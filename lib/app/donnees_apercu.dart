@@ -97,6 +97,11 @@ const _fr = <Discussion>[
     apercu: 'Message vocal (0:27)',
     heure: 'Hier',
     nonLus: 1,
+    messages: [
+      MessageApercu('Tu viens toujours samedi ?', deMoi: true, heure: '18:20'),
+      MessageApercu('Oui ! Je t’envoie l’adresse ce soir', deMoi: false, heure: '18:41'),
+      MessageApercu('Message vocal (0:27)', deMoi: false, heure: '22:05'),
+    ],
   ),
   Discussion(
     nom: 'Club de randonnée',
@@ -104,6 +109,11 @@ const _fr = <Discussion>[
     apercu: 'Karim : Départ 7 h au parking du col',
     heure: 'Mardi',
     groupe: true,
+    messages: [
+      MessageApercu('Pas de réseau là-haut, pensez à installer Droplet avant de partir', deMoi: true, heure: '19:02'),
+      MessageApercu('Fait ✅', deMoi: false, heure: '19:10'),
+      MessageApercu('Départ 7 h au parking du col', deMoi: false, heure: '19:15'),
+    ],
   ),
 ];
 
@@ -153,6 +163,11 @@ const _en = <Discussion>[
     apercu: 'Voice message (0:27)',
     heure: 'Yesterday',
     nonLus: 1,
+    messages: [
+      MessageApercu('Still coming on Saturday?', deMoi: true, heure: '18:20'),
+      MessageApercu('Yes! I’ll send you the address tonight', deMoi: false, heure: '18:41'),
+      MessageApercu('Voice message (0:27)', deMoi: false, heure: '22:05'),
+    ],
   ),
   Discussion(
     nom: 'Hiking club',
@@ -160,5 +175,10 @@ const _en = <Discussion>[
     apercu: 'Karim: Leaving at 7 am from the pass car park',
     heure: 'Tuesday',
     groupe: true,
+    messages: [
+      MessageApercu('No signal up there, install Droplet before we leave', deMoi: true, heure: '19:02'),
+      MessageApercu('Done ✅', deMoi: false, heure: '19:10'),
+      MessageApercu('Leaving at 7 am from the pass car park', deMoi: false, heure: '19:15'),
+    ],
   ),
 ];

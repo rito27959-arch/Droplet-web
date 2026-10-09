@@ -19,6 +19,9 @@ dependencies:
   # Le niveau de correction d'erreur « H » : la goutte posée au centre du
   # code masque des modules, que la correction reconstruit.
   qr: ^3.0.1
+  # ⚠️ La police des icônes Cupertino (CupertinoIcons). Sans elle, chaque
+  # icône s'affiche comme un carré vide.
+  cupertino_icons: ^1.0.8
   # L'accès au navigateur (nom du navigateur pour « Chrome sur macOS »).
   web: ^1.1.0
 
