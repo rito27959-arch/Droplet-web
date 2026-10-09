@@ -1,0 +1,23 @@
+== commit 46cac5a54a6bd0015215246866847870d076badc
+Flutter 3.47.7 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision abaf9c5237 (25 hours ago) • 2026-10-08 09:51:21 -0700
+Engine • hash d8a2d6c768c334d53e16277f837970ffa1e2de81 (revision deb287481e) (2 days ago) • 2026-10-07 17:09:12.000Z
+Tools • Dart 3.13.5 • DevTools 2.60.0
+== analyse
+Analyzing Droplet-web...                                        
+
+   info • Invalid regular expression syntax. Try correcting the regular expression • lib/app/texte_riche.dart:21:7 • valid_regexps
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/app/vue_discussion.dart:314:40 • use_build_context_synchronously
+   info • The import of 'package:flutter/foundation.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/widgets.dart'. Try removing the import directive • lib/donnees/depot.dart:15:8 • unnecessary_import
+   info • The import of 'package:qr/qr.dart' is unnecessary because all of the used elements are also provided by the import of 'package:qr_flutter/qr_flutter.dart'. Try removing the import directive • lib/liaison/ecran_liaison.dart:18:8 • unnecessary_import
+   info • The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/foundation.dart'. Try removing the import directive • lib/web/navigateur.dart:17:8 • unnecessary_import
+
+5 issues found. (ran in 8.8s)
+analyse: 0
+== construction
+Compiling lib/main.dart for the Web...                          
+Wasm dry run succeeded. Consider building and testing your application with the `--wasm` flag. See docs for more info: https://docs.flutter.dev/platform-integration/web/wasm
+Use --no-wasm-dry-run to disable these warnings.
+Compiling lib/main.dart for the Web...                             31.4s
+✓ Built build/web
+construction: 0
