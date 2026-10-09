@@ -206,7 +206,12 @@ class _CoquilleState extends State<Coquille> {
     );
   }
 
-  Widget _racine(Onglet o) => switch (o) {
+  Widget _racine(Onglet o) => ColoredBox(
+        color: OuroColors.secondarySystemGroupedBackground,
+        child: _colonne(o),
+      );
+
+  Widget _colonne(Onglet o) => switch (o) {
         Onglet.discussions => const ListeDiscussions(),
         Onglet.actus => const ColonneActus(),
         Onglet.appels => const ColonneAppels(),
