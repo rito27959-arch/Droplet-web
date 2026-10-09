@@ -1,8 +1,12 @@
-// LA GOUTTE DE DROPLET — le logo, dessiné plutôt qu'importé : il prend la
-// couleur d'accent et reste net à toutes les tailles.
+// LE LOGO DE DROPLET — la bulle et sa goutte, dessinées plutôt
+// qu'importées : elles prennent n'importe quelle couleur et restent nettes à
+// toutes les tailles.
 //
-// Même tracé que le site (viewBox 64 × 64) : la goutte, et l'onde qu'un
-// message fait en arrivant.
+// Comme WhatsApp avec sa bulle : en COULEUR DU THÈME quand il est actif
+// (l'onglet Discussions sélectionné, la marque, le code QR), en GRIS quand
+// il ne l'est pas. Le même tracé que l'icône de l'app et que le site
+// (viewBox 64 × 64) : un anneau qui finit en pointe en bas à gauche, et la
+// goutte au centre.
 import 'package:flutter/widgets.dart';
 
 class Goutte extends StatelessWidget {
@@ -14,37 +18,48 @@ class Goutte extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox.square(
         dimension: taille,
-        child: CustomPaint(painter: _PeintreGoutte(couleur)),
+        child: CustomPaint(painter: _PeintreLogo(couleur)),
       );
 }
 
-class _PeintreGoutte extends CustomPainter {
-  _PeintreGoutte(this.couleur);
+class _PeintreLogo extends CustomPainter {
+  _PeintreLogo(this.couleur);
 
   final Color couleur;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final k = size.width / 64;
-    canvas.scale(k);
-    // M32 6 c7.6 9.6 18 20 18 31.5 a18 18 0 0 1 -36 0 C14 26 24.4 15.6 32 6z
-    final goutte = Path()
-      ..moveTo(32, 6)
-      ..cubicTo(39.6, 15.6, 50, 26, 50, 37.5)
-      ..arcToPoint(const Offset(14, 37.5), radius: const Radius.circular(18))
-      ..cubicTo(14, 26, 24.4, 15.6, 32, 6)
+    canvas.scale(size.width / 64);
+    // La bulle : M26.16 48.79 A20 20 0 1 0 15.68 40 L12.5 52.5 Z
+    final bulle = Path()
+      ..moveTo(26.16, 48.79)
+      ..arcToPoint(
+        const Offset(15.68, 40),
+        radius: const Radius.circular(20),
+        largeArc: true,
+        clockwise: false,
+      )
+      ..lineTo(12.5, 52.5)
       ..close();
-    canvas.drawPath(goutte, Paint()..color = couleur);
-    canvas.drawCircle(
-      const Offset(32, 38),
-      6.5,
+    canvas.drawPath(
+      bulle,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..color = const Color(0xEBFFFFFF),
+        ..strokeWidth = 5.2
+        ..strokeJoin = StrokeJoin.round
+        ..color = couleur,
     );
+    // La goutte : M33 17.5 C37.2 23 41.3 27 41.3 32.4 a8.3 8.3 0 0 1 -16.6 0
+    //             C24.7 27 28.8 23 33 17.5 Z
+    final goutte = Path()
+      ..moveTo(33, 17.5)
+      ..cubicTo(37.2, 23, 41.3, 27, 41.3, 32.4)
+      ..arcToPoint(const Offset(24.7, 32.4), radius: const Radius.circular(8.3))
+      ..cubicTo(24.7, 27, 28.8, 23, 33, 17.5)
+      ..close();
+    canvas.drawPath(goutte, Paint()..color = couleur);
   }
 
   @override
-  bool shouldRepaint(_PeintreGoutte ancien) => ancien.couleur != couleur;
+  bool shouldRepaint(_PeintreLogo ancien) => ancien.couleur != couleur;
 }

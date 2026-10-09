@@ -165,13 +165,14 @@ class _Rail extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 18),
-          Goutte(taille: 28, couleur: OuroColors.accent),
-          const SizedBox(height: 22),
+          // Discussions : le logo de Droplet lui-même, comme la bulle de
+          // WhatsApp — en couleur quand l'onglet est actif, gris sinon.
           for (var i = 0; i < items.length; i++)
             _BoutonRail(
               icone: onglet == i ? items[i].$1 : items[i].$2,
               libelle: items[i].$3,
               actif: onglet == i,
+              logo: i == 0,
               onTap: () => onOnglet(i),
             ),
           const Spacer(),
@@ -191,9 +192,18 @@ class _Rail extends StatelessWidget {
 }
 
 class _BoutonRail extends StatefulWidget {
-  const _BoutonRail({required this.icone, required this.libelle, required this.actif, required this.onTap});
+  const _BoutonRail({
+    required this.icone,
+    required this.libelle,
+    required this.actif,
+    required this.onTap,
+    this.logo = false,
+  });
 
   final IconData icone;
+
+  /// Dessiner le logo de Droplet au lieu de l'icône.
+  final bool logo;
   final String libelle;
   final bool actif;
   final VoidCallback onTap;
@@ -226,11 +236,17 @@ class _BoutonRailState extends State<_BoutonRail> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(color: fond, borderRadius: BorderRadius.circular(12)),
-            child: Icon(
-              widget.icone,
-              size: 22,
-              color: widget.actif ? OuroColors.accent : OuroColors.secondaryLabel,
-            ),
+            alignment: Alignment.center,
+            child: widget.logo
+                ? Goutte(
+                    taille: 26,
+                    couleur: widget.actif ? OuroColors.accent : OuroColors.secondaryLabel,
+                  )
+                : Icon(
+                    widget.icone,
+                    size: 22,
+                    color: widget.actif ? OuroColors.accent : OuroColors.secondaryLabel,
+                  ),
           ),
         ),
       ),
@@ -584,10 +600,11 @@ class _AccueilVide extends StatelessWidget {
                   bottom: 12,
                   child: Icon(Icons.smartphone_rounded, size: 64, color: OuroColors.tertiaryLabel),
                 ),
+                // Le logo en gris : rien n'est encore ouvert.
                 Positioned(
                   top: 0,
-                  right: 54,
-                  child: Goutte(taille: 34, couleur: OuroColors.accent),
+                  right: 50,
+                  child: Goutte(taille: 40, couleur: OuroColors.tertiaryLabel),
                 ),
               ],
             ),
