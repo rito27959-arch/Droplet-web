@@ -13,8 +13,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../design/ouro_colors.dart';
-import '../design/ouro_typography.dart';
+import '../design_system/ouro_colors.dart';
+import '../design_system/ouro_typography.dart';
 import '../textes.dart';
 import 'coquille.dart' show avatarDiscussion;
 import 'donnees_apercu.dart';

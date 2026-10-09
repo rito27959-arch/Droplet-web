@@ -11,6 +11,10 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  # Repris de l'app mobile : ressorts façon SwiftUI, animations, dates.
+  motor: ^1.1.0
+  flutter_animate: ^4.5.0
+  intl: ^0.20.2
   # Les clés de l'appareil (X25519). Dans un navigateur, le paquet passe
   # par WebCrypto quand c'est possible, sinon par son implémentation Dart.
   cryptography: ^2.7.0

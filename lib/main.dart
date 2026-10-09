@@ -11,10 +11,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'design/ouro_colors.dart';
-import 'design/ouro_typography.dart';
+import 'design_system/ouro_colors.dart';
+import 'design_system/ouro_typography.dart';
 import 'app/coquille.dart';
-import 'design/reglages_apparence.dart';
+import 'design_system/reglages_apparence.dart';
 import 'liaison/ecran_liaison.dart';
 import 'textes.dart';
 

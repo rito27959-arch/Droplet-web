@@ -19,8 +19,8 @@ import 'package:qr/qr.dart' show QrErrorCorrectLevel;
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:web/web.dart' as web;
 
-import '../design/ouro_colors.dart';
-import '../design/ouro_typography.dart';
+import '../design_system/ouro_colors.dart';
+import '../design_system/ouro_typography.dart';
 import '../fond/goutte.dart';
 import '../fond/maillage.dart';
 import '../textes.dart';

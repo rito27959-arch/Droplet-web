@@ -15,8 +15,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../design/ouro_colors.dart';
-import '../design/ouro_typography.dart';
+import '../design_system/ouro_colors.dart';
+import '../design_system/ouro_typography.dart';
 import '../fond/goutte.dart';
 import '../textes.dart';
 import 'donnees_apercu.dart';
