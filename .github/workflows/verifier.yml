@@ -1,11 +1,15 @@
-# Vérifie chaque push : analyse et construction web. Le journal de cette
-# action est ce qui permet de corriger le code sans machine Flutter.
+# Vérifie chaque push : analyse et construction web. Le journal complet est
+# publié sur la branche `journal-ci` (fichier journal.txt) : c'est ce qui
+# permet de corriger le code sans machine Flutter.
 name: Vérifier
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   verifier:
@@ -16,9 +20,35 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: flutter --version
       - run: flutter pub get
-      - name: Analyse
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
-      - name: Construction web
-        run: flutter build web --release --no-tree-shake-icons
+      - name: Analyse et construction
+        id: verif
+        run: |
+          set +e
+          {
+            echo "== commit $GITHUB_SHA"
+            flutter --version
+            echo "== analyse"
+            flutter analyze --no-fatal-infos --no-fatal-warnings
+            echo "analyse: $?"
+            echo "== construction"
+            flutter build web --release --no-tree-shake-icons
+            echo "construction: $?"
+          } > journal.txt 2>&1
+          cat journal.txt
+          grep -q "construction: 0" journal.txt && grep -q "analyse: 0" journal.txt
+          echo "ok=$?" >> "$GITHUB_OUTPUT"
+      - name: Publier le journal
+        if: always()
+        run: |
+          cp journal.txt /tmp/journal.txt
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          git checkout --orphan journal-ci
+          git rm -rfq . > /dev/null
+          cp /tmp/journal.txt journal.txt
+          git add journal.txt
+          git commit -qm "journal $GITHUB_SHA"
+          git push -fq origin journal-ci
+      - name: Résultat
+        run: test "${{ steps.verif.outputs.ok }}" = "0"
