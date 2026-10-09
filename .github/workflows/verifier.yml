@@ -1,6 +1,7 @@
 # Vérifie chaque push : analyse et construction web. Le journal complet est
 # publié sur la branche `journal-ci` (fichier journal.txt) : c'est ce qui
-# permet de corriger le code sans machine Flutter.
+# permet de corriger le code sans machine Flutter. La version construite
+# (web/) y est jointe, pour les captures d'écran.
 name: Vérifier
 
 on:
@@ -32,7 +33,7 @@ jobs:
             flutter analyze --no-fatal-infos --no-fatal-warnings
             echo "analyse: $?"
             echo "== construction"
-            flutter build web --release --no-tree-shake-icons
+            flutter build web --release --no-tree-shake-icons --no-web-resources-cdn
             echo "construction: $?"
           } > journal.txt 2>&1
           cat journal.txt
@@ -42,12 +43,14 @@ jobs:
         if: always()
         run: |
           cp journal.txt /tmp/journal.txt
+          rm -rf /tmp/web && if [ -d build/web ]; then cp -r build/web /tmp/web; fi
           git config user.name "ci"
           git config user.email "ci@users.noreply.github.com"
           git checkout --orphan journal-ci
           git rm -rfq . > /dev/null
           cp /tmp/journal.txt journal.txt
-          git add journal.txt
+          if [ -d /tmp/web ]; then rm -rf build; cp -r /tmp/web web; fi
+          git add -f journal.txt web 2>/dev/null || git add journal.txt
           git commit -qm "journal $GITHUB_SHA"
           git push -fq origin journal-ci
       - name: Résultat
