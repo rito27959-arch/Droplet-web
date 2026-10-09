@@ -224,7 +224,7 @@ class _Infos extends StatelessWidget {
                     LigneIlot(
                       icone: Icons.lock_rounded,
                       couleurIcone: OuroColors.systemGreen,
-                      titre: l.giEncryptedMessages,
+                      titre: d.estGroupe ? l.giEncryptedMessages : l.ciSecurityCode,
                       sousTitre: t.chiffrementDetail,
                       onTap: () => _codeSecurite(context, d),
                     ),

@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 
 import '../donnees/modeles.dart';
 import '../l10n/generated/app_localizations.dart';
+import 'portee.dart';
 
 DateTime _jour(DateTime d) => DateTime(d.year, d.month, d.day);
 
@@ -49,7 +50,7 @@ String _majuscule(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(
 /// « Vu il y a 12 min » — comme l'en-tête de l'app.
 String vuA(BuildContext context, Contact c) {
   final l = AppLocalizations.of(context);
-  if (c.enLigne) return l.chOnlineNow;
+  if (c.enLigne) return _majuscule(Portee.lire(context).textes.enLigne);
   final v = c.vuA;
   if (v == null) return '';
   final ecart = DateTime.now().difference(v);
