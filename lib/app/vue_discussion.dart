@@ -105,7 +105,7 @@ class _VueDiscussionState extends State<VueDiscussion> {
                       CupertinoButton(
                         padding: const EdgeInsets.only(left: 8),
                         onPressed: widget.onRetour,
-                        child: Icon(CupertinoIcons.back, color: OuroColors.accent),
+                        child: Icon(Icons.arrow_back_ios_new_rounded, color: OuroColors.accent),
                       )
                     else
                       const SizedBox(width: 20),
@@ -123,9 +123,9 @@ class _VueDiscussionState extends State<VueDiscussion> {
                         ],
                       ),
                     ),
-                    _Icone(CupertinoIcons.video_camera),
-                    _Icone(CupertinoIcons.phone),
-                    _Icone(CupertinoIcons.search),
+                    _Icone(Icons.videocam_outlined),
+                    _Icone(Icons.phone_outlined),
+                    _Icone(Icons.search_rounded),
                     const SizedBox(width: 10),
                   ],
                 ),
@@ -143,7 +143,7 @@ class _VueDiscussionState extends State<VueDiscussion> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _Icone(CupertinoIcons.plus, taille: 26),
+                    _Icone(Icons.add_rounded, taille: 26),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Container(
@@ -173,7 +173,7 @@ class _VueDiscussionState extends State<VueDiscussion> {
                                 ),
                               ),
                             ),
-                            Icon(CupertinoIcons.smiley, size: 22, color: OuroColors.secondaryLabel),
+                            Icon(Icons.emoji_emotions_outlined, size: 22, color: OuroColors.secondaryLabel),
                           ],
                         ),
                       ),
@@ -196,14 +196,14 @@ class _VueDiscussionState extends State<VueDiscussion> {
                                     width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(color: OuroColors.accent, shape: BoxShape.circle),
-                                    child: const Icon(CupertinoIcons.arrow_up, color: Colors.white, size: 22),
+                                    child: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 22),
                                   ),
                                 )
                               : SizedBox(
                                   key: const ValueKey('micro'),
                                   width: 40,
                                   height: 40,
-                                  child: Icon(CupertinoIcons.mic, color: OuroColors.secondaryLabel, size: 24),
+                                  child: Icon(Icons.mic_none_rounded, color: OuroColors.secondaryLabel, size: 24),
                                 ),
                         );
                       },

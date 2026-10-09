@@ -152,9 +152,9 @@ class _Rail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      (CupertinoIcons.chat_bubble_fill, CupertinoIcons.chat_bubble, textes.discussions),
+      (Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, textes.discussions),
       (Icons.podcasts_rounded, Icons.podcasts_outlined, textes.actus),
-      (CupertinoIcons.phone_fill, CupertinoIcons.phone, textes.appels),
+      (Icons.phone_rounded, Icons.phone_outlined, textes.appels),
     ];
     return Container(
       width: 68,
@@ -176,7 +176,7 @@ class _Rail extends StatelessWidget {
             ),
           const Spacer(),
           _BoutonRail(
-            icone: CupertinoIcons.gear,
+            icone: Icons.settings_outlined,
             libelle: textes.reglages,
             actif: onglet == 3,
             onTap: () => onOnglet(3),
@@ -277,8 +277,8 @@ class _ColonneListe extends StatelessWidget {
                   child: Text(t.discussions,
                       style: OuroTypography.largeTitle.copyWith(color: OuroColors.label)),
                 ),
-                _IconeEntete(icone: CupertinoIcons.square_pencil, onTap: () {}),
-                _IconeEntete(icone: CupertinoIcons.ellipsis_circle, onTap: () {}),
+                _IconeEntete(icone: Icons.add_comment_outlined, onTap: () {}),
+                _IconeEntete(icone: Icons.more_horiz_rounded, onTap: () {}),
               ],
             ),
           ),
@@ -287,6 +287,10 @@ class _ColonneListe extends StatelessWidget {
             child: CupertinoSearchTextField(
               placeholder: t.rechercher,
               onChanged: onRecherche,
+              // Les icônes Material : celles de Cupertino (loupe, croix)
+              // dépendent d'une police que le navigateur peut ne pas avoir.
+              prefixIcon: const Icon(Icons.search_rounded),
+              suffixIcon: const Icon(Icons.cancel_rounded),
               style: OuroTypography.body.copyWith(color: OuroColors.label),
               backgroundColor: OuroColors.tertiarySystemFill,
             ),
@@ -452,7 +456,7 @@ class _LigneDiscussionState extends State<_LigneDiscussion> {
                           ),
                         ),
                         if (d.epingle && d.nonLus == 0)
-                          Icon(CupertinoIcons.pin_fill, size: 13, color: OuroColors.tertiaryLabel),
+                          Icon(Icons.push_pin_rounded, size: 13, color: OuroColors.tertiaryLabel),
                         if (d.nonLus > 0)
                           Container(
                             constraints: const BoxConstraints(minWidth: 20),
@@ -573,12 +577,12 @@ class _AccueilVide extends StatelessWidget {
               children: [
                 Positioned(
                   left: 0,
-                  child: Icon(CupertinoIcons.device_laptop, size: 120, color: OuroColors.tertiaryLabel),
+                  child: Icon(Icons.laptop_mac_rounded, size: 120, color: OuroColors.tertiaryLabel),
                 ),
                 Positioned(
                   right: 6,
                   bottom: 12,
-                  child: Icon(CupertinoIcons.device_phone_portrait, size: 64, color: OuroColors.tertiaryLabel),
+                  child: Icon(Icons.smartphone_rounded, size: 64, color: OuroColors.tertiaryLabel),
                 ),
                 Positioned(
                   top: 0,
@@ -603,7 +607,7 @@ class _AccueilVide extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(CupertinoIcons.lock_fill, size: 12, color: OuroColors.tertiaryLabel),
+              Icon(Icons.lock_rounded, size: 12, color: OuroColors.tertiaryLabel),
               const SizedBox(width: 6),
               Text(textes.chiffre, style: OuroTypography.footnote.copyWith(color: OuroColors.tertiaryLabel)),
             ],

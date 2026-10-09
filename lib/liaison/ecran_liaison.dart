@@ -631,7 +631,7 @@ class _GrandEcran extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(CupertinoIcons.desktopcomputer, size: 44, color: OuroColors.accent),
+          Icon(Icons.desktop_mac_rounded, size: 44, color: OuroColors.accent),
           const SizedBox(height: 18),
           Text(
             textes.sousTitre,
@@ -666,7 +666,7 @@ class _PiedDePage extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.lock_fill, size: 13, color: OuroColors.secondaryLabel),
+            Icon(Icons.lock_rounded, size: 13, color: OuroColors.secondaryLabel),
             const SizedBox(width: 6),
             Text(textes.chiffre, style: discret),
           ],
