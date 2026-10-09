@@ -1,0 +1,47 @@
+{
+  "id": "2026-10-stickers",
+  "versionMini": "1.4.0",
+  "lien": "",
+  "textes": {
+    "fr": {
+      "titre": "Les stickers arrivent",
+      "corps": "Droplet gère maintenant les stickers. L'icône à droite de la barre de saisie ouvre le panneau à la place du clavier, et redevient un clavier d'un seul toucher.\n\nLa feuille de pièces jointes a aussi changé : une vraie grille de galerie, où l'on coche plusieurs photos d'un coup."
+    },
+    "en": {
+      "titre": "Stickers are here",
+      "corps": "Droplet now supports stickers. The icon on the right of the input bar opens the panel in place of the keyboard, and turns back into a keyboard with one tap.\n\nThe attachment sheet changed too: a real gallery grid, where you tick several photos at once."
+    },
+    "es": {
+      "titre": "Llegan los stickers",
+      "corps": "Droplet ya admite stickers. El icono a la derecha de la barra de escritura abre el panel en lugar del teclado, y vuelve a ser un teclado con un solo toque.\n\nLa hoja de adjuntos también cambió: una verdadera cuadrícula de galería, donde marcas varias fotos a la vez."
+    },
+    "pt": {
+      "titre": "Chegaram os stickers",
+      "corps": "O Droplet agora aceita stickers. O ícone à direita da barra de escrita abre o painel no lugar do teclado, e volta a ser um teclado com um só toque.\n\nA folha de anexos também mudou: uma verdadeira grelha de galeria, onde marca várias fotos de uma vez."
+    },
+    "de": {
+      "titre": "Sticker sind da",
+      "corps": "Droplet unterstützt jetzt Sticker. Das Symbol rechts in der Eingabeleiste öffnet das Panel anstelle der Tastatur und wird mit einem Tippen wieder zur Tastatur.\n\nAuch das Anhang-Blatt ist neu: ein echtes Galerieraster, in dem man mehrere Fotos auf einmal auswählt."
+    },
+    "it": {
+      "titre": "Arrivano gli sticker",
+      "corps": "Droplet ora supporta gli sticker. L'icona a destra della barra di scrittura apre il pannello al posto della tastiera, e torna tastiera con un solo tocco.\n\nAnche il foglio degli allegati è cambiato: una vera griglia della galleria, dove si spuntano più foto in una volta."
+    },
+    "ar": {
+      "titre": "وصلت الملصقات",
+      "corps": "يدعم دروبلت الآن الملصقات. الأيقونة على يمين شريط الكتابة تفتح اللوحة بدل لوحة المفاتيح، وتعود لوحةَ مفاتيح بلمسة واحدة.\n\nكما تغيّرت ورقة المرفقات: شبكة معرض حقيقية، تختار فيها عدة صور دفعة واحدة."
+    },
+    "hi": {
+      "titre": "स्टिकर आ गए",
+      "corps": "Droplet अब स्टिकर का समर्थन करता है। लिखने की पट्टी के दाईं ओर का आइकन कीबोर्ड की जगह पैनल खोलता है, और एक ही टैप में फिर से कीबोर्ड बन जाता है।\n\nअटैचमेंट शीट भी बदली है: एक असली गैलरी ग्रिड, जहाँ आप एक साथ कई फ़ोटो चुनते हैं।"
+    },
+    "ru": {
+      "titre": "Появились стикеры",
+      "corps": "Droplet теперь поддерживает стикеры. Значок справа от строки ввода открывает панель вместо клавиатуры и одним касанием снова становится клавиатурой.\n\nПанель вложений тоже изменилась: настоящая сетка галереи, где можно отметить сразу несколько фото."
+    },
+    "zh": {
+      "titre": "贴纸来了",
+      "corps": "Droplet 现已支持贴纸。输入栏右侧的图标会在键盘的位置打开贴纸面板，轻点一下又变回键盘。\n\n附件面板也变了：真正的相册网格，可以一次勾选多张照片。"
+    }
+  }
+}
