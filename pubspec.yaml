@@ -276,3 +276,6 @@ flutter:
     - shaders/nexus.frag
     - shaders/fond_prisme.frag
     - shaders/lentille_ios.frag
+
+dependency_overrides:
+  archive: ^4.0.0
