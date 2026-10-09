@@ -1,11 +1,17 @@
 // LES TEXTES DE DROPLET WEB, DANS LES DIX LANGUES DE L'APP.
 //
-// Un simple dictionnaire plutôt que `gen-l10n` : l'app web n'a encore que
-// quelques écrans. Le jour où elle grandit, ces clés passent dans des
-// fichiers .arb comme celles de l'app, sans changer leur nom.
+// Deux sources : les traductions de l'app (`AppLocalizations`, reprises
+// telles quelles) et ce dictionnaire pour ce qui n'existe que sur le web
+// (liaison, raccourcis clavier, notifications du navigateur…). Les textes
+// propres au web sont dans `textes_web.dart`.
 //
-// La langue est celle du navigateur ; à défaut, l'anglais.
+// La langue est celle choisie dans Réglages › Langue, sinon celle du
+// navigateur, à défaut l'anglais.
 import 'dart:ui' show PlatformDispatcher;
+
+import 'package:web/web.dart' as web;
+
+import 'textes_web.dart';
 
 class Textes {
   const Textes._(this.code, this._t);
@@ -13,41 +19,182 @@ class Textes {
   final String code;
   final Map<String, String> _t;
 
-  String get titre => 'Droplet Web';
-  String get sousTitre => _t['sousTitre']!;
-  String get etape1 => _t['etape1']!;
-  String get etape2 => _t['etape2']!;
-  String get etape3 => _t['etape3']!;
-  String get chiffre => _t['chiffre']!;
-  String renouvele(int secondes) => _t['renouvele']!.replaceAll('{s}', '$secondes');
-  String get rester => _t['rester']!;
-  String get resterAide => _t['resterAide']!;
-  String get grandEcran => _t['grandEcran']!;
-  String get aide => _t['aide']!;
-  String get pasEncore => _t['pasEncore']!;
-  String get telecharger => _t['telecharger']!;
-  String get nouveauCode => _t['nouveauCode']!;
-  String get codeLiaison => _t['codeLiaison']!;
+  String _(String k) => _t[k] ?? textesWeb[code]?[k] ?? textesWeb['en']?[k] ?? _langues['en']?[k] ?? k;
 
   bool get rtl => code == 'ar';
-  String get connexion => _t['connexion']!;
-  String get androidTitre => _t['androidTitre']!;
-  String get androidTexte => _t['androidTexte']!;
-  String get discussions => _t['discussions']!;
-  String get actus => _t['actus']!;
-  String get appels => _t['appels']!;
-  String get reglages => _t['reglages']!;
-  String get rechercher => _t['rechercher']!;
-  String get toutes => _t['toutes']!;
-  String get nonLues => _t['nonLues']!;
-  String get groupes => _t['groupes']!;
-  String get videTexte => _t['videTexte']!;
-  String get message => _t['message']!;
-  String get apercu => _t['apercu']!;
-  String get enLigne => _t['enLigne']!;
-  String get aujourdhui => _t['aujourdhui']!;
-  String get aucune => _t['aucune']!;
+  String get titre => 'Droplet Web';
+  String renouvele(int secondes) => _('renouvele').replaceAll('{s}', '$secondes');
+  String aQuitte(String nom) => _('aQuitte').replaceAll('{nom}', nom);
+  String aRetire(String qui, String nom) => _('aRetire').replaceAll('{qui}', qui).replaceAll('{nom}', nom);
+  String aRenomme(String qui, String titre) => _('aRenomme').replaceAll('{qui}', qui).replaceAll('{titre}', titre);
+  String creeLe(String date) => _('creeLe').replaceAll('{date}', date);
+  String deposerIci(String nom) => _('deposerIci').replaceAll('{nom}', nom);
+  String envoyerA(String nom) => _('envoyerA').replaceAll('{nom}', nom);
+  String envoyerMessageA(String nom) => _('envoyerMessageA').replaceAll('{nom}', nom);
+  String ephemereActive(String duree) => _('ephemereActive').replaceAll('{duree}', duree);
+  String groupesCommun(int n) => _('groupesCommun').replaceAll('{n}', '$n');
+  String get sousTitre => _('sousTitre');
+  String get etape1 => _('etape1');
+  String get etape2 => _('etape2');
+  String get etape3 => _('etape3');
+  String get chiffre => _('chiffre');
+  String get rester => _('rester');
+  String get resterAide => _('resterAide');
+  String get grandEcran => _('grandEcran');
+  String get aide => _('aide');
+  String get pasEncore => _('pasEncore');
+  String get telecharger => _('telecharger');
+  String get nouveauCode => _('nouveauCode');
+  String get codeLiaison => _('codeLiaison');
+  String get connexion => _('connexion');
+  String get androidTitre => _('androidTitre');
+  String get androidTexte => _('androidTexte');
+  String get discussions => _('discussions');
+  String get actus => _('actus');
+  String get appels => _('appels');
+  String get reglages => _('reglages');
+  String get rechercher => _('rechercher');
+  String get toutes => _('toutes');
+  String get nonLues => _('nonLues');
+  String get groupes => _('groupes');
+  String get videTexte => _('videTexte');
+  String get message => _('message');
+  String get apercu => _('apercu');
+  String get enLigne => _('enLigne');
+  String get aujourdhui => _('aujourdhui');
+  String get aucune => _('aucune');
+  String get aPropos => _('aPropos');
+  String get aProposIndication => _('aProposIndication');
+  String get accueilActus => _('accueilActus');
+  String get accueilAppels => _('accueilAppels');
+  String get accueilReglages => _('accueilReglages');
+  String get actifMaintenant => _('actifMaintenant');
+  String get aideTitre => _('aideTitre');
+  String get ajouterContact => _('ajouterContact');
+  String get ajouterContactTexte => _('ajouterContactTexte');
+  String get appareilsLies => _('appareilsLies');
+  String get appareilsNote => _('appareilsNote');
+  String get appareilsTexte => _('appareilsTexte');
+  String get archivesNote => _('archivesNote');
+  String get aucunTelephone => _('aucunTelephone');
+  String get centreAide => _('centreAide');
+  String get cetAppareil => _('cetAppareil');
+  String get changerFond => _('changerFond');
+  String get chiffrementDetail => _('chiffrementDetail');
+  String get cliquerInfos => _('cliquerInfos');
+  String get codeSecuriteTexte => _('codeSecuriteTexte');
+  String get conditions => _('conditions');
+  String get confidentialite => _('confidentialite');
+  String get confirmationsLecture => _('confirmationsLecture');
+  String get confirmationsNote => _('confirmationsNote');
+  String get connexionEnCours => _('connexionEnCours');
+  String get contacts => _('contacts');
+  String get deconnexion => _('deconnexion');
+  String get deconnexionTexte => _('deconnexionTexte');
+  String get deconnexionTitre => _('deconnexionTitre');
+  String get discussionPrecedente => _('discussionPrecedente');
+  String get discussionSuivante => _('discussionSuivante');
+  String get discussionsSous => _('discussionsSous');
+  String get effacerJournal => _('effacerJournal');
+  String get emojis => _('emojis');
+  String get entreeEnvoie => _('entreeEnvoie');
+  String get entreeEnvoieNote => _('entreeEnvoieNote');
+  String get ephemereDesactive => _('ephemereDesactive');
+  String get essayerDemo => _('essayerDemo');
+  String get fermer => _('fermer');
+  String get horsLigne => _('horsLigne');
+  String get infosDiscussion => _('infosDiscussion');
+  String get lierTelephone => _('lierTelephone');
+  String get marquerLue => _('marquerLue');
+  String get marquerNonLue => _('marquerNonLue');
+  String get mediasLiensDocs => _('mediasLiensDocs');
+  String get messageIntrouvable => _('messageIntrouvable');
+  String get messageSupprime => _('messageSupprime');
+  String get modeDemo => _('modeDemo');
+  String get nommerAdmin => _('nommerAdmin');
+  String get notificationsNavigateur => _('notificationsNavigateur');
+  String get notificationsNote => _('notificationsNote');
+  String get notificationsRefusees => _('notificationsRefusees');
+  String get nouvelleLigne => _('nouvelleLigne');
+  String get photos => _('photos');
+  String get plus => _('plus');
+  String get plusMembre => _('plusMembre');
+  String get profil => _('profil');
+  String get profilSynchro => _('profilSynchro');
+  String get pseudo => _('pseudo');
+  String get pseudoNote => _('pseudoNote');
+  String get raccourcis => _('raccourcis');
+  String get reagir => _('reagir');
+  String get recents => _('recents');
+  String get rechercherDansDiscussion => _('rechercherDansDiscussion');
+  String get retirerAdmin => _('retirerAdmin');
+  String get securite => _('securite');
+  String get statutsChiffres => _('statutsChiffres');
+  String get suppressionDiscussion => _('suppressionDiscussion');
+  String get supprimerMessage => _('supprimerMessage');
+  String get supprimerPourMoi => _('supprimerPourMoi');
+  String get supprimerPourMoiTexte => _('supprimerPourMoiTexte');
+  String get supprimerPourTous => _('supprimerPourTous');
+  String get telechargerFichier => _('telechargerFichier');
+  String get telephonePrincipal => _('telephonePrincipal');
+  String get telephoneTexte => _('telephoneTexte');
+  String get toucheEntree => _('toucheEntree');
+  String get toutMarquerLu => _('toutMarquerLu');
+  String get videListe => _('videListe');
+  String get vider => _('vider');
+  String get viderDiscussion => _('viderDiscussion');
+  String get viderTexte => _('viderTexte');
+  String get vocal => _('vocal');
+  String get voirDansDiscussion => _('voirDansDiscussion');
+  String get vous => _('vous');
+  String get vousAvezSupprime => _('vousAvezSupprime');
 
+  static const List<String> codes = ['fr', 'en', 'de', 'es', 'it', 'pt', 'ru', 'zh', 'ar', 'hi'];
+
+  static String nomLangue(String code) => const {
+        'fr': 'Français',
+        'en': 'English',
+        'de': 'Deutsch',
+        'es': 'Español',
+        'it': 'Italiano',
+        'pt': 'Português',
+        'ru': 'Русский',
+        'zh': '中文',
+        'ar': 'العربية',
+        'hi': 'हिन्दी',
+      }[code] ??
+      code;
+
+  static const _cle = 'droplet-web:langue';
+
+  /// La langue choisie dans les réglages, ou null (celle du navigateur).
+  static String? get langueStockee {
+    try {
+      final v = web.window.localStorage.getItem(_cle);
+      return codes.contains(v) ? v : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Changer de langue : enregistrée, puis la page se recharge.
+  static void choisirLangue(String? code) {
+    try {
+      if (code == null) {
+        web.window.localStorage.removeItem(_cle);
+      } else {
+        web.window.localStorage.setItem(_cle, code);
+      }
+    } catch (_) {}
+    web.window.location.reload();
+  }
+
+  /// La langue des réglages, sinon celle du navigateur.
+  static Textes choisies() {
+    final stockee = langueStockee;
+    if (stockee != null && _langues[stockee] != null) return Textes._(stockee, _langues[stockee]!);
+    return duNavigateur();
+  }
 
   /// Les textes dans la langue du navigateur.
   static Textes duNavigateur() {

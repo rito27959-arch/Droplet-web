@@ -30,9 +30,13 @@ import 'invitation_liaison.dart';
 const Curve kSortie = Cubic(0.16, 1, 0.3, 1);
 
 class EcranLiaison extends StatefulWidget {
-  const EcranLiaison({super.key, required this.textes});
+  const EcranLiaison({super.key, required this.textes, this.onDemo});
 
   final Textes textes;
+
+  /// « Essayer la démonstration » : l'interface complète, avec des
+  /// discussions d'exemple, sans téléphone.
+  final VoidCallback? onDemo;
 
   @override
   State<EcranLiaison> createState() => _EcranLiaisonState();
@@ -153,6 +157,10 @@ class _EcranLiaisonState extends State<EcranLiaison> {
                         onAide: () => _ouvrir('https://dropletmesh.app/support/'),
                         onTelecharger: () => _ouvrir('https://dropletmesh.app/'),
                       ),
+                      if (widget.onDemo != null) ...[
+                        const SizedBox(height: 14),
+                        _LienDemo(texte: t.essayerDemo, onTap: widget.onDemo!),
+                      ],
                     ],
                   ),
                 ),
@@ -697,3 +705,46 @@ class _PiedDePage extends StatelessWidget {
   }
 }
 
+
+/// Le lien discret vers la démonstration, sous le pied de page.
+class _LienDemo extends StatefulWidget {
+  const _LienDemo({required this.texte, required this.onTap});
+
+  final String texte;
+  final VoidCallback onTap;
+
+  @override
+  State<_LienDemo> createState() => _LienDemoState();
+}
+
+class _LienDemoState extends State<_LienDemo> {
+  bool _survol = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _survol = true),
+      onExit: (_) => setState(() => _survol = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+          decoration: BoxDecoration(
+            color: _survol ? OuroColors.accent.withValues(alpha: 0.12) : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.play_circle_outline_rounded, size: 18, color: OuroColors.accent),
+              const SizedBox(width: 8),
+              Text(widget.texte, style: OuroTypography.subheadline.copyWith(color: OuroColors.accent, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

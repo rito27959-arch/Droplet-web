@@ -73,6 +73,7 @@ class Discussion {
     this.brouillon = '',
     this.description = '',
     this.admins = const [kMoi],
+    this.quitte = false,
     DateTime? creeeLe,
   }) : creeeLe = creeeLe ?? DateTime.now();
 
@@ -93,6 +94,9 @@ class Discussion {
   String brouillon;
   String description;
   List<String> admins;
+
+  /// J'ai quitté ce groupe : on le lit encore, on n'y écrit plus.
+  bool quitte;
   final DateTime creeeLe;
 
   bool get estGroupe => type == TypeDiscussion.groupe;
@@ -111,6 +115,7 @@ class Discussion {
         'brouillon': brouillon,
         'description': description,
         'admins': admins,
+        'quitte': quitte,
         'creeeLe': creeeLe.toIso8601String(),
       };
 
@@ -128,6 +133,7 @@ class Discussion {
         brouillon: j['brouillon'] as String? ?? '',
         description: j['description'] as String? ?? '',
         admins: (j['admins'] as List? ?? const [kMoi]).cast<String>(),
+        quitte: j['quitte'] as bool? ?? false,
         creeeLe: DateTime.tryParse(j['creeeLe'] as String? ?? ''),
       );
 }
@@ -274,17 +280,24 @@ class Statut {
     required this.texte,
     required this.fond,
     required this.date,
+    this.image,
     List<String>? vuPar,
-  }) : vuPar = vuPar ?? [];
+    List<String>? aimePar,
+  })  : vuPar = vuPar ?? [],
+        aimePar = aimePar ?? [];
 
   final String id;
   final String auteurId;
   final String texte;
 
+  /// Une photo (adresse `data:`), ou rien pour un statut texte.
+  final String? image;
+
   /// Index dans `fondsStatut`.
   final int fond;
   final DateTime date;
   List<String> vuPar;
+  List<String> aimePar;
 
   bool get expire => DateTime.now().difference(date) > const Duration(hours: 24);
 
@@ -294,7 +307,9 @@ class Statut {
         'texte': texte,
         'fond': fond,
         'date': date.toIso8601String(),
+        'image': image != null && image!.length < 400000 ? image : null,
         'vuPar': vuPar,
+        'aimePar': aimePar,
       };
 
   factory Statut.fromJson(Map<String, dynamic> j) => Statut(
@@ -303,7 +318,9 @@ class Statut {
         texte: j['texte'] as String? ?? '',
         fond: j['fond'] as int? ?? 0,
         date: DateTime.tryParse(j['date'] as String? ?? '') ?? DateTime.now(),
+        image: j['image'] as String?,
         vuPar: (j['vuPar'] as List? ?? const []).cast<String>(),
+        aimePar: (j['aimePar'] as List? ?? const []).cast<String>(),
       );
 }
 

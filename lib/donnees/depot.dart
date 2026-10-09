@@ -255,23 +255,47 @@ class Depot extends ChangeNotifier {
   }
 
   void renommer(Discussion d, String titre, {String? description}) {
+    final change = titre != d.titre;
     d.titre = titre;
     if (description != null) d.description = description;
-    _changer();
+    if (change && d.estGroupe) {
+      _systeme(d, 'renomme:$titre');
+    } else {
+      _changer();
+    }
   }
 
   void retirerMembre(Discussion d, String membre) {
     d.membres = [...d.membres]..remove(membre);
-    _changer();
+    _systeme(d, 'retire:$membre');
   }
 
   void ajouterMembres(Discussion d, List<String> membres) {
-    d.membres = {...d.membres, ...membres}.toList();
+    final nouveaux = membres.where((m) => !d.membres.contains(m)).toList();
+    d.membres = [...d.membres, ...nouveaux];
+    for (final m in nouveaux) {
+      _systeme(d, 'ajoute:$m');
+    }
     _changer();
   }
 
+  void basculerAdmin(Discussion d, String membre) {
+    d.admins = d.admins.contains(membre) ? ([...d.admins]..remove(membre)) : [...d.admins, membre];
+    _changer();
+  }
+
+  void _systeme(Discussion d, String code) => _ajouter(Message(
+        id: _id('s'),
+        discussionId: d.id,
+        auteurId: kMoi,
+        type: TypeMessage.systeme,
+        date: DateTime.now(),
+        texte: code,
+      ));
+
   void quitterGroupe(Discussion d) {
-    d.archivee = true;
+    d.quitte = true;
+    d.admins = [...d.admins]..remove(kMoi);
     _ajouter(Message(
       id: _id('s'),
       discussionId: d.id,
@@ -416,9 +440,32 @@ class Depot extends ChangeNotifier {
 
   // ══ STATUTS, APPELS, PROFIL ══════════════════════════════════════════
 
-  void publierStatut(String texte, int fond) {
-    statuts.add(Statut(id: _id('st'), auteurId: kMoi, texte: texte, fond: fond, date: DateTime.now()));
+  void publierStatut(String texte, int fond, {String? image}) {
+    statuts.add(Statut(id: _id('st'), auteurId: kMoi, texte: texte, fond: fond, date: DateTime.now(), image: image));
     _changer();
+    // En démonstration, les contacts passent voir.
+    if (demo) {
+      final s = statuts.last;
+      for (final (i, c) in contacts.keys.take(3).indexed) {
+        Timer(Duration(seconds: 3 + i * 4), () {
+          if (!s.vuPar.contains(c)) s.vuPar.add(c);
+          if (i == 0 && !s.aimePar.contains(c)) s.aimePar.add(c);
+          _changer();
+        });
+      }
+    }
+  }
+
+  void aimerStatut(Statut s) {
+    s.aimePar.contains(kMoi) ? s.aimePar.remove(kMoi) : s.aimePar.add(kMoi);
+    _changer();
+  }
+
+  /// Répondre à un statut : un message dans la discussion avec son auteur,
+  /// qui cite le statut.
+  void repondreStatut(Statut s, String texte) {
+    final d = discussionAvec(s.auteurId);
+    envoyerTexte(d, '« ${s.texte.isEmpty ? '📷' : s.texte} »\n$texte');
   }
 
   void marquerStatutVu(Statut s) {
@@ -451,8 +498,9 @@ class Depot extends ChangeNotifier {
     _changer();
   }
 
-  void majProfil({String? pseudo, String? aPropos, String? photo, bool retirerPhoto = false}) {
+  void majProfil({String? pseudo, String? aPropos, String? photo, int? couleur, bool retirerPhoto = false}) {
     if (pseudo != null) profil.pseudo = pseudo;
+    if (couleur != null) profil.couleur = couleur;
     if (aPropos != null) profil.aPropos = aPropos;
     if (photo != null) profil.photo = photo;
     if (retirerPhoto) profil.photo = null;
