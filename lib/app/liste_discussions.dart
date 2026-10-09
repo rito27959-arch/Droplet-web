@@ -11,6 +11,7 @@
 //
 // À la souris : un chevron apparaît au survol d'une ligne, et le clic droit
 // ouvre le même menu (archiver, épingler, couper le son…).
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../design_system/ouro_colors.dart';

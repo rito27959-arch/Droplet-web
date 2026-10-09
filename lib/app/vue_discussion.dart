@@ -355,7 +355,6 @@ class _VueDiscussionState extends State<VueDiscussion> {
   Widget build(BuildContext context) {
     final depot = context.depot;
     final ui = context.ui;
-    final l = context.l;
     final d = depot.discussions[widget.discussion.id] ?? widget.discussion;
     final contact = depot.interlocuteur(d);
     final messages = depot.messages(d.id);

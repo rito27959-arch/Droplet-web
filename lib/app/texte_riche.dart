@@ -13,16 +13,25 @@ import '../web/navigateur.dart';
 
 final RegExp _lien = RegExp(r'((https?://|www\.)[^\s<>"]+[^\s<>".,;:!?)\]])', caseSensitive: false);
 final RegExp _forme = RegExp(r'```([\s\S]+?)```|(?<![\w*])\*([^*\n]+)\*(?![\w*])|(?<![\w/])_([^_\n]+)_(?![\w])|(?<![\w~])~([^~\n]+)~(?![\w~])');
-final RegExp _emojis = RegExp(
-  r'^(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|‍|️|\s)+$',
-  unicode: true,
-);
+// Construite à la demande : les propriétés Unicode (\p{…}) sont
+// reconnues par les navigateurs, pas par l'analyseur.
+final RegExp? _emojis = (() {
+  try {
+    return RegExp(
+      r'^(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|\u200d|\ufe0f|\s)+$',
+      unicode: true,
+    );
+  } catch (_) {
+    return null;
+  }
+})();
 
 /// Vrai pour un message fait de 1 à 3 émojis : affiché en grand, sans
 /// bulle, comme iMessage.
 bool seulementEmojis(String texte) {
   final t = texte.trim();
-  if (t.isEmpty || !_emojis.hasMatch(t)) return false;
+  final e = _emojis;
+  if (t.isEmpty || e == null || !e.hasMatch(t)) return false;
   return t.characters.where((c) => c.trim().isNotEmpty).length <= 3;
 }
 

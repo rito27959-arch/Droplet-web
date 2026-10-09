@@ -8,7 +8,7 @@ import '../design_system/ouro_typography.dart';
 import 'composants.dart';
 
 class TitreIlot extends StatelessWidget {
-  const TitreIlot(this.texte);
+  const TitreIlot(this.texte, {super.key});
 
   final String texte;
 
@@ -21,7 +21,7 @@ class TitreIlot extends StatelessWidget {
 
 /// Un îlot de lignes, séparées par des traits décalés comme dans iOS.
 class Ilot extends StatelessWidget {
-  const Ilot({required this.enfants, this.fond});
+  const Ilot({super.key, required this.enfants, this.fond});
 
   final List<Widget> enfants;
 
@@ -53,6 +53,7 @@ class Ilot extends StatelessWidget {
 
 class LigneIlot extends StatelessWidget {
   const LigneIlot({
+    super.key,
     required this.titre,
     this.sousTitre,
     this.icone,
