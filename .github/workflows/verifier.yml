@@ -1,57 +1,22 @@
-# Vérifie chaque push : analyse et construction web. Le journal complet est
-# publié sur la branche `journal-ci` (fichier journal.txt) : c'est ce qui
-# permet de corriger le code sans machine Flutter. La version construite
-# (web/) y est jointe, pour les captures d'écran.
-name: Vérifier
+name: Vérifier Droplet Web
 
 on:
+  pull_request:
   push:
     branches: [main]
-  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   verifier:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/setup-node@v4
         with:
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - name: Analyse et construction
-        id: verif
-        run: |
-          set +e
-          {
-            echo "== commit $GITHUB_SHA"
-            flutter --version
-            echo "== analyse"
-            flutter analyze --no-fatal-infos --no-fatal-warnings
-            echo "analyse: $?"
-            echo "== construction"
-            flutter build web --release --no-tree-shake-icons --no-web-resources-cdn
-            echo "construction: $?"
-          } > journal.txt 2>&1
-          cat journal.txt
-          grep -q "construction: 0" journal.txt && grep -q "analyse: 0" journal.txt
-          echo "ok=$?" >> "$GITHUB_OUTPUT"
-      - name: Publier le journal
-        if: always()
-        run: |
-          cp journal.txt /tmp/journal.txt
-          rm -rf /tmp/web && if [ -d build/web ]; then cp -r build/web /tmp/web; fi
-          git config user.name "ci"
-          git config user.email "ci@users.noreply.github.com"
-          git checkout --orphan journal-ci
-          git rm -rfq . > /dev/null
-          cp /tmp/journal.txt journal.txt
-          if [ -d /tmp/web ]; then rm -rf build; cp -r /tmp/web web; fi
-          git add -f journal.txt web 2>/dev/null || git add journal.txt
-          git commit -qm "journal $GITHUB_SHA"
-          git push -fq origin journal-ci
-      - name: Résultat
-        run: test "${{ steps.verif.outputs.ok }}" = "0"
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
