@@ -1,6 +1,6 @@
 # Droplet Web — client TypeScript
 
-Le client servi par Vercel est maintenant écrit en **TypeScript**. Le code Flutter/Dart historique reste sous `lib/` pour permettre la comparaison de l'interface et une migration progressive. Le choix de TypeScript suit le langage de Telegram Web K ; ce dépôt n'importe aucun code GPL de Telegram.
+Le client Web à déployer sur Vercel est écrit en **TypeScript**. Le code Flutter/Dart historique reste sous `lib/` pour permettre la comparaison de l'interface et une migration progressive. Le choix de TypeScript suit le langage de Telegram Web K ; ce dépôt n'importe aucun code GPL de Telegram.
 
 ## Ce qui fonctionne
 
@@ -12,9 +12,9 @@ Le client servi par Vercel est maintenant écrit en **TypeScript**. Le code Flut
 
 ## Limites bloquantes pour les discussions réelles
 
-Le code serveur de `droplet_directory/` se trouve dans le dépôt GitHub `rito27959-arch/droplet`, mais sa branche publique ne comporte pas encore la route `/liaison/{canal}`. Un correctif est préparé dans ce dépôt : le navigateur réserve le canal par `PUT` (`201`), attend `GET` (`204`), le téléphone publie par `POST` (`200`) et le navigateur lit l'enveloppe JSON `{v, cleTel, nonce, chiffre}` (`200`). La publication ne peut être remplacée, et le canal expire après une minute. La lecture répétée du texte chiffré évite qu'un tiers efface le dépôt avant le navigateur. L'ancienne version du serveur Railway répond encore `404 Route not found` à `GET /liaison/{canal}` : le correctif doit être intégré au code réellement déployé, puis publié côté annuaire et côté Web.
+Le correctif serveur de `droplet_directory/` se trouve dans une branche du dépôt `rito27959-arch/droplet`, établie à partir de l'archive serveur fournie par le propriétaire. Le navigateur réserve le canal par `PUT` (`201`), attend `GET` (`204`), le téléphone publie par `POST` (`200`) et le navigateur lit l'enveloppe JSON `{v, cleTel, nonce, chiffre}` (`200`). La publication ne peut être remplacée, et le canal expire après une minute. La lecture répétée du texte chiffré évite qu'un tiers efface le dépôt avant le navigateur. Tant que la version serveur n'est pas déployée sur Railway, l'annuaire public répond `404 Route not found` à `GET /liaison/{canal}`.
 
-La réponse `/health` de l'annuaire Railway indique `pushConfigured`, absent du serveur de la branche publique. Le code déployé comporte donc des différences ; déployer directement l'ancienne version du dépôt peut supprimer des fonctions de production. Reporter le correctif de liaison sur cette version avant un déploiement. Le stockage des canaux est en mémoire : un seul processus doit traiter les requêtes, ou il faut un magasin partagé avec expiration atomique.
+La version serveur apportée dans l'archive préserve la configuration Firebase, les sauvegardes et les clés Signal qui manquaient dans la branche publique. Le stockage des canaux reste en mémoire : un seul processus doit traiter les requêtes, ou il faut un magasin partagé avec expiration atomique. Vérifier la configuration du service Railway avant le déploiement.
 
 L'application Flutter mobile conserve ses conversations sur le téléphone. Aucun point d'accès authentifié ne synchronise les conversations, contacts, clés de session, reçus et messages vers un appareil lié. Le dépôt `droplet-server` public ne contient que la signalisation des appels. Lier une identité ne permet donc pas encore d'envoyer ou de recevoir une discussion. L'interface liée l'indique et désactive l'envoi. **Ne pas utiliser les routes mailbox existantes à partir d'un simple `peerId` : elles n'authentifient pas un appareil lié.**
 
