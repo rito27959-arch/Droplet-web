@@ -54,6 +54,13 @@ export async function newInvitation(): Promise<Invitation> {
   };
 }
 
+export async function reserveInvitation(invitation: Invitation, signal: AbortSignal): Promise<void> {
+  const response = await fetch(`${DIRECTORY}/liaison/${encodeURIComponent(invitation.channel)}`, {
+    method: 'PUT', mode: 'cors', cache: 'no-store', credentials: 'omit', signal,
+  });
+  if (response.status !== 201) throw new Error(`Impossible de réserver le code QR (HTTP ${response.status}).`);
+}
+
 interface Envelope { v: number; cleTel: string; nonce: string; chiffre: string }
 function envelopeFrom(response: unknown): Envelope | null {
   if (!response || typeof response !== 'object') return null;
@@ -69,8 +76,8 @@ export async function receiveEnvelope(invitation: Invitation, signal: AbortSigna
   const response = await fetch(`${DIRECTORY}/liaison/${encodeURIComponent(invitation.channel)}`, {
     method: 'GET', mode: 'cors', cache: 'no-store', credentials: 'omit', signal: combined,
   });
-  // 404 means nothing has been deposited yet; 204 also denotes an empty poll.
-  if (response.status === 404 || response.status === 204) return null;
+  if (response.status === 204) return null;
+  if (response.status === 404) throw new Error('Ce code QR n’existe plus sur le serveur. Actualisez le code.');
   if (!response.ok) throw new Error(`L'annuaire refuse la liaison (HTTP ${response.status}).`);
   const parsed: unknown = await response.json();
   const envelope = envelopeFrom(parsed);

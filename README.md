@@ -5,18 +5,20 @@ Le client servi par Vercel est maintenant écrit en **TypeScript**. Le code Flut
 ## Ce qui fonctionne
 
 - Code QR au format exact que lit `lib/core/services/appareils_lies.dart` du téléphone : `droplet_lien`, version 1, canal de 16 octets et clé publique X25519 de 32 octets.
-- Clé privée non exportable générée par WebCrypto, rotation du QR chaque 60 secondes, interrogation de l'annuaire par `GET /liaison/{canal}`.
+- Clé privée non exportable générée par WebCrypto, réservation du canal par `PUT /liaison/{canal}`, rotation du QR avant son expiration de 60 secondes, interrogation de l'annuaire par `GET /liaison/{canal}`.
 - Réception de l'enveloppe publiée par le téléphone, X25519 + HKDF-SHA256 (`droplet-mesh`, `droplet-lien-v1`) + AES-256-GCM pour la déchiffrer.
 - Sauvegarde de l'identité et des clés CryptoKey en IndexedDB seulement si « Rester connecté » est coché. L'autre option ne garde l'identité qu'en mémoire jusqu'à la fermeture de l'onglet.
 - Vue d'aperçu explicite par `?apercu`, séparée de la liaison réelle. Aucun faux accusé de réception ni réponse simulée n'est affiché comme un message réel.
 
 ## Limites bloquantes pour les discussions réelles
 
-Le client mobile publie la liaison sur `POST /liaison/{canal}`, mais le code du serveur d'annuaire et son contrat de lecture ne figurent dans aucun des dépôts accessibles. La requête `GET /liaison/{canal}` doit répondre avec l'enveloppe JSON `{v, cleTel, nonce, chiffre}` (ou `{enveloppe: {...}}`), `404`/`204` tant que rien n'a été publié, et des en-têtes CORS limités à `https://web.dropletmesh.app`. Si ce contrat n'existe pas, la page affiche une erreur réelle au lieu de faire semblant d'être liée. Vérifier que la lecture est atomique et limitée à un seul consommateur, que le canal expire, et que la publication ne peut être remplacée.
+Le code serveur de `droplet_directory/` se trouve dans le dépôt GitHub `rito27959-arch/droplet`, mais sa branche publique ne comporte pas encore la route `/liaison/{canal}`. Un correctif est préparé dans ce dépôt : le navigateur réserve le canal par `PUT` (`201`), attend `GET` (`204`), le téléphone publie par `POST` (`200`) et le navigateur lit l'enveloppe JSON `{v, cleTel, nonce, chiffre}` (`200`). La publication ne peut être remplacée, et le canal expire après une minute. La lecture répétée du texte chiffré évite qu'un tiers efface le dépôt avant le navigateur. L'ancienne version du serveur Railway répond encore `404 Route not found` à `GET /liaison/{canal}` : le correctif doit être intégré au code réellement déployé, puis publié côté annuaire et côté Web.
+
+La réponse `/health` de l'annuaire Railway indique `pushConfigured`, absent du serveur de la branche publique. Le code déployé comporte donc des différences ; déployer directement l'ancienne version du dépôt peut supprimer des fonctions de production. Reporter le correctif de liaison sur cette version avant un déploiement. Le stockage des canaux est en mémoire : un seul processus doit traiter les requêtes, ou il faut un magasin partagé avec expiration atomique.
 
 L'application Flutter mobile conserve ses conversations sur le téléphone. Aucun point d'accès authentifié ne synchronise les conversations, contacts, clés de session, reçus et messages vers un appareil lié. Le dépôt `droplet-server` public ne contient que la signalisation des appels. Lier une identité ne permet donc pas encore d'envoyer ou de recevoir une discussion. L'interface liée l'indique et désactive l'envoi. **Ne pas utiliser les routes mailbox existantes à partir d'un simple `peerId` : elles n'authentifient pas un appareil lié.**
 
-Pour terminer le produit, il faut publier le code ou le contrat du serveur directory/mailbox, ajouter une authentification par appareil lié, transférer une sauvegarde chiffrée au navigateur, puis implémenter l'envoi, la réception, les accusés et la révocation côté téléphone et serveur. Tester avec deux appareils et un compte réel avant de présenter la messagerie comme fonctionnelle.
+Pour terminer le produit, il faut intégrer et déployer la liaison sur le serveur effectivement utilisé, ajouter une authentification par appareil lié, transférer une sauvegarde chiffrée au navigateur, puis implémenter l'envoi, la réception, les accusés et la révocation côté téléphone et serveur. Le mobile appelle `DELETE /appareils/{peerId}/{appareilId}`, route absente du serveur public ; l'ajouter sans authentification permettrait à un tiers de déconnecter un appareil. Tester avec deux appareils et un compte réel avant de présenter la messagerie comme fonctionnelle.
 
 ## Développement
 

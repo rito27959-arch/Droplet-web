@@ -1,5 +1,5 @@
 import { qrcodegen } from '../third_party/qrcodegen.js';
-import { decryptEnvelope, forgetIdentity, loadIdentity, newInvitation, receiveEnvelope, saveIdentity, type Identity, type Invitation } from './link.js';
+import { decryptEnvelope, forgetIdentity, loadIdentity, newInvitation, receiveEnvelope, reserveInvitation, saveIdentity, type Identity, type Invitation } from './link.js';
 
 const root = document.querySelector<HTMLElement>('#app');
 if (!root) throw new Error('Élément #app manquant.');
@@ -14,6 +14,7 @@ let timer: number | null = null;
 let remember = false;
 let dark = (() => { try { return localStorage.getItem('droplet-theme') !== 'light'; } catch { return true; } })();
 let storageWarning = false;
+let linkGeneration = 0;
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', value = ''): HTMLElementTagNameMap[K] {
   const element = document.createElement(tag);
@@ -27,6 +28,7 @@ function button(label: string, cls: string, action: () => void): HTMLButtonEleme
   return result;
 }
 function clearWork(): void {
+  linkGeneration++;
   cancelled = true;
   pollController?.abort();
   pollController = null;
@@ -107,13 +109,18 @@ function renderLink(status = 'Préparation d’un code sécurisé…', error = f
 
 async function startLink(): Promise<void> {
   clearWork(); cancelled = false; invitation = null;
+  const generation = linkGeneration;
   renderLink();
   if (!window.isSecureContext || !crypto?.subtle) {
     renderLink('Ouvrez Droplet Web en HTTPS avec un navigateur récent.', true); return;
   }
   try {
     const current = await newInvitation();
-    if (cancelled) return;
+    if (cancelled || generation !== linkGeneration) return;
+    await reserveInvitation(current, AbortSignal.timeout(8000));
+    if (cancelled || generation !== linkGeneration) return;
+    // Reserve a few seconds for network delay before the server's 60 s TTL.
+    current.expiresAt = Date.now() + 55_000;
     invitation = current;
     renderLink('En attente du scan depuis votre téléphone…');
     timer = window.setInterval(() => {
@@ -125,6 +132,7 @@ async function startLink(): Promise<void> {
     }, 1000);
     void poll(current);
   } catch (err) {
+    if (cancelled || generation !== linkGeneration) return;
     renderLink(err instanceof Error ? err.message : 'Impossible de créer le code QR.', true);
   }
 }
