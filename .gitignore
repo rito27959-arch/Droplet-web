@@ -7,3 +7,5 @@ flutter/
 pubspec.lock
 .vercel
 .DS_Store
+node_modules/
+dist/
