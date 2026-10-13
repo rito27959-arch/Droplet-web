@@ -18,6 +18,7 @@ import 'dart:typed_data';
 import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show BuildContext, HtmlElementView, StatelessWidget, Widget;
 import 'package:web/web.dart' as web;
 
 import '../donnees/modeles.dart';
@@ -493,5 +494,47 @@ class Camera {
     for (final p in _flux.getTracks().toDart) {
       p.stop();
     }
+  }
+}
+
+/// Une adresse `blob:` pour des octets reçus (photo, vocal, vidéo…) :
+/// le contenu reste en mémoire, hors du stockage limité du navigateur.
+String urlBlob(Uint8List octets, String mime) {
+  final blob = web.Blob([octets.toJS].toJS, web.BlobPropertyBag(type: mime.isEmpty ? 'application/octet-stream' : mime));
+  return web.URL.createObjectURL(blob);
+}
+
+/// Les dimensions d'une image, une fois chargée.
+Future<(int, int)?> tailleImageDe(String url) => Navigateur.tailleImage(url);
+
+
+/// Une vidéo dans une bulle : le lecteur du navigateur (lecture, plein
+/// écran, image dans l'image), sans rien réinventer.
+class LecteurVideo extends StatelessWidget {
+  const LecteurVideo({super.key, required this.url});
+
+  final String url;
+
+  static final _enregistres = <String>{};
+
+  @override
+  Widget build(BuildContext context) {
+    final type = 'droplet-video-${url.hashCode}';
+    if (_enregistres.add(type)) {
+      ui_web.platformViewRegistry.registerViewFactory(type, (int _) {
+        final v = web.HTMLVideoElement()
+          ..src = url
+          ..controls = true
+          ..preload = 'metadata'
+          ..playsInline = true;
+        v.style
+          ..width = '100%'
+          ..height = '100%'
+          ..objectFit = 'cover'
+          ..backgroundColor = '#000';
+        return v;
+      });
+    }
+    return HtmlElementView(viewType: type);
   }
 }

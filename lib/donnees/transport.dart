@@ -12,9 +12,12 @@
 //     boîte aux lettres, relevé par l'annuaire. Rien d'autre à changer : ni
 //     le dépôt, ni les écrans.
 import 'dart:async';
+import 'dart:convert';
+import 'dart:js_interop';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:web/web.dart' as web;
 
 import 'canal_telephone.dart';
 
@@ -47,10 +50,14 @@ abstract class Transport {
 
   /// Envoyer un paquet aux participants d'une discussion.
   Future<void> envoyer(Paquet paquet, {required List<String> destinataires});
+
+  /// Une demande au téléphone (contenu d'un fichier, discussion lue…).
+  /// Rien en démonstration.
+  Future<void> demander(Map<String, dynamic> demande) async {}
 }
 
 /// Le réseau simulé de la démonstration.
-class TransportDemo implements Transport {
+class TransportDemo extends Transport {
   TransportDemo({required this.langue});
 
   final String langue;
@@ -132,7 +139,7 @@ class TransportDemo implements Transport {
 /// • Un message écrit ici part au téléphone, qui l'envoie au contact avec
 ///   ses propres clés, puis le renvoie avec ses vraies coches.
 /// • Au premier démarrage, il demande une synchro complète.
-class TransportDroplet implements Transport {
+class TransportDroplet extends Transport {
   TransportDroplet({required this.canal, required this.verifier, required this.annuaire});
 
   /// L'adresse de l'annuaire (recherche par pseudo).
@@ -207,16 +214,46 @@ class TransportDroplet implements Transport {
   }
 
   @override
+  Future<void> demander(Map<String, dynamic> demande) => canal.demander(demande);
+
+  /// Les morceaux d'un fichier envoyé au téléphone : 700 Ko d'octets, soit
+  /// ~1,3 Mo une fois encodés et chiffrés (la boîte accepte 2 Mo).
+  static const tailleMorceau = 700 * 1024;
+
+  /// Au-delà, le téléphone ne pourrait pas l'envoyer par Internet.
+  static const maxFichier = 16 * 1024 * 1024;
+
+  /// La progression des fichiers qui partent (identifiant → 0..1).
+  final progression = ValueNotifier<Map<String, double>>({});
+
+  @override
   Future<void> envoyer(Paquet paquet, {required List<String> destinataires}) async {
-    // Le téléphone gère pour l'instant les messages écrits ; les réactions,
-    // modifications et « en train d'écrire » viendront avec lui.
-    if (paquet.type != TypePaquet.message) return;
     final d = paquet.discussionId;
     if (!d.startsWith('p:') && !d.startsWith('g:')) {
       throw StateError('Discussion inconnue du téléphone');
     }
     final m = paquet.donnees;
+    switch (paquet.type) {
+      case TypePaquet.reaction:
+        await canal.demander({'t': 'reaction', 'id': m['id'], 'emoji': m['emoji'], 'retirer': m['retirer'] ?? const []});
+        return;
+      case TypePaquet.edition:
+        await canal.demander({'t': 'modifier', 'id': m['id'], 'texte': m['texte']});
+        return;
+      case TypePaquet.suppression:
+        await canal.demander({'t': 'supprimer', 'id': m['id']});
+        return;
+      case TypePaquet.message:
+        break;
+      default:
+        return;
+    }
     final inconnu = d.startsWith('p:') ? inconnus[d.substring(2)] : null;
+    final piece = m['piece'];
+    if (piece is Map && (piece['url'] as String? ?? '').isNotEmpty) {
+      await _envoyerPiece(d, m, piece.cast<String, dynamic>(), inconnu);
+      return;
+    }
     await canal.demander({
       't': 'envoyer',
       'd': d,
@@ -227,4 +264,53 @@ class TransportDroplet implements Transport {
       if (inconnu?.cle != null) 'cle': inconnu!.cle,
     });
   }
+
+  /// Une photo, un vocal, une vidéo, un document : lu, découpé, et confié
+  /// au téléphone morceau par morceau. Il l'envoie quand tout est arrivé.
+  Future<void> _envoyerPiece(String d, Map<String, dynamic> m, Map<String, dynamic> piece, ResultatRecherche? inconnu) async {
+    final octets = await octetsDe(piece['url'] as String);
+    if (octets.isEmpty) throw StateError('Fichier illisible');
+    if (octets.length > maxFichier) throw const FichierTropGros();
+    final id = m['id'] as String;
+    final n = (octets.length / tailleMorceau).ceil();
+    for (var i = 0; i < n; i++) {
+      final fin = min((i + 1) * tailleMorceau, octets.length);
+      await canal.demander({
+        't': 'fichier',
+        'd': d,
+        'id': id,
+        'i': i,
+        'n': n,
+        'b64': base64.encode(octets.sublist(i * tailleMorceau, fin)),
+        if (i == 0) ...{
+          'nom': piece['nom'] ?? 'fichier',
+          'mime': piece['mime'] ?? 'application/octet-stream',
+          'taille': octets.length,
+          'legende': m['texte'] ?? '',
+          if (m['reponseA'] != null) 'r': m['reponseA'],
+          if (inconnu != null) 'pseudo': inconnu.pseudo,
+          if (inconnu?.cle != null) 'cle': inconnu!.cle,
+        },
+      });
+      progression.value = {...progression.value, id: (i + 1) / n};
+    }
+    progression.value = {...progression.value}..remove(id);
+  }
+}
+
+/// Le contenu d'une pièce, depuis son adresse `data:` ou `blob:`.
+Future<Uint8List> octetsDe(String url) async {
+  if (url.startsWith('data:')) {
+    final virgule = url.indexOf(',');
+    if (virgule < 0) return Uint8List(0);
+    return base64.decode(url.substring(virgule + 1));
+  }
+  final r = await web.window.fetch(url.toJS).toDart;
+  final tampon = await r.arrayBuffer().toDart;
+  return tampon.toDart.asUint8List();
+}
+
+/// Plus de 16 Mo : le téléphone ne pourrait pas l'envoyer par Internet.
+class FichierTropGros implements Exception {
+  const FichierTropGros();
 }

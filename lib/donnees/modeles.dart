@@ -150,14 +150,23 @@ class PieceJointe {
     this.hauteur,
     this.dureeMs,
     this.onde = const [],
+    this.distant = false,
   });
 
   final String nom;
   final String mime;
   final int taille;
-  final String url;
-  final int? largeur;
-  final int? hauteur;
+
+  /// Le contenu (adresse `data:` ou `blob:`). Vide pour une pièce dont le
+  /// contenu est resté sur le téléphone : il arrive quand on le demande.
+  String url;
+  int? largeur;
+  int? hauteur;
+
+  /// Vrai : le contenu est sur le téléphone, à demander (`Depot.charger`).
+  final bool distant;
+
+  bool get estVideo => mime.startsWith('video/');
 
   /// Pour un vocal.
   final int? dureeMs;
@@ -170,11 +179,12 @@ class PieceJointe {
         // Les gros contenus ne sont pas gardés d'une session à l'autre :
         // le stockage du navigateur est limité. Le jour où les serveurs sont
         // branchés, la boîte aux lettres garde la copie chiffrée.
-        'url': url.length < 400000 ? url : '',
+        'url': url.startsWith('blob:') || url.length >= 400000 ? '' : url,
         'largeur': largeur,
         'hauteur': hauteur,
         'dureeMs': dureeMs,
         'onde': onde,
+        'distant': distant,
       };
 
   factory PieceJointe.fromJson(Map<String, dynamic> j) => PieceJointe(
@@ -186,6 +196,7 @@ class PieceJointe {
         hauteur: j['hauteur'] as int?,
         dureeMs: j['dureeMs'] as int?,
         onde: (j['onde'] as List? ?? const []).map((e) => (e as num).toDouble()).toList(),
+        distant: j['distant'] as bool? ?? false,
       );
 }
 

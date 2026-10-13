@@ -133,7 +133,8 @@ class _BarreSaisieState extends State<BarreSaisie> {
           icone: Icons.photo_library_outlined,
           libelle: t.photos,
           onTap: () async {
-            final p = await Navigateur.choisirFichiers(accepter: 'image/*');
+            // Photos ET vidéos, comme la photothèque de l'app.
+            final p = await Navigateur.choisirFichiers(accepter: 'image/*,video/*');
             if (p.isNotEmpty) widget.onPieces(p);
           },
         ),

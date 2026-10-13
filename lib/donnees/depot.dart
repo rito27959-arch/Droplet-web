@@ -11,11 +11,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:web/web.dart' as web;
 
+import '../web/navigateur.dart' show urlBlob, tailleImageDe;
 import 'modeles.dart';
 import 'transport.dart';
 
@@ -175,7 +177,74 @@ class Depot extends ChangeNotifier {
     if (d.nonLus > 0) {
       d.nonLus = 0;
       _changer();
+      // Lu ici, lu sur le téléphone : il efface son badge et prévient
+      // l'expéditeur (les coches bleues).
+      if (!demo) unawaited(transport.demander({'t': 'lu', 'd': d.id}).then((_) {}, onError: (_) {}));
     }
+  }
+
+  // ══ LES PIÈCES RESTÉES SUR LE TÉLÉPHONE ══════════════════════════════
+
+  /// Les pièces demandées au téléphone, en cours d'arrivée.
+  final Set<String> _demandees = {};
+
+  /// Les morceaux reçus : identifiant → (nombre attendu, morceaux).
+  final Map<String, (int, List<Uint8List?>)> _morceaux = {};
+
+  /// Vrai si le contenu de [m] est en route depuis le téléphone.
+  bool enChargement(Message m) => _demandees.contains(m.id);
+
+  /// Demande au téléphone le contenu d'une photo, d'un vocal, d'une vidéo
+  /// ou d'un document. Il arrive en morceaux chiffrés (`appliquerLot`).
+  void charger(Message m) {
+    final p = m.piece;
+    if (p == null || !p.distant || p.url.isNotEmpty || _demandees.contains(m.id) || demo) return;
+    _demandees.add(m.id);
+    notifyListeners();
+    unawaited(transport.demander({'t': 'telecharger', 'id': m.id}).then((_) {}, onError: (_) {
+      _demandees.remove(m.id);
+      notifyListeners();
+    }));
+    // Sans réponse (téléphone éteint), on pourra redemander plus tard.
+    Timer(const Duration(minutes: 2), () {
+      if (_demandees.remove(m.id)) notifyListeners();
+    });
+  }
+
+  void _morceauRecu(Map<String, dynamic> f) {
+    final id = f['id'];
+    final i = f['i'];
+    final n = f['n'];
+    if (id is! String || i is! int || n is! int || n <= 0 || i < 0 || i >= n || n > 64) return;
+    final m = message(id);
+    final p = m?.piece;
+    if (m == null || p == null) return;
+    final etat = _morceaux.putIfAbsent(id, () => (n, List<Uint8List?>.filled(n, null)));
+    if (etat.$1 != n) return;
+    try {
+      etat.$2[i] = base64.decode(f['b64'] as String);
+    } catch (_) {
+      return;
+    }
+    if (etat.$2.any((x) => x == null)) return;
+    _morceaux.remove(id);
+    final tout = BytesBuilder(copy: false);
+    for (final x in etat.$2) {
+      tout.add(x!);
+    }
+    // Une adresse `blob:` : le contenu reste en mémoire, hors du stockage
+    // limité du navigateur, le temps de la session.
+    p.url = urlBlob(tout.takeBytes(), p.mime);
+    _demandees.remove(id);
+    if (m.type == TypeMessage.image && p.largeur == null) {
+      unawaited(tailleImageDe(p.url).then((t) {
+        if (t == null) return;
+        p.largeur = t.$1;
+        p.hauteur = t.$2;
+        notifyListeners();
+      }));
+    }
+    notifyListeners();
   }
 
   Discussion discussionAvec(String contactId) {
@@ -423,6 +492,7 @@ class Depot extends ChangeNotifier {
   /// autre remplace.
   void reagir(Message m, String emoji) {
     final avait = m.reactions.entries.where((e) => e.value.contains(kMoi)).map((e) => e.key).toList();
+    final retirees = [...avait];
     for (final e in avait) {
       m.reactions[e] = [...m.reactions[e]!]..remove(kMoi);
       if (m.reactions[e]!.isEmpty) m.reactions.remove(e);
@@ -431,7 +501,13 @@ class Depot extends ChangeNotifier {
       m.reactions[emoji] = [...?m.reactions[emoji], kMoi];
     }
     _changer();
-    _diffuser(m.discussionId, TypePaquet.reaction, {'id': m.id, 'emoji': emoji});
+    // Le téléphone ne connaît pas « une réaction par personne » : on lui dit
+    // laquelle retirer, puis laquelle ajouter (rien si c'était la même).
+    _diffuser(m.discussionId, TypePaquet.reaction, {
+      'id': m.id,
+      'emoji': avait.contains(emoji) ? '' : emoji,
+      'retirer': retirees,
+    });
   }
 
   void epingler(Message m) {
@@ -613,6 +689,11 @@ class Depot extends ChangeNotifier {
   /// dans l'app) : contacts, discussions et messages, créés ou mis à jour.
   void appliquerLot(Map<String, dynamic> lot) {
     telephoneVu = true;
+    final f = lot['fichier'];
+    if (f is Map) {
+      _morceauRecu(f.cast<String, dynamic>());
+      return;
+    }
     final profilLot = lot['profil'];
     if (profilLot is Map) {
       final pseudo = profilLot['pseudo'];
@@ -661,6 +742,7 @@ class Depot extends ChangeNotifier {
       final id = m['id'] as String;
       final statut = StatutMessage.values.asNameMap()[m['statut']] ?? StatutMessage.envoye;
       final existant = message(id);
+      final reactions = _reactionsDu(m['reactions'], m['a'] == 'moi' ? d.membres : const [kMoi]);
       if (existant != null) {
         final texte = m['texte'] as String? ?? existant.texte;
         if (texte != existant.texte) {
@@ -668,19 +750,42 @@ class Depot extends ChangeNotifier {
           existant.modifie = m['modifie'] == true || existant.modifie;
         }
         if (statut == StatutMessage.echec || statut.index > existant.statut.index) existant.statut = statut;
+        existant.reactions = reactions;
+        // Un fichier envoyé d'ici revient avec sa fiche : on garde notre
+        // copie locale (déjà affichée).
         continue;
       }
       final auteur = m['a'] == 'moi' ? kMoi : (m['a'] as String? ?? '');
+      final fiche = m['f'];
+      PieceJointe? piece;
+      var type = TypeMessage.texte;
+      if (fiche is Map) {
+        final mime = fiche['mime'] as String? ?? '';
+        piece = PieceJointe(
+          nom: fiche['nom'] as String? ?? 'fichier',
+          mime: mime,
+          taille: fiche['taille'] as int? ?? 0,
+          url: '',
+          distant: true,
+        );
+        type = mime.startsWith('image/') && !mime.contains('svg')
+            ? TypeMessage.image
+            : mime.startsWith('audio/')
+                ? TypeMessage.vocal
+                : TypeMessage.fichier;
+      }
       final nouveau = Message(
         id: id,
         discussionId: d.id,
         auteurId: auteur,
-        type: TypeMessage.texte,
+        type: type,
         date: (DateTime.tryParse(m['date'] as String? ?? '') ?? DateTime.now()).toLocal(),
         texte: m['texte'] as String? ?? '',
+        piece: piece,
         reponseA: m['r'] as String?,
         statut: statut,
         modifie: m['modifie'] == true,
+        reactions: reactions,
       );
       final liste = _messages[d.id] ??= [];
       liste.add(nouveau);
@@ -695,6 +800,18 @@ class Depot extends ChangeNotifier {
       }
     }
     _changer();
+  }
+
+  /// Les réactions du téléphone (une liste d'émojis, sans leurs auteurs) :
+  /// attribuées à l'autre côté de la discussion, pour le compte.
+  static Map<String, List<String>> _reactionsDu(Object? brut, List<String> auteurs) {
+    final r = <String, List<String>>{};
+    if (brut is! List) return r;
+    final qui = auteurs.isEmpty ? '·' : auteurs.first;
+    for (final e in brut.whereType<String>()) {
+      r[e] = [...?r[e], qui];
+    }
+    return r;
   }
 
   /// Prévenu à chaque message reçu (notifications du navigateur, son).

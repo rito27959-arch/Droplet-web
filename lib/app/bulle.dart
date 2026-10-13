@@ -399,11 +399,14 @@ class CorpsBulle extends StatelessWidget {
                       width: largeurImage,
                       height: hauteurImage,
                       child: p == null || p.url.isEmpty
-                          ? ColoredBox(
-                              color: OuroColors.tertiarySystemFill,
-                              child: Icon(Icons.image_not_supported_outlined, color: OuroColors.tertiaryLabel),
-                            )
-                          : Image.network(p.url, fit: BoxFit.cover, gaplessPlayback: true),
+                          ? _Attente(message: m)
+                          : TweenAnimationBuilder<double>(
+                              // La photo apparaît en fondu quand elle arrive du téléphone.
+                              tween: Tween(begin: p.distant ? 0 : 1, end: 1),
+                              duration: const Duration(milliseconds: 280),
+                              builder: (context, v, enfant) => Opacity(opacity: v, child: enfant),
+                              child: Image.network(p.url, fit: BoxFit.cover, gaplessPlayback: true),
+                            ),
                     ),
                     Positioned.fill(
                       child: AnimatedOpacity(
@@ -440,6 +443,38 @@ class CorpsBulle extends StatelessWidget {
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(color: fond, borderRadius: arrondi),
           child: contenu,
+        );
+      case TypeMessage.fichier when m.piece?.estVideo ?? false:
+        // Une vidéo : le lecteur du navigateur, dans la bulle.
+        final largeurVideo = (largeurMax < 340 ? largeurMax : 340.0) - 8;
+        return Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(color: fond, borderRadius: arrondi),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (enTete.isNotEmpty)
+                Padding(padding: const EdgeInsets.fromLTRB(8, 4, 8, 4), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: enTete)),
+              ClipRRect(
+                borderRadius: BorderRadius.circular((ReglagesApparence.rayonBulles - 4).clamp(4, 20)),
+                child: SizedBox(
+                  width: largeurVideo,
+                  height: largeurVideo * 9 / 16,
+                  child: m.piece!.url.isEmpty ? _Attente(message: m, icone: Icons.play_circle_fill_rounded) : LecteurVideo(url: m.piece!.url),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 6, 6, 2),
+                child: SizedBox(
+                  width: largeurVideo - 14,
+                  child: m.texte.isEmpty
+                      ? Align(alignment: Alignment.centerRight, child: meta)
+                      : _TexteAvecMeta(texte: m.texte, style: styleTexte, meta: meta, message: m, surligne: surligne),
+                ),
+              ),
+            ],
+          ),
         );
       case TypeMessage.fichier:
         contenu = _Fichier(message: m, encre: encre, discret: discret, meta: meta);
@@ -638,7 +673,11 @@ class _Fichier extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Survol(
-          onTap: p == null || p.url.isEmpty ? null : () => Navigateur.telecharger(p),
+          onTap: p == null
+              ? null
+              : p.url.isNotEmpty
+                  ? () => Navigateur.telecharger(p)
+                  : (p.distant ? () => context.depot.charger(message) : null),
           builder: (context, survol) => AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             width: 270,
@@ -683,7 +722,9 @@ class _Fichier extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: discret, width: 1.4)),
-                  child: Icon(Icons.arrow_downward_rounded, size: 17, color: discret),
+                  child: context.depot.enChargement(message)
+                      ? Padding(padding: const EdgeInsets.all(7), child: CircularProgressIndicator(strokeWidth: 1.6, color: discret))
+                      : Icon(p != null && p.url.isNotEmpty ? Icons.arrow_downward_rounded : Icons.cloud_download_outlined, size: 17, color: discret),
                 ),
               ],
             ),
@@ -737,6 +778,11 @@ class _VocalState extends State<_Vocal> {
     final onde = (p?.onde.isNotEmpty ?? false) ? p!.onde : List.filled(40, 0.25);
     final duree = Duration(milliseconds: p?.dureeMs ?? 0);
     final disponible = p != null && p.url.isNotEmpty;
+    if (p != null && p.distant && p.url.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.depot.charger(widget.message);
+      });
+    }
     final lecteur = _lecteur;
     return SizedBox(
       width: 260,
@@ -910,6 +956,70 @@ class _Reactions extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+
+/// Le contenu arrive du téléphone : une surface qui respire doucement, et
+/// la demande part dès que la bulle s'affiche.
+class _Attente extends StatefulWidget {
+  const _Attente({required this.message, this.icone = Icons.photo_outlined});
+
+  final Message message;
+  final IconData icone;
+
+  @override
+  State<_Attente> createState() => _AttenteState();
+}
+
+class _AttenteState extends State<_Attente> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat(reverse: true);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Les photos et les vidéos courtes se chargent seules ; au-delà de
+      // 8 Mo, on attend le clic.
+      final p = widget.message.piece;
+      if (mounted && p != null && p.distant && p.taille <= 8 * 1024 * 1024) context.depot.charger(widget.message);
+    });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.message.piece;
+    final enCours = context.depot.enChargement(widget.message);
+    return Survol(
+      onTap: p != null && p.distant && !enCours ? () => context.depot.charger(widget.message) : null,
+      builder: (context, survol) => AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) => ColoredBox(
+          color: Color.lerp(OuroColors.tertiarySystemFill, OuroColors.secondarySystemFill, enCours ? _c.value : 0)!,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(p != null && p.distant ? widget.icone : Icons.image_not_supported_outlined, color: OuroColors.tertiaryLabel, size: 34),
+                if (p != null && p.distant) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    enCours ? '…' : taille(context, p.taille),
+                    style: OuroTypography.caption1.copyWith(color: OuroColors.secondaryLabel),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

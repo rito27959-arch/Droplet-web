@@ -336,7 +336,11 @@ class _VueDiscussionState extends State<VueDiscussion> {
       depot.envoyerPiece(
         widget.discussion,
         p,
-        p.mime.startsWith('image/') ? TypeMessage.image : TypeMessage.fichier,
+        p.mime.startsWith('image/') && !p.mime.contains('svg')
+            ? TypeMessage.image
+            : p.mime.startsWith('audio/')
+                ? TypeMessage.vocal
+                : TypeMessage.fichier,
         legende: i == pieces.length - 1 ? legende : '',
         reponseA: i == 0 ? _reponse?.id : null,
       );
