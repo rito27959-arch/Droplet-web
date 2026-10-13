@@ -413,7 +413,13 @@ class _VueDiscussionState extends State<VueDiscussion> {
                           child: ListView.builder(
                               controller: _defilement,
                               reverse: true,
-                              padding: EdgeInsets.fromLTRB(c.maxWidth > 900 ? 56 : 14, 14, c.maxWidth > 900 ? 56 : 14, 14),
+                              // Sur un très grand écran, le fil reste une colonne lisible au
+                              // centre (1 000 px au plus) : l'œil ne traverse pas l'écran
+                              // d'une bulle reçue à une bulle envoyée.
+                              padding: EdgeInsets.symmetric(
+                                horizontal: c.maxWidth > 900 ? ((c.maxWidth - 1000) / 2).clamp(56.0, double.infinity) : 14.0,
+                                vertical: 14,
+                              ),
                               itemCount: elements.length + 1,
                               itemBuilder: (context, i) {
                                 if (i == 0) {
@@ -582,7 +588,7 @@ class _VueDiscussionState extends State<VueDiscussion> {
       case _Genre.jour:
         return _Pastille(texte: separateurJour(context, e.date!));
       case _Genre.nonLus:
-        return _SeparateurNonLus(texte: context.l.chUnreadMessages(e.compte));
+        return _SeparateurNonLus(texte: context.t.nonLus(e.compte));
       case _Genre.message:
         final m = e.message!;
         if (m.type == TypeMessage.systeme) {

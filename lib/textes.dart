@@ -32,6 +32,16 @@ class Textes {
   String envoyerA(String nom) => _('envoyerA').replaceAll('{nom}', nom);
   String envoyerMessageA(String nom) => _('envoyerMessageA').replaceAll('{nom}', nom);
   String ephemereActive(String duree) => _('ephemereActive').replaceAll('{duree}', duree);
+  /// « 1 message non lu » / « 3 messages non lus » — le russe a trois
+  /// formes : 2 à 4 (sauf 12 à 14) prennent le génitif singulier.
+  String nonLus(int n) {
+    if (n == 1) return _('nonLu1');
+    if (code == 'ru') {
+      final d = n % 10, c = n % 100;
+      if (d >= 2 && d <= 4 && (c < 12 || c > 14)) return '$n непрочитанных сообщения';
+    }
+    return _('nonLusN').replaceAll('{n}', '$n');
+  }
   String groupesCommun(int n) => _('groupesCommun').replaceAll('{n}', '$n');
   String get sousTitre => _('sousTitre');
   String get etape1 => _('etape1');

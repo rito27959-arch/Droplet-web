@@ -6,7 +6,7 @@ name: Vérifier
 
 on:
   push:
-    branches: [main]
+    branches: [main, design]
   workflow_dispatch:
 
 permissions:

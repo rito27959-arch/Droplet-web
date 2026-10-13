@@ -585,7 +585,7 @@ class _Accueil extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _Illustration(onglet: onglet),
-          const SizedBox(height: 28),
+          const SizedBox(height: 14),
           Text(titre, style: OuroTypography.title1.copyWith(color: OuroColors.label)),
           const SizedBox(height: 10),
           ConstrainedBox(
@@ -596,6 +596,10 @@ class _Accueil extends StatelessWidget {
               style: OuroTypography.body.copyWith(color: OuroColors.secondaryLabel, height: 1.45),
             ),
           ),
+          if (onglet == Onglet.discussions) ...[
+            const SizedBox(height: 32),
+            const _AstucesClavier(),
+          ],
           const SizedBox(height: 44),
           ValueListenableBuilder<EtatConnexion>(
             valueListenable: etat,
@@ -614,8 +618,9 @@ class _Accueil extends StatelessWidget {
   }
 }
 
-/// Un ordinateur et un téléphone, reliés par la goutte : l'idée de
-/// l'appareil associé en une image. L'icône change avec l'onglet.
+/// La goutte au centre d'un halo de la couleur choisie, entourée de
+/// l'onde du maillage : l'accueil a la présence d'une icône d'app, pas
+/// d'un pictogramme gris. L'icône change avec l'onglet.
 class _Illustration extends StatelessWidget {
   const _Illustration({required this.onglet});
 
@@ -623,41 +628,102 @@ class _Illustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gris = OuroColors.tertiaryLabel;
-    final pastille = switch (onglet) {
+    final accent = OuroColors.accent;
+    final icone = switch (onglet) {
       Onglet.discussions => null,
       Onglet.actus => Icons.podcasts_rounded,
       Onglet.appels => Icons.phone_rounded,
       Onglet.reglages => Icons.settings_rounded,
     };
+    final fonce = Color.lerp(accent, Colors.black, 0.22)!;
     return SizedBox(
-      width: 240,
-      height: 140,
+      width: 220,
+      height: 220,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Positioned(left: 4, child: Icon(Icons.laptop_mac_rounded, size: 128, color: gris.withValues(alpha: 0.6))),
-          Positioned(right: 12, bottom: 10, child: Icon(Icons.smartphone_rounded, size: 70, color: gris.withValues(alpha: 0.6))),
-          Positioned(
-            top: 0,
-            right: 54,
-            child: Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: OuroColors.secondarySystemGroupedBackground,
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6))],
-              ),
-              alignment: Alignment.center,
-              // Le logo en gris : rien n'est encore ouvert.
-              child: pastille == null
-                  ? Goutte(taille: 34, couleur: gris)
-                  : Icon(pastille, size: 26, color: gris),
+          // Le halo.
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(colors: [accent.withValues(alpha: 0.20), accent.withValues(alpha: 0)]),
             ),
+          ),
+          // L'onde du maillage : trois cercles qui s'effacent.
+          for (final (taille, alpha) in const [(196.0, 0.10), (156.0, 0.16), (122.0, 0.24)])
+            Container(
+              width: taille,
+              height: taille,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: accent.withValues(alpha: alpha), width: 1),
+              ),
+            ),
+          // L'icône, comme sur l'écran d'accueil d'un téléphone.
+          Container(
+            width: 92,
+            height: 92,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(26),
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [accent, fonce]),
+              boxShadow: [
+                BoxShadow(color: accent.withValues(alpha: 0.38), blurRadius: 30, offset: const Offset(0, 14)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 4, offset: const Offset(0, 2)),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: icone == null ? const Goutte(taille: 52, couleur: Colors.white) : Icon(icone, size: 44, color: Colors.white),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Trois raccourcis, en touches dessinées : ce que le Mac montre au
+/// premier lancement, et que WhatsApp Web cache dans un menu.
+class _AstucesClavier extends StatelessWidget {
+  const _AstucesClavier();
+
+  @override
+  Widget build(BuildContext context) {
+    final liste = listeRaccourcis(context);
+    final choix = [liste[0], liste[2], liste[9]];
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        for (final (action, touches) in choix)
+          Container(
+            padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+            decoration: BoxDecoration(
+              color: OuroColors.secondarySystemGroupedBackground,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: OuroColors.separator.withValues(alpha: 0.5), width: 0.5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(action, style: OuroTypography.footnote.copyWith(color: OuroColors.secondaryLabel)),
+                const SizedBox(width: 10),
+                for (final k in touches.split('+'))
+                  Container(
+                    margin: const EdgeInsets.only(left: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    constraints: const BoxConstraints(minWidth: 22),
+                    decoration: BoxDecoration(
+                      color: OuroColors.systemGroupedBackground,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border(bottom: BorderSide(color: OuroColors.separator, width: 1.5)),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(k, style: OuroTypography.caption1.copyWith(color: OuroColors.label, fontWeight: FontWeight.w600)),
+                  ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
