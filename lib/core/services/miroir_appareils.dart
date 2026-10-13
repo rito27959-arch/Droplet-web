@@ -41,6 +41,24 @@
 //                                         recherche, inconnu du téléphone)
 //           {"t":"synchro"}
 //
+//           {"t":"fichier", "d", "id", "nom", "mime", "taille", "legende",
+//            "r", "i", "n", "b64"}   un fichier écrit sur le web, en n
+//                                    morceaux de 700 Ko au plus (la boîte
+//                                    accepte 2 Mo par dépôt)
+//           {"t":"telecharger", "id"}  le navigateur veut le contenu d'un
+//                                    fichier (photo, vocal, vidéo…)
+//           {"t":"lu", "d"}          la discussion a été lue sur le web
+//           {"t":"reaction", "id", "emoji", "retirer":[…]}
+//           {"t":"modifier", "id", "texte"}
+//           {"t":"supprimer", "id"}
+//
+//   Le téléphone répond à « telecharger » par des lots
+//     {"v":1, "fichier":{"id", "i", "n", "b64"}}
+//   et chaque message de fichier porte, dans ses lots ordinaires,
+//     "f": {"id", "nom", "mime", "taille"}.
+//   Chaque lot donne aussi le nombre de non-lus de ses discussions : lire
+//   sur le téléphone efface le badge du web, et inversement.
+//
 // Le message écrit sur le web garde SON identifiant : il revient dans le
 // lot suivant avec ses vraies coches, et le navigateur le reconnaît.
 //
@@ -53,6 +71,8 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
@@ -67,8 +87,42 @@ import 'storage_service.dart';
 
 typedef EnvoiDepuisAppareil = Future<void> Function(String cible, String texte, {String? id, String? reponseA});
 
+/// Un fichier écrit sur le web, à envoyer depuis le téléphone.
+typedef FichierDepuisAppareil = Future<void> Function({
+  String? cible,
+  String? groupe,
+  required String id,
+  required String nom,
+  required String mime,
+  required Uint8List octets,
+  String? legende,
+  String? reponseA,
+});
+
+/// Ce que le web peut faire d'autre, et que le téléphone refait à
+/// l'identique (lectures, réactions, modifications, suppressions).
+class ActionsMiroir {
+  const ActionsMiroir({required this.lire, required this.lireGroupe, required this.reagir, required this.modifier, required this.supprimer});
+
+  final Future<void> Function(String peerId) lire;
+  final Future<void> Function(String groupId) lireGroupe;
+  final void Function(String messageId, String emoji) reagir;
+  final void Function(String messageId, String texte) modifier;
+  final void Function(String messageId) supprimer;
+}
+
+/// Un fichier qui arrive du web morceau par morceau.
+class _Assemblage {
+  _Assemblage(this.n) : morceaux = List<Uint8List?>.filled(n, null);
+  final int n;
+  final List<Uint8List?> morceaux;
+  final DateTime debut = DateTime.now();
+  Map<String, dynamic> entete = const {};
+  bool get complet => morceaux.every((m) => m != null);
+}
+
 class MiroirAppareils {
-  MiroirAppareils(this._repo, {required this.envoyer, required this.envoyerGroupe}) {
+  MiroirAppareils(this._repo, {required this.envoyer, required this.envoyerGroupe, required this.envoyerFichier, required this.actions}) {
     actuel = this;
   }
 
@@ -78,6 +132,17 @@ class MiroirAppareils {
   final MeshRepository _repo;
   final EnvoiDepuisAppareil envoyer;
   final EnvoiDepuisAppareil envoyerGroupe;
+  final FichierDepuisAppareil envoyerFichier;
+  final ActionsMiroir actions;
+
+  /// Les morceaux d'un fichier : 700 Ko d'octets, soit ~1,3 Mo une fois
+  /// encodés et chiffrés — sous les 2 Mo d'un dépôt.
+  static const tailleMorceau = 700 * 1024;
+
+  /// Au-delà, un fichier ne passe pas par Internet (`FichierEnLigne`).
+  static const maxFichier = 16 * 1024 * 1024;
+
+  final Map<String, _Assemblage> _assemblages = {};
 
   static const _maxDiscussions = 40;
   static const _maxParDiscussion = 80;
@@ -186,6 +251,30 @@ class MiroirAppareils {
       switch (j['t']) {
         case 'synchro':
           await synchroniser(appareil);
+        case 'fichier':
+          await _morceauRecu(j);
+        case 'telecharger':
+          await _envoyerContenu(appareil, j['id'] as String? ?? '');
+        case 'lu':
+          final d = j['d'] as String? ?? '';
+          if (d.startsWith('p:')) await actions.lire(d.substring(2));
+          if (d.startsWith('g:')) await actions.lireGroupe(d.substring(2));
+        case 'reaction':
+          final id = j['id'] as String? ?? '';
+          final m = _dernier.where((x) => x.id == id).firstOrNull;
+          if (m == null) return true;
+          // Le web garde une réaction par personne : il dit laquelle il
+          // remplace, le téléphone la retire avant d'ajouter la nouvelle.
+          for (final e in (j['retirer'] as List? ?? const []).whereType<String>()) {
+            if (m.reactions.contains(e)) actions.reagir(id, e);
+          }
+          final emoji = j['emoji'] as String? ?? '';
+          if (emoji.isNotEmpty) actions.reagir(id, emoji);
+        case 'modifier':
+          final texte = (j['texte'] as String? ?? '').trim();
+          if (texte.isNotEmpty && texte.length <= 20000) actions.modifier(j['id'] as String? ?? '', texte);
+        case 'supprimer':
+          actions.supprimer(j['id'] as String? ?? '');
         case 'envoyer':
           final d = j['d'] as String? ?? '';
           final texte = (j['texte'] as String? ?? '').trim();
@@ -204,6 +293,68 @@ class MiroirAppareils {
       debugPrint('[Miroir] demande illisible : $e');
     }
     return true;
+  }
+
+  /// Un morceau d'un fichier écrit sur le web. Le dernier arrivé, le
+  /// téléphone envoie le fichier comme s'il avait été choisi ici : même
+  /// identifiant, même légende, même réponse.
+  Future<void> _morceauRecu(Map<String, dynamic> j) async {
+    final id = j['id'] as String? ?? '';
+    final n = j['n'] as int? ?? 0;
+    final i = j['i'] as int? ?? -1;
+    final taille = j['taille'] as int? ?? 0;
+    if (id.isEmpty || n <= 0 || i < 0 || i >= n || taille > maxFichier || n > maxFichier ~/ tailleMorceau + 2) return;
+    if (_dernier.any((m) => m.id == id)) return; // déjà parti
+    // Les assemblages abandonnés (navigateur fermé en cours d'envoi) ne
+    // restent pas en mémoire.
+    _assemblages.removeWhere((_, a) => DateTime.now().difference(a.debut) > const Duration(minutes: 15));
+    final a = _assemblages.putIfAbsent(id, () => _Assemblage(n));
+    if (a.n != n) return;
+    try {
+      a.morceaux[i] = base64Decode(j['b64'] as String? ?? '');
+    } catch (_) {
+      return;
+    }
+    if (i == 0 || a.entete.isEmpty) a.entete = j;
+    if (!a.complet) return;
+    _assemblages.remove(id);
+    final octets = BytesBuilder(copy: false);
+    for (final m in a.morceaux) {
+      octets.add(m!);
+    }
+    final e = a.entete;
+    final d = e['d'] as String? ?? '';
+    if (d.startsWith('p:')) _apprendreContact(d.substring(2), e['pseudo'] as String?, e['cle'] as String?);
+    final legende = (e['legende'] as String? ?? '').trim();
+    await envoyerFichier(
+      cible: d.startsWith('p:') ? d.substring(2) : null,
+      groupe: d.startsWith('g:') ? d.substring(2) : null,
+      id: id,
+      nom: (e['nom'] as String? ?? 'fichier').replaceAll(RegExp(r'[/\\]'), '_'),
+      mime: e['mime'] as String? ?? 'application/octet-stream',
+      octets: octets.takeBytes(),
+      legende: legende.isEmpty ? null : legende,
+      reponseA: e['r'] as String?,
+    );
+  }
+
+  /// Le contenu d'un fichier, demandé par le web : lu sur le disque du
+  /// téléphone, envoyé en morceaux chiffrés dans la file de ce navigateur.
+  Future<void> _envoyerContenu(AppareilLie appareil, String id) async {
+    final m = _dernier.where((x) => x.id == id || x.fileId == id).firstOrNull;
+    if (m == null || m.fileName == null) return;
+    final chemin = await StorageService.getSharedFilePath(m.fileId ?? m.id, m.fileName!);
+    if (chemin == null) return;
+    final octets = await File(chemin).readAsBytes();
+    if (octets.length > maxFichier) return;
+    final n = (octets.length / tailleMorceau).ceil().clamp(1, 1 << 20);
+    for (var i = 0; i < n; i++) {
+      final fin = ((i + 1) * tailleMorceau).clamp(0, octets.length);
+      await _deposer(appareil, {
+        'v': 1,
+        'fichier': {'id': id, 'i': i, 'n': n, 'b64': base64Encode(octets.sublist(i * tailleMorceau, fin))},
+      });
+    }
   }
 
   /// Un contact trouvé sur le web par son pseudo : le téléphone apprend sa
@@ -244,10 +395,10 @@ class MiroirAppareils {
       }
     }
     if (dtos.isEmpty) return null;
-    if (nonLus) {
-      for (final e in discussions.entries) {
-        e.value['nonLus'] = _nonLus(e.key, moi);
-      }
+    // Les non-lus voyagent avec chaque lot : une discussion lue sur le
+    // téléphone perd aussi son badge sur le web.
+    for (final e in discussions.entries) {
+      e.value['nonLus'] = _nonLus(e.key, moi);
     }
     return {
       'v': 1,
@@ -296,19 +447,20 @@ class MiroirAppareils {
   static Map<String, dynamic>? _message(MeshMessage m, String d, String moi) {
     if (m.type == 'appel' || m.type == 'call' || m.type == 'mesh' || m.type == 'warning') return null;
     var texte = m.content;
+    Map<String, dynamic>? fichier;
     if (m.type == 'file') {
-      final mime = m.fileMimeType ?? '';
-      final etiquette = mime.startsWith('image/')
-          ? '📷'
-          : mime.startsWith('audio/')
-              ? '🎤'
-              : mime.startsWith('video/')
-                  ? '🎥'
-                  : '📎 ${m.fileName ?? ''}'.trim();
+      // Le fichier lui-même : le web l'affiche (photo, vocal, vidéo,
+      // document) et en demande le contenu quand il en a besoin.
       final legende = m.content.trim();
-      texte = legende.isEmpty || legende == m.fileName ? etiquette : '$etiquette $legende';
+      texte = legende == m.fileName ? '' : legende;
+      fichier = {
+        'id': m.id,
+        'nom': m.fileName ?? 'fichier',
+        'mime': (m.fileMimeType ?? '').split(';').first,
+        'taille': m.fileSize ?? 0,
+      };
     }
-    if (texte.trim().isEmpty) return null;
+    if (texte.trim().isEmpty && fichier == null) return null;
     final deMoi = m.senderId == moi;
     return {
       'id': m.id,
@@ -325,11 +477,13 @@ class MiroirAppareils {
             },
       'r': ?m.replyToId,
       if (m.editedAt != null) 'modifie': true,
+      'f': ?fichier,
+      if (m.reactions.isNotEmpty) 'reactions': m.reactions,
     };
   }
 
   static String _empreinte(MeshMessage m) =>
-      '${m.status.index}|${m.deliveryCount > 0}|${m.readAt != null}|${m.content.length}|${m.content.hashCode}|${m.editedAt?.millisecondsSinceEpoch}';
+      '${m.status.index}|${m.deliveryCount > 0}|${m.readAt != null}|${m.content.length}|${m.content.hashCode}|${m.editedAt?.millisecondsSinceEpoch}|${m.reactions.join(',')}';
 
   static DateTime _plusRecent(List<MeshMessage> l) =>
       l.fold(DateTime(2000), (a, m) => m.timestamp.isAfter(a) ? m.timestamp : a);

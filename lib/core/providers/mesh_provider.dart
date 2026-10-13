@@ -334,6 +334,28 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         id: id,
         replyToId: reponseA,
       ),
+      // Une photo, un vocal, une vidéo ou un document choisis sur le web :
+      // envoyés d'ici, exactement comme s'ils avaient été choisis ici.
+      envoyerFichier: ({String? cible, String? groupe, required String id, required String nom, required String mime, required Uint8List octets, String? legende, String? reponseA}) => sendFile(
+        pseudo: StorageService.currentUser?.pseudo ?? '',
+        fileName: nom,
+        bytes: octets,
+        mimeType: mime,
+        targetId: cible,
+        groupId: groupe,
+        replyToId: reponseA,
+        legende: legende,
+        idPrepare: id,
+      ),
+      // Ce qui est fait sur le web se refait ici : lire, réagir, modifier,
+      // supprimer.
+      actions: ActionsMiroir(
+        lire: sendReadReceipts,
+        lireGroupe: envoyerLecturesGroupe,
+        reagir: toggleReaction,
+        modifier: editMessage,
+        supprimer: deleteMessage,
+      ),
     );
     addListener(_miroir.surMessages);
     _peerSub = _repo.peerEvents?.listen((_) => _flushOutbox());
