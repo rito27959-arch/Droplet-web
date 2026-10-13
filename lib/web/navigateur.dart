@@ -14,7 +14,6 @@
 import 'dart:async';
 import 'dart:js_interop';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/foundation.dart';

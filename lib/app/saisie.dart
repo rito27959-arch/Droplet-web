@@ -207,17 +207,24 @@ class _BarreSaisieState extends State<BarreSaisie> {
                 : Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      if (widget.edition == null)
-                        BoutonIcone(key: _plus, icone: Icons.add_rounded, taille: 26, aide: l.chAttachTooltip, couleur: OuroColors.accent, onTap: _joindre),
-                      const SizedBox(width: 6),
+                      // Comme Messages : le « + » dans un rond gris à gauche,
+                      // puis une capsule qui contient tout le reste — émoji,
+                      // texte, et le bouton d'envoi (ou le micro) au bout.
+                      if (widget.edition == null) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: _Rond(cle: _plus, icone: Icons.add_rounded, aide: l.chAttachTooltip, onTap: _joindre),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
                       Expanded(
                         child: Container(
                           constraints: const BoxConstraints(minHeight: 40),
-                          padding: const EdgeInsets.only(left: 4, right: 14),
+                          padding: const EdgeInsets.only(left: 2, right: 3),
                           decoration: BoxDecoration(
-                            color: OuroColors.isDark ? OuroColors.tertiarySystemFill : OuroColors.systemBackground,
+                            color: OuroColors.isDark ? const Color(0xFF1C1C1E) : OuroColors.systemBackground,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: OuroColors.separator, width: 0.5),
+                            border: Border.all(color: OuroColors.isDark ? const Color(0xFF3A3A3C) : const Color(0xFFD1D1D6), width: 0.8),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -260,14 +267,29 @@ class _BarreSaisieState extends State<BarreSaisie> {
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 4),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 3),
+                                child: _boutonFin(context),
+                              ),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      // Le bouton devient une flèche d'envoi dès qu'il y a
-                      // du texte, comme dans l'app.
-                      ValueListenableBuilder<TextEditingValue>(
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Au bout de la capsule : la flèche d'envoi dès qu'il y a du texte, le
+  /// micro sinon — comme dans l'app.
+  Widget _boutonFin(BuildContext context) {
+    final l = context.l;
+    final t = context.t;
+    return ValueListenableBuilder<TextEditingValue>(
                         valueListenable: widget.controleur,
                         builder: (context, valeur, _) {
                           final plein = valeur.text.trim().isNotEmpty;
@@ -285,19 +307,45 @@ class _BarreSaisieState extends State<BarreSaisie> {
                                 : BoutonIcone(
                                     key: const ValueKey('micro'),
                                     icone: Icons.mic_none_rounded,
-                                    taille: 25,
-                                    diametre: 40,
+                                    taille: 22,
+                                    diametre: 32,
                                     aide: t.vocal,
                                     couleur: _demarrage ? OuroColors.accent : null,
                                     onTap: _demarrerVocal,
                                   ),
                           );
                         },
-                      ),
-                    ],
-                  ),
+                      );
+  }
+}
+
+/// Le rond gris du « + », à gauche de la capsule.
+class _Rond extends StatelessWidget {
+  const _Rond({required this.cle, required this.icone, required this.aide, required this.onTap});
+
+  final Key cle;
+  final IconData icone;
+  final String aide;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      key: cle,
+      message: aide,
+      waitDuration: const Duration(milliseconds: 450),
+      child: Survol(
+        onTap: onTap,
+        builder: (context, survol) => AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: survol ? OuroColors.secondarySystemFill : OuroColors.tertiarySystemFill,
           ),
-        ],
+          child: Icon(icone, size: 24, color: OuroColors.secondaryLabel),
+        ),
       ),
     );
   }
@@ -319,8 +367,8 @@ class _BoutonEnvoi extends StatelessWidget {
         onTap: actif ? onTap : null,
         builder: (context, survol) => AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          width: 40,
-          height: 40,
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
             color: actif ? OuroColors.accentRempli : OuroColors.systemGray3,
             shape: BoxShape.circle,
@@ -328,7 +376,7 @@ class _BoutonEnvoi extends StatelessWidget {
                 ? [BoxShadow(color: OuroColors.accent.withValues(alpha: 0.4), blurRadius: 14, offset: const Offset(0, 4))]
                 : null,
           ),
-          child: Icon(icone, color: OuroColors.texteSurAccent, size: 22),
+          child: Icon(icone, color: OuroColors.texteSurAccent, size: 20),
         ),
       ),
     );

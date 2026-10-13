@@ -1035,7 +1035,9 @@ class FondDiscussion {
 }
 
 const List<FondDiscussion> fondsDiscussion = [
-  FondDiscussion([Color(0xFFFFFFFF), Color(0xFFFFFFFF)], [Color(0xFF000000), Color(0xFF000000)]),
+  // Le fond de l'app : uni, comme Messages. Les bulles n'ont besoin de rien
+  // derrière elles pour exister.
+  FondDiscussion([Color(0xFFFFFFFF), Color(0xFFFFFFFF)], [Color(0xFF000000), Color(0xFF000000)], motif: false),
   FondDiscussion([Color(0xFFF2F2F7), Color(0xFFF2F2F7)], [Color(0xFF1C1C1E), Color(0xFF1C1C1E)], motif: false),
   FondDiscussion([Color(0xFFFFF1E6), Color(0xFFFFE3EC)], [Color(0xFF2A1A12), Color(0xFF2A1220)]),
   FondDiscussion([Color(0xFFE6F4FF), Color(0xFFEDE7FF)], [Color(0xFF0E1A2B), Color(0xFF1A1430)]),

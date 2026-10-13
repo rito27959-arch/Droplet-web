@@ -306,13 +306,20 @@ class LigneDiscussion extends StatelessWidget {
       onTap: () => ouvrirDiscussion(context, d.id),
       onClicDroit: menu,
       builder: (context, survol) {
-        final fond = selectionnee
-            ? OuroColors.tertiarySystemFill
-            : (survol ? OuroColors.quaternarySystemFill : Colors.transparent);
+        // La discussion ouverte, sur grand écran : la ligne prend l'accent
+        // et son texte passe en blanc — la sélection des apps du Mac.
+        final inverse = selectionnee && MediaQuery.sizeOf(context).width >= 900;
+        final encre = inverse ? OuroColors.texteSurAccent : null;
+        final fond = inverse
+            ? OuroColors.accentRempli
+            : selectionnee
+                ? OuroColors.tertiarySystemFill
+                : (survol ? OuroColors.quaternarySystemFill : Colors.transparent);
         return AnimatedContainer(
           duration: const Duration(milliseconds: 160),
+          margin: const EdgeInsets.symmetric(vertical: 1),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-          decoration: BoxDecoration(color: fond, borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(color: fond, borderRadius: BorderRadius.circular(12)),
           child: Row(
             children: [
               AvatarDroplet(
@@ -334,14 +341,14 @@ class LigneDiscussion extends StatelessWidget {
                           child: _TexteSurligne(
                             texte: d.titre,
                             surligne: surligne,
-                            style: OuroTypography.headline.copyWith(color: OuroColors.label),
+                            style: OuroTypography.headline.copyWith(color: encre ?? OuroColors.label),
                           ),
                         ),
                         if (dernier != null)
                           Text(
                             dateListe(context, dernier.date),
                             style: OuroTypography.footnote.copyWith(
-                              color: d.nonLus > 0 && !d.sourdine ? OuroColors.accent : OuroColors.secondaryLabel,
+                              color: encre?.withValues(alpha: 0.8) ?? (d.nonLus > 0 && !d.sourdine ? OuroColors.accent : OuroColors.secondaryLabel),
                             ),
                           ),
                       ],
@@ -349,29 +356,29 @@ class LigneDiscussion extends StatelessWidget {
                     const SizedBox(height: 3),
                     Row(
                       children: [
-                        Expanded(child: _Apercu(discussion: d, dernier: dernier, ecrivent: ecrivent)),
+                        Expanded(child: _Apercu(discussion: d, dernier: dernier, ecrivent: ecrivent, encre: encre)),
                         if (d.ephemereSecondes > 0)
                           Padding(
                             padding: const EdgeInsets.only(left: 4),
-                            child: Icon(Icons.timer_outlined, size: 14, color: OuroColors.tertiaryLabel),
+                            child: Icon(Icons.timer_outlined, size: 14, color: encre?.withValues(alpha: 0.75) ?? OuroColors.tertiaryLabel),
                           ),
                         if (d.sourdine)
                           Padding(
                             padding: const EdgeInsets.only(left: 4),
-                            child: Icon(Icons.volume_off_rounded, size: 15, color: OuroColors.tertiaryLabel),
+                            child: Icon(Icons.volume_off_rounded, size: 15, color: encre?.withValues(alpha: 0.75) ?? OuroColors.tertiaryLabel),
                           ),
                         if (d.epinglee && d.nonLus == 0)
                           Padding(
                             padding: const EdgeInsets.only(left: 4),
                             child: Transform.rotate(
                               angle: 0.6,
-                              child: Icon(Icons.push_pin_rounded, size: 14, color: OuroColors.tertiaryLabel),
+                              child: Icon(Icons.push_pin_rounded, size: 14, color: encre?.withValues(alpha: 0.75) ?? OuroColors.tertiaryLabel),
                             ),
                           ),
                         if (d.nonLus > 0)
                           Padding(
                             padding: const EdgeInsets.only(left: 6),
-                            child: Pastille(compte: d.nonLus, grise: d.sourdine),
+                            child: Pastille(compte: d.nonLus, grise: d.sourdine, inverse: inverse),
                           ),
                         // Le chevron du survol, comme WhatsApp Web.
                         AnimatedSize(
@@ -384,6 +391,7 @@ class LigneDiscussion extends StatelessWidget {
                                     icone: Icons.keyboard_arrow_down_rounded,
                                     diametre: 24,
                                     taille: 20,
+                                    couleur: encre,
                                     onTap: () {
                                       final box = chevron.currentContext!.findRenderObject() as RenderBox;
                                       menu(box.localToGlobal(Offset(0, box.size.height)));
@@ -406,27 +414,30 @@ class LigneDiscussion extends StatelessWidget {
 }
 
 class _Apercu extends StatelessWidget {
-  const _Apercu({required this.discussion, required this.dernier, required this.ecrivent});
+  const _Apercu({required this.discussion, required this.dernier, required this.ecrivent, this.encre});
 
   final Discussion discussion;
   final Message? dernier;
   final Set<String> ecrivent;
+
+  /// Sur la ligne sélectionnée : tout en blanc (ou noir sur accent clair).
+  final Color? encre;
 
   @override
   Widget build(BuildContext context) {
     final depot = context.depot;
     final l = context.l;
     final d = discussion;
-    final gris = OuroTypography.subheadline.copyWith(color: OuroColors.secondaryLabel);
+    final gris = OuroTypography.subheadline.copyWith(color: encre?.withValues(alpha: 0.85) ?? OuroColors.secondaryLabel);
 
     if (ecrivent.isNotEmpty) {
       final texte = d.estGroupe ? l.chGroupTyping(ecrivent.map(depot.nom).join(', ')) : l.chTypingNow;
-      return Text(texte, maxLines: 1, overflow: TextOverflow.ellipsis, style: gris.copyWith(color: OuroColors.accent));
+      return Text(texte, maxLines: 1, overflow: TextOverflow.ellipsis, style: gris.copyWith(color: encre ?? OuroColors.accent));
     }
     if (d.brouillon.isNotEmpty && depot.discussionOuverte != d.id) {
       return Text.rich(
         TextSpan(children: [
-          TextSpan(text: '${l.chDraftLabel} ', style: gris.copyWith(color: OuroColors.systemRed)),
+          TextSpan(text: '${l.chDraftLabel} ', style: gris.copyWith(color: encre ?? OuroColors.systemRed)),
           TextSpan(text: d.brouillon.replaceAll('\n', ' ')),
         ]),
         maxLines: 1,
@@ -449,11 +460,11 @@ class _Apercu extends StatelessWidget {
     return Row(
       children: [
         if (m.deMoi && m.type != TypeMessage.systeme && !m.supprime) ...[
-          Coches(statut: m.statut, taille: 16),
+          Coches(statut: m.statut, taille: 16, couleur: encre?.withValues(alpha: 0.8)),
           const SizedBox(width: 3),
         ],
         if (icone != null) ...[
-          Icon(icone, size: 15, color: OuroColors.tertiaryLabel),
+          Icon(icone, size: 15, color: encre?.withValues(alpha: 0.75) ?? OuroColors.tertiaryLabel),
           const SizedBox(width: 3),
         ],
         Expanded(

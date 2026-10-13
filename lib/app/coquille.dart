@@ -37,6 +37,16 @@ import 'portee.dart';
 import 'reglages.dart';
 import 'vue_discussion.dart';
 
+/// La matière de la barre latérale (rail et colonne) sur grand écran : le
+/// gris de la barre latérale du Mac, la discussion restant sur le blanc
+/// (ou le noir) pur. Sur téléphone, la liste est sur le fond de liste
+/// d'iOS.
+Color fondBarreLaterale(BuildContext context) {
+  final large = MediaQuery.sizeOf(context).width >= 900;
+  if (!large) return OuroColors.secondarySystemGroupedBackground;
+  return OuroColors.isDark ? const Color(0xFF161618) : const Color(0xFFF4F4F7);
+}
+
 /// Pousser un panneau dans la colonne de gauche de l'onglet actif.
 void pousserPanneau(BuildContext context, Widget panneau) {
   context.lire.ui.cleGauche.currentState?.push(CupertinoPageRoute<void>(builder: (_) => panneau));
@@ -160,7 +170,7 @@ class _CoquilleState extends State<Coquille> {
         ? Row(
             children: [
               _Rail(onDeconnexion: widget.onDeconnexion),
-              SizedBox(width: colonne, child: ColoredBox(color: OuroColors.secondarySystemGroupedBackground, child: gauche)),
+              SizedBox(width: colonne, child: ColoredBox(color: fondBarreLaterale(context), child: gauche)),
               VerticalDivider(width: 0.5, thickness: 0.5, color: OuroColors.separator),
               Expanded(
                 child: AnimatedSwitcher(
@@ -203,9 +213,8 @@ class _CoquilleState extends State<Coquille> {
     );
   }
 
-  Widget _racine(Onglet o) => ColoredBox(
-        color: OuroColors.secondarySystemGroupedBackground,
-        child: _colonne(o),
+  Widget _racine(Onglet o) => Builder(
+        builder: (context) => ColoredBox(color: fondBarreLaterale(context), child: _colonne(o)),
       );
 
   Widget _colonne(Onglet o) => switch (o) {
@@ -446,12 +455,11 @@ class _Rail extends StatelessWidget {
     final l = context.l;
     final nonVus = depot.auteursStatuts().where((a) => !depot.statutsTousVus(a)).length;
     final manques = depot.appels.where((a) => a.manque).length;
+    // Le rail et la colonne forment UNE barre latérale, comme dans les
+    // apps du Mac : même matière, pas de trait entre les deux.
     return Container(
       width: 68,
-      decoration: BoxDecoration(
-        color: OuroColors.systemGroupedBackground,
-        border: Border(right: BorderSide(color: OuroColors.separator, width: 0.5)),
-      ),
+      color: fondBarreLaterale(context),
       child: Column(
         children: [
           const SizedBox(height: 14),
@@ -614,15 +622,22 @@ class _BoutonRailState extends State<_BoutonRail> {
 
 /// La pastille des non-lus.
 class Pastille extends StatelessWidget {
-  const Pastille({super.key, required this.compte, this.rouge = false, this.grise = false});
+  const Pastille({super.key, required this.compte, this.rouge = false, this.grise = false, this.inverse = false});
 
   final int compte;
   final bool rouge;
   final bool grise;
 
+  /// Sur une ligne sélectionnée (fond d'accent) : pastille blanche.
+  final bool inverse;
+
   @override
   Widget build(BuildContext context) {
-    final fond = grise ? OuroColors.systemGray : (rouge ? OuroColors.systemRed : OuroColors.accentRempli);
+    final fond = inverse
+        ? OuroColors.texteSurAccent
+        : grise
+            ? OuroColors.systemGray
+            : (rouge ? OuroColors.systemRed : OuroColors.accentRempli);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       constraints: const BoxConstraints(minWidth: 19),
@@ -633,7 +648,7 @@ class Pastille extends StatelessWidget {
       child: Text(
         compte > 99 ? '99+' : '$compte',
         style: OuroTypography.caption2.copyWith(
-          color: OuroColors.texteSurRemplissage(fond),
+          color: inverse ? OuroColors.accentRempli : OuroColors.texteSurRemplissage(fond),
           fontWeight: FontWeight.w700,
           fontVariations: const [FontVariation('wght', 700)],
           height: 1,

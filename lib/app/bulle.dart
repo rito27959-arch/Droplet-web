@@ -15,6 +15,8 @@
 // À la souris : au survol, un bouton « réagir » et un chevron apparaissent
 // à côté de la bulle ; le clic droit soulève la bulle et ouvre le menu de
 // l'app (le même composant que sur iPhone).
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../design_system/ouro_colors.dart';
@@ -108,7 +110,7 @@ class _BulleState extends State<Bulle> {
           Transform.translate(
             offset: const Offset(0, -6),
             child: Padding(
-              padding: EdgeInsets.only(left: moi ? 0 : 10, right: moi ? 10 : 0),
+              padding: EdgeInsets.only(left: moi ? 0 : 10 + FormeBulle.debord, right: moi ? 10 + FormeBulle.debord : 0),
               child: _Reactions(message: m, reactions: reactions),
             ),
           ),
@@ -214,7 +216,7 @@ class _BulleState extends State<Bulle> {
         child: enfant,
       ),
       child: Padding(
-        padding: EdgeInsets.only(bottom: widget.finSerie ? 10 : 2.5, top: 0.5),
+        padding: EdgeInsets.only(bottom: widget.finSerie ? 9 : 2, top: 0.5),
         child: ligne,
       ),
     );
@@ -286,17 +288,25 @@ class CorpsBulle extends StatelessWidget {
     final taille = ReglagesApparence.tailleTexte;
     final styleTexte = OuroTypography.body.copyWith(color: encre, fontSize: taille, height: ReglagesApparence.interligne);
 
-    // Les coins côté auteur se resserrent au sein d'une série ; la
-    // dernière bulle porte la « queue » (un coin presque carré).
-    final r = Radius.circular(ReglagesApparence.rayonBulles);
-    final q = Radius.circular(ReglagesApparence.rayonQueue);
-    final haut = debutSerie ? r : q;
-    final bas = finSerie ? const Radius.circular(4) : q;
-    final arrondi = BorderRadius.only(
-      topLeft: moi ? r : haut,
-      bottomLeft: moi ? r : bas,
-      topRight: moi ? haut : r,
-      bottomRight: moi ? bas : r,
+    // La forme de Messages : des bulles bien rondes, et la QUEUE — une
+    // vraie, dessinée — sur la dernière bulle d'une série. Chaque bulle
+    // garde la place de la queue de son côté, pour que toutes s'alignent.
+    final forme = FormeBulle(moi: moi, queue: finSerie, rayon: ReglagesApparence.rayonBulles);
+    final arrondi = BorderRadius.circular(ReglagesApparence.rayonBulles);
+    final cote = EdgeInsets.only(left: moi ? 0 : FormeBulle.debord, right: moi ? FormeBulle.debord : 0);
+    // Mes bulles : l'accent, un peu plus profond vers le bas — la lumière
+    // vient d'en haut, comme sur iPhone. Le haut garde le contraste exact
+    // du remplissage ; le bas ne peut que l'augmenter.
+    final peinture = ShapeDecoration(
+      shape: forme,
+      color: moi ? null : fond,
+      gradient: moi
+          ? LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [fond, Color.lerp(fond, Colors.black, 0.14)!],
+            )
+          : null,
     );
 
     final meta = _Meta(message: m, couleur: discret, surImage: false);
@@ -305,6 +315,7 @@ class CorpsBulle extends StatelessWidget {
     if (m.supprime) {
       return Container(
         constraints: BoxConstraints(maxWidth: largeurMax),
+        margin: cote,
         padding: const EdgeInsets.fromLTRB(12, 8, 10, 7),
         decoration: BoxDecoration(
           borderRadius: arrondi,
@@ -334,9 +345,9 @@ class CorpsBulle extends StatelessWidget {
         crossAxisAlignment: moi ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(m.texte.trim(), style: styleEmojis(m.texte)),
+          Padding(padding: cote, child: Text(m.texte.trim(), style: styleEmojis(m.texte))),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 6) + cote,
             child: _Meta(message: m, couleur: OuroColors.secondaryLabel, surImage: false),
           ),
         ],
@@ -392,7 +403,7 @@ class CorpsBulle extends StatelessWidget {
               onTap: onVoirImage == null ? null : () => onVoirImage!(m),
               curseur: SystemMouseCursors.zoomIn,
               builder: (context, survol) => ClipRRect(
-                borderRadius: BorderRadius.circular((ReglagesApparence.rayonBulles - 4).clamp(4, 20)),
+                borderRadius: BorderRadius.circular((ReglagesApparence.rayonBulles - 4).clamp(4, 20).toDouble()),
                 child: Stack(
                   children: [
                     SizedBox(
@@ -440,16 +451,16 @@ class CorpsBulle extends StatelessWidget {
           ],
         );
         return Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(color: fond, borderRadius: arrondi),
+          padding: const EdgeInsets.all(4) + cote,
+          decoration: peinture,
           child: contenu,
         );
       case TypeMessage.fichier when m.piece?.estVideo ?? false:
         // Une vidéo : le lecteur du navigateur, dans la bulle.
         final largeurVideo = (largeurMax < 340 ? largeurMax : 340.0) - 8;
         return Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(color: fond, borderRadius: arrondi),
+          padding: const EdgeInsets.all(4) + cote,
+          decoration: peinture,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -457,7 +468,7 @@ class CorpsBulle extends StatelessWidget {
               if (enTete.isNotEmpty)
                 Padding(padding: const EdgeInsets.fromLTRB(8, 4, 8, 4), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: enTete)),
               ClipRRect(
-                borderRadius: BorderRadius.circular((ReglagesApparence.rayonBulles - 4).clamp(4, 20)),
+                borderRadius: BorderRadius.circular((ReglagesApparence.rayonBulles - 4).clamp(4, 20).toDouble()),
                 child: SizedBox(
                   width: largeurVideo,
                   height: largeurVideo * 9 / 16,
@@ -485,15 +496,9 @@ class CorpsBulle extends StatelessWidget {
     }
 
     return Container(
-      constraints: BoxConstraints(maxWidth: largeurMax),
-      padding: const EdgeInsets.fromLTRB(12, 7, 10, 6),
-      decoration: BoxDecoration(
-        color: fond,
-        borderRadius: arrondi,
-        boxShadow: moi
-            ? null
-            : [BoxShadow(color: Colors.black.withValues(alpha: OuroColors.isDark ? 0 : 0.05), blurRadius: 1.5, offset: const Offset(0, 1))],
-      ),
+      constraints: BoxConstraints(maxWidth: largeurMax + FormeBulle.debord),
+      padding: const EdgeInsets.fromLTRB(13, 8, 12, 7) + cote,
+      decoration: peinture,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -1022,4 +1027,70 @@ class _AttenteState extends State<_Attente> with SingleTickerProviderStateMixin 
       ),
     );
   }
+}
+
+
+/// La bulle de Messages : un rectangle très arrondi et, en fin de série,
+/// la queue qui s'échappe du coin inférieur, du côté de l'auteur.
+///
+/// La forme réserve [debord] points de son côté pour la queue, qu'elle
+/// soit dessinée ou non : toutes les bulles d'une série restent alignées.
+class FormeBulle extends ShapeBorder {
+  const FormeBulle({required this.moi, required this.queue, required this.rayon});
+
+  final bool moi;
+  final bool queue;
+  final double rayon;
+
+  static const double debord = 6;
+
+  @override
+  EdgeInsetsGeometry get dimensions => EdgeInsets.zero;
+
+  @override
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) => getOuterPath(rect, textDirection: textDirection);
+
+  @override
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
+    final corps = moi
+        ? Rect.fromLTRB(rect.left, rect.top, rect.right - debord, rect.bottom)
+        : Rect.fromLTRB(rect.left + debord, rect.top, rect.right, rect.bottom);
+    final r = math.min(rayon, corps.shortestSide / 2);
+    final bulle = Path()..addRRect(RRect.fromRectAndRadius(corps, Radius.circular(r)));
+    // Une queue n'a de sens que sur une bulle arrondie.
+    if (!queue || rayon < 8) return bulle;
+    final b = corps.bottom;
+    final h = math.min(16.0, corps.height * 0.6);
+    final Path q;
+    if (moi) {
+      final x = corps.right;
+      q = Path()
+        ..moveTo(x - 1, b - h)
+        ..quadraticBezierTo(x, b - 3, x + debord, b)
+        ..quadraticBezierTo(x - 3, b + 0.5, x - 13, b - 3.5)
+        ..lineTo(x - 13, b - h)
+        ..close();
+    } else {
+      final x = corps.left;
+      q = Path()
+        ..moveTo(x + 1, b - h)
+        ..quadraticBezierTo(x, b - 3, x - debord, b)
+        ..quadraticBezierTo(x + 3, b + 0.5, x + 13, b - 3.5)
+        ..lineTo(x + 13, b - h)
+        ..close();
+    }
+    return Path.combine(PathOperation.union, bulle, q);
+  }
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {}
+
+  @override
+  ShapeBorder scale(double t) => FormeBulle(moi: moi, queue: queue, rayon: rayon * t);
+
+  @override
+  bool operator ==(Object other) => other is FormeBulle && other.moi == moi && other.queue == queue && other.rayon == rayon;
+
+  @override
+  int get hashCode => Object.hash(moi, queue, rayon);
 }

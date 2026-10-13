@@ -310,7 +310,7 @@ class _VueDiscussionState extends State<VueDiscussion> {
   Future<void> _allerA(String id) async {
     for (var essai = 0; essai < 60; essai++) {
       final ctx = _cles[id]?.currentContext;
-      if (ctx != null) {
+      if (ctx != null && ctx.mounted) {
         await Scrollable.ensureVisible(ctx, alignment: 0.4, duration: const Duration(milliseconds: 420), curve: kSortie);
         if (mounted) setState(() => _clignote = id);
         Future<void>.delayed(const Duration(milliseconds: 1700), () {
@@ -766,7 +766,7 @@ class _Entete extends StatelessWidget {
                             AvatarDroplet(
                               nom: d.titre,
                               couleur: d.couleur,
-                              taille: 40,
+                              taille: 38,
                               groupe: d.estGroupe,
                               enLigne: contact?.enLigne ?? false,
                             ),
@@ -922,21 +922,18 @@ class _Pastille extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Comme Messages : la date est un simple texte centré, discret,
+    // posé sur le fil — pas une étiquette.
     return Center(
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: OuroColors.secondarySystemGroupedBackground.withValues(alpha: 0.92),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 3, offset: const Offset(0, 1))],
-        ),
+      child: Padding(
+        padding: EdgeInsets.only(top: systeme ? 8 : 18, bottom: systeme ? 8 : 10, left: 24, right: 24),
         child: Text(
           texte,
           textAlign: TextAlign.center,
           style: OuroTypography.caption1.copyWith(
-            color: OuroColors.secondaryLabel,
+            color: systeme ? OuroColors.tertiaryLabel : OuroColors.secondaryLabel,
             fontWeight: systeme ? FontWeight.w400 : FontWeight.w600,
+            letterSpacing: 0.1,
           ),
         ),
       ),
@@ -950,13 +947,22 @@ class _SeparateurNonLus extends StatelessWidget {
   final String texte;
 
   @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.symmetric(vertical: 10),
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        color: OuroColors.accent.withValues(alpha: 0.08),
-        alignment: Alignment.center,
-        child: Text(texte, style: OuroTypography.caption1.copyWith(color: OuroColors.accent, fontWeight: FontWeight.w600)),
-      );
+  Widget build(BuildContext context) {
+    final trait = Expanded(child: Container(height: 0.5, color: OuroColors.accent.withValues(alpha: 0.45)));
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: [
+          trait,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(texte, style: OuroTypography.caption1.copyWith(color: OuroColors.accent, fontWeight: FontWeight.w600)),
+          ),
+          trait,
+        ],
+      ),
+    );
+  }
 }
 
 class _AvisChiffrement extends StatelessWidget {
@@ -971,25 +977,21 @@ class _AvisChiffrement extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l;
     final avis = Center(
+      // Discret, comme les mentions système d'iOS : un cadenas et une
+      // phrase, sans encadré jaune qui crie.
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 440),
-        margin: const EdgeInsets.only(top: 6, bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        decoration: BoxDecoration(
-          color: (OuroColors.isDark ? const Color(0xFF3A3220) : const Color(0xFFFFF5D6)).withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
+        constraints: const BoxConstraints(maxWidth: 420),
+        margin: const EdgeInsets.only(top: 18, bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.lock_rounded, size: 13, color: OuroColors.isDark ? const Color(0xFFFFD60A) : const Color(0xFF8A6D00)),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                l.chE2eNotice,
-                textAlign: TextAlign.center,
-                style: OuroTypography.caption1.copyWith(color: OuroColors.isDark ? const Color(0xFFFFE58F) : const Color(0xFF6B5500)),
-              ),
+            Icon(Icons.lock_rounded, size: 14, color: OuroColors.tertiaryLabel),
+            const SizedBox(height: 5),
+            Text(
+              l.chE2eNotice,
+              textAlign: TextAlign.center,
+              style: OuroTypography.caption1.copyWith(color: OuroColors.tertiaryLabel, height: 1.35),
             ),
           ],
         ),
