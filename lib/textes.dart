@@ -42,6 +42,10 @@ class Textes {
     }
     return _('nonLusN').replaceAll('{n}', '$n');
   }
+  String debutAvec(String nom) => _('debutAvec').replaceAll('{nom}', nom);
+  String debutGroupe(String nom) => _('debutGroupe').replaceAll('{nom}', nom);
+  String get debutTexte => _('debutTexte');
+  List<String> get suggestions => [_('suggestion1'), _('suggestion2'), _('suggestion3')];
   String groupesCommun(int n) => _('groupesCommun').replaceAll('{n}', '$n');
   String get sousTitre => _('sousTitre');
   String get etape1 => _('etape1');

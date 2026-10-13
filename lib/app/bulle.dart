@@ -220,26 +220,35 @@ class _BulleState extends State<Bulle> {
     );
 
     if (!widget.nouveau) return ligne;
-    // L'arrivée d'un nouveau message : il monte et s'éclaircit.
+    // L'arrivée d'un nouveau message. Envoyé : il jaillit de la barre de
+    // saisie avec un léger rebond, comme dans Messages. Reçu : il glisse
+    // depuis son côté et s'éclaircit, sans rebond (on ne l'a pas lancé).
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 420),
-      curve: kSortie,
-      builder: (context, v, enfant) => Opacity(
-        opacity: v,
-        child: Transform.translate(
-          offset: Offset(0, 14 * (1 - v)),
-          child: Transform.scale(
-            scale: 0.96 + 0.04 * v,
-            alignment: moi ? Alignment.bottomRight : Alignment.bottomLeft,
-            child: enfant,
+      duration: Duration(milliseconds: moi ? 520 : 420),
+      curve: Curves.linear,
+      builder: (context, t, enfant) {
+        final v = (moi ? _rebond : kSortie).transform(t);
+        final o = Curves.easeOut.transform((t * 2.2).clamp(0.0, 1.0));
+        return Opacity(
+          opacity: o,
+          child: Transform.translate(
+            offset: moi ? Offset(0, 26 * (1 - v)) : Offset(-10 * (1 - v), 10 * (1 - v)),
+            child: Transform.scale(
+              scale: moi ? 0.86 + 0.14 * v : 0.96 + 0.04 * v,
+              alignment: moi ? Alignment.bottomRight : Alignment.bottomLeft,
+              child: enfant,
+            ),
           ),
-        ),
-      ),
+        );
+      },
       child: ligne,
     );
   }
 }
+
+/// Un ressort amorti : dépasse d'environ 4 % puis se pose.
+const Curve _rebond = Cubic(0.34, 1.32, 0.64, 1);
 
 /// Le corps de la bulle, sans les boutons de survol : c'est aussi la copie
 /// que le menu contextuel soulève.

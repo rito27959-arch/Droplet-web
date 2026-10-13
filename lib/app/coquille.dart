@@ -178,18 +178,15 @@ class _CoquilleState extends State<Coquille> {
               ),
             ],
           )
-        : Stack(
-            children: [
-              Positioned.fill(
-                child: Column(
-                  children: [
-                    Expanded(child: ColoredBox(color: OuroColors.secondarySystemGroupedBackground, child: gauche)),
-                    const _BarreOnglets(),
-                  ],
-                ),
-              ),
-              if (ouverte != null) Positioned.fill(child: droite),
-            ],
+        : _PileIos(
+            dessous: Column(
+              children: [
+                Expanded(child: ColoredBox(color: OuroColors.secondarySystemGroupedBackground, child: gauche)),
+                const _BarreOnglets(),
+              ],
+            ),
+            dessus: ouverte != null ? KeyedSubtree(key: ValueKey(ouverte.id), child: droite) : null,
+            onRetour: () => depot.ouvrir(null),
           );
 
     return Scaffold(
@@ -217,6 +214,147 @@ class _CoquilleState extends State<Coquille> {
         Onglet.appels => const ColonneAppels(),
         Onglet.reglages => ColonneReglages(onDeconnexion: widget.onDeconnexion),
       };
+}
+
+// ── La pile du téléphone : la discussion glisse par-dessus la liste ────
+
+/// Sur un écran étroit, ouvrir une discussion la fait glisser depuis la
+/// droite par-dessus la liste, qui recule d'un tiers et s'assombrit — la
+/// navigation de l'iPhone. On la referme par le bouton retour, la touche
+/// Échap, ou en la tirant depuis le bord gauche, au doigt comme à la
+/// souris ; lâchée à mi-chemin, elle revient ou part selon l'élan.
+class _PileIos extends StatefulWidget {
+  const _PileIos({required this.dessous, required this.dessus, required this.onRetour});
+
+  final Widget dessous;
+  final Widget? dessus;
+  final VoidCallback onRetour;
+
+  @override
+  State<_PileIos> createState() => _PileIosState();
+}
+
+class _PileIosState extends State<_PileIos> with SingleTickerProviderStateMixin {
+  late final AnimationController _a = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 460),
+    reverseDuration: const Duration(milliseconds: 380),
+  );
+
+  /// La dernière discussion affichée : elle reste visible pendant qu'elle
+  /// repart vers la droite.
+  Widget? _affiche;
+  bool _tire = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _affiche = widget.dessus;
+    if (widget.dessus != null) _a.value = 1;
+    _a.addStatusListener((s) {
+      if (s == AnimationStatus.dismissed && widget.dessus == null && mounted) setState(() => _affiche = null);
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _PileIos ancien) {
+    super.didUpdateWidget(ancien);
+    if (widget.dessus != null) {
+      _affiche = widget.dessus;
+      if (ancien.dessus == null) _a.forward();
+    } else if (ancien.dessus != null && !_tire) {
+      // Déjà repoussée au doigt : il n'y a plus rien à animer.
+      if (_a.value == 0) {
+        _affiche = null;
+      } else {
+        _a.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _a.dispose();
+    super.dispose();
+  }
+
+  void _glisse(DragUpdateDetails d, double largeur) {
+    _tire = true;
+    final sens = Directionality.of(context) == TextDirection.rtl ? -1 : 1;
+    _a.value = (_a.value - sens * d.delta.dx / largeur).clamp(0.0, 1.0);
+  }
+
+  void _lache(DragEndDetails d, double largeur) {
+    final sens = Directionality.of(context) == TextDirection.rtl ? -1 : 1;
+    final elan = sens * d.velocity.pixelsPerSecond.dx / largeur;
+    if (elan > 1.0 || (_a.value < 0.55 && elan > -1.0)) {
+      _a.animateBack(0, duration: Duration(milliseconds: (300 * _a.value).round().clamp(120, 300)), curve: Curves.easeOut).whenComplete(() {
+        _tire = false;
+        widget.onRetour();
+      });
+    } else {
+      _tire = false;
+      _a.animateTo(1, duration: const Duration(milliseconds: 260), curve: Curves.easeOut);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, c) {
+      final largeur = c.maxWidth;
+      final rtl = Directionality.of(context) == TextDirection.rtl;
+      return AnimatedBuilder(
+        animation: _a,
+        builder: (context, _) {
+          // Pendant le geste, la discussion suit le doigt exactement ; seule
+          // l'animation automatique prend la courbe.
+          final v = _tire ? _a.value : (_a.status == AnimationStatus.reverse ? Curves.easeInOutCubic : kSortie).transform(_a.value);
+          final sens = rtl ? -1.0 : 1.0;
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: Transform.translate(
+                  offset: Offset(-sens * largeur * 0.3 * v, 0),
+                  child: IgnorePointer(ignoring: _affiche != null, child: widget.dessous),
+                ),
+              ),
+              if (_affiche != null) ...[
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: ColoredBox(color: Colors.black.withValues(alpha: (OuroColors.isDark ? 0.35 : 0.12) * v)),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Transform.translate(
+                    offset: Offset(sens * largeur * (1 - v), 0),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18 * v), blurRadius: 24)],
+                      ),
+                      child: _affiche,
+                    ),
+                  ),
+                ),
+                // Le bord qu'on tire pour revenir.
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  left: rtl ? null : largeur * (1 - v),
+                  right: rtl ? largeur * (1 - v) : null,
+                  width: 22,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onHorizontalDragUpdate: (d) => _glisse(d, largeur),
+                    onHorizontalDragEnd: (d) => _lache(d, largeur),
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      );
+    });
+  }
 }
 
 // ── Le bandeau de la démonstration ──────────────────────────────────────

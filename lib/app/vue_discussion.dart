@@ -584,7 +584,12 @@ class _VueDiscussionState extends State<VueDiscussion> {
   Widget _construire(BuildContext context, _Element e, Discussion d, double largeurMax, String q) {
     switch (e.genre) {
       case _Genre.chiffrement:
-        return _AvisChiffrement(vide: context.lire.depot.messages(d.id).isEmpty, onBonjour: () => _envoyer('👋'));
+        return _AvisChiffrement(
+          vide: context.lire.depot.messages(d.id).isEmpty,
+          discussion: d,
+          enLigne: context.lire.depot.interlocuteur(d)?.enLigne ?? false,
+          onEnvoyer: _envoyer,
+        );
       case _Genre.jour:
         return _Pastille(texte: separateurJour(context, e.date!));
       case _Genre.nonLus:
@@ -951,53 +956,129 @@ class _SeparateurNonLus extends StatelessWidget {
 }
 
 class _AvisChiffrement extends StatelessWidget {
-  const _AvisChiffrement({required this.vide, required this.onBonjour});
+  const _AvisChiffrement({required this.vide, required this.discussion, required this.enLigne, required this.onEnvoyer});
 
   final bool vide;
-  final VoidCallback onBonjour;
+  final Discussion discussion;
+  final bool enLigne;
+  final ValueChanged<String> onEnvoyer;
 
   @override
   Widget build(BuildContext context) {
     final l = context.l;
-    return Column(
-      children: [
-        Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 440),
-            margin: const EdgeInsets.only(top: 6, bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-            decoration: BoxDecoration(
-              color: (OuroColors.isDark ? const Color(0xFF3A3220) : const Color(0xFFFFF5D6)).withValues(alpha: 0.95),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.lock_rounded, size: 13, color: OuroColors.isDark ? const Color(0xFFFFD60A) : const Color(0xFF8A6D00)),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    l.chE2eNotice,
-                    textAlign: TextAlign.center,
-                    style: OuroTypography.caption1.copyWith(color: OuroColors.isDark ? const Color(0xFFFFE58F) : const Color(0xFF6B5500)),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    final avis = Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 440),
+        margin: const EdgeInsets.only(top: 6, bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: (OuroColors.isDark ? const Color(0xFF3A3220) : const Color(0xFFFFF5D6)).withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(12),
         ),
-        if (vide)
-          Padding(
-            padding: const EdgeInsets.only(top: 40, bottom: 20),
-            child: Column(
-              children: [
-                const Text('👋', style: TextStyle(fontSize: 64)),
-                const SizedBox(height: 10),
-                BoutonPlein(texte: l.chSayHello, onTap: onBonjour),
-              ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.lock_rounded, size: 13, color: OuroColors.isDark ? const Color(0xFFFFD60A) : const Color(0xFF8A6D00)),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                l.chE2eNotice,
+                textAlign: TextAlign.center,
+                style: OuroTypography.caption1.copyWith(color: OuroColors.isDark ? const Color(0xFFFFE58F) : const Color(0xFF6B5500)),
+              ),
             ),
-          ),
-      ],
+          ],
+        ),
+      ),
+    );
+    if (!vide) return avis;
+    return _DebutDiscussion(discussion: discussion, enLigne: enLigne, avis: avis, onEnvoyer: onEnvoyer);
+  }
+}
+
+/// Une discussion encore vide : le visage de la personne, en grand, et
+/// trois premiers mots à toucher. Une page blanche avec un seul bouton
+/// « Dire bonjour » laisse l'utilisateur seul devant le clavier ; ici,
+/// écrire le premier message ne demande qu'un clic.
+class _DebutDiscussion extends StatelessWidget {
+  const _DebutDiscussion({required this.discussion, required this.enLigne, required this.avis, required this.onEnvoyer});
+
+  final Discussion discussion;
+  final bool enLigne;
+  final Widget avis;
+  final ValueChanged<String> onEnvoyer;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    final d = discussion;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 620),
+      curve: kSortie,
+      builder: (context, v, enfant) => Opacity(
+        opacity: v,
+        child: Transform.translate(offset: Offset(0, 18 * (1 - v)), child: enfant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 36, bottom: 28),
+        child: Column(
+          children: [
+            AvatarDroplet(nom: d.titre, couleur: d.couleur, taille: 96, groupe: d.estGroupe, enLigne: enLigne),
+            const SizedBox(height: 16),
+            Text(
+              d.estGroupe ? t.debutGroupe(d.titre) : t.debutAvec(d.titre),
+              textAlign: TextAlign.center,
+              style: OuroTypography.title3.copyWith(color: OuroColors.label, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: Text(
+                t.debutTexte,
+                textAlign: TextAlign.center,
+                style: OuroTypography.subheadline.copyWith(color: OuroColors.secondaryLabel, height: 1.4),
+              ),
+            ),
+            const SizedBox(height: 22),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: [for (final s in t.suggestions) _Suggestion(texte: s, onTap: () => onEnvoyer(s))],
+            ),
+            const SizedBox(height: 26),
+            avis,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Suggestion extends StatelessWidget {
+  const _Suggestion({required this.texte, required this.onTap});
+
+  final String texte;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = OuroColors.accent;
+    return Survol(
+      onTap: onTap,
+      builder: (context, survol) => AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: survol ? accent : accent.withValues(alpha: OuroColors.isDark ? 0.18 : 0.10),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          texte,
+          style: OuroTypography.subheadline.copyWith(color: survol ? Colors.white : accent, fontWeight: FontWeight.w600),
+        ),
+      ),
     );
   }
 }
