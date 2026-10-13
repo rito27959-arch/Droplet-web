@@ -195,7 +195,7 @@ class _CoquilleState extends State<Coquille> {
         onDeconnexion: widget.onDeconnexion,
         child: Column(
           children: [
-            if (depot.demo) _BandeauDemo(onQuitter: widget.onDeconnexion) else const _BandeauSynchro(),
+            if (depot.demo) _BandeauDemo(onQuitter: widget.onDeconnexion) else if (!depot.telephoneVu) const _BandeauSynchro(),
             Expanded(child: corps),
           ],
         ),

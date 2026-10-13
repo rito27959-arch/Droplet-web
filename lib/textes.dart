@@ -45,6 +45,7 @@ class Textes {
   String debutAvec(String nom) => _('debutAvec').replaceAll('{nom}', nom);
   String debutGroupe(String nom) => _('debutGroupe').replaceAll('{nom}', nom);
   String get debutTexte => _('debutTexte');
+  String get surDroplet => _('surDroplet');
   List<String> get suggestions => [_('suggestion1'), _('suggestion2'), _('suggestion3')];
   String groupesCommun(int n) => _('groupesCommun').replaceAll('{n}', '$n');
   String get sousTitre => _('sousTitre');

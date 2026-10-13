@@ -16,6 +16,8 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import 'canal_telephone.dart';
+
 enum TypePaquet { message, accuse, reaction, edition, suppression, frappe, appel }
 
 enum EtatConnexion { connexion, connecte, horsLigne }
@@ -122,23 +124,43 @@ class TransportDemo implements Transport {
   }
 }
 
-/// Le transport du compte lié — premier étage du vrai réseau.
+/// Le transport du compte lié : la file de ce navigateur dans la boîte aux
+/// lettres, et le canal chiffré avec le téléphone (`canal_telephone.dart`).
 ///
-/// Aujourd'hui il sait dire si le réseau Droplet répond (l'annuaire), ce
-/// qui allume ou éteint le bandeau « Connexion… ». La suite (étape 3 du
-/// plan) branche ici la boîte aux lettres : une file par appareil, les
-/// messages chiffrés avec le protocole Signal pour chacun. Tant que ce
-/// n'est pas fait, un envoi échoue proprement (point d'exclamation rouge,
-/// « Réessayer »), plutôt que de faire semblant.
+/// • Il relève la file en continu (attente longue de 20 s) : les lots du
+///   téléphone — discussions, messages, coches — passent à [onLot].
+/// • Un message écrit ici part au téléphone, qui l'envoie au contact avec
+///   ses propres clés, puis le renvoie avec ses vraies coches.
+/// • Au premier démarrage, il demande une synchro complète.
 class TransportDroplet implements Transport {
-  TransportDroplet({required this.verifier});
+  TransportDroplet({required this.canal, required this.verifier, required this.annuaire});
 
-  /// Interroge le réseau (l'annuaire) : vrai s'il répond.
+  /// L'adresse de l'annuaire (recherche par pseudo).
+  final String annuaire;
+
+  final CanalTelephone canal;
+
+  /// Interroge l'annuaire : vrai si le navigateur est toujours lié.
   final Future<bool> Function() verifier;
+
+  /// Vrai quand ce navigateur n'a encore rien reçu : il demande tout au
+  /// téléphone en se connectant.
+  bool Function() aBesoinDeSynchro = () => false;
+
+  /// Les lots reçus du téléphone (branché par le dépôt).
+  void Function(Map<String, dynamic> lot)? onLot;
+
+  /// Le téléphone a refusé ce navigateur (déconnecté) : on revient au code.
+  void Function()? onRefuse;
+
+  /// Les contacts trouvés par recherche, que le téléphone ne connaît pas
+  /// encore : leur pseudo et leur clé partent avec le premier message.
+  final Map<String, ResultatRecherche> inconnus = {};
 
   final _recus = StreamController<Paquet>.broadcast();
   final _etat = ValueNotifier(EtatConnexion.connexion);
   Timer? _battement;
+  bool _actif = false;
 
   @override
   Stream<Paquet> get recus => _recus.stream;
@@ -148,17 +170,61 @@ class TransportDroplet implements Transport {
 
   @override
   Future<void> connecter() async {
-    Future<void> sonder() async {
-      final ok = await verifier();
-      _etat.value = ok ? EtatConnexion.connecte : EtatConnexion.horsLigne;
+    if (_actif) return;
+    _actif = true;
+    _battement ??= Timer.periodic(const Duration(seconds: 60), (_) => unawaited(verifier()));
+    if (aBesoinDeSynchro()) {
+      unawaited(canal.demander({'t': 'synchro'}).then((_) {}, onError: (_) {}));
     }
+    unawaited(_boucle());
+  }
 
-    await sonder();
-    _battement ??= Timer.periodic(const Duration(seconds: 30), (_) => sonder());
+  Future<void> _boucle() async {
+    var attente = 2;
+    while (_actif) {
+      try {
+        final lots = await canal.relever();
+        _etat.value = EtatConnexion.connecte;
+        attente = 2;
+        for (final l in lots) {
+          onLot?.call(l);
+        }
+      } on AppareilRefuse {
+        _actif = false;
+        onRefuse?.call();
+        return;
+      } catch (_) {
+        _etat.value = EtatConnexion.horsLigne;
+        await Future<void>.delayed(Duration(seconds: attente));
+        attente = (attente * 2).clamp(2, 30);
+      }
+    }
+  }
+
+  void arreter() {
+    _actif = false;
+    _battement?.cancel();
   }
 
   @override
   Future<void> envoyer(Paquet paquet, {required List<String> destinataires}) async {
-    throw StateError('La synchronisation des messages n’est pas encore activée');
+    // Le téléphone gère pour l'instant les messages écrits ; les réactions,
+    // modifications et « en train d'écrire » viendront avec lui.
+    if (paquet.type != TypePaquet.message) return;
+    final d = paquet.discussionId;
+    if (!d.startsWith('p:') && !d.startsWith('g:')) {
+      throw StateError('Discussion inconnue du téléphone');
+    }
+    final m = paquet.donnees;
+    final inconnu = d.startsWith('p:') ? inconnus[d.substring(2)] : null;
+    await canal.demander({
+      't': 'envoyer',
+      'd': d,
+      'id': m['id'],
+      'texte': m['texte'] ?? '',
+      if (m['reponseA'] != null) 'r': m['reponseA'],
+      if (inconnu != null) 'pseudo': inconnu.pseudo,
+      if (inconnu?.cle != null) 'cle': inconnu!.cle,
+    });
   }
 }

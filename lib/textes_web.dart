@@ -3,7 +3,8 @@
 // comme l'app. Les paramètres s'écrivent entre accolades : {nom}.
 const Map<String, Map<String, String>> textesWeb = {
   'fr': {
-    'synchroBientot': 'Ce navigateur est lié à votre téléphone. Vos discussions s’afficheront ici dans une prochaine mise à jour.',
+    'synchroBientot': "En attente de votre téléphone : ouvrez Droplet dessus pour charger vos discussions ici.",
+    'surDroplet': "Sur Droplet",
     'aPropos': 'À propos',
     'aProposIndication': 'Disponible, en réunion, au festival…',
     'accueilActus': 'Les actus de vos contacts, pendant 24 heures. Choisissez-en une à gauche, ou publiez la vôtre.',
@@ -108,7 +109,8 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} groupe(s) en commun',
   },
   'en': {
-    'synchroBientot': 'This browser is linked to your phone. Your chats will appear here in an upcoming update.',
+    'synchroBientot': "Waiting for your phone: open Droplet on it to load your chats here.",
+    'surDroplet': "On Droplet",
     'aPropos': 'About',
     'aProposIndication': 'Available, in a meeting, at the festival…',
     'accueilActus': 'Your contacts’ updates, for 24 hours. Pick one on the left, or post your own.',
@@ -213,7 +215,8 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} group(s) in common',
   },
   'de': {
-    'synchroBientot': 'Dieser Browser ist mit deinem Telefon verknüpft. Deine Chats erscheinen hier mit einem kommenden Update.',
+    'synchroBientot': "Warte auf dein Telefon: Öffne Droplet darauf, um deine Chats hier zu laden.",
+    'surDroplet': "Auf Droplet",
     'aPropos': 'Info',
     'aProposIndication': 'Verfügbar, im Meeting, auf dem Festival …',
     'accueilActus': 'Die Neuigkeiten deiner Kontakte, 24 Stunden lang. Wähle links eine aus oder teile deine eigene.',
@@ -318,7 +321,8 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} gemeinsame Gruppe(n)',
   },
   'es': {
-    'synchroBientot': 'Este navegador está vinculado a tu teléfono. Tus chats aparecerán aquí en una próxima actualización.',
+    'synchroBientot': "Esperando a tu teléfono: abre Droplet en él para cargar tus chats aquí.",
+    'surDroplet': "En Droplet",
     'aPropos': 'Info.',
     'aProposIndication': 'Disponible, en una reunión, en el festival…',
     'accueilActus': 'Las novedades de tus contactos, durante 24 horas. Elige una a la izquierda o publica la tuya.',
@@ -423,7 +427,8 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} grupo(s) en común',
   },
   'it': {
-    'synchroBientot': 'Questo browser è collegato al tuo telefono. Le tue chat appariranno qui in un prossimo aggiornamento.',
+    'synchroBientot': "In attesa del telefono: apri Droplet sul telefono per caricare qui le chat.",
+    'surDroplet': "Su Droplet",
     'aPropos': 'Info',
     'aProposIndication': 'Disponibile, in riunione, al festival…',
     'accueilActus': 'Gli aggiornamenti dei tuoi contatti, per 24 ore. Scegline uno a sinistra o pubblica il tuo.',
@@ -528,7 +533,8 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} gruppo/i in comune',
   },
   'pt': {
-    'synchroBientot': 'Este navegador está conectado ao seu telefone. Suas conversas aparecerão aqui em uma próxima atualização.',
+    'synchroBientot': "Aguardando seu telefone: abra o Droplet nele para carregar suas conversas aqui.",
+    'surDroplet': "No Droplet",
     'aPropos': 'Recado',
     'aProposIndication': 'Disponível, em reunião, no festival…',
     'accueilActus': 'As novidades dos seus contatos, por 24 horas. Escolha uma à esquerda ou publique a sua.',
@@ -633,7 +639,8 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} grupo(s) em comum',
   },
   'ru': {
-    'synchroBientot': 'Этот браузер привязан к вашему телефону. Ваши чаты появятся здесь в одном из следующих обновлений.',
+    'synchroBientot': "Ждём телефон: откройте на нём Droplet, чтобы загрузить чаты сюда.",
+    'surDroplet': "В Droplet",
     'aPropos': 'Сведения',
     'aProposIndication': 'На связи, на встрече, на фестивале…',
     'accueilActus': 'Новости ваших контактов — в течение 24 часов. Выберите слева или опубликуйте свою.',
@@ -738,7 +745,8 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': 'Общих групп: {n}',
   },
   'zh': {
-    'synchroBientot': '此浏览器已关联到你的手机。你的聊天将在后续更新中显示在这里。',
+    'synchroBientot': "正在等待你的手机：在手机上打开 Droplet，即可在此加载聊天。",
+    'surDroplet': "Droplet 用户",
     'aPropos': '个性签名',
     'aProposIndication': '有空、开会中、在音乐节…',
     'accueilActus': '联系人的动态，保留 24 小时。在左侧选择一条，或发布你自己的动态。',
@@ -843,7 +851,8 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} 个共同群组',
   },
   'ar': {
-    'synchroBientot': 'هذا المتصفح مرتبط بهاتفك. ستظهر محادثاتك هنا في تحديث قادم.',
+    'synchroBientot': "في انتظار هاتفك: افتح Droplet عليه لتحميل محادثاتك هنا.",
+    'surDroplet': "على Droplet",
     'aPropos': 'الحالة',
     'aProposIndication': 'متاح، في اجتماع، في المهرجان…',
     'accueilActus': 'تحديثات جهات اتصالك لمدة 24 ساعة. اختر واحدًا من القائمة، أو انشر تحديثك.',
@@ -948,7 +957,8 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': 'المجموعات المشتركة: {n}',
   },
   'hi': {
-    'synchroBientot': 'यह ब्राउज़र आपके फ़ोन से लिंक है। आपकी चैट आने वाले अपडेट में यहाँ दिखेंगी।',
+    'synchroBientot': "आपके फ़ोन का इंतज़ार: यहाँ चैट लोड करने के लिए उस पर Droplet खोलें।",
+    'surDroplet': "Droplet पर",
     'aPropos': 'परिचय',
     'aProposIndication': 'उपलब्ध, मीटिंग में, फ़ेस्टिवल में…',
     'accueilActus': 'आपके संपर्कों के अपडेट, 24 घंटे के लिए। बाईं ओर से कोई एक चुनें, या अपना अपडेट पोस्ट करें।',

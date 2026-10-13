@@ -71,18 +71,42 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
   void _entrerCompte(CompteLie compte, {bool? rester}) {
     if (rester != null) compte.enregistrer(durable: rester);
     _ui = Interface();
-    final depot = Depot(
-      transport: TransportDroplet(verifier: () async {
+    final transport = TransportDroplet(
+      canal: compte.canal(),
+      annuaire: compte.annuaire,
+      verifier: () async {
         // Le téléphone a pu déconnecter ce navigateur entre-temps.
         final lie = await compte.toujoursLie();
         if (lie == false && mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) => _quitter());
         }
         return lie != null;
-      }),
-      langue: _textes.code,
+      },
     );
+    final depot = Depot(transport: transport, langue: _textes.code);
+    transport
+      ..onLot = depot.appliquerLot
+      ..aBesoinDeSynchro = (() => !depot.telephoneVu)
+      ..onRefuse = () {
+        if (mounted) WidgetsBinding.instance.addPostFrameCallback((_) => _quitter());
+      };
+    if (compte.invitation != null) depot.invitation ??= compte.invitation;
     depot.addListener(_appliquerReglages);
+    depot.onMessageRecu = (d, m) {
+      if (d.sourdine) return;
+      if (depot.reglages.sons) Navigateur.ploc();
+      if (depot.reglages.notifications) {
+        Navigateur.notifier(
+          d.estGroupe ? '${depot.nom(m.auteurId)} · ${d.titre}' : d.titre,
+          m.texte.isEmpty ? '📎' : m.texte,
+          auClic: () {
+            _ui.onglet = Onglet.discussions;
+            depot.ouvrir(d.id);
+            _ui.rafraichir();
+          },
+        );
+      }
+    };
     depot.demarrer();
     if (depot.profil.pseudo.isEmpty) depot.majProfil(pseudo: compte.pseudo);
     setState(() {
@@ -119,6 +143,8 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
   }
 
   void _quitter() {
+    final t = _depot?.transport;
+    if (t is TransportDroplet) t.arreter();
     if (_compte != null) {
       CompteLie.oublier();
       _depot?.toutEffacer();

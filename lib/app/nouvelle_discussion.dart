@@ -7,12 +7,16 @@
 //     (les choisis s'alignent en haut, retirables d'un clic), puis le nom
 //     et la description.
 //   • Archives : les discussions mises de côté.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../design_system/ouro_colors.dart';
 import '../design_system/ouro_typography.dart';
+import '../donnees/canal_telephone.dart';
 import '../donnees/modeles.dart';
+import '../donnees/transport.dart';
 import 'composants.dart';
 import 'coquille.dart';
 import 'liste_discussions.dart';
@@ -30,6 +34,52 @@ class PanneauNouvelleDiscussion extends StatefulWidget {
 
 class _PanneauNouvelleDiscussionState extends State<PanneauNouvelleDiscussion> {
   String _q = '';
+
+  /// Compte lié : les comptes Droplet trouvés dans l'annuaire par pseudo.
+  List<ResultatRecherche> _distants = const [];
+  bool _recherche = false;
+  Timer? _attente;
+
+  @override
+  void dispose() {
+    _attente?.cancel();
+    super.dispose();
+  }
+
+  void _chercher(String q) {
+    setState(() => _q = q.trim().toLowerCase());
+    _attente?.cancel();
+    final transport = context.lire.depot.transport;
+    if (transport is! TransportDroplet || _q.length < 2) {
+      setState(() {
+        _distants = const [];
+        _recherche = false;
+      });
+      return;
+    }
+    setState(() => _recherche = true);
+    final demande = _q;
+    _attente = Timer(const Duration(milliseconds: 350), () async {
+      List<ResultatRecherche> r;
+      try {
+        r = await chercherPseudo(transport.annuaire, demande);
+      } catch (_) {
+        r = const [];
+      }
+      if (!mounted || demande != _q) return;
+      setState(() {
+        _distants = r.where((x) => x.peerId != transport.canal.peerId).toList();
+        _recherche = false;
+      });
+    });
+  }
+
+  void _ouvrirDistant(ResultatRecherche r) {
+    final depot = context.lire.depot;
+    final transport = depot.transport;
+    if (transport is TransportDroplet) transport.inconnus[r.peerId] = r;
+    _ouvrir(depot.contactDistant(r.peerId, r.pseudo));
+  }
 
   void _ouvrir(Contact c) {
     final d = context.lire.depot.discussionAvec(c.id);
@@ -56,7 +106,10 @@ class _PanneauNouvelleDiscussionState extends State<PanneauNouvelleDiscussion> {
 
   void _inviter() {
     final depot = context.lire.depot;
-    Clipboard.setData(ClipboardData(text: context.l.invShareText(depot.nom(kMoi), kAdresseInvitation)));
+    // Compte lié : le lien du téléphone, qui dit qui invite. La démo n'a
+    // que l'adresse de la page.
+    final lien = depot.invitation ?? kAdresseInvitation;
+    Clipboard.setData(ClipboardData(text: context.l.invShareText(depot.nom(kMoi), lien)));
     annoncer(context, context.l.ivCopied, icone: Icons.link_rounded);
   }
 
@@ -72,12 +125,17 @@ class _PanneauNouvelleDiscussionState extends State<PanneauNouvelleDiscussion> {
 
     final lignes = <Widget>[
       if (_q.isEmpty) ...[
-        _LigneAction(
-          icone: Icons.group_add_rounded,
-          libelle: l.chatsNewGroup,
-          onTap: () => pousserPanneau(context, const PanneauNouveauGroupe()),
-        ),
-        _LigneAction(icone: Icons.person_add_alt_1_rounded, libelle: t.ajouterContact, onTap: _ajouter),
+        // Créer un groupe et ajouter un contact à la main restent sur le
+        // téléphone ; avec un compte lié, la recherche par pseudo trouve
+        // directement les comptes Droplet.
+        if (depot.demo) ...[
+          _LigneAction(
+            icone: Icons.group_add_rounded,
+            libelle: l.chatsNewGroup,
+            onTap: () => pousserPanneau(context, const PanneauNouveauGroupe()),
+          ),
+          _LigneAction(icone: Icons.person_add_alt_1_rounded, libelle: t.ajouterContact, onTap: _ajouter),
+        ],
         _LigneAction(icone: Icons.link_rounded, libelle: l.chatsInviteLink, onTap: _inviter),
         const SizedBox(height: 8),
       ],
@@ -94,6 +152,25 @@ class _PanneauNouvelleDiscussionState extends State<PanneauNouvelleDiscussion> {
       }
       lignes.add(LigneContact(contact: c, onTap: () => _ouvrir(c)));
     }
+    final distants = _distants.where((r) => !depot.contacts.containsKey(r.peerId)).toList();
+    if (_recherche || distants.isNotEmpty) {
+      lignes.add(Padding(
+        padding: const EdgeInsets.fromLTRB(14, 16, 14, 4),
+        child: Row(
+          children: [
+            Text(t.surDroplet, style: OuroTypography.footnote.copyWith(color: OuroColors.accent, fontWeight: FontWeight.w700)),
+            const Spacer(),
+            if (_recherche) const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.6)),
+          ],
+        ),
+      ));
+      for (final r in distants) {
+        lignes.add(LigneContact(
+          contact: Contact(id: r.peerId, pseudo: r.pseudo, couleur: depot.couleurDe(r.peerId)),
+          onTap: () => _ouvrirDistant(r),
+        ));
+      }
+    }
 
     return ColoredBox(
       color: OuroColors.secondarySystemGroupedBackground,
@@ -106,11 +183,11 @@ class _PanneauNouvelleDiscussionState extends State<PanneauNouvelleDiscussion> {
             child: ChampRecherche(
               indication: l.nmFindByPseudo,
               autofocus: true,
-              onChanged: (v) => setState(() => _q = v.trim().toLowerCase()),
+              onChanged: _chercher,
             ),
           ),
           Expanded(
-            child: contacts.isEmpty && _q.isNotEmpty
+            child: contacts.isEmpty && _q.isNotEmpty && distants.isEmpty && !_recherche
                 ? EtatVide(icone: Icons.person_search_rounded, titre: l.nmNoResult)
                 : ListView(padding: const EdgeInsets.fromLTRB(8, 0, 8, 16), children: lignes),
           ),
@@ -217,7 +294,7 @@ class _PanneauNouveauGroupeState extends State<PanneauNouveauGroupe> {
                 child: ChampRecherche(
                   indication: l.nmFindByPseudo,
                   autofocus: true,
-                  onChanged: (v) => setState(() => _q = v.trim().toLowerCase()),
+                  onChanged: _chercher,
                 ),
               ),
               Expanded(

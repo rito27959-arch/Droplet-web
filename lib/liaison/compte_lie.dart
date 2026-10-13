@@ -21,10 +21,14 @@ import 'dart:js_interop';
 import 'package:cryptography/cryptography.dart';
 import 'package:web/web.dart' as web;
 
+import '../donnees/canal_telephone.dart';
 import 'invitation_liaison.dart';
 
 /// L'annuaire Droplet (les routes /liaison et /appareils).
 const String kAnnuaire = 'https://droplet-directory-production.up.railway.app';
+
+/// La boîte aux lettres Droplet, si l'enveloppe n'en donne pas.
+const String kBoite = 'https://droplet-mailbox-production.up.railway.app';
 
 class CompteLie {
   const CompteLie({
@@ -33,6 +37,11 @@ class CompteLie {
     required this.appareil,
     required this.nomAppareil,
     required this.lieLe,
+    required this.graine,
+    required this.cleTelephone,
+    this.annuaire = kAnnuaire,
+    this.boite = kBoite,
+    this.invitation,
   });
 
   final String peerId;
@@ -40,6 +49,20 @@ class CompteLie {
   final String appareil;
   final String nomAppareil;
   final DateTime lieLe;
+
+  /// La clé privée X25519 de ce navigateur (base64url). Elle ne quitte
+  /// jamais le navigateur : c'est elle qui signe ses requêtes et ouvre le
+  /// canal avec le téléphone.
+  final String graine;
+
+  /// La clé publique X25519 du téléphone (base64url).
+  final String cleTelephone;
+
+  final String annuaire;
+  final String boite;
+
+  /// Le lien d'invitation du compte (« Inviter par un lien »).
+  final String? invitation;
 
   static const _cle = 'droplet-web:compte';
 
@@ -49,6 +72,11 @@ class CompteLie {
         'appareil': appareil,
         'nom': nomAppareil,
         'lieLe': lieLe.toIso8601String(),
+        'graine': graine,
+        'cleTel': cleTelephone,
+        'annuaire': annuaire,
+        'boite': boite,
+        'invitation': invitation,
       };
 
   factory CompteLie.fromJson(Map<String, dynamic> j) => CompteLie(
@@ -57,15 +85,23 @@ class CompteLie {
         appareil: j['appareil'] as String,
         nomAppareil: j['nom'] as String? ?? 'Droplet Web',
         lieLe: DateTime.tryParse(j['lieLe'] as String? ?? '') ?? DateTime.now(),
+        graine: j['graine'] as String,
+        cleTelephone: j['cleTel'] as String,
+        annuaire: j['annuaire'] as String? ?? kAnnuaire,
+        boite: j['boite'] as String? ?? kBoite,
+        invitation: j['invitation'] as String?,
       );
 
-  /// Le compte gardé par ce navigateur, s'il y en a un.
+  /// Le compte gardé par ce navigateur, s'il y en a un. Un compte lié
+  /// avant l'arrivée des messages (sans clé gardée) est oublié : il faut
+  /// relier le navigateur, une fois.
   static CompteLie? charge() {
     try {
       final brut = web.window.localStorage.getItem(_cle) ?? web.window.sessionStorage.getItem(_cle);
       if (brut == null) return null;
       return CompteLie.fromJson((jsonDecode(brut) as Map).cast<String, dynamic>());
     } catch (_) {
+      oublier();
       return null;
     }
   }
@@ -85,12 +121,21 @@ class CompteLie {
     } catch (_) {}
   }
 
+  /// Le canal chiffré avec le téléphone, par la boîte aux lettres.
+  CanalTelephone canal() => CanalTelephone(
+        appareil: appareil,
+        peerId: peerId,
+        graine: base64Url.decode(base64Url.normalize(graine)),
+        cleTelephone: base64Url.decode(base64Url.normalize(cleTelephone)),
+        boite: boite,
+      );
+
   /// L'annuaire dit-il encore que ce navigateur est lié ? `null` si on ne
   /// peut pas le savoir (hors ligne) : on ne déconnecte pas pour si peu.
   Future<bool?> toujoursLie() async {
     try {
       final r = await web.window
-          .fetch('$kAnnuaire/appareils/${Uri.encodeComponent(peerId)}/${Uri.encodeComponent(appareil)}/etat'.toJS)
+          .fetch('$annuaire/appareils/${Uri.encodeComponent(peerId)}/${Uri.encodeComponent(appareil)}/etat'.toJS)
           .toDart;
       if (!r.ok) return null;
       final j = jsonDecode((await r.text().toDart).toDart) as Map;
@@ -166,12 +211,18 @@ class AttenteLiaison {
       secretKey: cle,
     );
     final j = (jsonDecode(utf8.decode(clair)) as Map).cast<String, dynamic>();
+    String adresse(Object? a, String defaut) => a is String && a.startsWith('https://') ? a : defaut;
     return CompteLie(
       peerId: j['peerId'] as String,
       pseudo: j['pseudo'] as String? ?? '',
       appareil: j['appareil'] as String,
       nomAppareil: j['nom'] as String? ?? invitation.nomAppareil,
       lieLe: DateTime.tryParse(j['lieLe'] as String? ?? '')?.toLocal() ?? DateTime.now(),
+      graine: base64Url.encode(await invitation.cles.extractPrivateKeyBytes()).replaceAll('=', ''),
+      cleTelephone: base64Url.encode(cleTel).replaceAll('=', ''),
+      annuaire: adresse(j['annuaire'], kAnnuaire),
+      boite: adresse(j['boite'], kBoite),
+      invitation: j['invitation'] as String?,
     );
   }
 }

@@ -43,6 +43,13 @@ class Depot extends ChangeNotifier {
   /// La discussion ouverte : ses messages arrivent déjà lus.
   String? discussionOuverte;
 
+  /// Le lien d'invitation du compte, donné par le téléphone.
+  String? invitation;
+
+  /// Vrai dès que le téléphone a envoyé quelque chose : tant que ce n'est
+  /// pas le cas, un bandeau explique qu'il faut l'avoir à portée.
+  bool telephoneVu = false;
+
   StreamSubscription<Paquet>? _abonnement;
   Timer? _sauvegarde;
   Timer? _menage;
@@ -177,7 +184,8 @@ class Depot extends ChangeNotifier {
     }
     final c = contacts[contactId];
     final d = Discussion(
-      id: _id('d'),
+      // Compte lié : l'identifiant est celui que le téléphone comprend.
+      id: demo ? _id('d') : 'p:$contactId',
       type: TypeDiscussion.directe,
       titre: c?.pseudo ?? contactId,
       membres: [contactId],
@@ -316,6 +324,20 @@ class Depot extends ChangeNotifier {
     d.brouillon = texte;
     _planifierSauvegarde();
   }
+
+  /// Un compte trouvé dans l'annuaire : il devient un contact ici, avec
+  /// son vrai identifiant.
+  Contact contactDistant(String peerId, String pseudo) {
+    final c = contacts[peerId] ?? Contact(id: peerId, pseudo: pseudo, couleur: _couleurDe(peerId));
+    contacts[peerId] = c;
+    _changer();
+    return c;
+  }
+
+  /// La couleur d'avatar d'un identifiant : toujours la même pour lui.
+  int couleurDe(String id) => _couleurDe(id);
+
+  int _couleurDe(String id) => id.codeUnits.fold<int>(0, (a, b) => (a * 31 + b) & 0x7fffffff) % palettesAvatar.length;
 
   Contact ajouterContact(String pseudo) {
     final c = Contact(id: _id('c'), pseudo: pseudo, couleur: _hasard.nextInt(palettesAvatar.length));
@@ -585,6 +607,96 @@ class Depot extends ChangeNotifier {
     }
   }
 
+  // ══ LES LOTS DU TÉLÉPHONE ════════════════════════════════════════════
+
+  /// Applique un lot envoyé par le téléphone (voir `miroir_appareils.dart`
+  /// dans l'app) : contacts, discussions et messages, créés ou mis à jour.
+  void appliquerLot(Map<String, dynamic> lot) {
+    telephoneVu = true;
+    final profilLot = lot['profil'];
+    if (profilLot is Map) {
+      final pseudo = profilLot['pseudo'];
+      if (pseudo is String && pseudo.isNotEmpty) profil.pseudo = pseudo;
+      final lien = profilLot['invitation'];
+      if (lien is String && lien.startsWith('https://')) invitation = lien;
+    }
+    for (final c in (lot['contacts'] as List? ?? const [])) {
+      if (c is! Map || c['id'] is! String) continue;
+      final id = c['id'] as String;
+      final pseudo = c['pseudo'] as String? ?? id;
+      final x = contacts[id];
+      if (x == null) {
+        contacts[id] = Contact(id: id, pseudo: pseudo, couleur: _couleurDe(id));
+      } else {
+        x.pseudo = pseudo;
+      }
+    }
+    final initial = lot.containsKey('profil');
+    for (final d in (lot['discussions'] as List? ?? const [])) {
+      if (d is! Map || d['id'] is! String) continue;
+      final id = d['id'] as String;
+      final membres = (d['membres'] as List? ?? const []).whereType<String>().toList();
+      final titre = d['titre'] as String? ?? '';
+      final x = discussions[id];
+      if (x == null) {
+        discussions[id] = Discussion(
+          id: id,
+          type: d['type'] == 'groupe' ? TypeDiscussion.groupe : TypeDiscussion.directe,
+          titre: titre,
+          membres: membres,
+          couleur: _couleurDe(id),
+          nonLus: (d['nonLus'] as int?) ?? 0,
+          admins: <String>[],
+        );
+      } else {
+        if (titre.isNotEmpty) x.titre = titre;
+        if (membres.isNotEmpty) x.membres = membres;
+        if (d['nonLus'] is int && discussionOuverte != id) x.nonLus = d['nonLus'] as int;
+      }
+    }
+    for (final m in (lot['messages'] as List? ?? const [])) {
+      if (m is! Map || m['id'] is! String || m['d'] is! String) continue;
+      final d = discussions[m['d'] as String];
+      if (d == null) continue;
+      final id = m['id'] as String;
+      final statut = StatutMessage.values.asNameMap()[m['statut']] ?? StatutMessage.envoye;
+      final existant = message(id);
+      if (existant != null) {
+        final texte = m['texte'] as String? ?? existant.texte;
+        if (texte != existant.texte) {
+          existant.texte = texte;
+          existant.modifie = m['modifie'] == true || existant.modifie;
+        }
+        if (statut == StatutMessage.echec || statut.index > existant.statut.index) existant.statut = statut;
+        continue;
+      }
+      final auteur = m['a'] == 'moi' ? kMoi : (m['a'] as String? ?? '');
+      final nouveau = Message(
+        id: id,
+        discussionId: d.id,
+        auteurId: auteur,
+        type: TypeMessage.texte,
+        date: (DateTime.tryParse(m['date'] as String? ?? '') ?? DateTime.now()).toLocal(),
+        texte: m['texte'] as String? ?? '',
+        reponseA: m['r'] as String?,
+        statut: statut,
+        modifie: m['modifie'] == true,
+      );
+      final liste = _messages[d.id] ??= [];
+      liste.add(nouveau);
+      if (liste.length > 1 && liste[liste.length - 2].date.isAfter(nouveau.date)) {
+        liste.sort((a, b) => a.date.compareTo(b.date));
+      }
+      // Un message qui arrive en direct (pas l'historique d'une synchro).
+      if (!initial && auteur != kMoi && DateTime.now().difference(nouveau.date).inMinutes < 5) {
+        enTrainDecrire[d.id]?.remove(auteur);
+        if (discussionOuverte != d.id) d.nonLus++;
+        onMessageRecu?.call(d, nouveau);
+      }
+    }
+    _changer();
+  }
+
   /// Prévenu à chaque message reçu (notifications du navigateur, son).
   void Function(Discussion d, Message m)? onMessageRecu;
 
@@ -603,7 +715,9 @@ class Depot extends ChangeNotifier {
         Paquet(type: TypePaquet.message, discussionId: d.id, auteurId: kMoi, donnees: m.toJson()),
         destinataires: d.membres,
       );
-      if (m.statut == StatutMessage.envoi) m.statut = StatutMessage.envoye;
+      // En démonstration, « parti » suffit. Avec un compte lié, la coche
+      // n'avance que quand le téléphone confirme l'envoi (lot suivant).
+      if (demo && m.statut == StatutMessage.envoi) m.statut = StatutMessage.envoye;
     } catch (_) {
       m.statut = StatutMessage.echec;
     }
@@ -664,6 +778,8 @@ class Depot extends ChangeNotifier {
       },
       'statuts': statuts.map((s) => s.toJson()).toList(),
       'appels': appels.map((a) => a.toJson()).toList(),
+      'invitation': invitation,
+      'telephoneVu': telephoneVu,
     };
     try {
       web.window.localStorage.setItem(_cle, jsonEncode(etat));
@@ -692,6 +808,8 @@ class Depot extends ChangeNotifier {
       });
       statuts.addAll((j['statuts'] as List).map((s) => Statut.fromJson((s as Map).cast<String, dynamic>())));
       appels.addAll((j['appels'] as List).map((a) => Appel.fromJson((a as Map).cast<String, dynamic>())));
+      invitation = j['invitation'] as String?;
+      telephoneVu = j['telephoneVu'] as bool? ?? false;
     } catch (e) {
       debugPrint('Droplet Web : lecture impossible ($e)');
     }
