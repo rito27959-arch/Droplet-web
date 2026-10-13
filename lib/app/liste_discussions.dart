@@ -306,15 +306,14 @@ class LigneDiscussion extends StatelessWidget {
       onTap: () => ouvrirDiscussion(context, d.id),
       onClicDroit: menu,
       builder: (context, survol) {
-        // La discussion ouverte, sur grand écran : la ligne prend l'accent
-        // et son texte passe en blanc — la sélection des apps du Mac.
-        final inverse = selectionnee && MediaQuery.sizeOf(context).width >= 900;
-        final encre = inverse ? OuroColors.texteSurAccent : null;
-        final fond = inverse
-            ? OuroColors.accentRempli
-            : selectionnee
-                ? OuroColors.tertiarySystemFill
-                : (survol ? OuroColors.quaternarySystemFill : Colors.transparent);
+        // La discussion ouverte : la ligne se teinte de l'accent, sans le
+        // crier — la sélection de la barre latérale d'iOS 26 et du Mac.
+        // ([encre] reste prévu pour une sélection pleine.)
+        const inverse = false;
+        const Color? encre = null;
+        final fond = selectionnee
+            ? OuroColors.accent.withValues(alpha: OuroColors.isDark ? 0.28 : 0.13)
+            : (survol ? OuroColors.quaternarySystemFill : Colors.transparent);
         return AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           margin: const EdgeInsets.symmetric(vertical: 1),

@@ -577,10 +577,14 @@ class _VueDiscussionState extends State<VueDiscussion> {
           b.type != TypeMessage.systeme &&
           a.auteurId == b.auteurId &&
           a.date.difference(b.date).inMinutes.abs() < 3 &&
-          a.date.day == b.date.day &&
-          b.id != _premierNonLu &&
-          a.id != _premierNonLu;
-      elements.add(_Element.message(m, debut: !meme(avant, m), fin: !meme(apres, m)));
+          a.date.day == b.date.day;
+      // Le séparateur des non-lus coupe la série JUSTE AVANT le premier
+      // non-lu, pas après.
+      elements.add(_Element.message(
+        m,
+        debut: !meme(avant, m) || m.id == _premierNonLu,
+        fin: !meme(apres, m) || apres?.id == _premierNonLu,
+      ));
     }
     return elements;
   }

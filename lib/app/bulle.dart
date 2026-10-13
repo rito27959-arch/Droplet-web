@@ -294,9 +294,9 @@ class CorpsBulle extends StatelessWidget {
     final forme = FormeBulle(moi: moi, queue: finSerie, rayon: ReglagesApparence.rayonBulles);
     final arrondi = BorderRadius.circular(ReglagesApparence.rayonBulles);
     final cote = EdgeInsets.only(left: moi ? 0 : FormeBulle.debord, right: moi ? FormeBulle.debord : 0);
-    // Mes bulles : l'accent, un peu plus profond vers le bas — la lumière
-    // vient d'en haut, comme sur iPhone. Le haut garde le contraste exact
-    // du remplissage ; le bas ne peut que l'augmenter.
+    // Mes bulles : l'accent vif en haut, plus profond vers le bas — la
+    // lumière vient d'en haut, comme sur iPhone (voir `bubbleOutgoingTop`
+    // pour le contraste).
     final peinture = ShapeDecoration(
       shape: forme,
       color: moi ? null : fond,
@@ -304,7 +304,7 @@ class CorpsBulle extends StatelessWidget {
           ? LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [fond, Color.lerp(fond, Colors.black, 0.14)!],
+              colors: [OuroColors.bubbleOutgoingTop, fond],
             )
           : null,
     );

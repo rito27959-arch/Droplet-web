@@ -215,15 +215,15 @@ class OuroColors {
   /// alors que la menthe claire appelle du blanc — sans ce paramètre, le
   /// même bouton passerait de blanc à noir en changeant de mode, ce qui
   /// se lit comme un bug et non comme une intention.
-  static Color surRemplissage(Color teinte, {Color? encre}) {
+  static Color surRemplissage(Color teinte, {Color? encre, double cible = 4.5}) {
     final e = encre ?? texteSurRemplissage(teinte);
-    if (contraste(teinte, e) >= 4.5) return teinte;
+    if (contraste(teinte, e) >= cible) return teinte;
     // Encre claire → on assombrit le fond ; encre sombre → on l'éclaircit.
     final versSombre = _luminance(e) > 0.5;
     var hsl = HSLColor.fromColor(teinte);
     // Pas de 0,005 : assez fin pour ne jamais aller trop loin, assez
     // grossier pour que la boucle reste courte (200 tours au pire).
-    while (contraste(hsl.toColor(), e) < 4.5) {
+    while (contraste(hsl.toColor(), e) < cible) {
       final l = versSombre ? hsl.lightness - 0.005 : hsl.lightness + 0.005;
       if (l <= 0 || l >= 1) break;
       hsl = hsl.withLightness(l);
@@ -302,6 +302,14 @@ class OuroColors {
   /// est donc peinte avec le remplissage, et son texte est
   /// `bubbleOutgoingText`, qui va avec.
   static Color get bubbleOutgoing => accentRempli;
+
+  /// Le HAUT de mes bulles, qui descendent en dégradé vers
+  /// [bubbleOutgoing]. Messages peint ses bulles dans le bleu d'iOS, à
+  /// 3,65:1 (#0A84FF) avec du blanc ; on s'autorise ce même plancher en
+  /// haut de la bulle — jamais en dessous — et le bas revient à 4,5:1 et
+  /// plus. Sans cela, le rose de Droplet devient un cramoisi uniforme, qui
+  /// se lit comme une alerte.
+  static Color get bubbleOutgoingTop => surRemplissage(accent, encre: texteSurAccent, cible: 3.65);
 
   /// Le texte d'une bulle envoyée. Va TOUJOURS avec [bubbleOutgoing].
   static Color get bubbleOutgoingText => texteSurAccent;
