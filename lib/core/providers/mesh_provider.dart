@@ -530,7 +530,11 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
   /// partagée qu'un message mesh direct, via [MeshRepository.resolveIncomingContent].
   Future<void> _pollMailbox() async {
     try {
-      final messages = await _repo.transport.fetchMailboxMessages();
+      // Ce qui attend de partir part AVANT l'attente longue, pas après.
+      _flushOutbox();
+      final messages = await _repo.transport.fetchMailboxMessages(
+        attendre: attenteReleve(premierPlan: NotificationService.isAppForeground),
+      );
       // Messages reçus pendant cette relève, par expéditeur : un seul accusé
       // « distribué » part ensuite vers chacun.
       final livres = <String, List<String>>{};

@@ -1987,9 +1987,9 @@ class MeshTransportService {
   }
 
   /// Récupère tous les messages en attente dans notre mailbox.
-  Future<List<MailboxMessage>> fetchMailboxMessages() async {
+  Future<List<MailboxMessage>> fetchMailboxMessages({int attendre = 0}) async {
     if (_torTransport == null) return [];
-    return _torTransport!.fetchMailboxMessages();
+    return _torTransport!.fetchMailboxMessages(attendre: attendre);
   }
 
   /// Supprime un message après l'avoir traité.

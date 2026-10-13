@@ -97,6 +97,10 @@ class CryptoService {
     return base64Encode(publicKey.bytes);
   }
 
+  /// Change quand l'identité change (restauration, réinitialisation) :
+  /// les secrets dérivés de l'ancienne clé doivent être recalculés.
+  static int revisionIdentite = 0;
+
   static Future<SimpleKeyPair?> _loadIdentityKeyPair() async {
     final stored = await _secureStorage.read(key: _identityPrivateKeyKey);
     if (stored == null) return null;
@@ -109,6 +113,7 @@ class CryptoService {
 
   /// Supprime la clé privée d'identité (réinitialisation complète du profil).
   static Future<void> clearIdentity() async {
+    revisionIdentite++;
     await _secureStorage.delete(key: _identityPrivateKeyKey);
     _sharedKeyCache.clear();
   }
@@ -126,6 +131,7 @@ class CryptoService {
   /// d'appareil). Écrase toute identité existante — réservé au flux de
   /// restauration à l'onboarding, jamais utilisé sur une identité active.
   static Future<void> restorePrivateKeySeed(String base64Seed) async {
+    revisionIdentite++;
     await _secureStorage.write(key: _identityPrivateKeyKey, value: base64Seed);
     _sharedKeyCache.clear();
   }
@@ -223,6 +229,24 @@ class CryptoService {
       info: utf8.encode('droplet-lien-v1'),
       nonce: utf8.encode('droplet-mesh'),
     );
+  }
+
+  /// Le secret partagé avec les SERVEURS Droplet, qui sert à signer les
+  /// requêtes (voir `signature_serveur.dart`). Étiquette HKDF à part
+  /// (`droplet-auth-v1`) : ce secret ne sert à rien d'autre.
+  static Future<List<int>?> cleAuthServeur(List<int> clePubliqueServeur) async {
+    final moi = await _loadIdentityKeyPair();
+    if (moi == null) return null;
+    final secret = await _x25519.sharedSecretKey(
+      keyPair: moi,
+      remotePublicKey: SimplePublicKey(clePubliqueServeur, type: KeyPairType.x25519),
+    );
+    final k = await Hkdf(hmac: _hmac, outputLength: 32).deriveKey(
+      secretKey: secret,
+      info: utf8.encode('droplet-auth-v1'),
+      nonce: utf8.encode('droplet-mesh'),
+    );
+    return k.extractBytes();
   }
 
   /// Invalide le secret mis en cache pour [peerId] (ex. clé publique changée).

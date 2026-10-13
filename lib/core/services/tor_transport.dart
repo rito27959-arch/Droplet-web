@@ -455,7 +455,7 @@ class TorTransport implements MeshTransport {
   }
 
   /// Récupère tous les messages en attente dans notre mailbox.
-  Future<List<MailboxMessage>> fetchMailboxMessages() async {
+  Future<List<MailboxMessage>> fetchMailboxMessages({int attendre = 0}) async {
     if (_mailboxClient == null && _isRunning) _initHttpClients();
     if (_mailboxClient == null) {
       debugPrint('[TorTransport] Client mailbox non disponible '
@@ -464,7 +464,7 @@ class TorTransport implements MeshTransport {
       return [];
     }
 
-    return _mailboxClient!.fetchAll(_myId);
+    return _mailboxClient!.fetchAll(_myId, attendre: attendre);
   }
 
   /// Supprime un message après l'avoir traité.

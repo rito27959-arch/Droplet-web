@@ -12,6 +12,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import 'etat_internet.dart';
+import 'signature_serveur.dart';
 import 'package:http/http.dart' as http;
 
 /// Un message dans la boîte aux lettres.
@@ -77,14 +78,19 @@ class MailboxClient {
     required String encryptedPayload,
   }) async {
     try {
+      final adresse = Uri.parse('$serverUrl/messages');
+      final corps = utf8.encode(jsonEncode({
+        'from': fromPeerId,
+        'to': toPeerId,
+        'payload': encryptedPayload,
+      }));
       final response = await _client.post(
-        Uri.parse('$serverUrl/messages'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'from': fromPeerId,
-          'to': toPeerId,
-          'payload': encryptedPayload,
-        }),
+        adresse,
+        headers: {
+          'Content-Type': 'application/json',
+          ...await SignatureServeur.entetes(peerId: fromPeerId, methode: 'POST', adresse: adresse, corps: corps),
+        },
+        body: corps,
       );
 
       if (response.statusCode == 200) {
@@ -103,11 +109,21 @@ class MailboxClient {
   }
 
   /// Récupère tous les messages en attente pour un peer.
-  Future<List<MailboxMessage>> fetchAll(String peerId) async {
+  ///
+  /// [attendre] > 0 : ATTENTE LONGUE. Si la boîte est vide, le serveur garde
+  /// la requête ouverte jusqu'à [attendre] secondes et répond à l'instant
+  /// où un message arrive. Une requête toutes les 20 s au lieu de toutes
+  /// les 4 s, et des messages qui arrivent tout de suite.
+  Future<List<MailboxMessage>> fetchAll(String peerId, {int attendre = 0}) async {
     try {
-      final response = await _client.get(
-        Uri.parse('$serverUrl/messages/$peerId'),
-      );
+      final chemin = Uri.parse('$serverUrl/messages/$peerId');
+      final adresse = attendre > 0 ? chemin.replace(queryParameters: {'attendre': '$attendre'}) : chemin;
+      final response = await _client
+          .get(
+            adresse,
+            headers: await SignatureServeur.entetes(peerId: peerId, methode: 'GET', adresse: chemin),
+          )
+          .timeout(Duration(seconds: attendre + 20));
 
       if (response.statusCode == 200) {
         EtatInternet.signalerReussite();
@@ -128,8 +144,10 @@ class MailboxClient {
   /// Supprime un message après l'avoir récupéré.
   Future<bool> acknowledge(String peerId, String messageId) async {
     try {
+      final adresse = Uri.parse('$serverUrl/messages/$peerId/$messageId');
       final response = await _client.delete(
-        Uri.parse('$serverUrl/messages/$peerId/$messageId'),
+        adresse,
+        headers: await SignatureServeur.entetes(peerId: peerId, methode: 'DELETE', adresse: adresse),
       );
       return response.statusCode == 200;
     } catch (e) {

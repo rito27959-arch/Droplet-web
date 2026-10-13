@@ -56,5 +56,12 @@ class AccuseEnLigne {
 /// conversation paraît instantanée. En arrière-plan, on garde 30 secondes —
 /// la notification push (quand elle fonctionne côté serveur) prend le relais,
 /// et la batterie est ménagée.
+///
+/// Au premier plan, la relève est une ATTENTE LONGUE (voir
+/// `MailboxClient.fetchAll`) : elle attend déjà jusqu'à 20 s côté serveur,
+/// on la relance donc presque aussitôt.
 Duration intervalleReleve({required bool premierPlan}) =>
-    premierPlan ? const Duration(seconds: 4) : const Duration(seconds: 30);
+    premierPlan ? const Duration(milliseconds: 500) : const Duration(seconds: 30);
+
+/// L'attente longue demandée au serveur, en secondes (0 : réponse immédiate).
+int attenteReleve({required bool premierPlan}) => premierPlan ? 20 : 0;

@@ -15,6 +15,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 import 'appel_outils.dart';
 import 'etat_internet.dart';
+import 'signature_serveur.dart';
 import 'package:web_socket_channel/io.dart';
 
 /// Événement de signaling reçu du serveur.
@@ -202,7 +203,14 @@ class SignalingClient {
       );
 
       // Envoyer le join.
-      _send({'type': 'join', 'peerId': peerId});
+      // La preuve d'identité : sans elle, une fois mon compte verrouillé
+      // (voir signature_serveur.dart), le serveur refuse l'entrée.
+      final preuve = await SignatureServeur.signer(peerId: peerId, methode: 'GET', chemin: '/ws/$roomId');
+      _send({
+        'type': 'join',
+        'peerId': peerId,
+        if (preuve != null) ...{'ts': preuve.ts, 'nonce': preuve.nonce, 'sig': preuve.sig},
+      });
       debugPrint('[Signaling] Rejoint la salle $roomId');
       EtatInternet.signalerReussite();
       return true;

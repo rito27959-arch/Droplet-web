@@ -12,6 +12,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import 'etat_internet.dart';
+import 'signature_serveur.dart';
 import 'package:http/http.dart' as http;
 
 /// Entrée d'un contact dans l'annuaire.
@@ -99,16 +100,21 @@ class DirectoryClient {
     String? fcmToken,
   }) async {
     try {
+      final adresse = Uri.parse('$serverUrl/register');
+      final corps = utf8.encode(jsonEncode({
+        'peerId': peerId,
+        'pseudo': pseudo,
+        'onion': onionAddress,
+        'publicKey': publicKey,
+        if (fcmToken != null) 'fcmToken': fcmToken,
+      }));
       final response = await _client.post(
-        Uri.parse('$serverUrl/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'peerId': peerId,
-          'pseudo': pseudo,
-          'onion': onionAddress,
-          'publicKey': publicKey,
-          if (fcmToken != null) 'fcmToken': fcmToken,
-        }),
+        adresse,
+        headers: {
+          'Content-Type': 'application/json',
+          ...await SignatureServeur.entetes(peerId: peerId, methode: 'POST', adresse: adresse, corps: corps),
+        },
+        body: corps,
       );
 
       if (response.statusCode == 200) {
@@ -135,10 +141,15 @@ class DirectoryClient {
   /// `/presence`, l'appel échoue en silence et l'app continue comme avant.
   Future<bool> battement(String peerId) async {
     try {
+      final adresse = Uri.parse('$serverUrl/presence');
+      final corps = utf8.encode(jsonEncode({'peerId': peerId}));
       final response = await _client.post(
-        Uri.parse('$serverUrl/presence'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'peerId': peerId}),
+        adresse,
+        headers: {
+          'Content-Type': 'application/json',
+          ...await SignatureServeur.entetes(peerId: peerId, methode: 'POST', adresse: adresse, corps: corps),
+        },
+        body: corps,
       );
       if (response.statusCode == 200) {
         EtatInternet.signalerReussite();
@@ -179,10 +190,15 @@ class DirectoryClient {
 
   Future<bool> unregister(String peerId) async {
     try {
+      final adresse = Uri.parse('$serverUrl/register');
+      final corps = utf8.encode(jsonEncode({'peerId': peerId}));
       final response = await _client.delete(
-        Uri.parse('$serverUrl/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'peerId': peerId}),
+        adresse,
+        headers: {
+          'Content-Type': 'application/json',
+          ...await SignatureServeur.entetes(peerId: peerId, methode: 'DELETE', adresse: adresse, corps: corps),
+        },
+        body: corps,
       );
 
       return response.statusCode == 200;
