@@ -73,15 +73,41 @@ class DirectoryClient {
   }
 
   /// Retire un appareil associé : l'annuaire cesse de le servir et la
-  /// boîte aux lettres supprime sa file.
+  /// boîte aux lettres supprime sa file. Signé : personne d'autre que le
+  /// téléphone ne peut couper un de ses appareils.
   Future<bool> revoquerAppareil({required String peerId, required String appareilId}) async {
     try {
+      final adresse = Uri.parse('$serverUrl/appareils/${Uri.encodeComponent(peerId)}/${Uri.encodeComponent(appareilId)}');
       final response = await _client
-          .delete(Uri.parse('$serverUrl/appareils/${Uri.encodeComponent(peerId)}/${Uri.encodeComponent(appareilId)}'))
+          .delete(adresse, headers: await SignatureServeur.entetes(peerId: peerId, methode: 'DELETE', adresse: adresse))
           .timeout(const Duration(seconds: 12));
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
       debugPrint('Annuaire : révocation impossible ($e)');
+      return false;
+    }
+  }
+
+  /// Déclare la clé publique d'un appareil qu'on vient de lier : il aura
+  /// sa propre file dans la boîte aux lettres, et pourra signer ses
+  /// requêtes en son nom.
+  Future<bool> declarerAppareil({required String peerId, required String appareilId, required String cle}) async {
+    try {
+      final adresse = Uri.parse('$serverUrl/appareils/${Uri.encodeComponent(peerId)}/${Uri.encodeComponent(appareilId)}/cle');
+      final corps = utf8.encode(jsonEncode({'cle': cle}));
+      final response = await _client
+          .post(
+            adresse,
+            headers: {
+              'Content-Type': 'application/json',
+              ...await SignatureServeur.entetes(peerId: peerId, methode: 'POST', adresse: adresse, corps: corps),
+            },
+            body: corps,
+          )
+          .timeout(const Duration(seconds: 12));
+      return response.statusCode >= 200 && response.statusCode < 300;
+    } catch (e) {
+      debugPrint('Annuaire : déclaration d\'appareil impossible ($e)');
       return false;
     }
   }

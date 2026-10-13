@@ -231,6 +231,24 @@ class CryptoService {
     );
   }
 
+  /// La clé du canal permanent entre ce téléphone et un appareil lié
+  /// (Droplet Web) : copies des discussions dans un sens, demandes d'envoi
+  /// dans l'autre. Étiquette HKDF à part (`droplet-appareil-v1`) : elle ne
+  /// se confond ni avec la clé de liaison, ni avec celle des serveurs.
+  static Future<SecretKey?> cleAppareil(List<int> clePubliqueAppareil) async {
+    final moi = await _loadIdentityKeyPair();
+    if (moi == null) return null;
+    final secret = await _x25519.sharedSecretKey(
+      keyPair: moi,
+      remotePublicKey: SimplePublicKey(clePubliqueAppareil, type: KeyPairType.x25519),
+    );
+    return Hkdf(hmac: _hmac, outputLength: 32).deriveKey(
+      secretKey: secret,
+      info: utf8.encode('droplet-appareil-v1'),
+      nonce: utf8.encode('droplet-mesh'),
+    );
+  }
+
   /// Le secret partagé avec les SERVEURS Droplet, qui sert à signer les
   /// requêtes (voir `signature_serveur.dart`). Étiquette HKDF à part
   /// (`droplet-auth-v1`) : ce secret ne sert à rien d'autre.

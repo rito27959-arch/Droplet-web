@@ -29,6 +29,7 @@
 // que l'annuaire n'a pas accepté l'enveloppe.
 // ============================================================================
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -38,6 +39,9 @@ import 'package:flutter/foundation.dart';
 import '../config/server_config.dart';
 import 'crypto_service.dart';
 import 'directory_client.dart';
+import 'invitation.dart';
+import 'miroir_appareils.dart';
+import 'qr_code_exchange.dart';
 import 'storage_service.dart';
 
 /// Ce que porte le code QR de Droplet Web.
@@ -73,12 +77,18 @@ class AppareilLie {
     required this.nom,
     required this.lieLe,
     this.dernierAcces,
+    this.cle,
   });
 
   final String id;
   final String nom;
   final DateTime lieLe;
   final DateTime? dernierAcces;
+
+  /// La clé publique X25519 du navigateur (base64). C'est avec elle que le
+  /// téléphone chiffre les copies de discussions qu'il lui envoie. Absente
+  /// pour un appareil lié avant cette version : il faut le relier.
+  final String? cle;
 
   /// Une icône selon le nom (« Safari · macOS », « Edge · Windows »…).
   bool get estMac => nom.contains('macOS');
@@ -88,6 +98,7 @@ class AppareilLie {
         'nom': nom,
         'lieLe': lieLe.toIso8601String(),
         'dernierAcces': dernierAcces?.toIso8601String(),
+        'cle': ?cle,
       };
 
   factory AppareilLie.fromJson(Map<String, dynamic> j) => AppareilLie(
@@ -95,6 +106,7 @@ class AppareilLie {
         nom: j['nom'] as String? ?? 'Droplet Web',
         lieLe: DateTime.tryParse(j['lieLe'] as String? ?? '') ?? DateTime.now(),
         dernierAcces: j['dernierAcces'] == null ? null : DateTime.tryParse(j['dernierAcces'] as String),
+        cle: j['cle'] as String?,
       );
 }
 
@@ -143,6 +155,18 @@ class AppareilsLies {
     final hasard = Random.secure();
     final appareilId = base64Url.encode(List<int>.generate(9, (_) => hasard.nextInt(256)));
     final lieLe = DateTime.now().toUtc();
+    final cleNavigateur = base64Encode(invitation.cle);
+
+    // D'ABORD la file du navigateur dans la boîte aux lettres : sans elle,
+    // il serait lié mais sourd. Si l'annuaire refuse, on n'envoie rien.
+    final declare = await _annuaire.declarerAppareil(peerId: moi.id, appareilId: appareilId, cle: cleNavigateur);
+    if (!declare) return ResultatLiaison.serveurInjoignable;
+
+    // Le lien d'invitation du compte, pour le bouton « Inviter » du web.
+    String? invitationCompte;
+    try {
+      invitationCompte = InvitationDroplet.lien(await QrCodeExchange.generateQrData());
+    } catch (_) {}
     final contenu = utf8.encode(jsonEncode({
       'peerId': moi.id,
       'pseudo': moi.pseudo,
@@ -151,6 +175,7 @@ class AppareilsLies {
       'lieLe': lieLe.toIso8601String(),
       'annuaire': kDirectoryUrl,
       'boite': kMailboxUrl,
+      'invitation': ?invitationCompte,
     }));
     final aes = AesGcm.with256bits();
     final boite = await aes.encrypt(contenu, secretKey: cle);
@@ -166,10 +191,18 @@ class AppareilsLies {
     final ok = await _annuaire.publierLiaison(canal: invitation.canal, enveloppe: enveloppe);
     if (!ok) return ResultatLiaison.serveurInjoignable;
 
-    await _enregistrer([
-      ...liste(),
-      AppareilLie(id: appareilId, nom: invitation.nom, lieLe: lieLe.toLocal(), dernierAcces: DateTime.now()),
-    ]);
+    final appareil = AppareilLie(
+      id: appareilId,
+      nom: invitation.nom,
+      lieLe: lieLe.toLocal(),
+      dernierAcces: DateTime.now(),
+      cle: cleNavigateur,
+    );
+    await _enregistrer([...liste(), appareil]);
+    // Les discussions récentes partent tout de suite vers le navigateur :
+    // il les trouve en arrivant, même si le téléphone s'éteint ensuite.
+    final miroir = MiroirAppareils.actuel;
+    if (miroir != null) unawaited(miroir.synchroniser(appareil));
     return ResultatLiaison.lie;
   }
 
@@ -180,6 +213,7 @@ class AppareilsLies {
     final moi = StorageService.currentUser;
     final ok = moi != null && await _annuaire.revoquerAppareil(peerId: moi.id, appareilId: a.id);
     await _enregistrer(liste().where((x) => x.id != a.id).toList());
+    MiroirAppareils.actuel?.oublierCle(a.id);
     return ok;
   }
 

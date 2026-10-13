@@ -39,6 +39,7 @@ import '../../features/chat/location_message.dart';
 import '../../features/chat/poll_message.dart';
 import '../services/nom_pair.dart';
 import '../services/crypto_service.dart';
+import '../services/miroir_appareils.dart';
 import '../services/storage_service.dart';
 import '../services/mesh_transport_service.dart';
 import '../services/ble_mesh_protocol.dart';
@@ -294,6 +295,7 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
   StreamSubscription<String>? _repairedSub;
   Timer? _readDelayTimer;
   Timer? _mailboxPollTimer;
+  late final MiroirAppareils _miroir;
 
   /// Événements de réaction entrants (pour déclencher l'overlay côté UI).
   final _reactionEventCtrl = StreamController<({String messageId, String emoji})>.broadcast();
@@ -314,6 +316,26 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
   }
 
   MeshNotifier(this._repo, this._showToast) : super(StorageService.getMessages()) {
+    // Droplet Web et les autres appareils liés : chaque changement de la
+    // liste part vers eux, et leurs demandes d'envoi passent par ici.
+    _miroir = MiroirAppareils(
+      _repo,
+      envoyer: (cible, texte, {String? id, String? reponseA}) => sendMessage(
+        StorageService.currentUser?.pseudo ?? '',
+        texte,
+        targetId: cible,
+        id: id,
+        replyToId: reponseA,
+      ),
+      envoyerGroupe: (groupe, texte, {String? id, String? reponseA}) => sendGroupMessage(
+        StorageService.currentUser?.pseudo ?? '',
+        texte,
+        groupId: groupe,
+        id: id,
+        replyToId: reponseA,
+      ),
+    );
+    addListener(_miroir.surMessages);
     _peerSub = _repo.peerEvents?.listen((_) => _flushOutbox());
     _ackSub = _repo.ackEvents.listen((messageId) {
       // Haptique de livraison : vibrer légèrement quand un message arrive
@@ -559,6 +581,13 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         final cipherText = parsed?['c'] as String?;
         final nonce = parsed?['n'] as String?;
         if (cipherText == null || nonce == null) {
+          await _repo.transport.acknowledgeMailboxMessage(mbMsg.id);
+          continue;
+        }
+
+        // ── Une DEMANDE d'un appareil lié (Droplet Web) ────────────────
+        if (parsed?['l'] == 1) {
+          await _miroir.recevoir(mbMsg.fromPeerId, parsed!);
           await _repo.transport.acknowledgeMailboxMessage(mbMsg.id);
           continue;
         }
@@ -1202,7 +1231,7 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
   /// avant que l'envoi réel ne soit confirmé — l'utilisateur n'attend
   /// jamais devant un écran vide.
   Future<void> sendMessage(String pseudo, String content,
-      {String type = 'text', String? imageUrl, String? audioUrl, String? replyToId, String? targetId, String? effect, String? threadId, String? forwardedFrom}) async {
+      {String type = 'text', String? imageUrl, String? audioUrl, String? replyToId, String? targetId, String? effect, String? threadId, String? forwardedFrom, String? id}) async {
     // On ne peut pas écrire à un contact qu'on a bloqué.
     if (targetId != null && StorageService.isContactBlocked(targetId)) return;
     // Messages éphémères : si la conversation a un timer, l'appliquer.
@@ -1210,7 +1239,9 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         ? StorageService.getEphemeralTimer(targetId)
         : 0;
     final msg = MeshMessage(
-      id: BleMeshProtocol.generateMessageId(),
+      // `id` imposé : un message écrit sur Droplet Web garde l'identifiant
+      // que le navigateur lui a donné, pour qu'il s'y retrouve.
+      id: id ?? BleMeshProtocol.generateMessageId(),
       authorPseudo: pseudo,
       content: content,
       type: type,
@@ -1309,12 +1340,13 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
   /// Envoie un message dans un groupe (chiffré avec ma sender-key).
   Future<void> sendGroupMessage(String pseudo, String content, {
     required String groupId,
+    String? id,
     String? replyToId,
     String? effect,
     String? threadId,
   }) async {
     final msg = MeshMessage(
-      id: BleMeshProtocol.generateMessageId(),
+      id: id ?? BleMeshProtocol.generateMessageId(),
       authorPseudo: pseudo,
       content: content,
       type: 'text',
