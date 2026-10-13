@@ -48,7 +48,9 @@ class ReponseHttp {
 /// Une requête HTTP depuis le navigateur.
 Future<ReponseHttp> requete(String methode, String url, {Map<String, String> entetes = const {}, String? corps, Duration delai = const Duration(seconds: 30)}) async {
   final h = web.Headers();
-  entetes.forEach(h.append);
+  for (final e in entetes.entries) {
+    h.append(e.key, e.value);
+  }
   final init = web.RequestInit(method: methode, headers: h, cache: 'no-store');
   if (corps != null) init.body = corps.toJS;
   final r = await web.window.fetch(url.toJS, init).toDart.timeout(delai);

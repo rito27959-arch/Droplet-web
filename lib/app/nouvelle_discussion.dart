@@ -294,7 +294,7 @@ class _PanneauNouveauGroupeState extends State<PanneauNouveauGroupe> {
                 child: ChampRecherche(
                   indication: l.nmFindByPseudo,
                   autofocus: true,
-                  onChanged: _chercher,
+                  onChanged: (v) => setState(() => _q = v.trim().toLowerCase()),
                 ),
               ),
               Expanded(
