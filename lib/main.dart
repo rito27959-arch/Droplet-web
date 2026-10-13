@@ -28,6 +28,7 @@ import 'donnees/depot.dart';
 import 'donnees/modeles.dart';
 import 'donnees/transport.dart';
 import 'l10n/generated/app_localizations.dart';
+import 'liaison/compte_lie.dart';
 import 'liaison/ecran_liaison.dart';
 import 'textes.dart';
 import 'web/navigateur.dart';
@@ -56,7 +57,38 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    if (Uri.base.queryParameters.containsKey('apercu')) _entrerDemo();
+    if (Uri.base.queryParameters.containsKey('apercu')) {
+      _entrerDemo();
+    } else {
+      final compte = CompteLie.charge();
+      if (compte != null) _entrerCompte(compte);
+    }
+  }
+
+  CompteLie? _compte;
+
+  /// Le téléphone vient de lier ce navigateur, ou il l'avait déjà fait.
+  void _entrerCompte(CompteLie compte, {bool? rester}) {
+    if (rester != null) compte.enregistrer(durable: rester);
+    _ui = Interface();
+    final depot = Depot(
+      transport: TransportDroplet(verifier: () async {
+        // Le téléphone a pu déconnecter ce navigateur entre-temps.
+        final lie = await compte.toujoursLie();
+        if (lie == false && mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _quitter());
+        }
+        return lie != null;
+      }),
+      langue: _textes.code,
+    );
+    depot.addListener(_appliquerReglages);
+    depot.demarrer();
+    if (depot.profil.pseudo.isEmpty) depot.majProfil(pseudo: compte.pseudo);
+    setState(() {
+      _compte = compte;
+      _depot = depot;
+    });
   }
 
   void _entrerDemo() {
@@ -87,6 +119,11 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
   }
 
   void _quitter() {
+    if (_compte != null) {
+      CompteLie.oublier();
+      _depot?.toutEffacer();
+      _compte = null;
+    }
     _depot?.removeListener(_appliquerReglages);
     _depot?.dispose();
     web.window.history.replaceState(null, '', web.window.location.pathname);
@@ -178,7 +215,11 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
           ? enfant!
           : Portee(depot: depot, ui: _ui, textes: _textes, child: enfant!),
       home: depot == null
-          ? EcranLiaison(textes: _textes, onDemo: _entrerDemo)
+          ? EcranLiaison(
+              textes: _textes,
+              onDemo: _entrerDemo,
+              onLie: (compte, rester) => _entrerCompte(compte, rester: rester),
+            )
           : Coquille(onDeconnexion: _quitter),
     );
   }

@@ -198,7 +198,7 @@ class _CoquilleState extends State<Coquille> {
         onDeconnexion: widget.onDeconnexion,
         child: Column(
           children: [
-            if (depot.demo) _BandeauDemo(onQuitter: widget.onDeconnexion),
+            if (depot.demo) _BandeauDemo(onQuitter: widget.onDeconnexion) else const _BandeauSynchro(),
             Expanded(child: corps),
           ],
         ),
@@ -257,6 +257,35 @@ class _BandeauDemo extends StatelessWidget {
                 decoration: survol ? TextDecoration.underline : null,
                 decorationColor: OuroColors.accent,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Le bandeau du compte lié, tant que les messages ne transitent pas.
+class _BandeauSynchro extends StatelessWidget {
+  const _BandeauSynchro();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 34),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+      color: OuroColors.systemGreen.withValues(alpha: OuroColors.isDark ? 0.18 : 0.1),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.link_rounded, size: 16, color: OuroColors.systemGreen),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              context.t.synchroBientot,
+              textAlign: TextAlign.center,
+              style: OuroTypography.footnote.copyWith(color: OuroColors.label),
             ),
           ),
         ],

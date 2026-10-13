@@ -121,3 +121,44 @@ class TransportDemo implements Transport {
     });
   }
 }
+
+/// Le transport du compte lié — premier étage du vrai réseau.
+///
+/// Aujourd'hui il sait dire si le réseau Droplet répond (l'annuaire), ce
+/// qui allume ou éteint le bandeau « Connexion… ». La suite (étape 3 du
+/// plan) branche ici la boîte aux lettres : une file par appareil, les
+/// messages chiffrés avec le protocole Signal pour chacun. Tant que ce
+/// n'est pas fait, un envoi échoue proprement (point d'exclamation rouge,
+/// « Réessayer »), plutôt que de faire semblant.
+class TransportDroplet implements Transport {
+  TransportDroplet({required this.verifier});
+
+  /// Interroge le réseau (l'annuaire) : vrai s'il répond.
+  final Future<bool> Function() verifier;
+
+  final _recus = StreamController<Paquet>.broadcast();
+  final _etat = ValueNotifier(EtatConnexion.connexion);
+  Timer? _battement;
+
+  @override
+  Stream<Paquet> get recus => _recus.stream;
+
+  @override
+  ValueListenable<EtatConnexion> get etat => _etat;
+
+  @override
+  Future<void> connecter() async {
+    Future<void> sonder() async {
+      final ok = await verifier();
+      _etat.value = ok ? EtatConnexion.connecte : EtatConnexion.horsLigne;
+    }
+
+    await sonder();
+    _battement ??= Timer.periodic(const Duration(seconds: 30), (_) => sonder());
+  }
+
+  @override
+  Future<void> envoyer(Paquet paquet, {required List<String> destinataires}) async {
+    throw StateError('La synchronisation des messages n’est pas encore activée');
+  }
+}

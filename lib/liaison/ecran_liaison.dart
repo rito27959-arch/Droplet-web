@@ -24,15 +24,19 @@ import '../design_system/ouro_typography.dart';
 import '../fond/goutte.dart';
 import '../fond/maillage.dart';
 import '../textes.dart';
+import 'compte_lie.dart';
 import 'invitation_liaison.dart';
 
 /// La courbe de sortie d'Apple : rapide au départ, très douce à l'arrivée.
 const Curve kSortie = Cubic(0.16, 1, 0.3, 1);
 
 class EcranLiaison extends StatefulWidget {
-  const EcranLiaison({super.key, required this.textes, this.onDemo});
+  const EcranLiaison({super.key, required this.textes, this.onDemo, this.onLie});
 
   final Textes textes;
+
+  /// Le téléphone a lié ce navigateur : le compte, et « Rester connecté ».
+  final void Function(CompteLie compte, bool rester)? onLie;
 
   /// « Essayer la démonstration » : l'interface complète, avec des
   /// discussions d'exemple, sans téléphone.
@@ -64,9 +68,18 @@ class _EcranLiaisonState extends State<EcranLiaison> {
     });
   }
 
+  AttenteLiaison? _attente;
+
   Future<void> _renouveler() async {
     final nouvelle = await InvitationLiaison.nouvelle();
     if (!mounted) return;
+    // Un nouveau code, un nouveau canal : on écoute celui-là.
+    _attente?.arreter();
+    _attente = AttenteLiaison(nouvelle, onLie: (compte) {
+      _minuteur?.cancel();
+      widget.onLie?.call(compte, _rester);
+    })
+      ..demarrer();
     setState(() {
       _invitation = nouvelle;
       _restant = _duree;
@@ -75,6 +88,7 @@ class _EcranLiaisonState extends State<EcranLiaison> {
 
   @override
   void dispose() {
+    _attente?.arreter();
     _minuteur?.cancel();
     super.dispose();
   }

@@ -145,6 +145,7 @@ class Textes {
   String get viderDiscussion => _('viderDiscussion');
   String get viderTexte => _('viderTexte');
   String get vocal => _('vocal');
+  String get synchroBientot => _('synchroBientot');
   String get voirDansDiscussion => _('voirDansDiscussion');
   String get vous => _('vous');
   String get vousAvezSupprime => _('vousAvezSupprime');
