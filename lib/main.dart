@@ -21,6 +21,7 @@ import 'package:web/web.dart' as web;
 
 import 'app/coquille.dart';
 import 'app/portee.dart';
+import 'design_system/droplet_design.dart';
 import 'design_system/ouro_colors.dart';
 import 'design_system/ouro_typography.dart';
 import 'design_system/reglages_apparence.dart';
@@ -37,7 +38,7 @@ Future<void> main() async {
   await initializeDateFormatting();
   // Le rose de la goutte : la couleur de Droplet tant que les réglages
   // n'en ont pas choisi une autre.
-  ReglagesApparence.accent = ReglagesApparence.accentParCle('rose');
+  ReglagesApparence.accent = ReglagesApparence.accentParCle(DDAccents.defaut);
   runApp(const DropletWeb());
 }
 

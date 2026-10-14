@@ -39,3 +39,14 @@ flutter:
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Variable.ttf
+    # Inter Tight : les grands titres, comme sur les sites et dans Droplet
+    # Drop (Droplet Design). Trois fichiers statiques, les seules graisses
+    # des titres. Même licence (SIL OFL 1.1), mêmes auteurs qu'Inter.
+    - family: Inter Tight
+      fonts:
+        - asset: assets/fonts/InterTight_600SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/InterTight_700Bold.ttf
+          weight: 700
+        - asset: assets/fonts/InterTight_800ExtraBold.ttf
+          weight: 800
