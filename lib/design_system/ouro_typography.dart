@@ -43,6 +43,8 @@
 
 import 'package:flutter/material.dart';
 
+import 'droplet_design.dart';
+
 /// Échelle typographique iOS (Dynamic Type, taille par défaut « Large »).
 /// Valeurs officielles des Human Interface Guidelines d'Apple.
 class OuroTypography {
@@ -89,24 +91,37 @@ class OuroTypography {
     );
   }
 
-  // ══ GRANDS TITRES ════════════════════════════════════════════════════
-  // Le titre qui occupe tout le haut d'un écran et se replie au scroll.
+  // ══ GRANDS TITRES — ceux de la famille ═══════════════════════════════
+  // Les titres sont en INTER TIGHT, serrés, comme sur dropletmesh.app et
+  // dans Droplet Drop (Droplet Design, voir droplet_design.dart).
+  //
+  // Pourquoi s'écarter ici de l'échelle d'iOS, qui AÈRE ses grands titres
+  // (+0,37 à 34 pt) ? Parce que cet espacement est calibré pour SF Pro
+  // Display, dont le dessin est déjà serré. Inter, plus large, aéré de la
+  // même façon, donnait des titres lâches : c'est ce qui faisait paraître
+  // l'app moins finie que le site. Inter Tight est la coupe d'Inter dessinée
+  // pour les grandes tailles ; serrée de 2 %, elle donne la tenue des titres
+  // d'apple.com — et les mêmes titres d'une app Droplet à l'autre.
+  //
+  // Seules les tailles de titre changent de police ; le texte reste en
+  // Inter, à l'échelle exacte d'iOS.
+
+  static TextStyle _titre(TextStyle famille, {required double lineHeight}) => famille.copyWith(
+        fontFamilyFallback: const [fontFamily],
+        height: lineHeight / famille.fontSize!,
+      );
 
   /// Large Title — 34pt. Le grand titre en haut des écrans principaux.
-  static TextStyle get largeTitle =>
-      _font(size: 34, weight: FontWeight.w700, lineHeight: 41, tracking: 0.37);
+  static TextStyle get largeTitle => _titre(DDTypo.grandTitre, lineHeight: 41);
 
   /// Title 1 — 28pt.
-  static TextStyle get title1 =>
-      _font(size: 28, weight: FontWeight.w700, lineHeight: 34, tracking: 0.36);
+  static TextStyle get title1 => _titre(DDTypo.titre1, lineHeight: 34);
 
   /// Title 2 — 22pt.
-  static TextStyle get title2 =>
-      _font(size: 22, weight: FontWeight.w700, lineHeight: 28, tracking: 0.35);
+  static TextStyle get title2 => _titre(DDTypo.titre2, lineHeight: 28);
 
   /// Title 3 — 20pt.
-  static TextStyle get title3 =>
-      _font(size: 20, weight: FontWeight.w600, lineHeight: 25, tracking: 0.38);
+  static TextStyle get title3 => _titre(DDTypo.titre3, lineHeight: 25);
 
   // ══ CORPS DE TEXTE ═══════════════════════════════════════════════════
   // 17pt est LA taille de référence d'iOS — celle du texte d'un message,

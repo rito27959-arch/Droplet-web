@@ -15,6 +15,8 @@
 
 import 'package:flutter/material.dart';
 
+import 'droplet_design.dart';
+
 /// Une couleur d'accent, en version claire et sombre.
 class Accent {
   const Accent(this.cle, this.clair, this.sombre);
@@ -38,25 +40,18 @@ class ReglagesApparence {
   static const double rayonMax = 20;
   static const double rayonDefaut = 19;
 
-  /// Les accents proposés : le bleu iOS d'abord, puis le cercle chromatique.
-  /// Les versions sombres sont celles d'iOS (légèrement plus lumineuses).
-  static const List<Accent> accents = [
-    Accent('bleu', Color(0xFF007AFF), Color(0xFF0A84FF)),
-    Accent('indigo', Color(0xFF5856D6), Color(0xFF5E5CE6)),
-    Accent('violet', Color(0xFFAF52DE), Color(0xFFBF5AF2)),
-    Accent('rose', Color(0xFFFF2D55), Color(0xFFFF375F)),
-    Accent('rouge', Color(0xFFFF3B30), Color(0xFFFF453A)),
-    Accent('orange', Color(0xFFFF9500), Color(0xFFFF9F0A)),
-    Accent('vert', Color(0xFF34C759), Color(0xFF30D158)),
-    Accent('menthe', Color(0xFF00C7BE), Color(0xFF63E6E2)),
-    Accent('cyan', Color(0xFF32ADE6), Color(0xFF64D2FF)),
-    Accent('graphite', Color(0xFF8E8E93), Color(0xFF98989D)),
+  /// Les accents proposés : ceux de toute la famille Droplet, dans le même
+  /// ordre que sur le site et dans Droplet Drop (Droplet Design). La GOUTTE
+  /// (rose) ouvre la liste : c'est la couleur du logo, donc celle qu'on voit
+  /// sans rien choisir. Les versions sombres sont celles d'iOS.
+  static final List<Accent> accents = [
+    for (final a in DDAccents.liste) Accent(a.cle, a.clair, a.sombre),
   ];
 
   // ── L'état courant ──────────────────────────────────────────────────
   static double tailleTexte = tailleTexteDefaut;
   static double rayonBulles = rayonDefaut;
-  static Accent accent = accents.first;
+  static Accent accent = accentParCle(DDAccents.defaut);
   static int lignesListe = 3;
 
   /// Le jeu de motifs du fond des discussions (index de `PackMotifs`).

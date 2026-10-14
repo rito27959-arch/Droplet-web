@@ -11,6 +11,7 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../design_system/droplet_design.dart';
 import '../../design_system/reglages_apparence.dart';
 import '../services/storage_service.dart';
 
@@ -19,7 +20,7 @@ class Personnalisation {
   const Personnalisation({
     this.tailleTexte = ReglagesApparence.tailleTexteDefaut,
     this.rayonBulles = ReglagesApparence.rayonDefaut,
-    this.accent = 'bleu',
+    this.accent = DDAccents.defaut,
     this.lignesListe = 3,
     this.packMotifs = 0,
   });
