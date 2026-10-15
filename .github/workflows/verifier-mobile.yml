@@ -15,7 +15,7 @@ jobs:
           cache: true
       - run: |
           set +e
-          { flutter pub get; echo "pub: $?"; flutter analyze --no-fatal-infos --no-fatal-warnings lib; echo "analyse: $?"; flutter test test/crypto_service_test.dart --reporter expanded; echo "tests crypto: $?"; } > journal.txt 2>&1
+          { flutter pub get; echo "pub: $?"; flutter analyze --no-fatal-infos --no-fatal-warnings lib; echo "analyse: $?"; mkdir -p assets/sounds assets/icon/variants assets/icon/premuim assets/stickers assets/lottie assets/fonts; [ -f assets/fonts/Inter-Variable.ttf ] || touch assets/fonts/Inter-Variable.ttf; flutter test test/crypto_service_test.dart --reporter expanded; echo "tests crypto: $?"; } > journal.txt 2>&1
           cp journal.txt /tmp/j.txt
           git config user.name ci; git config user.email ci@users.noreply.github.com
           git checkout --orphan journal-mobile; git rm -rfq . >/dev/null; cp /tmp/j.txt journal.txt
