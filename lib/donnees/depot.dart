@@ -289,17 +289,125 @@ class Depot extends ChangeNotifier {
   void epinglerDiscussion(Discussion d) {
     d.epinglee = !d.epinglee;
     _changer();
+    _etatAuTelephone(d.id, 'epinglee', d.epinglee);
   }
 
   void archiver(Discussion d) {
     d.archivee = !d.archivee;
     if (d.archivee) d.epinglee = false;
     _changer();
+    _etatAuTelephone(d.id, 'archivee', d.archivee);
   }
 
   void sourdine(Discussion d) {
     d.sourdine = !d.sourdine;
     _changer();
+    _etatAuTelephone(d.id, 'sourdine', d.sourdine);
+  }
+
+  // ══ L'ÉTAT PARTAGÉ AVEC LE TÉLÉPHONE ═════════════════════════════════
+  //
+  // Comme WhatsApp : épingler, archiver, mettre en sourdine, bloquer,
+  // épingler ou mettre un message en favori… se refait sur le téléphone.
+  // Le changement est montré tout de suite ici, puis le téléphone renvoie
+  // son état réel (`_appliquerEtat`), qui fait foi.
+
+  /// Ce qu'on vient de changer ici et que le téléphone n'a peut-être pas
+  /// encore appliqué : un instantané arrivé entre-temps ne doit pas le
+  /// faire revenir en arrière une seconde (l'interrupteur qui « rebondit »).
+  final Map<String, DateTime> _enAttente = {};
+  bool _attend(String cle) {
+    final t = _enAttente[cle];
+    if (t == null) return false;
+    if (DateTime.now().difference(t) < const Duration(seconds: 8)) return true;
+    _enAttente.remove(cle);
+    return false;
+  }
+
+  void _etatAuTelephone(String discussionId, String champ, Object valeur) {
+    _enAttente['$discussionId|$champ'] = DateTime.now();
+    unawaited(transport.demander({'t': 'etat', 'd': discussionId, 'champ': champ, 'valeur': valeur}));
+  }
+
+  void _etatMessageAuTelephone(String id, String champ, bool valeur) {
+    _enAttente['m|$id|$champ'] = DateTime.now();
+    unawaited(transport.demander({'t': 'msg_etat', 'id': id, 'champ': champ, 'valeur': valeur}));
+  }
+
+  /// Les discussions verrouillées sur le téléphone : jamais montrées ici.
+  final Set<String> _verrouillees = {};
+  DateTime _derniereResynchro = DateTime(0);
+
+  /// L'instantané d'état envoyé par le téléphone (voir `miroir_appareils`).
+  void _appliquerEtat(Map<String, dynamic> e) {
+    final disc = (e['disc'] as Map?)?.cast<String, dynamic>() ?? const {};
+    var manquante = false;
+    for (final x in disc.entries) {
+      final s = (x.value as Map?)?.cast<String, dynamic>();
+      if (s == null) continue;
+      if (s['v'] == true) {
+        // Verrouillée sur le téléphone : elle disparaît du navigateur.
+        _verrouillees.add(x.key);
+        discussions.remove(x.key);
+        _messages.remove(x.key);
+        if (discussionOuverte == x.key) discussionOuverte = null;
+        continue;
+      }
+      if (_verrouillees.remove(x.key)) manquante = true;
+      final d = discussions[x.key];
+      if (d == null) {
+        manquante = true;
+        continue;
+      }
+      if (!_attend('${d.id}|epinglee')) d.epinglee = s['e'] == true;
+      if (!_attend('${d.id}|archivee')) d.archivee = s['a'] == true;
+      if (!_attend('${d.id}|sourdine')) d.sourdine = s['s'] == true;
+      if (!_attend('${d.id}|ephemere')) d.ephemereSecondes = (s['x'] as num?)?.toInt() ?? 0;
+    }
+    final epingles = <String>{
+      for (final l in ((e['epingles'] as Map?)?.values ?? const <Object?>[]))
+        if (l is List) ...l.whereType<String>(),
+    };
+    final importants = <String>{...((e['importants'] as List?) ?? const []).whereType<String>()};
+    for (final liste in _messages.values) {
+      for (final m in liste) {
+        if (!_attend('m|${m.id}|epingle')) m.epingle = epingles.contains(m.id);
+        if (!_attend('m|${m.id}|important')) m.important = importants.contains(m.id);
+      }
+    }
+    final bloques = <String>{...((e['bloques'] as List?) ?? const []).whereType<String>()};
+    for (final c in contacts.values) {
+      if (!_attend('p:${c.id}|bloque')) c.bloque = bloques.contains(c.id);
+    }
+    final presence = (e['presence'] as Map?)?.cast<String, dynamic>() ?? const {};
+    for (final x in presence.entries) {
+      final c = contacts[x.key];
+      final p = (x.value as Map?)?.cast<String, dynamic>();
+      if (c == null || p == null) continue;
+      c.enLigne = p['l'] == true;
+      final vu = p['vu'];
+      if (vu is String) c.vuA = DateTime.tryParse(vu)?.toLocal();
+    }
+    // Une discussion que le navigateur ne connaît pas (déverrouillée, ou
+    // créée pendant qu'il était fermé) : il redemande tout, une fois par
+    // minute au plus.
+    if (manquante && DateTime.now().difference(_derniereResynchro) > const Duration(minutes: 1)) {
+      _derniereResynchro = DateTime.now();
+      unawaited(transport.demander({'t': 'synchro'}));
+    }
+    _changer();
+  }
+
+  /// Le téléphone a vu quelqu'un écrire.
+  void _appliquerFrappe(Map<String, dynamic> f) {
+    final d = f['d'];
+    final a = f['a'];
+    if (d is! String || a is! String || !discussions.containsKey(d)) return;
+    enTrainDecrire.putIfAbsent(d, () => {}).add(a);
+    notifyListeners();
+    Timer(const Duration(seconds: 6), () {
+      if (enTrainDecrire[d]?.remove(a) ?? false) notifyListeners();
+    });
   }
 
   void marquerNonLue(Discussion d) {
@@ -321,6 +429,7 @@ class Depot extends ChangeNotifier {
 
   void definirEphemere(Discussion d, int secondes) {
     d.ephemereSecondes = secondes;
+    _etatAuTelephone(d.id, 'ephemere', secondes);
     _ajouter(Message(
       id: _id('s'),
       discussionId: d.id,
@@ -386,6 +495,7 @@ class Depot extends ChangeNotifier {
   void bloquer(Contact c) {
     c.bloque = !c.bloque;
     _changer();
+    _etatAuTelephone('p:${c.id}', 'bloque', c.bloque);
   }
 
   void enregistrerBrouillon(Discussion d, String texte) {
@@ -516,11 +626,13 @@ class Depot extends ChangeNotifier {
     }
     m.epingle = !m.epingle;
     _changer();
+    _etatMessageAuTelephone(m.id, 'epingle', m.epingle);
   }
 
   void marquerImportant(Message m) {
     m.important = !m.important;
     _changer();
+    _etatMessageAuTelephone(m.id, 'important', m.important);
   }
 
   void reessayer(Message m) {
@@ -531,9 +643,15 @@ class Depot extends ChangeNotifier {
     _envoyerAuTransport(d, m);
   }
 
+  final Map<String, DateTime> _frappeSignalee = {};
+
+  /// On écrit ici : le téléphone prévient le contact (« en train
+  /// d'écrire… »), au plus toutes les 2,5 s, comme l'app.
   void signalerFrappe(Discussion d) {
-    // Le vrai transport préviendra les autres appareils ; la démo n'en a
-    // pas besoin.
+    final maintenant = DateTime.now();
+    if (maintenant.difference(_frappeSignalee[d.id] ?? DateTime(0)) < const Duration(milliseconds: 2500)) return;
+    _frappeSignalee[d.id] = maintenant;
+    unawaited(transport.demander({'t': 'frappe', 'd': d.id}));
   }
 
   // ══ STATUTS, APPELS, PROFIL ══════════════════════════════════════════
@@ -689,6 +807,13 @@ class Depot extends ChangeNotifier {
   /// dans l'app) : contacts, discussions et messages, créés ou mis à jour.
   void appliquerLot(Map<String, dynamic> lot) {
     telephoneVu = true;
+    final etat = lot['etat'];
+    if (etat is Map) _appliquerEtat(etat.cast<String, dynamic>());
+    final frappe = lot['frappe'];
+    if (frappe is Map) _appliquerFrappe(frappe.cast<String, dynamic>());
+    if (etat is Map || frappe is Map) {
+      if (lot['messages'] == null && lot['discussions'] == null && lot['profil'] == null) return;
+    }
     final f = lot['fichier'];
     if (f is Map) {
       _morceauRecu(f.cast<String, dynamic>());
