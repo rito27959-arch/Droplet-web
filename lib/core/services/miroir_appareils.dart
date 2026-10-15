@@ -66,6 +66,17 @@
 //                          | "op":"retirer", "membre"
 //                          | "op":"quitter"
 //           {"t":"profil", "pseudo"}
+//           {"t":"statut", "texte", "fond"}           statut texte seul
+//           {"t":"fichier", "but":"statut", "k":"photo"|"video"|"voice",
+//            "texte", "fond", "ms", …morceaux…}       statut avec média
+//           {"t":"statut_vu", "id", "auteur"}
+//           {"t":"statut_reaction", "id", "auteur", "emoji"}
+//           {"t":"statut_reponse", "id", "auteur", "texte"}
+//   L'instantané d'état porte aussi les statuts actifs :
+//     "statuts":[{"id","a":<auteur>|"moi","pseudo","texte","date",
+//                 "k":"texte"|"photo"|"video"|"voice","nom","mime","ms",
+//                 "fond":ARGB,"vu":bool}]
+//   et « telecharger » accepte l'id d'un statut (son média).
 //   Les discussions de groupe portent aussi "admins" (["moi" si je le
 //   suis, puis les peerIds) et "description".
 //
@@ -114,6 +125,8 @@ import '../models/mesh_message.dart';
 import '../repositories/mesh_repository.dart';
 import '../../features/chat/messages_importants.dart';
 import '../../features/group/reglages_groupe.dart';
+import '../../features/status/ordre_statuts.dart';
+import '../models/status_media.dart';
 import 'appareils_lies.dart';
 import 'epingles.dart';
 import 'presence_internet.dart';
@@ -268,12 +281,42 @@ class MiroirAppareils {
       if (d.startsWith('p:')) presence[cle] = _presence(cle);
     }
     return {
+      'statuts': _statuts(moi),
       'disc': etat,
       'epingles': epingles,
       'importants': [for (final m in MessagesImportants.tous()) m.id],
       'bloques': StorageService.getBlockedContacts().toList(),
       'presence': presence,
     };
+  }
+
+  /// Les statuts actifs (24 h), des contacts non bloqués et les miens.
+  static List<Map<String, dynamic>> _statuts(String moi) {
+    final bloques = StorageService.getBlockedContacts();
+    final actifs = StorageService.getActiveStatuses()
+        .where((s) => !s.isExpired && !bloques.contains(s.authorId))
+        .toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return [
+      for (final s in actifs.length > 120 ? actifs.sublist(actifs.length - 120) : actifs)
+        () {
+          final media = StorageService.getStatusMedia(s.id);
+          final avecFichier = media.hasMedia;
+          return {
+            'id': s.id,
+            'a': s.authorId == moi ? 'moi' : s.authorId,
+            'pseudo': s.authorPseudo,
+            'texte': s.content,
+            'date': s.createdAt.toUtc().toIso8601String(),
+            'k': avecFichier ? media.kind.name : 'texte',
+            if (avecFichier) 'nom': media.fileName,
+            if (avecFichier) 'mime': media.mimeType,
+            if (media.durationMs != null) 'ms': media.durationMs,
+            if (media.backgroundColor != null) 'fond': media.backgroundColor,
+            'vu': StatutsVus.estVu(s.id),
+          };
+        }(),
+    ];
   }
 
   /// En ligne : à portée du maillage, ou signe de vie par Internet de moins
@@ -458,6 +501,28 @@ class MiroirAppareils {
           await _appliquerGroupe(j);
         case 'profil':
           await _appliquerProfil(j);
+        case 'statut':
+          final texte = (j['texte'] as String? ?? '').trim();
+          if (texte.isEmpty || texte.length > 700) return true;
+          await _repo.sendStatus(texte, media: StatusMedia(backgroundColor: j['fond'] as int?));
+          _dernierEtat = null;
+          await _pousserEtat();
+        case 'statut_vu':
+          final id = j['id'] as String? ?? '';
+          final auteur = j['auteur'] as String? ?? '';
+          if (id.isEmpty) return true;
+          StatutsVus.marquer(id);
+          if (auteur.isNotEmpty) unawaited(_repo.sendStatusSeen(authorId: auteur, statusId: id).then<void>((_) {}, onError: (Object _) {}));
+        case 'statut_reaction':
+          final auteur = j['auteur'] as String? ?? '';
+          final emoji = j['emoji'] as String? ?? '';
+          if (auteur.isEmpty || emoji.isEmpty || emoji.length > 16) return true;
+          await _repo.sendStatusFeedback(authorId: auteur, statusId: j['id'] as String? ?? '', emoji: emoji);
+        case 'statut_reponse':
+          final auteur = j['auteur'] as String? ?? '';
+          final texte = (j['texte'] as String? ?? '').trim();
+          if (auteur.isEmpty || texte.isEmpty || texte.length > 2000) return true;
+          await _repo.sendStatusFeedback(authorId: auteur, statusId: j['id'] as String? ?? '', text: texte);
         case 'frappe':
           final d = j['d'] as String? ?? '';
           if (d.startsWith('p:')) actions.frappe(peer: d.substring(2));
@@ -635,6 +700,10 @@ class MiroirAppareils {
       octets.add(m!);
     }
     final e = a.entete;
+    if (e['but'] == 'statut') {
+      await _publierStatutFichier(e, octets.takeBytes());
+      return;
+    }
     final d = e['d'] as String? ?? '';
     if (d.startsWith('p:')) _apprendreContact(d.substring(2), e['pseudo'] as String?, e['cle'] as String?);
     final legende = (e['legende'] as String? ?? '').trim();
@@ -650,12 +719,45 @@ class MiroirAppareils {
     );
   }
 
+  /// Un statut photo, vidéo ou vocal publié depuis le web : il part du
+  /// téléphone exactement comme depuis l'éditeur de statut (fichier
+  /// d'abord, annonce ensuite), à tous les contacts.
+  Future<void> _publierStatutFichier(Map<String, dynamic> e, Uint8List octets) async {
+    final kind = StatusMediaKind.fromName(e['k'] as String?);
+    if (kind == StatusMediaKind.none) return;
+    final nom = (e['nom'] as String? ?? 'statut').replaceAll(RegExp(r'[/\\]'), '_');
+    final mime = e['mime'] as String? ?? 'application/octet-stream';
+    final fileId = await _repo.sendStatusFile(fileName: nom, bytes: octets, mimeType: mime);
+    final ms = e['ms'];
+    await _repo.sendStatus(
+      (e['texte'] as String? ?? '').trim(),
+      media: StatusMedia(
+        kind: kind,
+        fileId: fileId,
+        fileName: nom,
+        mimeType: mime,
+        durationMs: kind == StatusMediaKind.voice && ms is int ? ms : null,
+        backgroundColor: kind == StatusMediaKind.voice ? e['fond'] as int? : null,
+      ),
+    );
+    _dernierEtat = null;
+    await _pousserEtat();
+  }
+
   /// Le contenu d'un fichier, demandé par le web : lu sur le disque du
   /// téléphone, envoyé en morceaux chiffrés dans la file de ce navigateur.
   Future<void> _envoyerContenu(AppareilLie appareil, String id) async {
     final m = _dernier.where((x) => x.id == id || x.fileId == id).firstOrNull;
-    if (m == null || m.fileName == null) return;
-    final chemin = await StorageService.getSharedFilePath(m.fileId ?? m.id, m.fileName!);
+    String? chemin;
+    if (m != null && m.fileName != null) {
+      chemin = await StorageService.getSharedFilePath(m.fileId ?? m.id, m.fileName!);
+    } else {
+      // L'identifiant d'un statut : sa photo, sa vidéo ou son vocal.
+      final media = StorageService.getStatusMedia(id);
+      if (media.hasMedia && media.fileName != null) {
+        chemin = await StorageService.getSharedFilePath(media.fileId!, media.fileName!);
+      }
+    }
     if (chemin == null) return;
     final octets = await File(chemin).readAsBytes();
     if (octets.length > maxFichier) return;
