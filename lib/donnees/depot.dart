@@ -418,6 +418,7 @@ class Depot extends ChangeNotifier {
   void vider(Discussion d) {
     _messages[d.id] = [];
     _changer();
+    unawaited(transport.demander({'t': 'discussion', 'd': d.id, 'op': 'vider'}));
   }
 
   void supprimerDiscussion(Discussion d) {
@@ -425,6 +426,13 @@ class Depot extends ChangeNotifier {
     _messages.remove(d.id);
     if (discussionOuverte == d.id) discussionOuverte = null;
     _changer();
+    unawaited(transport.demander({'t': 'discussion', 'd': d.id, 'op': 'supprimer'}));
+  }
+
+  /// Une opération de groupe, refaite par le téléphone (`g:` retiré).
+  void _groupeAuTelephone(Discussion d, Map<String, dynamic> op) {
+    if (!d.estGroupe) return;
+    unawaited(transport.demander({'t': 'groupe', 'g': d.id.substring(2), ...op}));
   }
 
   void definirEphemere(Discussion d, int secondes) {
@@ -442,8 +450,11 @@ class Depot extends ChangeNotifier {
 
   void renommer(Discussion d, String titre, {String? description}) {
     final change = titre != d.titre;
+    final descriptionChange = description != null && description != d.description;
     d.titre = titre;
     if (description != null) d.description = description;
+    if (change) _groupeAuTelephone(d, {'op': 'renommer', 'titre': titre});
+    if (descriptionChange) _groupeAuTelephone(d, {'op': 'description', 'texte': description});
     if (change && d.estGroupe) {
       _systeme(d, 'renomme:$titre');
     } else {
@@ -453,12 +464,14 @@ class Depot extends ChangeNotifier {
 
   void retirerMembre(Discussion d, String membre) {
     d.membres = [...d.membres]..remove(membre);
+    _groupeAuTelephone(d, {'op': 'retirer', 'membre': membre});
     _systeme(d, 'retire:$membre');
   }
 
   void ajouterMembres(Discussion d, List<String> membres) {
     final nouveaux = membres.where((m) => !d.membres.contains(m)).toList();
     d.membres = [...d.membres, ...nouveaux];
+    if (nouveaux.isNotEmpty) _groupeAuTelephone(d, {'op': 'ajouter', 'membres': nouveaux});
     for (final m in nouveaux) {
       _systeme(d, 'ajoute:$m');
     }
@@ -481,6 +494,7 @@ class Depot extends ChangeNotifier {
 
   void quitterGroupe(Discussion d) {
     d.quitte = true;
+    _groupeAuTelephone(d, {'op': 'quitter'});
     d.admins = [...d.admins]..remove(kMoi);
     _ajouter(Message(
       id: _id('s'),
@@ -721,6 +735,10 @@ class Depot extends ChangeNotifier {
     if (photo != null) profil.photo = photo;
     if (retirerPhoto) profil.photo = null;
     _changer();
+    // Le pseudo est celui du compte : c'est le téléphone qui l'annonce.
+    if (pseudo != null && pseudo.trim().isNotEmpty) {
+      unawaited(transport.demander({'t': 'profil', 'pseudo': pseudo.trim()}));
+    }
   }
 
   void majReglages(void Function(ReglagesWeb r) changement) {
@@ -852,11 +870,14 @@ class Depot extends ChangeNotifier {
           membres: membres,
           couleur: _couleurDe(id),
           nonLus: (d['nonLus'] as int?) ?? 0,
-          admins: <String>[],
+          admins: (d['admins'] as List? ?? const []).whereType<String>().toList(),
+          description: d['description'] as String? ?? '',
         );
       } else {
         if (titre.isNotEmpty) x.titre = titre;
         if (membres.isNotEmpty) x.membres = membres;
+        if (d['admins'] is List) x.admins = (d['admins'] as List).whereType<String>().toList();
+        if (d['description'] is String) x.description = d['description'] as String;
         if (d['nonLus'] is int && discussionOuverte != id) x.nonLus = d['nonLus'] as int;
       }
     }
