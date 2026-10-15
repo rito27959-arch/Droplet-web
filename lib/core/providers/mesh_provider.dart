@@ -356,6 +356,20 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         reagir: toggleReaction,
         modifier: editMessage,
         supprimer: deleteMessage,
+        epingler: (id, e) => epingler(id, epingle: e),
+        // « En train d'écrire » tapé sur le web : par le maillage, et par
+        // Internet comme le fait l'écran de discussion du téléphone.
+        frappe: ({String? peer, String? groupe}) {
+          unawaited(_repo.sendTyping(targetId: peer, groupId: groupe));
+          final enLigne = MiroirAppareils.frappeEnLigne;
+          if (enLigne == null || !EtatInternet.disponible()) return;
+          if (peer != null) enLigne(peer);
+          if (groupe != null) {
+            for (final membre in (StorageService.getGroup(groupe)?.activeMembers ?? const []).take(30)) {
+              if (membre.peerId != _repo.myId) enLigne(membre.peerId, groupId: groupe);
+            }
+          }
+        },
       ),
     );
     addListener(_miroir.surMessages);
@@ -2071,7 +2085,10 @@ class _OutboxEntry {
 // directement (« en train de sonner », « connecté », « raccroché »...).
 
 final callProvider = StateNotifierProvider<CallNotifier, CallState>((ref) {
-  return CallNotifier();
+  final appels = CallNotifier();
+  // Le miroir relaie par Internet les « en train d'écrire » tapés sur le web.
+  MiroirAppareils.frappeEnLigne = appels.envoyerFrappeEnLigne;
+  return appels;
 });
 
 class CallNotifier extends StateNotifier<CallState> {
@@ -3304,8 +3321,11 @@ class MeshPeerListNotifier extends StateNotifier<List<ConnectedPeer>> {
   StreamSubscription<ConnectedPeer>? _sub;
 
   MeshPeerListNotifier(this._repo) : super(_repo.peerList) {
+    MiroirAppareils.pairsMaillage = {for (final p in _repo.peerList) p.peerId};
     _sub = _repo.peerEvents?.listen((_) {
       state = _repo.peerList;
+      // Le web montre « en ligne » pour un contact à portée du maillage.
+      MiroirAppareils.pairsMaillage = {for (final p in state) p.peerId};
     });
   }
 
@@ -3475,7 +3495,16 @@ final pairsEnLigneInternetProvider = Provider<Set<String>>((ref) {
   return actuel;
 });
 
+/// Un état changé depuis Droplet Web (épinglée, archivée, sourdine…).
+final etatDistantProvider = Provider<int>((ref) {
+  void relire() => ref.invalidateSelf();
+  MiroirAppareils.revisionEtat.addListener(relire);
+  ref.onDispose(() => MiroirAppareils.revisionEtat.removeListener(relire));
+  return MiroirAppareils.revisionEtat.value;
+});
+
 final conversationsProvider = Provider<List<Conversation>>((ref) {
+  ref.watch(etatDistantProvider);
   // Le point vert : à portée du maillage OU en ligne par Internet. Il ne
   // comptait que le maillage — un contact présent par Internet restait gris.
   final enLigneInternet = ref.watch(pairsEnLigneInternetProvider);
@@ -3673,6 +3702,7 @@ final conversationsProvider = Provider<List<Conversation>>((ref) {
 /// Conversations archivées (mêmes calculs que [conversationsProvider], non
 /// filtrées) — pour la feuille de désarchivage de `chats_screen.dart`.
 final archivedConversationsProvider = Provider<List<Conversation>>((ref) {
+  ref.watch(etatDistantProvider);
   ref.watch(archivedRevisionProvider);
   final messages = ref.watch(meshMessagesProvider);
   final peers = ref.watch(meshPeerListProvider);
@@ -3740,6 +3770,7 @@ final archivedConversationsProvider = Provider<List<Conversation>>((ref) {
 /// (voir `_LockedChatsSheet`) : à ce stade, cacher encore le contenu ne
 /// protégerait rien de plus et rendrait la liste inutile.
 final lockedConversationsProvider = Provider<List<Conversation>>((ref) {
+  ref.watch(etatDistantProvider);
   ref.watch(pinMuteRevisionProvider);
   final messages = ref.watch(meshMessagesProvider);
   final peers = ref.watch(meshPeerListProvider);

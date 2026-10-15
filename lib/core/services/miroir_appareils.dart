@@ -52,6 +52,30 @@
 //           {"t":"modifier", "id", "texte"}
 //           {"t":"supprimer", "id"}
 //
+//           {"t":"etat", "d", "champ", "valeur"}
+//                                    champ : epinglee | archivee | sourdine
+//                                    | ephemere (secondes) | bloque (1:1)
+//           {"t":"msg_etat", "id", "champ", "valeur"}
+//                                    champ : epingle | important
+//           {"t":"frappe", "d"}      on écrit sur le web : le contact voit
+//                                    « en train d'écrire… »
+//
+//   ── L'ÉTAT PARTAGÉ (téléphone → navigateur) ──
+//   Comme WhatsApp : ce qui change d'un côté change de l'autre. Le
+//   téléphone fait foi ; il envoie un instantané COMPLET dès qu'il change
+//   (vérifié toutes les 1,5 s, déposé seulement s'il a bougé) :
+//     {"v":1, "etat":{
+//        "disc":      {"<d>":{"e":épinglée,"a":archivée,"s":sourdine,
+//                             "v":verrouillée,"x":éphémère (s)}},
+//        "epingles":  {"<d>":[id…]},      messages épinglés (3 au plus)
+//        "importants":[id…],              messages favoris
+//        "bloques":   [peerId…],
+//        "presence":  {"<peerId>":{"l":en ligne,"vu":ISO-8601 (à la minute)}}}}
+//   et, à chaque « en train d'écrire » reçu par le téléphone :
+//     {"v":1, "frappe":{"d":<discussion>, "a":<auteur>}}
+//   Une discussion VERROUILLÉE sur le téléphone n'est pas montrée sur le
+//   web — comme WhatsApp, qui ne déverrouille pas un appareil lié.
+//
 //   Le téléphone répond à « telecharger » par des lots
 //     {"v":1, "fichier":{"id", "i", "n", "b64"}}
 //   et chaque message de fichier porte, dans ses lots ordinaires,
@@ -79,7 +103,10 @@ import 'package:flutter/foundation.dart';
 
 import '../models/mesh_message.dart';
 import '../repositories/mesh_repository.dart';
+import '../../features/chat/messages_importants.dart';
 import 'appareils_lies.dart';
+import 'epingles.dart';
+import 'presence_internet.dart';
 import 'crypto_service.dart';
 import 'invitation.dart';
 import 'qr_code_exchange.dart';
@@ -102,13 +129,28 @@ typedef FichierDepuisAppareil = Future<void> Function({
 /// Ce que le web peut faire d'autre, et que le téléphone refait à
 /// l'identique (lectures, réactions, modifications, suppressions).
 class ActionsMiroir {
-  const ActionsMiroir({required this.lire, required this.lireGroupe, required this.reagir, required this.modifier, required this.supprimer});
+  const ActionsMiroir({
+    required this.lire,
+    required this.lireGroupe,
+    required this.reagir,
+    required this.modifier,
+    required this.supprimer,
+    required this.epingler,
+    required this.frappe,
+  });
 
   final Future<void> Function(String peerId) lire;
   final Future<void> Function(String groupId) lireGroupe;
   final void Function(String messageId, String emoji) reagir;
   final void Function(String messageId, String texte) modifier;
   final void Function(String messageId) supprimer;
+
+  /// Épingle ou désépingle un message, ici ET chez les autres (comme
+  /// depuis la discussion du téléphone).
+  final Future<void> Function(String messageId, bool epingle) epingler;
+
+  /// « En train d'écrire » depuis le web : prévenir le contact ou le groupe.
+  final void Function({String? peer, String? groupe}) frappe;
 }
 
 /// Un fichier qui arrive du web morceau par morceau.
@@ -154,6 +196,115 @@ class MiroirAppareils {
   Timer? _minuteur;
   List<MeshMessage> _dernier = const [];
 
+  // ── L'état partagé ─────────────────────────────────────────────────
+
+  /// Les pairs à portée du maillage, tenus à jour par la liste des pairs.
+  static Set<String> pairsMaillage = const {};
+
+  /// « En train d'écrire » par Internet (branché par le notifier d'appels).
+  static void Function(String peerId, {String? groupId})? frappeEnLigne;
+
+  /// Incrémenté quand le web change un état (épinglée, archivée…) : la
+  /// liste des discussions du téléphone se relit.
+  static final ValueNotifier<int> revisionEtat = ValueNotifier<int>(0);
+
+  Timer? _veilleEtat;
+  String? _dernierEtat;
+  StreamSubscription<String>? _subFrappe;
+  StreamSubscription<({String groupId, String peerId})>? _subFrappeGroupe;
+  final Map<String, DateTime> _frappeEnvoyee = {};
+
+  void _demarrerVeille() {
+    _veilleEtat ??= Timer.periodic(const Duration(milliseconds: 1500), (_) => unawaited(_pousserEtat()));
+    _subFrappe ??= _repo.typingEvents.listen((p) => unawaited(_pousserFrappe('p:$p', p)));
+    _subFrappeGroupe ??= _repo.frappeGroupeEvents.listen((e) => unawaited(_pousserFrappe('g:${e.groupId}', e.peerId)));
+  }
+
+  /// L'instantané complet de l'état, pour les 60 discussions les plus
+  /// récentes — ce que le web montre.
+  Map<String, dynamic> _etat() {
+    final moi = _repo.myId;
+    final recence = <String, int>{};
+    for (final m in _dernier) {
+      final d = _discussionDe(m, moi);
+      if (d == null) continue;
+      final t = m.timestamp.millisecondsSinceEpoch;
+      if (t > (recence[d] ?? 0)) recence[d] = t;
+    }
+    final discs = (recence.entries.toList()..sort((a, b) => b.value.compareTo(a.value))).take(60).map((e) => e.key);
+    final epinglees = StorageService.getPinnedConversations();
+    final archivees = StorageService.getArchivedConversations();
+    final sourdines = StorageService.getMutedConversations();
+    final verrouillees = StorageService.getLockedConversations();
+    final ephemeres = StorageService.getEphemeralTimers();
+    final etat = <String, Map<String, dynamic>>{};
+    final epingles = <String, List<String>>{};
+    final presence = <String, Map<String, dynamic>>{};
+    for (final d in discs) {
+      final cle = d.substring(2);
+      etat[d] = {
+        'e': epinglees.contains(cle),
+        'a': archivees.contains(cle),
+        's': sourdines.contains(cle),
+        'v': verrouillees.contains(cle),
+        'x': ephemeres[cle] ?? 0,
+      };
+      final ep = Epingles.lire(cle);
+      if (ep.isNotEmpty) epingles[d] = ep;
+      if (d.startsWith('p:')) presence[cle] = _presence(cle);
+    }
+    return {
+      'disc': etat,
+      'epingles': epingles,
+      'importants': [for (final m in MessagesImportants.tous()) m.id],
+      'bloques': StorageService.getBlockedContacts().toList(),
+      'presence': presence,
+    };
+  }
+
+  /// En ligne : à portée du maillage, ou signe de vie par Internet de moins
+  /// de cinq minutes. « Vu » : le plus récent des deux, arrondi à la minute
+  /// pour ne pas renvoyer l'instantané à chaque seconde.
+  static Map<String, dynamic> _presence(String peer) {
+    final net = PresenceInternet.dernierSigne(peer);
+    final fiche = StorageService.getPeerRecord(peer)?.lastSeen;
+    DateTime? vu = net;
+    if (fiche != null && (vu == null || fiche.isAfter(vu))) vu = fiche;
+    return {
+      'l': pairsMaillage.contains(peer) || PresenceInternet.enLigne(peer),
+      if (vu != null)
+        'vu': DateTime.fromMillisecondsSinceEpoch(vu.millisecondsSinceEpoch ~/ 60000 * 60000).toUtc().toIso8601String(),
+    };
+  }
+
+  /// Dépose l'instantané s'il a changé (ou toujours, vers [seul]).
+  Future<void> _pousserEtat({AppareilLie? seul}) async {
+    final appareils = seul == null ? _appareils() : [seul];
+    if (appareils.isEmpty) return;
+    final etat = _etat();
+    final empreinte = jsonEncode(etat);
+    if (seul == null && empreinte == _dernierEtat) return;
+    _dernierEtat = empreinte;
+    for (final a in appareils) {
+      await _deposer(a, {'v': 1, 'etat': etat});
+    }
+  }
+
+  /// Un « en train d'écrire » reçu : relayé au web, une fois toutes les 3 s
+  /// au plus par personne (le web l'affiche 6 s).
+  Future<void> _pousserFrappe(String d, String auteur) async {
+    final cle = '$d|$auteur';
+    final maintenant = DateTime.now();
+    if (maintenant.difference(_frappeEnvoyee[cle] ?? DateTime(0)) < const Duration(seconds: 3)) return;
+    _frappeEnvoyee[cle] = maintenant;
+    for (final a in _appareils()) {
+      await _deposer(a, {
+        'v': 1,
+        'frappe': {'d': d, 'a': auteur},
+      });
+    }
+  }
+
   // ── Ce que le téléphone envoie ─────────────────────────────────────
 
   /// Appelé à chaque changement de la liste des messages.
@@ -163,6 +314,7 @@ class MiroirAppareils {
       _amorce = false;
       return;
     }
+    _demarrerVeille();
     if (!_amorce) {
       // Premier passage : ce qui existe déjà a été synchronisé à la
       // liaison. On ne renvoie que ce qui changera désormais.
@@ -221,6 +373,7 @@ class MiroirAppareils {
 
     if (choisis.isEmpty) {
       await _deposer(appareil, {'v': 1, 'profil': profil});
+      await _pousserEtat(seul: appareil);
       return;
     }
     for (var i = 0; i < choisis.length; i += _maxParLot) {
@@ -234,6 +387,8 @@ class MiroirAppareils {
       _empreintes[m.id] = _empreinte(m);
     }
     _amorce = true;
+    _demarrerVeille();
+    await _pousserEtat(seul: appareil);
   }
 
   // ── Ce que le navigateur demande ───────────────────────────────────
@@ -275,6 +430,14 @@ class MiroirAppareils {
           if (texte.isNotEmpty && texte.length <= 20000) actions.modifier(j['id'] as String? ?? '', texte);
         case 'supprimer':
           actions.supprimer(j['id'] as String? ?? '');
+        case 'etat':
+          await _appliquerEtat(j);
+        case 'msg_etat':
+          await _appliquerEtatMessage(j);
+        case 'frappe':
+          final d = j['d'] as String? ?? '';
+          if (d.startsWith('p:')) actions.frappe(peer: d.substring(2));
+          if (d.startsWith('g:')) actions.frappe(groupe: d.substring(2));
         case 'envoyer':
           final d = j['d'] as String? ?? '';
           final texte = (j['texte'] as String? ?? '').trim();
@@ -293,6 +456,70 @@ class MiroirAppareils {
       debugPrint('[Miroir] demande illisible : $e');
     }
     return true;
+  }
+
+  /// Un état de discussion changé sur le web, refait ici avec les mêmes
+  /// fonctions que les écrans du téléphone. L'instantané repart aussitôt :
+  /// le web reçoit l'état tel que le téléphone l'a réellement appliqué.
+  Future<void> _appliquerEtat(Map<String, dynamic> j) async {
+    final d = j['d'] as String? ?? '';
+    if (!(d.startsWith('p:') || d.startsWith('g:'))) return;
+    final cle = d.substring(2);
+    if (cle.isEmpty) return;
+    final oui = j['valeur'] == true;
+    switch (j['champ']) {
+      case 'epinglee':
+        await StorageService.setConversationPinned(cle, oui);
+      case 'archivee':
+        await StorageService.setConversationArchived(cle, oui);
+        // Une discussion archivée quitte les épinglées, comme sur le web.
+        if (oui) await StorageService.setConversationPinned(cle, false);
+      case 'sourdine':
+        await StorageService.setConversationMuted(cle, oui);
+      case 'ephemere':
+        final s = j['valeur'];
+        if (s is int && s >= 0 && s <= 90 * 24 * 3600) await StorageService.setEphemeralTimer(cle, s);
+      case 'bloque':
+        if (d.startsWith('p:')) await StorageService.setContactBlocked(cle, oui);
+      default:
+        return;
+    }
+    revisionEtat.value++;
+    _dernierEtat = null;
+    await _pousserEtat();
+  }
+
+  /// Un message épinglé ou mis en favori sur le web.
+  Future<void> _appliquerEtatMessage(Map<String, dynamic> j) async {
+    final id = j['id'] as String? ?? '';
+    final m = _dernier.where((x) => x.id == id).firstOrNull;
+    if (m == null) return;
+    final oui = j['valeur'] == true;
+    switch (j['champ']) {
+      case 'epingle':
+        await actions.epingler(id, oui);
+      case 'important':
+        if (MessagesImportants.estImportant(id) != oui) MessagesImportants.basculer(_versImportant(m));
+      default:
+        return;
+    }
+    _dernierEtat = null;
+    await _pousserEtat();
+  }
+
+  MessageImportant _versImportant(MeshMessage m) {
+    final moi = _repo.myId;
+    return MessageImportant(
+      id: m.id,
+      contenu: m.content,
+      type: m.type,
+      horodatage: m.timestamp.millisecondsSinceEpoch,
+      deMoi: m.senderId == moi,
+      auteur: m.authorPseudo,
+      peerId: m.groupId == null ? (m.senderId == moi ? m.targetId : m.senderId) : null,
+      groupId: m.groupId,
+      nomFichier: m.fileName,
+    );
   }
 
   /// Un morceau d'un fichier écrit sur le web. Le dernier arrivé, le
@@ -383,9 +610,12 @@ class MiroirAppareils {
     final contacts = <String, Map<String, dynamic>>{};
     final discussions = <String, Map<String, dynamic>>{};
     final dtos = <Map<String, dynamic>>[];
+    // Une discussion verrouillée sur le téléphone ne part pas sur le web.
+    final verrouillees = StorageService.getLockedConversations();
     for (final m in messages) {
       final d = _discussionDe(m, moi);
       if (d == null) continue;
+      if (verrouillees.contains(d.substring(2))) continue;
       final dto = _message(m, d, moi);
       if (dto == null) continue;
       dtos.add(dto);
