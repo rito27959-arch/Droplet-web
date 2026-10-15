@@ -40,6 +40,7 @@ import '../../features/chat/poll_message.dart';
 import '../services/nom_pair.dart';
 import '../services/crypto_service.dart';
 import '../services/miroir_appareils.dart';
+import '../services/presence_internet.dart';
 import '../services/storage_service.dart';
 import '../services/mesh_transport_service.dart';
 import '../services/ble_mesh_protocol.dart';
@@ -514,7 +515,9 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
     _mailboxPollTimer = Timer(
       immediat
           ? Duration.zero
-          : intervalleReleve(premierPlan: NotificationService.isAppForeground),
+          // Pendant un appel, rythme du premier plan même app cachée : la
+          // signalisation d'un appel par Internet passe par cette boîte.
+          : intervalleReleve(premierPlan: NotificationService.isAppForeground || AppelSysteme.appelActif),
       () async {
         if (!_releveEnCours) {
           _releveEnCours = true;
@@ -577,7 +580,7 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
       // Ce qui attend de partir part AVANT l'attente longue, pas après.
       _flushOutbox();
       final messages = await _repo.transport.fetchMailboxMessages(
-        attendre: attenteReleve(premierPlan: NotificationService.isAppForeground),
+        attendre: attenteReleve(premierPlan: NotificationService.isAppForeground || AppelSysteme.appelActif),
       );
       // Messages reçus pendant cette relève, par expéditeur : un seul accusé
       // « distribué » part ensuite vers chacun.
@@ -2180,6 +2183,7 @@ class CallNotifier extends StateNotifier<CallState> {
     // été décroché, et c'est la seule chose qui compte.
     final actif =
         s.isCallActive && s.peerId != null && s.debutConnexion != null;
+    AppelSysteme.appelActif = actif;
 
     if (!actif) {
       final ancien = _notifAppelId;
@@ -3454,7 +3458,27 @@ final pinMuteRevisionProvider = StateProvider<int>((ref) => 0);
 /// messages stockés et les range en « paquets » par correspondant ou par
 /// groupe pour en faire une conversation, comme trier un tas de lettres
 /// reçues et envoyées en une pile par destinataire.
+/// Les contacts joignables PAR INTERNET à l'instant (voir `PresenceInternet`).
+///
+/// Ne change que quand l'ENSEMBLE change — un contact qui arrive, un autre
+/// dont les cinq minutes de fraîcheur expirent — et pas à chaque tic
+/// d'horloge : la liste des conversations, qui en dépend, ne se recalcule
+/// pas pour rien toutes les 30 secondes.
+final pairsEnLigneInternetProvider = Provider<Set<String>>((ref) {
+  final actuel = PresenceInternet.enLigneMaintenant();
+  void verifier() {
+    if (!setEquals(PresenceInternet.enLigneMaintenant(), actuel)) ref.invalidateSelf();
+  }
+  final source = PresenceInternet.aSurveiller;
+  source.addListener(verifier);
+  ref.onDispose(() => source.removeListener(verifier));
+  return actuel;
+});
+
 final conversationsProvider = Provider<List<Conversation>>((ref) {
+  // Le point vert : à portée du maillage OU en ligne par Internet. Il ne
+  // comptait que le maillage — un contact présent par Internet restait gris.
+  final enLigneInternet = ref.watch(pairsEnLigneInternetProvider);
   ref.watch(archivedRevisionProvider);
   ref.watch(pinMuteRevisionProvider);
   final messages = ref.watch(meshMessagesProvider);
@@ -3539,7 +3563,7 @@ final conversationsProvider = Provider<List<Conversation>>((ref) {
       dernier: locked.contains(entry.key) ? null : last,
       lastTimestamp: last.timestamp,
       unreadCount: unread,
-      isOnline: peer != null,
+      isOnline: peer != null || enLigneInternet.contains(entry.key),
       isPinned: pinned.contains(entry.key),
       isMuted: muted.contains(entry.key),
       isLocked: locked.contains(entry.key),

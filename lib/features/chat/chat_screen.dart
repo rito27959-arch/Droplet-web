@@ -147,6 +147,7 @@ import 'messages_importants.dart';
 import '../../core/providers/personnalisation_provider.dart';
 import 'messages_ephemeres.dart';
 import '../../core/services/presence_internet.dart';
+import '../../core/services/battement_presence.dart';
 import '../lecteur/lecteur_pdf.dart';
 import '../group/reglages_groupe.dart';
 import '../call/salon_vocal.dart';
@@ -678,6 +679,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     }
     _scrollCtrl.addListener(_onScroll);
     Epingles.revision.addListener(_surEpingles);
+    // La présence du contact à jour dès l'ouverture, sans attendre le
+    // prochain battement périodique.
+    BattementPresence.maintenant();
     final cible = widget.messageCible;
     if (cible != null) {
       // Après la première image : la liste doit exister pour qu'on y
@@ -4038,7 +4042,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                     peerPseudo: peerPseudo,
                                   ),
                                   semantique: l10n.chNetworkDetailsSemantics,
-                                  child: AnimatedSwitcher(
+                                  // ⚠️ SE REDESSINE TOUT SEUL. Avant, le
+                                  // texte ne bougeait que si autre chose
+                                  // redessinait l'écran : un battement reçu
+                                  // laissait « Par Internet il y a 12 min »
+                                  // à l'écran alors que le contact était là,
+                                  // et « il y a 3 min » ne vieillissait pas.
+                                  // Il suit maintenant chaque signe de vie
+                                  // reçu, et l'horloge toutes les 30 s.
+                                  child: ListenableBuilder(
+                                    listenable: PresenceInternet.aSurveiller,
+                                    builder: (context, _) => AnimatedSwitcher(
                                     duration: 200.ms,
                                     child: Text(
                                       _isGroup
@@ -4094,7 +4108,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                               ).couleur,
                                       ),
                                     ),
-                                  ),
+                                  )),
                                 ),
                               ],
                             ),

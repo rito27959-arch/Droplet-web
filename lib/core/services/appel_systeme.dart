@@ -37,6 +37,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class AppelSysteme {
+  /// Un appel décroché est en cours (quel que soit le chemin : natif ou
+  /// notification Dart). Lu par la relève de la boîte aux lettres : pendant
+  /// un appel, elle garde le rythme du premier plan même app en arrière-plan
+  /// — sinon la signalisation (réseau qui change, raccrochage) attendait
+  /// jusqu'à 30 s.
+  static bool appelActif = false;
+
   AppelSysteme._();
 
   static const MethodChannel _canal =

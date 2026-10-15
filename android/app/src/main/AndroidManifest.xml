@@ -63,6 +63,15 @@
          n'apparaît jamais. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
+    <!-- ⚠️ LE MICRO EN ARRIÈRE-PLAN. Depuis Android 14, une application
+         qui passe en arrière-plan n'a PLUS accès au micro, sauf si son
+         service de premier plan déclare AUSSI le type `microphone` (et
+         `camera` pour la vidéo). Le type `phoneCall` seul ne suffit pas :
+         l'appel restait « en cours », mais Android remplaçait la voix par
+         du silence dès qu'on quittait l'app — l'autre n'entendait plus
+         rien. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
@@ -341,7 +350,7 @@
              seule l'application le démarre, jamais une autre. -->
         <service
             android:name=".AppelEnCoursService"
-            android:foregroundServiceType="phoneCall"
+            android:foregroundServiceType="phoneCall|microphone|camera"
             android:exported="false" />
 
         <!-- Le bouton « Raccrocher » de la notification. -->

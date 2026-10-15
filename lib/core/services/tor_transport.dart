@@ -36,6 +36,7 @@ import 'mailbox_client.dart';
 import 'push_notification_service.dart';
 import 'storage_service.dart';
 import '../models/mesh_message.dart';
+import 'battement_presence.dart';
 
 /// Transport Tor pour Droplet.
 class TorTransport implements MeshTransport {
@@ -53,6 +54,11 @@ class TorTransport implements MeshTransport {
 
   /// Client directory .onion — pour chercher/être trouvé par pseudo.
   DirectoryClient? _directoryClient;
+
+  /// Le client d'annuaire en service, partagé avec le battement de présence
+  /// (voir `battement_presence.dart`). `null` tant que la liaison Internet
+  /// n'est pas prête.
+  static DirectoryClient? annuaireCourant;
 
   /// Client mailbox .onion — pour stocker/récupérer des messages async.
   MailboxClient? _mailboxClient;
@@ -344,6 +350,11 @@ class TorTransport implements MeshTransport {
         httpClient: _httpCourant,
       );
     }
+    // Le battement de présence emprunte CE client-là : même chemin que la
+    // boîte aux lettres, donc par Tor quand Tor est actif — jamais une
+    // connexion directe à côté qui trahirait l'adresse IP.
+    annuaireCourant = _directoryClient;
+    BattementPresence.cheminPret();
     if (mailboxUrl != null) {
       _mailboxClient = MailboxClient(
         serverUrl: mailboxUrl!,
@@ -360,6 +371,7 @@ class TorTransport implements MeshTransport {
     } catch (_) {}
     _httpCourant = null;
     _directoryClient = null;
+    annuaireCourant = null;
     _mailboxClient = null;
     _viaTor = false;
   }

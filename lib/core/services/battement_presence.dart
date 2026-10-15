@@ -11,18 +11,25 @@
 //
 // Ce que ça coûte, dit franchement : l'annuaire apprend quand un identifiant
 // est en ligne, et les identifiants qu'on interroge. Aucun contenu, aucun
-// message, mais ce sont des métadonnées que Droplet ne donnait pas avant.
-// D'où les deux verrous : seulement si le mode en ligne est accepté, et
-// seulement app ouverte.
+// message. Le serveur de boîte aux lettres le voit déjà à chaque relève :
+// le battement n'ajoute que l'heure, lisible par les contacts.
+//
+// ⚠️ IL ÉTAIT ATTACHÉ AU MAUVAIS INTERRUPTEUR. Il ne partait que si les
+// « services en ligne » de TRADUCTION étaient activés — un réglage qui n'a
+// rien à voir. Qui écrivait par Internet sans traduction en ligne ne
+// battait jamais : ses contacts voyaient l'heure du dernier croisement par
+// le maillage, ou celle de son dernier message, figée. Le verrou qui reste
+// est le seul qui ait un sens : l'app ouverte.
+//
+// Il passe par le MÊME client que la boîte aux lettres
+// (`TorTransport.annuaireCourant`) : par Tor quand Tor est actif.
 // ============================================================================
 
 import 'dart:async';
 
-import '../config/server_config.dart';
-import 'directory_client.dart';
 import 'presence_internet.dart';
-import 'service_intelligence.dart';
 import 'storage_service.dart';
+import 'tor_transport.dart';
 
 class BattementPresence {
   BattementPresence._();
@@ -32,11 +39,24 @@ class BattementPresence {
   static const Duration periode = Duration(minutes: 2);
 
   static Timer? _minuteur;
-  static DirectoryClient? _annuaire;
   static bool _enCours = false;
+  static DateTime _dernier = DateTime(0);
 
-  static DirectoryClient get _client =>
-      _annuaire ??= DirectoryClient(serverUrl: kDirectoryUrl);
+  /// La liaison Internet vient d'être prête : si l'app est ouverte, on bat
+  /// tout de suite au lieu d'attendre la prochaine période — sans quoi le
+  /// premier battement du démarrage, parti trop tôt, faisait attendre deux
+  /// minutes avant de paraître en ligne.
+  static void cheminPret() {
+    if (_minuteur != null) unawaited(_battre());
+  }
+
+  /// À l'ouverture d'une discussion : la présence du contact à jour sans
+  /// attendre la période. Au plus une fois toutes les 20 s.
+  static void maintenant() {
+    if (_minuteur == null) return;
+    if (DateTime.now().difference(_dernier) < const Duration(seconds: 20)) return;
+    unawaited(_battre());
+  }
 
   /// À l'entrée au premier plan.
   static void demarrer() {
@@ -54,17 +74,19 @@ class BattementPresence {
 
   static Future<void> _battre() async {
     if (_enCours) return;
-    // Deux verrous : le mode en ligne accepté, et une identité connue.
-    if (!ServiceIntelligence.enLigneAutorise) return;
     final moi = StorageService.currentUser?.id;
     if (moi == null || moi.isEmpty) return;
+    // Pas encore de liaison Internet : rien à dire. `cheminPret` relancera.
+    final client = TorTransport.annuaireCourant;
+    if (client == null) return;
 
     _enCours = true;
+    _dernier = DateTime.now();
     try {
-      await _client.battement(moi);
+      await client.battement(moi);
       final autres = _pairsASuivre(moi);
       if (autres.isEmpty) return;
-      final vus = await _client.presences(autres);
+      final vus = await client.presences(autres);
       vus.forEach(PresenceInternet.signe2);
     } catch (_) {
       // Un annuaire injoignable n'est pas une erreur : le maillage, lui,

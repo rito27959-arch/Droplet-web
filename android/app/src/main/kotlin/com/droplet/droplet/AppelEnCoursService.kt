@@ -44,6 +44,7 @@ package com.droplet.droplet
 // accès disque ni réseau.
 // ============================================================================
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -51,12 +52,14 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
+import androidx.core.content.ContextCompat
 
 class AppelEnCoursService : Service() {
 
@@ -113,6 +116,9 @@ class AppelEnCoursService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    private fun permis(permission: String): Boolean =
+        ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_ARRETER) {
             arreterProprement()
@@ -131,11 +137,30 @@ class AppelEnCoursService : Service() {
         // Première chose faite, et sans aucune entrée/sortie avant : la
         // limite est de cinq secondes.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                ID_NOTIF,
-                notif,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL,
-            )
+            // ⚠️ `phoneCall` SEUL NE GARDE PAS LE MICRO. Dès que l'app passe
+            // en arrière-plan, Android 14+ coupe le micro (il rend du
+            // silence) à toute application dont le service ne déclare pas
+            // AUSSI `microphone` — et `camera` pour la vidéo. On les ajoute
+            // quand la permission correspondante est accordée : demander un
+            // type sans sa permission ferait refuser le service entier.
+            var types = ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (permis(Manifest.permission.RECORD_AUDIO)) {
+                    types = types or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                }
+                if (video && permis(Manifest.permission.CAMERA)) {
+                    types = types or ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                }
+            }
+            try {
+                startForeground(ID_NOTIF, notif, types)
+            } catch (e: Exception) {
+                // Android peut refuser `microphone`/`camera` si le service
+                // démarre alors que l'app n'est pas à l'écran. Plutôt que de
+                // perdre la notification d'appel, on retombe sur `phoneCall`
+                // seul : l'appel continue, la pastille reste.
+                startForeground(ID_NOTIF, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL)
+            }
         } else {
             startForeground(ID_NOTIF, notif)
         }

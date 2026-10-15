@@ -31,6 +31,19 @@ class PresenceInternet {
   /// Change à chaque signe reçu : les en-têtes et la liste se redessinent.
   static final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
+  /// Ce qu'un affichage de présence doit écouter : chaque signe reçu, ET
+  /// le temps qui passe. Sans l'horloge, « il y a 3 min » resterait écrit
+  /// une heure plus tard, et « en ligne » ne s'éteindrait jamais tout seul
+  /// au bout des cinq minutes de fraîcheur.
+  static Listenable get aSurveiller {
+    _horlogeMinuteur ??= Timer.periodic(const Duration(seconds: 30), (_) => _horloge.value++);
+    return _aSurveiller;
+  }
+
+  static final ValueNotifier<int> _horloge = ValueNotifier<int>(0);
+  static Timer? _horlogeMinuteur;
+  static final Listenable _aSurveiller = Listenable.merge([revision, _horloge]);
+
   static Map<String, int>? _cache;
 
   static Map<String, int> _tous() {
@@ -75,6 +88,16 @@ class PresenceInternet {
   static bool enLigne(String peerId) {
     final t = dernierSigne(peerId);
     return t != null && DateTime.now().difference(t) < fraicheur;
+  }
+
+  /// Tous les pairs « en ligne » à l'instant (signe de moins de 5 min).
+  static Set<String> enLigneMaintenant() {
+    final maintenant = DateTime.now().millisecondsSinceEpoch;
+    final seuil = maintenant - fraicheur.inMilliseconds;
+    return {
+      for (final e in _tous().entries)
+        if (e.value > seuil) e.key,
+    };
   }
 
   /// Depuis combien de temps, pour l'écrire.
