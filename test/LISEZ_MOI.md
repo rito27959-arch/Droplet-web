@@ -6,6 +6,7 @@
 | --- | --- |
 | `contraste_test.dart` | Les dix accents à 4,5:1 dans les deux modes, les quatre paliers de texte, et la formule WCAG elle-même |
 | `assistant_test.dart` | Markdown → texte brut, citations web, blocs de code, seuil d'artéfact |
+| `crypto_service_test.dart` | Aller-retour AES-GCM jusqu'à 5 Mo, compatibilité avec l'ancien format, code de sécurité identique à l'ancienne boucle, et les MESURES de performance |
 
 Chaque cas de `assistant_test.dart` **a été un vrai bug**. Ce ne sont pas des
 exemples choisis pour passer : `***` devenait une astérisque orpheline,

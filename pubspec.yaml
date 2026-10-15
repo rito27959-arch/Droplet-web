@@ -59,6 +59,14 @@ dependencies:
   flutter_tts: ^4.2.5
   battery_plus: ^6.2.1
   cryptography: ^2.7.0
+  # Branche le paquet ci-dessus sur le chiffrement NATIF du téléphone :
+  # AES-GCM matériel sur Android et iOS, HMAC et PBKDF2 natifs sur Android,
+  # X25519 natif et PBKDF2 en arrière-plan sur iOS. Rien à appeler : il
+  # s'enregistre tout seul au démarrage, et le code de CryptoService ne
+  # change pas (mêmes algorithmes, messages compatibles dans les deux sens).
+  # Les tout petits messages restent calculés en Dart, là où c'est plus
+  # rapide que l'aller-retour vers le natif.
+  cryptography_flutter: ^2.3.4
   pointycastle: ^4.0.0
   libsignal_protocol_dart: ^0.8.2
   flutter_secure_storage: ^9.2.4
@@ -287,6 +295,3 @@ flutter:
     - shaders/nexus.frag
     - shaders/fond_prisme.frag
     - shaders/lentille_ios.frag
-
-dependency_overrides:
-  archive: ^4.0.0

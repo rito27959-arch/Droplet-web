@@ -29,7 +29,9 @@
 // ============================================================================
 
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:typed_data';
+import 'package:crypto/crypto.dart' as hachage;
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -295,8 +297,20 @@ class CryptoService {
       secretKey: key,
       nonce: nonce,
     );
-    final combined = Uint8List.fromList([...box.cipherText, ...box.mac.bytes]);
-    return (combined, Uint8List.fromList(nonce));
+    return (_concatener(box.cipherText, box.mac.bytes), Uint8List.fromList(nonce));
+  }
+
+  /// Colle le texte chiffré et son tag dans UN tableau d'octets, sans passer
+  /// par une liste intermédiaire.
+  ///
+  /// L'ancienne écriture `[...cipherText, ...mac]` fabriquait d'abord une
+  /// liste Dart ordinaire — un objet par octet — avant de la convertir : pour
+  /// une photo de 5 Mo, cinq millions d'entrées en mémoire pour rien. Ici on
+  /// réserve la taille exacte et on recopie en bloc.
+  static Uint8List _concatener(List<int> a, List<int> b) {
+    return Uint8List(a.length + b.length)
+      ..setRange(0, a.length, a)
+      ..setRange(a.length, a.length + b.length, b);
   }
 
   /// Déchiffre le résultat de [encryptBytes]. Retourne null si le
@@ -438,7 +452,6 @@ class CryptoService {
 
   // -- Vérification hors-bande (code de sécurité) --------------------------
 
-  static final _sha256 = Sha256();
   static const int _kSafetyNumberRounds = 5000;
   static const int _kSafetyNumberGroups = 12;
 
@@ -469,13 +482,15 @@ class CryptoService {
     // résultat, peu importe qui des deux le lance.
     final ordered = a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
 
-    List<int> material = utf8.encode(ordered);
     // On mélange 5000 fois de suite (comme pétrir une pâte encore et
     // encore), pour que le résultat final ne ressemble à rien de ce qu'on
     // pourrait deviner à partir du texte de départ.
-    for (var round = 0; round < _kSafetyNumberRounds; round++) {
-      material = (await _sha256.hash(material)).bytes;
-    }
+    //
+    // Ce pétrissage se fait dans un isolate à part (un deuxième « cerveau »
+    // du téléphone) : 5000 tours d'affilée sur le fil principal, c'était
+    // l'écran du code de sécurité qui saccadait à l'ouverture. Même SHA-256,
+    // même nombre de tours, donc exactement le même code qu'avant.
+    final material = await Isolate.run(() => petrirCodeSecurite(ordered, _kSafetyNumberRounds));
 
     final extended = await Hkdf(hmac: _hmac, outputLength: _kSafetyNumberGroups * 5).deriveKey(
       secretKey: SecretKey(material),
@@ -497,5 +512,16 @@ class CryptoService {
       groups.add((value % 100000).toString().padLeft(5, '0'));
     }
     return groups.join(' ');
+  }
+
+  /// Les [tours] passes de SHA-256 du code de sécurité, en calcul direct
+  /// (sans `await` à chaque tour). Publique pour que les tests vérifient
+  /// qu'elle donne le même résultat que l'ancienne boucle.
+  static List<int> petrirCodeSecurite(String texte, int tours) {
+    List<int> m = utf8.encode(texte);
+    for (var i = 0; i < tours; i++) {
+      m = hachage.sha256.convert(m).bytes;
+    }
+    return m;
   }
 }
