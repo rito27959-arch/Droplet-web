@@ -95,6 +95,12 @@ class Textes {
   String get centreAide => _('centreAide');
   String get cetAppareil => _('cetAppareil');
   String get changerFond => _('changerFond');
+  String get statutVideo => _('statutVideo');
+  String get statutVocal => _('statutVocal');
+  String get statutEnregistrer => _('statutEnregistrer');
+  String get statutArreter => _('statutArreter');
+  String get fichierTropLourd => _('fichierTropLourd');
+  String get statutChargement => _('statutChargement');
   String get chiffrementDetail => _('chiffrementDetail');
   String get cliquerInfos => _('cliquerInfos');
   String get codeSecuriteTexte => _('codeSecuriteTexte');

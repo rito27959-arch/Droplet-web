@@ -292,10 +292,32 @@ class Statut {
     required this.fond,
     required this.date,
     this.image,
+    this.type = 'texte',
+    this.piece,
+    this.couleur,
+    this.distant = false,
+    this.pseudo,
     List<String>? vuPar,
     List<String>? aimePar,
   })  : vuPar = vuPar ?? [],
         aimePar = aimePar ?? [];
+
+  /// texte | photo | video | voice — comme `StatusMediaKind` dans l'app.
+  final String type;
+
+  /// Le média d'un statut venu du téléphone : son contenu arrive quand on
+  /// le regarde (`Depot.chargerStatut`).
+  final PieceJointe? piece;
+
+  /// La couleur de fond choisie dans l'app (ARGB), à la place d'un dégradé.
+  final int? couleur;
+
+  /// Vrai : ce statut vient du téléphone (il n'est pas gardé ici, le
+  /// téléphone le renvoie à chaque instantané).
+  final bool distant;
+
+  /// Le nom de l'auteur tel que le téléphone le connaît.
+  final String? pseudo;
 
   final String id;
   final String auteurId;
@@ -319,6 +341,8 @@ class Statut {
         'fond': fond,
         'date': date.toIso8601String(),
         'image': image != null && image!.length < 400000 ? image : null,
+        'type': type,
+        'couleur': couleur,
         'vuPar': vuPar,
         'aimePar': aimePar,
       };
@@ -330,6 +354,8 @@ class Statut {
         fond: j['fond'] as int? ?? 0,
         date: DateTime.tryParse(j['date'] as String? ?? '') ?? DateTime.now(),
         image: j['image'] as String?,
+        type: j['type'] as String? ?? 'texte',
+        couleur: j['couleur'] as int?,
         vuPar: (j['vuPar'] as List? ?? const []).cast<String>(),
         aimePar: (j['aimePar'] as List? ?? const []).cast<String>(),
       );

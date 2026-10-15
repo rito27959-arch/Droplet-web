@@ -510,26 +510,33 @@ Future<(int, int)?> tailleImageDe(String url) => Navigateur.tailleImage(url);
 /// Une vidéo dans une bulle : le lecteur du navigateur (lecture, plein
 /// écran, image dans l'image), sans rien réinventer.
 class LecteurVideo extends StatelessWidget {
-  const LecteurVideo({super.key, required this.url});
+  const LecteurVideo({super.key, required this.url, this.contenir = false, this.auto = false});
 
   final String url;
+
+  /// Montrer toute l'image (statut) plutôt que remplir la bulle.
+  final bool contenir;
+
+  /// Démarrer seul (statut), sans le son coupé : l'utilisateur l'a ouvert.
+  final bool auto;
 
   static final _enregistres = <String>{};
 
   @override
   Widget build(BuildContext context) {
-    final type = 'droplet-video-${url.hashCode}';
+    final type = 'droplet-video-${url.hashCode}-${contenir ? 1 : 0}${auto ? 1 : 0}';
     if (_enregistres.add(type)) {
       ui_web.platformViewRegistry.registerViewFactory(type, (int _) {
         final v = web.HTMLVideoElement()
           ..src = url
           ..controls = true
-          ..preload = 'metadata'
+          ..preload = auto ? 'auto' : 'metadata'
+          ..autoplay = auto
           ..playsInline = true;
         v.style
           ..width = '100%'
           ..height = '100%'
-          ..objectFit = 'cover'
+          ..objectFit = contenir ? 'contain' : 'cover'
           ..backgroundColor = '#000';
         return v;
       });

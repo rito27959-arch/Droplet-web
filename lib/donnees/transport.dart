@@ -20,6 +20,7 @@ import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
 
 import 'canal_telephone.dart';
+import 'modeles.dart' show PieceJointe;
 
 enum TypePaquet { message, accuse, reaction, edition, suppression, frappe, appel }
 
@@ -54,6 +55,9 @@ abstract class Transport {
   /// Une demande au téléphone (contenu d'un fichier, discussion lue…).
   /// Rien en démonstration.
   Future<void> demander(Map<String, dynamic> demande) async {}
+
+  /// Un statut publié d'ici, confié au téléphone (rien en démonstration).
+  Future<void> publierStatut({required String texte, required int couleur, PieceJointe? media, String type = 'texte'}) async {}
 }
 
 /// Le réseau simulé de la démonstration.
@@ -263,6 +267,43 @@ class TransportDroplet extends Transport {
       if (inconnu != null) 'pseudo': inconnu.pseudo,
       if (inconnu?.cle != null) 'cle': inconnu!.cle,
     });
+  }
+
+  /// Un statut : texte seul, ou photo / vidéo / vocal envoyés en morceaux
+  /// (`but: statut`) — le téléphone le publie quand tout est arrivé.
+  @override
+  Future<void> publierStatut({required String texte, required int couleur, PieceJointe? media, String type = 'texte'}) async {
+    if (media == null || media.url.isEmpty) {
+      await canal.demander({'t': 'statut', 'texte': texte, 'fond': couleur});
+      return;
+    }
+    final octets = await octetsDe(media.url);
+    if (octets.isEmpty) throw StateError('Fichier illisible');
+    if (octets.length > maxFichier) throw const FichierTropGros();
+    final id = 'st${DateTime.now().microsecondsSinceEpoch}';
+    final n = (octets.length / tailleMorceau).ceil();
+    for (var i = 0; i < n; i++) {
+      final fin = min((i + 1) * tailleMorceau, octets.length);
+      await canal.demander({
+        't': 'fichier',
+        'but': 'statut',
+        'id': id,
+        'i': i,
+        'n': n,
+        'b64': base64.encode(octets.sublist(i * tailleMorceau, fin)),
+        if (i == 0) ...{
+          'k': type,
+          'nom': media.nom,
+          'mime': media.mime,
+          'taille': octets.length,
+          'texte': texte,
+          'fond': couleur,
+          if (media.dureeMs != null) 'ms': media.dureeMs,
+        },
+      });
+      progression.value = {...progression.value, id: (i + 1) / n};
+    }
+    progression.value = {...progression.value}..remove(id);
   }
 
   /// Une photo, un vocal, une vidéo, un document : lu, découpé, et confié

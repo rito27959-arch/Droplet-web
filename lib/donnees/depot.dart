@@ -217,8 +217,9 @@ class Depot extends ChangeNotifier {
     final n = f['n'];
     if (id is! String || i is! int || n is! int || n <= 0 || i < 0 || i >= n || n > 64) return;
     final m = message(id);
-    final p = m?.piece;
-    if (m == null || p == null) return;
+    final statut = m == null ? statuts.where((s) => s.id == id).firstOrNull : null;
+    final p = m?.piece ?? statut?.piece;
+    if (p == null) return;
     final etat = _morceaux.putIfAbsent(id, () => (n, List<Uint8List?>.filled(n, null)));
     if (etat.$1 != n) return;
     try {
@@ -236,7 +237,7 @@ class Depot extends ChangeNotifier {
     // limité du navigateur, le temps de la session.
     p.url = urlBlob(tout.takeBytes(), p.mime);
     _demandees.remove(id);
-    if (m.type == TypeMessage.image && p.largeur == null) {
+    if (m != null && m.type == TypeMessage.image && p.largeur == null) {
       unawaited(tailleImageDe(p.url).then((t) {
         if (t == null) return;
         p.largeur = t.$1;
@@ -375,6 +376,8 @@ class Depot extends ChangeNotifier {
         if (!_attend('m|${m.id}|important')) m.important = importants.contains(m.id);
       }
     }
+    final st = e['statuts'];
+    if (st is List) _appliquerStatuts(st);
     final bloques = <String>{...((e['bloques'] as List?) ?? const []).whereType<String>()};
     for (final c in contacts.values) {
       if (!_attend('p:${c.id}|bloque')) c.bloque = bloques.contains(c.id);
@@ -397,6 +400,81 @@ class Depot extends ChangeNotifier {
     }
     _changer();
   }
+
+  /// Les statuts actifs du téléphone, qui remplacent ceux reçus avant. Le
+  /// contenu déjà chargé (photo, vidéo, vocal) est gardé.
+  void _appliquerStatuts(List<dynamic> liste) {
+    final dejaCharges = {
+      for (final s in statuts)
+        if (s.distant && s.piece != null && s.piece!.url.isNotEmpty) s.id: s.piece!.url,
+    };
+    final vusIci = {for (final s in statuts) if (s.distant && s.vuPar.contains(kMoi)) s.id};
+    final aimesIci = {for (final s in statuts) if (s.distant && s.aimePar.contains(kMoi)) s.id};
+    statuts.removeWhere((s) => s.distant);
+    final nouveaux = <Statut>[];
+    for (final x in liste) {
+      if (x is! Map || x['id'] is! String || x['a'] is! String) continue;
+      final j = x.cast<String, dynamic>();
+      final id = j['id'] as String;
+      final auteur = j['a'] == 'moi' ? kMoi : j['a'] as String;
+      final pseudo = j['pseudo'] as String?;
+      if (auteur != kMoi && !contacts.containsKey(auteur)) {
+        contacts[auteur] = Contact(id: auteur, pseudo: (pseudo == null || pseudo.isEmpty) ? auteur : pseudo, couleur: _couleurDe(auteur));
+      }
+      final type = j['k'] as String? ?? 'texte';
+      final avecMedia = type == 'photo' || type == 'video' || type == 'voice';
+      final mime = j['mime'] as String? ??
+          switch (type) { 'photo' => 'image/jpeg', 'video' => 'video/mp4', _ => 'audio/mp4' };
+      nouveaux.add(Statut(
+        id: id,
+        auteurId: auteur,
+        texte: j['texte'] as String? ?? '',
+        fond: 0,
+        couleur: j['fond'] as int?,
+        date: DateTime.tryParse(j['date'] as String? ?? '')?.toLocal() ?? DateTime.now(),
+        type: type,
+        distant: true,
+        pseudo: pseudo,
+        piece: avecMedia
+            ? PieceJointe(
+                nom: j['nom'] as String? ?? 'statut',
+                mime: mime,
+                taille: 0,
+                url: dejaCharges[id] ?? '',
+                dureeMs: j['ms'] as int?,
+                distant: true,
+              )
+            : null,
+        vuPar: [if (j['vu'] == true || vusIci.contains(id)) kMoi],
+        aimePar: [if (aimesIci.contains(id)) kMoi],
+      ));
+    }
+    // Mes statuts publiés d'ici, en attente : remplacés dès que le
+    // téléphone renvoie les siens.
+    final miensDuTelephone = nouveaux.where((s) => s.auteurId == kMoi).length;
+    if (miensDuTelephone > _miensConnus) statuts.removeWhere((s) => !s.distant && s.auteurId == kMoi && !demo);
+    _miensConnus = miensDuTelephone;
+    statuts.addAll(nouveaux);
+  }
+
+  int _miensConnus = 0;
+
+  /// Le contenu d'un statut du téléphone (photo, vidéo, vocal).
+  void chargerStatut(Statut s) {
+    final p = s.piece;
+    if (!s.distant || p == null || p.url.isNotEmpty || _demandees.contains(s.id) || demo) return;
+    _demandees.add(s.id);
+    notifyListeners();
+    unawaited(transport.demander({'t': 'telecharger', 'id': s.id}).then((_) {}, onError: (_) {
+      _demandees.remove(s.id);
+      notifyListeners();
+    }));
+    Timer(const Duration(minutes: 2), () {
+      if (_demandees.remove(s.id)) notifyListeners();
+    });
+  }
+
+  bool statutEnChargement(Statut s) => _demandees.contains(s.id);
 
   /// Le téléphone a vu quelqu'un écrire.
   void _appliquerFrappe(Map<String, dynamic> f) {
@@ -670,9 +748,33 @@ class Depot extends ChangeNotifier {
 
   // ══ STATUTS, APPELS, PROFIL ══════════════════════════════════════════
 
-  void publierStatut(String texte, int fond, {String? image}) {
-    statuts.add(Statut(id: _id('st'), auteurId: kMoi, texte: texte, fond: fond, date: DateTime.now(), image: image));
+  /// Publier un statut. Avec un téléphone lié, c'est lui qui le publie (à
+  /// tous les contacts, comme l'éditeur de statut de l'app) ; il apparaît
+  /// ici tout de suite, puis est remplacé par celui que le téléphone renvoie.
+  /// Rend `false` si le média est trop lourd pour partir.
+  Future<bool> publierStatut(String texte, int fond, {String? image, PieceJointe? media, String type = 'texte'}) async {
+    final couleur = fondsStatut[fond % fondsStatut.length].first.toARGB32();
+    statuts.add(Statut(
+      id: _id('st'),
+      auteurId: kMoi,
+      texte: texte,
+      fond: fond,
+      date: DateTime.now(),
+      image: image ?? (type == 'photo' ? media?.url : null),
+      type: type,
+      piece: type == 'video' || type == 'voice' ? media : null,
+    ));
     _changer();
+    if (!demo) {
+      try {
+        await transport.publierStatut(texte: texte, couleur: couleur, media: media, type: type);
+      } on FichierTropGros {
+        statuts.removeLast();
+        _changer();
+        return false;
+      } catch (_) {}
+      return true;
+    }
     // En démonstration, les contacts passent voir.
     if (demo) {
       final s = statuts.last;
@@ -684,16 +786,27 @@ class Depot extends ChangeNotifier {
         });
       }
     }
+    return true;
   }
 
   void aimerStatut(Statut s) {
-    s.aimePar.contains(kMoi) ? s.aimePar.remove(kMoi) : s.aimePar.add(kMoi);
+    final aime = !s.aimePar.contains(kMoi);
+    aime ? s.aimePar.add(kMoi) : s.aimePar.remove(kMoi);
     _changer();
+    // Le « j'aime » d'un statut du téléphone part à son auteur.
+    if (s.distant && s.auteurId != kMoi && aime) {
+      unawaited(transport.demander({'t': 'statut_reaction', 'id': s.id, 'auteur': s.auteurId, 'emoji': '❤️'}));
+    }
   }
 
   /// Répondre à un statut : un message dans la discussion avec son auteur,
   /// qui cite le statut.
   void repondreStatut(Statut s, String texte) {
+    // Un statut du téléphone : la réponse part comme depuis l'app.
+    if (s.distant && s.auteurId != kMoi) {
+      unawaited(transport.demander({'t': 'statut_reponse', 'id': s.id, 'auteur': s.auteurId, 'texte': texte}));
+      return;
+    }
     final d = discussionAvec(s.auteurId);
     envoyerTexte(d, '« ${s.texte.isEmpty ? '📷' : s.texte} »\n$texte');
   }
@@ -702,6 +815,9 @@ class Depot extends ChangeNotifier {
     if (s.vuPar.contains(kMoi)) return;
     s.vuPar.add(kMoi);
     _changer();
+    if (s.distant && s.auteurId != kMoi) {
+      unawaited(transport.demander({'t': 'statut_vu', 'id': s.id, 'auteur': s.auteurId}));
+    }
   }
 
   void supprimerStatut(Statut s) {
@@ -1039,7 +1155,7 @@ class Depot extends ChangeNotifier {
       'messages': {
         for (final e in _messages.entries) e.key: e.value.map((m) => m.toJson()).toList(),
       },
-      'statuts': statuts.map((s) => s.toJson()).toList(),
+      'statuts': statuts.where((s) => !s.distant).map((s) => s.toJson()).toList(),
       'appels': appels.map((a) => a.toJson()).toList(),
       'invitation': invitation,
       'telephoneVu': telephoneVu,

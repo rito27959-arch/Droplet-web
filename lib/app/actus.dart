@@ -57,6 +57,18 @@ class ColonneActus extends StatelessWidget {
               couleur: OuroColors.accent,
               onTap: () => creerStatut(context, photo: true),
             ),
+            BoutonIcone(
+              icone: Icons.videocam_outlined,
+              aide: t.statutVideo,
+              couleur: OuroColors.accent,
+              onTap: () => creerStatut(context, mode: 'video'),
+            ),
+            BoutonIcone(
+              icone: Icons.mic_none_rounded,
+              aide: t.statutVocal,
+              couleur: OuroColors.accent,
+              onTap: () => creerStatut(context, mode: 'voice'),
+            ),
           ],
         ),
         Expanded(
@@ -263,6 +275,16 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
 
   List<Statut> get _statuts => _depot.statutsDe(widget.auteurs[_auteur]);
 
+  /// Une vidéo ou un vocal : la barre suit sa vraie durée (bornée), au
+  /// lieu des 5 secondes d'une photo.
+  void _dureeMedia(Duration d) {
+    final borne = Duration(milliseconds: d.inMilliseconds.clamp(3000, 60000));
+    if (_temps.duration == borne) return;
+    final avancement = _temps.value;
+    _temps.duration = borne;
+    if (_temps.isAnimating) _temps.forward(from: avancement);
+  }
+
   void _demarrer() {
     final l = _statuts;
     if (l.isEmpty) {
@@ -270,6 +292,12 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
       return;
     }
     final vu = l[_index.clamp(0, l.length - 1)];
+    final p = vu.piece;
+    _temps.duration = switch (vu.type) {
+      'voice' when p?.dureeMs != null => Duration(milliseconds: p!.dureeMs!.clamp(3000, 60000)),
+      'video' || 'voice' => const Duration(seconds: 15),
+      _ => const Duration(seconds: 5),
+    };
     // Hors de la construction : le dépôt prévient tous les écrans.
     Future.microtask(() => _depot.marquerStatutVu(vu));
     _temps.forward(from: 0);
@@ -368,9 +396,12 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
                                         color: Colors.black,
                                         child: Image.network(s.image!, fit: BoxFit.contain),
                                       )
+                                    : s.piece != null
+                                    ? _MediaStatut(statut: s, fond: fond, surDuree: _dureeMedia)
                                     : DecoratedBox(
                                         decoration: BoxDecoration(
-                                          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: fond),
+                                          color: s.couleur != null ? Color(s.couleur!) : null,
+                                          gradient: s.couleur != null ? null : LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: fond),
                                         ),
                                         child: Center(
                                           child: Padding(
@@ -390,7 +421,7 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
                               ),
                             ),
                           ),
-                          if (s.image != null && s.texte.isNotEmpty)
+                          if ((s.image != null || s.type == 'photo' || s.type == 'video') && s.texte.isNotEmpty)
                             Positioned(
                               left: 0,
                               right: 0,
@@ -466,7 +497,9 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
                                         couleur: Colors.white,
                                         onTap: () => setState(() => _temps.isAnimating ? _temps.stop() : _temps.forward()),
                                       ),
-                                      if (mien)
+                                      // L'app ne sait pas supprimer un statut publié :
+                                      // pas de bouton pour ceux du téléphone.
+                                      if (mien && !s.distant)
                                         BoutonIcone(
                                           icone: Icons.delete_outline_rounded,
                                           couleur: Colors.white,
@@ -569,26 +602,36 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
 
 // ── La création ────────────────────────────────────────────────────────
 
-Future<void> creerStatut(BuildContext context, {bool photo = false}) async {
-  String? image;
-  if (photo) {
-    final p = await Navigateur.choisirFichiers(accepter: 'image/*', plusieurs: false);
+Future<void> creerStatut(BuildContext context, {bool photo = false, String? mode}) async {
+  final type = photo ? 'photo' : (mode ?? 'texte');
+  PieceJointe? piece;
+  if (type == 'photo' || type == 'video') {
+    final p = await Navigateur.choisirFichiers(accepter: type == 'photo' ? 'image/*' : 'video/*', plusieurs: false);
     if (p.isEmpty || !context.mounted) return;
-    image = p.first.url;
+    piece = p.first;
+    // Le téléphone ne fait pas passer plus de 16 Mo par Internet.
+    if (piece.taille > 16 * 1024 * 1024) {
+      annoncer(context, context.t.fichierTropLourd, icone: Icons.error_outline_rounded);
+      return;
+    }
   }
   if (!context.mounted) return;
   await Navigator.of(context, rootNavigator: true).push(PageRouteBuilder<void>(
     opaque: false,
     transitionDuration: const Duration(milliseconds: 340),
-    pageBuilder: (_, __, ___) => _Createur(image: image),
+    pageBuilder: (_, __, ___) => _Createur(image: type == 'photo' ? piece?.url : null, piece: piece, type: type),
     transitionsBuilder: (_, a, __, enfant) => FadeTransition(opacity: a, child: enfant),
   ));
 }
 
 class _Createur extends StatefulWidget {
-  const _Createur({this.image});
+  const _Createur({this.image, this.piece, this.type = 'texte'});
 
   final String? image;
+  final PieceJointe? piece;
+
+  /// texte | photo | video | voice.
+  final String type;
 
   @override
   State<_Createur> createState() => _CreateurState();
@@ -598,18 +641,98 @@ class _CreateurState extends State<_Createur> {
   final _texte = TextEditingController();
   int _fond = 0;
 
+  /// Le vocal : en cours d'enregistrement, puis enregistré.
+  Enregistreur? _enregistreur;
+  PieceJointe? _vocal;
+  Timer? _chrono;
+
+  bool get _vocalMode => widget.type == 'voice';
+  bool get _videoMode => widget.type == 'video';
+
   @override
   void dispose() {
+    _chrono?.cancel();
+    unawaited(_enregistreur?.arreter(annuler: true));
     _texte.dispose();
     super.dispose();
   }
 
-  void _publier() {
+  Future<void> _basculerEnregistrement() async {
+    final e = _enregistreur;
+    if (e == null) {
+      final nouveau = await Navigateur.enregistrer();
+      if (nouveau == null || !mounted) return;
+      setState(() {
+        _enregistreur = nouveau;
+        _vocal = null;
+      });
+      _chrono = Timer.periodic(const Duration(milliseconds: 250), (_) {
+        if (mounted) setState(() {});
+        // Comme l'app : un statut vocal dure une minute au plus.
+        if (nouveau.duree > const Duration(seconds: 60)) unawaited(_basculerEnregistrement());
+      });
+      return;
+    }
+    _chrono?.cancel();
+    final piece = await e.arreter();
+    if (!mounted) return;
+    setState(() {
+      _enregistreur = null;
+      _vocal = piece;
+    });
+  }
+
+  Future<void> _publier() async {
     final texte = _texte.text.trim();
-    if (texte.isEmpty && widget.image == null) return;
-    context.lire.depot.publierStatut(texte, _fond, image: widget.image);
-    Navigator.of(context).pop();
-    annoncer(context, context.l.evPublished(1), icone: Icons.podcasts_rounded);
+    final media = _vocalMode ? _vocal : widget.piece;
+    if (_vocalMode && media == null) return;
+    if (texte.isEmpty && media == null) return;
+    final depot = context.lire.depot;
+    final l = context.l;
+    final t = context.t;
+    final navigateur = Navigator.of(context);
+    navigateur.pop();
+    final ok = await depot.publierStatut(texte, _fond, image: widget.image, media: media, type: widget.type);
+    if (!navigateur.mounted) return;
+    annoncer(navigateur.context, ok ? l.evPublished(1) : t.fichierTropLourd,
+        icone: ok ? Icons.podcasts_rounded : Icons.error_outline_rounded);
+  }
+
+  /// Le grand bouton du vocal : enregistrer, arrêter, et ce qui a été pris.
+  Widget _zoneVocal(BuildContext context) {
+    final t = context.t;
+    final e = _enregistreur;
+    final duree = e?.duree ?? Duration(milliseconds: _vocal?.dureeMs ?? 0);
+    final mm = duree.inMinutes.toString().padLeft(1, '0');
+    final ss = (duree.inSeconds % 60).toString().padLeft(2, '0');
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Survol(
+          onTap: _basculerEnregistrement,
+          builder: (context, survol) => AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 112,
+            height: 112,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: e != null ? const Color(0xFFFF3B30) : Colors.white.withValues(alpha: survol ? 0.32 : 0.22),
+              border: Border.all(color: Colors.white, width: 3),
+            ),
+            child: Icon(e != null ? Icons.stop_rounded : Icons.mic_rounded, color: Colors.white, size: 48),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          e != null || _vocal != null ? '$mm:$ss' : t.statutEnregistrer,
+          style: OuroTypography.title2.copyWith(color: Colors.white, fontFeatures: const [ui.FontFeature.tabularFigures()]),
+        ),
+        if (e != null) ...[
+          const SizedBox(height: 6),
+          Text(t.statutArreter, style: OuroTypography.footnote.copyWith(color: Colors.white70)),
+        ],
+      ],
+    );
   }
 
   @override
@@ -628,14 +751,18 @@ class _CreateurState extends State<_Createur> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 400),
                 decoration: BoxDecoration(
-                  gradient: image == null ? LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: fond) : null,
-                  color: image == null ? null : Colors.black,
+                  gradient: image == null && !_videoMode ? LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: fond) : null,
+                  color: image == null && !_videoMode ? null : Colors.black,
                 ),
               ),
             ),
             if (image != null) Positioned.fill(child: Padding(padding: const EdgeInsets.fromLTRB(40, 80, 40, 140), child: Image.network(image, fit: BoxFit.contain))),
+            if (_videoMode && widget.piece != null)
+              Positioned.fill(child: Padding(padding: const EdgeInsets.fromLTRB(40, 80, 40, 140), child: LecteurVideo(url: widget.piece!.url, contenir: true))),
             Positioned.fill(
-              child: image != null
+              child: _vocalMode
+                  ? Center(child: _zoneVocal(context))
+                  : image != null || _videoMode
                   ? const SizedBox.shrink()
                   : Center(
                       child: ConstrainedBox(
@@ -672,7 +799,7 @@ class _CreateurState extends State<_Createur> {
                 children: [
                   BoutonIcone(icone: Icons.close_rounded, couleur: Colors.white, aide: l.actionCancel, onTap: () => Navigator.of(context).pop()),
                   const Spacer(),
-                  if (image == null)
+                  if (image == null && !_videoMode)
                     BoutonIcone(
                       icone: Icons.palette_outlined,
                       couleur: Colors.white,
@@ -693,7 +820,7 @@ class _CreateurState extends State<_Createur> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
                       children: [
-                        if (image != null)
+                        if (image != null || _videoMode)
                           Expanded(
                             child: TextField(
                               controller: _texte,
@@ -768,6 +895,124 @@ class _CreateurState extends State<_Createur> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Le média d'un statut venu du téléphone ─────────────────────────────
+
+/// Photo, vidéo ou vocal d'un statut publié depuis l'app : le contenu est
+/// demandé au téléphone à l'ouverture, puis montré (ou joué) tel quel.
+class _MediaStatut extends StatefulWidget {
+  const _MediaStatut({required this.statut, required this.fond, required this.surDuree});
+
+  final Statut statut;
+  final List<Color> fond;
+  final void Function(Duration) surDuree;
+
+  @override
+  State<_MediaStatut> createState() => _MediaStatutState();
+}
+
+class _MediaStatutState extends State<_MediaStatut> {
+  Lecteur? _lecteur;
+  String _urlLue = '';
+
+  @override
+  void dispose() {
+    _lecteur?.liberer();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.statut;
+    final p = s.piece!;
+    final depot = context.depot;
+    if (p.url.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) depot.chargerStatut(s);
+      });
+    }
+    final fondUni = s.couleur != null ? Color(s.couleur!) : null;
+
+    if (s.type == 'voice') {
+      // Le vocal démarre dès que son contenu est là, comme dans l'app.
+      if (p.url.isNotEmpty && p.url != _urlLue) {
+        _urlLue = p.url;
+        _lecteur?.liberer();
+        final l = Lecteur(p.url);
+        _lecteur = l;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) l.basculer();
+        });
+      }
+      final lecteur = _lecteur;
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: fondUni,
+          gradient: fondUni != null ? null : LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: widget.fond),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (lecteur == null)
+                const SizedBox(width: 44, height: 44, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+              else
+                ValueListenableBuilder<bool>(
+                  valueListenable: lecteur.enCours,
+                  builder: (context, joue, _) => Survol(
+                    onTap: lecteur.basculer,
+                    builder: (context, survol) => ValueListenableBuilder<double>(
+                      valueListenable: lecteur.position,
+                      builder: (context, pos, _) => SizedBox(
+                        width: 120,
+                        height: 120,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox.expand(child: CircularProgressIndicator(value: pos, strokeWidth: 4, color: Colors.white, backgroundColor: Colors.white24)),
+                            Icon(joue ? Icons.pause_rounded : Icons.mic_rounded, color: Colors.white, size: 52),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              if (s.texte.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  child: Text(s.texte, textAlign: TextAlign.center, style: OuroTypography.title3.copyWith(color: Colors.white)),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (p.url.isEmpty) {
+      return ColoredBox(
+        color: Colors.black,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(width: 36, height: 36, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white)),
+              const SizedBox(height: 14),
+              Text(context.t.statutChargement, style: OuroTypography.footnote.copyWith(color: Colors.white70)),
+            ],
+          ),
+        ),
+      );
+    }
+    return ColoredBox(
+      color: Colors.black,
+      child: s.type == 'video'
+          ? LecteurVideo(url: p.url, contenir: true, auto: true)
+          : Image.network(p.url, fit: BoxFit.contain),
     );
   }
 }
