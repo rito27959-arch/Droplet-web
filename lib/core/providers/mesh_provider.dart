@@ -357,6 +357,7 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         modifier: editMessage,
         supprimer: deleteMessage,
         epingler: (id, e) => epingler(id, epingle: e),
+        supprimerConversation: ({String? peer, String? groupe}) => supprimerConversation(peerId: peer, groupId: groupe),
         // « En train d'écrire » tapé sur le web : par le maillage, et par
         // Internet comme le fait l'écran de discussion du téléphone.
         frappe: ({String? peer, String? groupe}) {

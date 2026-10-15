@@ -59,6 +59,15 @@
 //                                    champ : epingle | important
 //           {"t":"frappe", "d"}      on écrit sur le web : le contact voit
 //                                    « en train d'écrire… »
+//           {"t":"discussion", "d", "op":"supprimer"|"vider"}
+//           {"t":"groupe", "g", "op":"renommer", "titre"}
+//                          | "op":"description", "texte"
+//                          | "op":"ajouter", "membres":[peerId…]
+//                          | "op":"retirer", "membre"
+//                          | "op":"quitter"
+//           {"t":"profil", "pseudo"}
+//   Les discussions de groupe portent aussi "admins" (["moi" si je le
+//   suis, puis les peerIds) et "description".
 //
 //   ── L'ÉTAT PARTAGÉ (téléphone → navigateur) ──
 //   Comme WhatsApp : ce qui change d'un côté change de l'autre. Le
@@ -104,6 +113,7 @@ import 'package:flutter/foundation.dart';
 import '../models/mesh_message.dart';
 import '../repositories/mesh_repository.dart';
 import '../../features/chat/messages_importants.dart';
+import '../../features/group/reglages_groupe.dart';
 import 'appareils_lies.dart';
 import 'epingles.dart';
 import 'presence_internet.dart';
@@ -137,6 +147,7 @@ class ActionsMiroir {
     required this.supprimer,
     required this.epingler,
     required this.frappe,
+    required this.supprimerConversation,
   });
 
   final Future<void> Function(String peerId) lire;
@@ -151,6 +162,9 @@ class ActionsMiroir {
 
   /// « En train d'écrire » depuis le web : prévenir le contact ou le groupe.
   final void Function({String? peer, String? groupe}) frappe;
+
+  /// Supprime une discussion du téléphone (comme depuis la liste).
+  final void Function({String? peer, String? groupe}) supprimerConversation;
 }
 
 /// Un fichier qui arrive du web morceau par morceau.
@@ -434,6 +448,16 @@ class MiroirAppareils {
           await _appliquerEtat(j);
         case 'msg_etat':
           await _appliquerEtatMessage(j);
+        case 'discussion':
+          final d = j['d'] as String? ?? '';
+          if (j['op'] == 'supprimer' || j['op'] == 'vider') {
+            if (d.startsWith('p:')) actions.supprimerConversation(peer: d.substring(2));
+            if (d.startsWith('g:')) actions.supprimerConversation(groupe: d.substring(2));
+          }
+        case 'groupe':
+          await _appliquerGroupe(j);
+        case 'profil':
+          await _appliquerProfil(j);
         case 'frappe':
           final d = j['d'] as String? ?? '';
           if (d.startsWith('p:')) actions.frappe(peer: d.substring(2));
@@ -487,6 +511,67 @@ class MiroirAppareils {
     revisionEtat.value++;
     _dernierEtat = null;
     await _pousserEtat();
+  }
+
+  /// Un groupe géré depuis le web : les mêmes fonctions que l'écran
+  /// d'informations du groupe sur le téléphone, puis la discussion repart
+  /// vers le web avec son titre, ses membres et ses admins à jour.
+  Future<void> _appliquerGroupe(Map<String, dynamic> j) async {
+    final g = j['g'] as String? ?? '';
+    final groupe = StorageService.getGroup(g);
+    if (groupe == null || !groupe.isActiveMember(_repo.myId)) return;
+    switch (j['op']) {
+      case 'renommer':
+        final titre = (j['titre'] as String? ?? '').trim();
+        if (titre.isNotEmpty && titre.length <= 100) await _repo.renameGroup(groupId: g, name: titre);
+      case 'description':
+        final texte = (j['texte'] as String? ?? '').trim();
+        if (texte.length > 1000) return;
+        ReglagesGroupes.definir(g, ReglagesGroupes.de(g).copier(description: texte));
+        await _repo.diffuserReglagesGroupe(g);
+      case 'ajouter':
+        for (final p in (j['membres'] as List? ?? const []).whereType<String>().take(50)) {
+          if (!groupe.isActiveMember(p)) await _repo.addGroupMember(groupId: g, peerId: p);
+        }
+      case 'retirer':
+        final p = j['membre'] as String? ?? '';
+        if (p.isNotEmpty && p != _repo.myId) await _repo.removeGroupMember(groupId: g, peerId: p);
+      case 'quitter':
+        await _repo.leaveGroup(g);
+      default:
+        return;
+    }
+    await _pousserDiscussion('g:$g');
+  }
+
+  /// Le pseudo changé sur le web : enregistré et annoncé comme depuis les
+  /// réglages du téléphone.
+  Future<void> _appliquerProfil(Map<String, dynamic> j) async {
+    final pseudo = (j['pseudo'] as String? ?? '').trim();
+    final moi = StorageService.currentUser;
+    if (moi == null || pseudo.isEmpty || pseudo.length > 40 || pseudo == moi.pseudo) return;
+    await StorageService.saveUser(DropletUserModel(id: moi.id, pseudo: pseudo, publicKey: moi.publicKey, avatarUrl: moi.avatarUrl));
+    unawaited(_repo.sendHello().then<void>((_) {}, onError: (Object _) {}));
+    for (final a in _appareils()) {
+      await _deposer(a, {
+        'v': 1,
+        'profil': {'pseudo': pseudo},
+      });
+    }
+  }
+
+  /// Une discussion seule (sans message), pour en rafraîchir le titre, les
+  /// membres et les admins sur le web.
+  Future<void> _pousserDiscussion(String d) async {
+    final contacts = <String, Map<String, dynamic>>{};
+    final disc = _discussion(d, _repo.myId, contacts);
+    for (final a in _appareils()) {
+      await _deposer(a, {
+        'v': 1,
+        'contacts': contacts.values.toList(),
+        'discussions': [disc],
+      });
+    }
   }
 
   /// Un message épinglé ou mis en favori sur le web.
@@ -655,7 +740,19 @@ class MiroirAppareils {
       for (final p in membres) {
         contacts.putIfAbsent(p, () => {'id': p, 'pseudo': _pseudo(p, null)});
       }
-      return {'id': d, 'type': 'groupe', 'titre': g?.name ?? 'Groupe', 'membres': membres};
+      // Les admins : « moi » si je le suis (le web ne connaît pas mon id).
+      final admins = [
+        for (final x in g?.activeMembers ?? const <GroupMemberRecord>[])
+          if (x.isAdmin) x.peerId == moi ? 'moi' : x.peerId,
+      ];
+      return {
+        'id': d,
+        'type': 'groupe',
+        'titre': g?.name ?? 'Groupe',
+        'membres': membres,
+        'admins': admins,
+        'description': ReglagesGroupes.de(d.substring(2)).description,
+      };
     }
     final peer = d.substring(2);
     contacts.putIfAbsent(peer, () => {'id': peer, 'pseudo': _pseudo(peer, null)});
