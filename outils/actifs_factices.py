@@ -11,4 +11,9 @@ for ligne in open('pubspec.yaml', encoding='utf-8'):
         os.makedirs(chemin, exist_ok=True)
     elif not os.path.exists(chemin):
         os.makedirs(os.path.dirname(chemin), exist_ok=True)
-        open(chemin, 'wb').close()
+        with open(chemin, 'w') as f:
+            if chemin.endswith('.frag'):
+                # un shader vide ne compile pas : le plus petit shader valide
+                f.write('#version 460 core\nprecision mediump float;\n'
+                        'layout(location = 0) out vec4 fragColor;\n'
+                        'void main() { fragColor = vec4(0.0); }\n')
