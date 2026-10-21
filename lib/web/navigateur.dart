@@ -111,6 +111,41 @@ class Navigateur {
     return fini.future;
   }
 
+  /// Une VIGNETTE CARRÉE JPEG de [cote] pixels, rognée au centre — la
+  /// forme exacte d'une photo de profil sur le téléphone
+  /// (`AvatarService.cote`). Une photo d'appareil de 12 Mpx pèse plusieurs
+  /// Mo : réduite ici, elle tient en quelques dizaines de Ko et part en
+  /// un seul dépôt vers le téléphone.
+  static Future<String?> vignetteCarree(String url, {int cote = 320}) {
+    final fini = Completer<String?>();
+    final image = web.HTMLImageElement();
+    image.addEventListener(
+      'load',
+      ((web.Event _) {
+        try {
+          final w = image.naturalWidth, h = image.naturalHeight;
+          final c = min(w, h);
+          if (c == 0) return fini.complete(null);
+          final toile = web.document.createElement('canvas') as web.HTMLCanvasElement
+            ..width = cote
+            ..height = cote;
+          final ctx = toile.getContext('2d') as web.CanvasRenderingContext2D;
+          // Fond blanc : une image PNG transparente deviendrait noire en JPEG.
+          ctx.fillStyle = '#ffffff'.toJS;
+          ctx.fillRect(0, 0, cote, cote);
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(image, (w - c) / 2, (h - c) / 2, c.toDouble(), c.toDouble(), 0, 0, cote.toDouble(), cote.toDouble());
+          fini.complete(toile.toDataURL('image/jpeg', 0.86.toJS));
+        } catch (_) {
+          fini.complete(null);
+        }
+      }).toJS,
+    );
+    image.addEventListener('error', ((web.Event _) => fini.complete(null)).toJS);
+    image.src = url;
+    return fini.future;
+  }
+
   /// Télécharge une pièce jointe sous son nom.
   static void telecharger(PieceJointe p) {
     final lien = web.document.createElement('a') as web.HTMLAnchorElement
@@ -505,6 +540,8 @@ String urlBlob(Uint8List octets, String mime) {
 
 /// Les dimensions d'une image, une fois chargée.
 Future<(int, int)?> tailleImageDe(String url) => Navigateur.tailleImage(url);
+
+Future<String?> vignetteDe(String url) => Navigateur.vignetteCarree(url);
 
 
 /// Une vidéo dans une bulle : le lecteur du navigateur (lecture, plein

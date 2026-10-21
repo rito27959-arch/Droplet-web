@@ -406,7 +406,7 @@ class Appel {
 }
 
 class Profil {
-  Profil({this.pseudo = '', this.aPropos = '', this.couleur = 0, this.photo});
+  Profil({this.pseudo = '', this.aPropos = '', this.couleur = 0, this.photo, this.photoEnvoyee = false});
 
   String pseudo;
   String aPropos;
@@ -415,13 +415,19 @@ class Profil {
   /// Une adresse `data:` d'image, ou rien.
   String? photo;
 
-  Map<String, dynamic> toJson() => {'pseudo': pseudo, 'aPropos': aPropos, 'couleur': couleur, 'photo': photo};
+  /// La photo est bien celle du compte (confiée au téléphone, ou reçue de
+  /// lui). Faux pour une photo choisie avant que le web sache l'envoyer :
+  /// elle n'existait que dans ce navigateur.
+  bool photoEnvoyee;
+
+  Map<String, dynamic> toJson() => {'pseudo': pseudo, 'aPropos': aPropos, 'couleur': couleur, 'photo': photo, 'photoEnvoyee': photoEnvoyee};
 
   factory Profil.fromJson(Map<String, dynamic> j) => Profil(
         pseudo: j['pseudo'] as String? ?? '',
         aPropos: j['aPropos'] as String? ?? '',
         couleur: j['couleur'] as int? ?? 0,
         photo: j['photo'] as String?,
+        photoEnvoyee: j['photoEnvoyee'] as bool? ?? false,
       );
 }
 

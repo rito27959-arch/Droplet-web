@@ -17,7 +17,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:web/web.dart' as web;
 
-import '../web/navigateur.dart' show urlBlob, tailleImageDe;
+import '../web/navigateur.dart' show urlBlob, tailleImageDe, vignetteDe;
 import 'appels_reseau.dart';
 import 'modeles.dart';
 import 'transport.dart';
@@ -890,10 +890,31 @@ class Depot extends ChangeNotifier {
     if (photo != null) profil.photo = photo;
     if (retirerPhoto) profil.photo = null;
     _changer();
-    // Le pseudo est celui du compte : c'est le téléphone qui l'annonce.
+    // Le pseudo et la photo sont ceux du COMPTE : c'est le téléphone qui
+    // les annonce à mes contacts. Une photo gardée dans le navigateur ne
+    // serait vue par personne d'autre — c'était le cas avant.
     if (pseudo != null && pseudo.trim().isNotEmpty) {
       unawaited(transport.demander({'t': 'profil', 'pseudo': pseudo.trim()}));
     }
+    if (photo != null) _confierPhoto(photo);
+    if (retirerPhoto) {
+      profil.photoEnvoyee = true;
+      unawaited(transport.demander({'t': 'profil', 'retirerPhoto': true}));
+    }
+  }
+
+  /// Confie ma photo au téléphone, qui la distribue à mes contacts. Elle
+  /// part en vignette JPEG 320 × 320 (une photo choisie avant cette
+  /// version peut être bien plus grosse : on la réduit d'abord).
+  void _confierPhoto(String photo) {
+    unawaited(() async {
+      final v = photo.startsWith('data:image/jpeg;base64,') && photo.length < 200 * 1024 ? photo : await vignetteDe(photo);
+      final virgule = v?.indexOf(',') ?? -1;
+      if (v == null || virgule < 0) return;
+      await transport.demander({'t': 'profil', 'photo': v.substring(virgule + 1)});
+      profil.photoEnvoyee = true;
+      _changer();
+    }());
   }
 
   void majReglages(void Function(ReglagesWeb r) changement) {
@@ -1007,6 +1028,23 @@ class Depot extends ChangeNotifier {
     if (profilLot is Map) {
       final pseudo = profilLot['pseudo'];
       if (pseudo is String && pseudo.isNotEmpty) profil.pseudo = pseudo;
+      // La photo du compte, envoyée par le téléphone (au jumelage, puis à
+      // chaque changement, d'où qu'il vienne).
+      final photo = profilLot['photo'];
+      if (photo is String && photo.isNotEmpty) {
+        profil.photo = 'data:image/jpeg;base64,$photo';
+        profil.photoEnvoyee = true;
+      }
+      if (profilLot['sansPhoto'] == true) {
+        // ⚠️ Une photo choisie ici AVANT que le web sache l'envoyer : le
+        // téléphone ne la connaît pas encore, ce n'est pas un retrait. On
+        // la lui confie au lieu de l'effacer.
+        if (profil.photo != null && !profil.photoEnvoyee) {
+          _confierPhoto(profil.photo!);
+        } else {
+          profil.photo = null;
+        }
+      }
       final lien = profilLot['invitation'];
       if (lien is String && lien.startsWith('https://')) invitation = lien;
     }

@@ -245,7 +245,11 @@ class _PanneauProfilState extends State<PanneauProfil> {
   Future<void> _photo() async {
     final p = await Navigateur.choisirFichiers(accepter: 'image/*', plusieurs: false);
     if (p.isEmpty || !mounted) return;
-    context.lire.depot.majProfil(photo: p.first.url);
+    // Réduite à la taille d'une photo de profil avant d'aller plus loin :
+    // c'est elle qui part vers le téléphone, puis vers mes contacts.
+    final vignette = await Navigateur.vignetteCarree(p.first.url);
+    if (vignette == null || !mounted) return;
+    context.lire.depot.majProfil(photo: vignette);
   }
 
   @override
