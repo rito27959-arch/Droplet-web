@@ -3123,6 +3123,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aicPrism => 'Prisme';
 
   @override
+  String get aicPlush => 'Peluche';
+
+  @override
   String get aicEmerald => 'Émeraude';
 
   @override

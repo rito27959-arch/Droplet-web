@@ -942,6 +942,7 @@
   "aicGlass": "玻璃",
   "aicConstellation": "星座",
   "aicPrism": "棱镜",
+  "aicPlush": "毛绒",
   "aicEmerald": "翡翠",
   "aicChangeIconTitle": "要更改图标吗？",
   "aicChangeIconMessage": "「{name}」图标将替换主屏幕上的图标。部分启动器可能需要几秒钟才能显示，或需要返回主屏幕。",

@@ -3191,6 +3191,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aicPrism => 'منشور';
 
   @override
+  String get aicPlush => 'مخملي';
+
+  @override
   String get aicEmerald => 'زمردي';
 
   @override

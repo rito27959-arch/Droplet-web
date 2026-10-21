@@ -3185,6 +3185,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aicPrism => 'Призма';
 
   @override
+  String get aicPlush => 'Плюш';
+
+  @override
   String get aicEmerald => 'Изумруд';
 
   @override

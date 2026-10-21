@@ -942,6 +942,7 @@
   "aicGlass": "Cristal",
   "aicConstellation": "Constelación",
   "aicPrism": "Prisma",
+  "aicPlush": "Peluche",
   "aicEmerald": "Esmeralda",
   "aicChangeIconTitle": "¿Cambiar el icono?",
   "aicChangeIconMessage": "El icono «{name}» sustituirá al de tu pantalla de inicio. Algunos lanzadores tardan unos segundos en mostrarlo, o piden volver al inicio.",

@@ -5346,6 +5346,12 @@ abstract class AppLocalizations {
   /// **'Prisme'**
   String get aicPrism;
 
+  /// No description provided for @aicPlush.
+  ///
+  /// In fr, this message translates to:
+  /// **'Peluche'**
+  String get aicPlush;
+
   /// No description provided for @aicEmerald.
   ///
   /// In fr, this message translates to:

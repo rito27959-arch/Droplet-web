@@ -62,6 +62,7 @@ String _iconName(AppLocalizations l10n, String alias) {
     'V10' => l10n.aicConstellation,
     'V11' => l10n.aicPrism,
     'V12' => l10n.aicEmerald,
+    'V13' => l10n.aicPlush,
     _ => alias,
   };
 }

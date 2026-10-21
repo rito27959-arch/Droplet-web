@@ -946,6 +946,7 @@
   "aicGlass": "Verre",
   "aicConstellation": "Constellation",
   "aicPrism": "Prisme",
+  "aicPlush": "Peluche",
   "aicEmerald": "Émeraude",
   "aicChangeIconTitle": "Changer l'icône ?",
   "aicChangeIconMessage": "L'icône « {name} » remplacera celle de votre écran d'accueil. Certains lanceurs mettent quelques secondes à l'afficher, ou demandent de revenir à l'accueil.",

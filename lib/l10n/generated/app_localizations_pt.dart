@@ -3128,6 +3128,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get aicPrism => 'Prisma';
 
   @override
+  String get aicPlush => 'Pelúcia';
+
+  @override
   String get aicEmerald => 'Esmeralda';
 
   @override

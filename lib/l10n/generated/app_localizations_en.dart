@@ -3120,6 +3120,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aicPrism => 'Prism';
 
   @override
+  String get aicPlush => 'Plush';
+
+  @override
   String get aicEmerald => 'Emerald';
 
   @override

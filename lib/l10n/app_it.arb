@@ -942,6 +942,7 @@
   "aicGlass": "Vetro",
   "aicConstellation": "Costellazione",
   "aicPrism": "Prisma",
+  "aicPlush": "Peluche",
   "aicEmerald": "Smeraldo",
   "aicChangeIconTitle": "Cambiare l'icona?",
   "aicChangeIconMessage": "L'icona «{name}» sostituirà quella della tua schermata Home. Alcuni launcher impiegano qualche secondo a mostrarla, oppure richiedono di tornare alla Home.",

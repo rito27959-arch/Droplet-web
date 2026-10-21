@@ -3102,6 +3102,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aicPrism => 'प्रिज्म';
 
   @override
+  String get aicPlush => 'रोएँदार';
+
+  @override
   String get aicEmerald => 'पन्ना';
 
   @override

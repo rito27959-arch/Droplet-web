@@ -52,7 +52,8 @@ class AppIconOption {
 
   /// Demande le pack pour être appliquée.
   ///
-  /// ⚠️ LES TROIS PREMIÈRES RESTENT LIBRES, et ce n'est pas de la
+  /// ⚠️ QUATRE D'ENTRE ELLES RESTENT LIBRES (les trois premières et
+  /// « Peluche »), et ce n'est pas de la
   /// générosité mal placée. Une grille entièrement verrouillée se lit
   /// comme une publicité et se referme aussitôt ; trois icônes
   /// gratuites laissent découvrir que changer d'icône est possible —
@@ -67,7 +68,7 @@ class AppIconService {
   static const MethodChannel _channel =
       MethodChannel('com.droplet.droplet/app_icon');
 
-  /// Les treize icônes disponibles.
+  /// Les quatorze icônes disponibles.
   ///
   /// Les noms décrivent l'ambiance plutôt que la couleur seule : sur une
   /// grille de vignettes, « Nuit » se retient mieux que « bleu foncé ».
@@ -86,6 +87,16 @@ class AppIconService {
       alias: 'V2',
       name: 'Néon',
       asset: 'assets/icon/variants/droplet_02.png',
+    ),
+    // « Peluche » : la boule de fourrure bleue. GRATUITE, et rangée avec
+    // les autres icônes libres plutôt qu'en fin de grille. Son alias est
+    // V13 parce que les numéros suivent l'ordre d'ajout, pas l'ordre
+    // d'affichage (un alias déjà publié ne doit jamais changer de nom :
+    // le téléphone qui l'a choisi perdrait son icône).
+    AppIconOption(
+      alias: 'V13',
+      name: 'Peluche',
+      asset: 'assets/icon/variants/droplet_13.png',
     ),
     AppIconOption(
       alias: 'V3',

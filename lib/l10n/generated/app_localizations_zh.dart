@@ -2977,6 +2977,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aicPrism => '棱镜';
 
   @override
+  String get aicPlush => '毛绒';
+
+  @override
   String get aicEmerald => '翡翠';
 
   @override

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Variante 13 de l'icône de Droplet : « Peluche ».
+
+  Icône adaptative : la boule de fourrure couvre toute la toile, si bien
+  que le masque du fabricant (cercle, carré arrondi…) ne montre que de la
+  fourrure ; le logo tient dans les 66 dp centraux, toujours visibles.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_v13_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_v13_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_v13_monochrome" />
+</adaptive-icon>

@@ -411,7 +411,7 @@ class MainActivity : FlutterFragmentActivity() {
 
     /** Tous les alias déclarés au manifeste. */
     private fun aliases(): List<String> =
-        listOf(defaultAlias) + (1..12).map { "V$it" }
+        listOf(defaultAlias) + (1..13).map { "V$it" }
 
     /** Active [target] et désactive tous les autres. */
     private fun applyIcon(target: String) {

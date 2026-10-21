@@ -942,6 +942,7 @@
   "aicGlass": "Vidro",
   "aicConstellation": "Constelação",
   "aicPrism": "Prisma",
+  "aicPlush": "Pelúcia",
   "aicEmerald": "Esmeralda",
   "aicChangeIconTitle": "Mudar o ícone?",
   "aicChangeIconMessage": "O ícone «{name}» substituirá o do teu ecrã principal. Alguns launchers demoram alguns segundos a mostrá-lo, ou pedem para voltar ao ecrã principal.",

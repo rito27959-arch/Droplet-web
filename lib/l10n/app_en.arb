@@ -942,6 +942,7 @@
   "aicGlass": "Glass",
   "aicConstellation": "Constellation",
   "aicPrism": "Prism",
+  "aicPlush": "Plush",
   "aicEmerald": "Emerald",
   "aicChangeIconTitle": "Change the icon?",
   "aicChangeIconMessage": "The \"{name}\" icon will replace the one on your home screen. Some launchers take a few seconds to show it, or require returning to the home screen.",
