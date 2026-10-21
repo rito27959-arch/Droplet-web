@@ -163,7 +163,11 @@ class ActionsMiroir {
     required this.frappe,
     required this.supprimerConversation,
     this.noterEnvoiAutonome,
+    this.noterFichierAutonome,
   });
+
+  /// Pareil pour une photo, un vocal, un document parti directement du web.
+  final Future<void> Function({required String peer, required String id, required String nom, required String mime, required Uint8List octets, String? legende, String? reponseA})? noterFichierAutonome;
 
   /// Droplet Web a envoyé un message LUI-MÊME (téléphone éteint) : on
   /// l'inscrit dans l'historique du téléphone, sans le renvoyer.
@@ -736,6 +740,20 @@ class MiroirAppareils {
     final d = e['d'] as String? ?? '';
     if (d.startsWith('p:')) _apprendreContact(d.substring(2), e['pseudo'] as String?, e['cle'] as String?);
     final legende = (e['legende'] as String? ?? '').trim();
+    // Déjà parti directement depuis le web (téléphone éteint à ce moment-là) :
+    // on l'inscrit dans l'historique, sans le renvoyer au contact.
+    if (e['deja'] == true && d.startsWith('p:')) {
+      await actions.noterFichierAutonome?.call(
+        peer: d.substring(2),
+        id: id,
+        nom: (e['nom'] as String? ?? 'fichier').replaceAll(RegExp(r'[/\\]'), '_'),
+        mime: e['mime'] as String? ?? 'application/octet-stream',
+        octets: octets.takeBytes(),
+        legende: legende.isEmpty ? null : legende,
+        reponseA: e['r'] as String?,
+      );
+      return;
+    }
     await envoyerFichier(
       cible: d.startsWith('p:') ? d.substring(2) : null,
       groupe: d.startsWith('g:') ? d.substring(2) : null,

@@ -362,6 +362,7 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         epingler: (id, e) => epingler(id, epingle: e),
         supprimerConversation: ({String? peer, String? groupe}) => supprimerConversation(peerId: peer, groupId: groupe),
         noterEnvoiAutonome: _noterEnvoiAutonome,
+        noterFichierAutonome: _noterFichierAutonome,
         // « En train d'écrire » tapé sur le web : par le maillage, et par
         // Internet comme le fait l'écran de discussion du téléphone.
         frappe: ({String? peer, String? groupe}) {
@@ -851,7 +852,46 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
       return null;
     }
     final k = await AppareilsContacts.clePour(appareil, cle);
-    final texte = k == null ? null : await CryptoService.decrypt(k, cipherText, nonce);
+    if (k == null) return null;
+    // Une photo, un vocal… envoyé depuis son Droplet Web, en morceaux.
+    if (parsed['f'] == 2) {
+      final fichierId = parsed['id'] as String? ?? '';
+      final index = (parsed['i'] as num?)?.toInt() ?? -1;
+      final total = (parsed['t'] as num?)?.toInt() ?? 0;
+      final cleAssemblage = '${appareil}_$fichierId';
+      if (!AssemblageEnLigne.valide(cleAssemblage, index, total)) return null;
+      final morceau = await CryptoService.decryptBytes(k, base64Decode(cipherText), base64Decode(nonce));
+      if (morceau == null) return null;
+      final assemblage = await _assemblage();
+      _repo.publierProgression(fichierId, await assemblage.ajouter(cleAssemblage, index, total, morceau), envoi: false);
+      final complet = await assemblage.assembler(cleAssemblage, total);
+      if (complet == null) return null;
+      final enveloppe = MeshRepository.decodeFileEnvelope(complet);
+      if (enveloppe == null) return null;
+      final (fileName, mimeBrut, bytes) = enveloppe;
+      final (mimeType, legende) = MeshRepository.separerLegende(mimeBrut);
+      await StorageService.saveSharedFile(fileId: fichierId, fileName: fileName, bytes: bytes);
+      final msgFichier = MeshMessage(
+        id: id,
+        authorPseudo: StorageService.getPeerRecord(compte)?.pseudo ?? compte,
+        content: legende ?? fileName,
+        type: 'file',
+        timestamp: mbMsg.timestamp,
+        senderId: compte,
+        targetId: _repo.myId,
+        fileId: fichierId,
+        fileName: fileName,
+        fileSize: bytes.length,
+        fileMimeType: mimeType,
+        hopCount: 0,
+        status: MessageStatus.sent,
+      );
+      await StorageService.saveMessage(msgFichier);
+      state = [...state, msgFichier];
+      _repo.announceIncoming(msgFichier);
+      return (compte, id);
+    }
+    final texte = await CryptoService.decrypt(k, cipherText, nonce);
     if (texte == null) return null;
     final msg = MeshMessage(
       id: id,
@@ -902,6 +942,66 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
     }
   }
 
+  /// Une photo, un vocal, un document pour chaque appareil lié de
+  /// [targetId] : en morceaux chiffrés pour la clé de l'appareil (`f: 2`).
+  Future<void> _copierFichierPourAppareils(String targetId, String fileName, String mime, Uint8List bytes, String fileId) async {
+    try {
+      if (bytes.length > FichierEnLigne.maximum) return;
+      final liste = await AppareilsContacts.de(targetId);
+      if (liste == null || liste.appareils.isEmpty) return;
+      final maCle = await CryptoService.ensureIdentityKeyPair();
+      final morceaux = FichierEnLigne.decouper(
+          MeshRepository.encodeFileEnvelope(fileName: fileName, mimeType: mime, bytes: bytes));
+      for (final a in liste.appareils.take(4)) {
+        final k = await AppareilsContacts.clePour(a.id, a.cle);
+        if (k == null) continue;
+        for (var i = 0; i < morceaux.length; i++) {
+          final (c, n) = await CryptoService.encryptBytes(k, morceaux[i]);
+          final depot = await _repo.transport.storeMailboxMessage(
+            toPeerId: a.id,
+            encryptedPayload: jsonEncode({
+              'c': base64Encode(c),
+              'n': base64Encode(n),
+              'k': maCle,
+              'f': 2,
+              'id': fileId,
+              'm': fileId,
+              'i': i,
+              't': morceaux.length,
+              'md': 1,
+              'pour': targetId,
+            }),
+          );
+          if (depot == null) break;
+        }
+      }
+    } catch (e) {
+      debugPrint('[MeshNotifier] fichier pour les appareils de $targetId : $e');
+    }
+  }
+
+  /// Les accusés « distribué » / « lu » aussi pour les appareils liés de
+  /// [peerId] : les coches avancent sur son Droplet Web, téléphone éteint.
+  Future<void> _copierAccusePourAppareils(String peerId, TypeAccuse type, List<String> ids) async {
+    try {
+      final liste = await AppareilsContacts.de(peerId);
+      if (liste == null || liste.appareils.isEmpty) return;
+      final maCle = await CryptoService.ensureIdentityKeyPair();
+      final texte = AccuseEnLigne(type, ids).encoder();
+      for (final a in liste.appareils.take(4)) {
+        final k = await AppareilsContacts.clePour(a.id, a.cle);
+        if (k == null) continue;
+        final (c, n) = await CryptoService.encrypt(k, texte);
+        await _repo.transport.storeMailboxMessage(
+          toPeerId: a.id,
+          encryptedPayload: jsonEncode({'c': c, 'n': n, 'k': maCle, 'rc': 1, 'md': 1, 'pour': peerId}),
+        );
+      }
+    } catch (e) {
+      debugPrint('[MeshNotifier] accusé pour les appareils de $peerId : $e');
+    }
+  }
+
   /// Un message que Droplet Web a envoyé LUI-MÊME à un contact (téléphone
   /// éteint) : on l'inscrit dans l'historique, sans le renvoyer.
   Future<void> _noterEnvoiAutonome({required String peer, required String id, required String texte, required DateTime date, String? reponseA}) async {
@@ -915,6 +1015,29 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
       timestamp: date,
       senderId: _repo.myId,
       targetId: peer,
+      hopCount: 0,
+      status: MessageStatus.sent,
+    );
+    await StorageService.saveMessage(msg);
+    state = [...state, msg];
+  }
+
+  Future<void> _noterFichierAutonome({required String peer, required String id, required String nom, required String mime, required Uint8List octets, String? legende, String? reponseA}) async {
+    if (id.isEmpty || state.any((m) => m.id == id)) return;
+    await StorageService.saveSharedFile(fileId: id, fileName: nom, bytes: octets);
+    final msg = MeshMessage(
+      id: id,
+      authorPseudo: StorageService.currentUser?.pseudo ?? '',
+      content: legende ?? nom,
+      replyToId: reponseA,
+      type: 'file',
+      timestamp: DateTime.now(),
+      senderId: _repo.myId,
+      targetId: peer,
+      fileId: id,
+      fileName: nom,
+      fileSize: octets.length,
+      fileMimeType: mime,
       hopCount: 0,
       status: MessageStatus.sent,
     );
@@ -1167,6 +1290,7 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
   /// jamais lui-même accusé (pas de boucle).
   Future<void> _deposerAccuse(String peerId, TypeAccuse type, List<String> ids) async {
     if (ids.isEmpty) return;
+    unawaited(_copierAccusePourAppareils(peerId, type, ids));
     if (!await _tenterAccuse(peerId, type, ids)) _memoriserAccuses(peerId, type, ids);
   }
 
@@ -1727,6 +1851,10 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         ? [for (final m in state) m.id == fileId ? msg : m]
         : [...state, msg];
     await StorageService.saveSharedFile(fileId: fileId, fileName: fileName, bytes: bytes);
+    // Le Droplet Web du destinataire reçoit aussi le fichier, téléphone éteint.
+    if (targetId != null && groupId == null && EtatInternet.disponible()) {
+      unawaited(_copierFichierPourAppareils(targetId, fileName, mimeTransporte, bytes, fileId));
+    }
 
     // ⚠️ UN CONTACT TOR-ONLY NE PASSE JAMAIS PAR LE MESH DIRECT — voir
     // la même remarque dans `sendMessage` ci-dessus. Ici, la différence
