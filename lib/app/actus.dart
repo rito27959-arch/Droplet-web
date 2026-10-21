@@ -457,7 +457,7 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
                     child: KeyedSubtree(
                       key: ValueKey('halo-${s.id}'),
                       child: Opacity(
-                        opacity: 0.55,
+                        opacity: 0.42,
                         child: ImageFiltered(
                           imageFilter: ui.ImageFilter.blur(sigmaX: 90, sigmaY: 90, tileMode: TileMode.decal),
                           child: s.image != null
@@ -467,7 +467,7 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
                                     color: s.couleur != null ? Color(s.couleur!) : null,
                                     gradient: s.couleur != null
                                         ? null
-                                        : RadialGradient(colors: [...fond, Colors.transparent], radius: 0.9),
+                                        : LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: fond),
                                   ),
                                 ),
                         ),
