@@ -454,7 +454,7 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
                 child: IgnorePointer(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 600),
-                    child: KeyedSubtree(
+                    child: SizedBox.expand(
                       key: ValueKey('halo-${s.id}'),
                       child: Opacity(
                         opacity: 0.42,
