@@ -100,7 +100,7 @@ class DetailDroit extends InheritedWidget {
         color: OuroColors.secondarySystemGroupedBackground,
         child: Align(
           alignment: Alignment.topCenter,
-          child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 720), child: page),
+          child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 720), child: Defilement(child: page)),
         ),
       );
 
@@ -294,7 +294,7 @@ class _CoquilleState extends State<Coquille> {
   }
 
   Widget _racine(Onglet o) => Builder(
-        builder: (context) => ColoredBox(color: fondBarreLaterale(context), child: _colonne(o)),
+        builder: (context) => ColoredBox(color: fondBarreLaterale(context), child: Defilement(child: _colonne(o))),
       );
 
   Widget _colonne(Onglet o) => switch (o) {

@@ -397,21 +397,45 @@ class EntetePanneau extends StatelessWidget {
     // titre, pas de chevron — on y arrive depuis la barre latérale.
     final racineDetail = retour != null && DetailDroit.dedans(context) && (ModalRoute.of(context)?.isFirst ?? false);
     if (retour == null || racineDetail) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 10, 6),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                titre,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: OuroTypography.largeTitle.copyWith(color: OuroColors.label),
+      // LE GRAND TITRE D'iOS : dès que la liste défile, il se replie en titre
+      // compact centré, et un trait fin vient souligner la barre.
+      final replie = Defilement.replie(context);
+      return TweenAnimationBuilder<double>(
+        tween: Tween(end: replie ? 1 : 0),
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        builder: (context, t, _) {
+          final grand = OuroTypography.largeTitle;
+          final petit = OuroTypography.headline;
+          final style = TextStyle.lerp(grand, petit, t)!.copyWith(color: OuroColors.label);
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: OuroColors.separator.withValues(alpha: t), width: 0.5)),
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20, 18 - 10 * t, 10, 6 - 2 * t),
+              child: SizedBox(
+                height: 44 - 8 * t,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.lerp(Alignment.centerLeft, Alignment.center, t)!,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 44.0 * actions.length * t),
+                        child: Text(titre, maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(mainAxisSize: MainAxisSize.min, children: actions),
+                    ),
+                  ],
+                ),
               ),
             ),
-            ...actions,
-          ],
-        ),
+          );
+        },
       );
     }
     return SizedBox(
@@ -1103,3 +1127,48 @@ class Fond extends StatelessWidget {
 /// Le raccourci clavier à afficher : ⌘ sur Mac, Ctrl ailleurs.
 String touche(String lettres, {required bool mac}) =>
     mac ? lettres.replaceAll('Ctrl+', '⌃').replaceAll('Alt+', '⌥').replaceAll('Maj+', '⇧') : lettres;
+
+
+/// L'état « la liste a défilé » d'une colonne : le grand titre s'y replie.
+/// Posé par la coquille autour de chaque colonne ; il écoute les listes
+/// verticales qu'elle contient.
+class Defilement extends StatefulWidget {
+  const Defilement({super.key, required this.child});
+
+  final Widget child;
+
+  static bool replie(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_DefilementPorte>()?.replie ?? false;
+
+  @override
+  State<Defilement> createState() => _DefilementState();
+}
+
+class _DefilementState extends State<Defilement> {
+  bool _replie = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (n) {
+        if (n.metrics.axis != Axis.vertical) return false;
+        // Une marge entre replier (> 12) et déplier (< 2) : pas de
+        // battement au seuil.
+        final px = n.metrics.pixels;
+        final replie = _replie ? px > 2 : px > 12;
+        if (replie != _replie) setState(() => _replie = replie);
+        return false;
+      },
+      child: _DefilementPorte(replie: _replie, child: widget.child),
+    );
+  }
+}
+
+class _DefilementPorte extends InheritedWidget {
+  const _DefilementPorte({required this.replie, required super.child});
+
+  final bool replie;
+
+  @override
+  bool updateShouldNotify(_DefilementPorte old) => old.replie != replie;
+}
