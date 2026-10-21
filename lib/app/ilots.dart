@@ -88,7 +88,8 @@ class LigneIlot extends StatelessWidget {
       onTap: onTap,
       builder: (context, survol) => AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        constraints: const BoxConstraints(minHeight: 48),
+        // La marge de la pastille est prise sur la hauteur : rien ne bouge.
+        constraints: BoxConstraints(minHeight: selectionnee ? 42 : 48),
         // Sélectionnée : une pastille d'accent arrondie, légèrement en
         // retrait des bords de l'îlot — la barre latérale d'iPadOS 26.
         margin: selectionnee ? const EdgeInsets.symmetric(horizontal: 5, vertical: 3) : EdgeInsets.zero,
