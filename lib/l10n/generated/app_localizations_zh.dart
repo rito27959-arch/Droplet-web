@@ -1107,6 +1107,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get giAdministrator => '管理员';
 
   @override
+  String get chatsMarkUnread => '标记为未读';
+
+  @override
+  String get chatsMarkRead => '标记为已读';
+
+  @override
+  String get giMakeAdmin => '设为管理员';
+
+  @override
+  String get giRemoveAdmin => '取消管理员';
+
+  @override
   String get giLeaveGroup => '退出群组';
 
   @override

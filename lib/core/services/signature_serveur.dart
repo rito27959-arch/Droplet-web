@@ -26,6 +26,8 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart' as c;
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 import 'crypto_service.dart';
 
@@ -49,6 +51,80 @@ class SignatureServeur {
 
   /// À appeler si l'identité change (restauration d'une sauvegarde).
   static void oublier() => _secret = null;
+
+  // -- L'horloge -------------------------------------------------------------
+  //
+  // Les serveurs refusent une signature datée de plus de 5 minutes d'écart
+  // (sinon une requête interceptée pourrait être rejouée plus tard). Un
+  // téléphone dont l'horloge est réglée à la main, ou qui a dérivé, voyait
+  // donc TOUT refusé : plus un message, plus un appel par Internet, sans
+  // un mot d'explication. On lit l'heure des serveurs dans chaque réponse
+  // et on signe avec elle : l'horloge du téléphone n'a plus d'importance.
+
+  /// Écart serveur − téléphone, en secondes.
+  static int decalage = 0;
+
+  /// La dernière raison de refus donnée par un serveur (`heure`,
+  /// `signature`, `inconnu`, `requise`…), null quand tout passe.
+  static final ValueNotifier<String?> dernierRefus = ValueNotifier<String?>(null);
+
+  /// L'heure, en secondes, telle que les serveurs la voient.
+  static int heureServeur() =>
+      DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000 + decalage;
+
+  /// Recale l'horloge sur une réponse d'un serveur Droplet, et note la
+  /// raison d'un éventuel refus.
+  static void noter(http.BaseResponse r) {
+    final local = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+    int? distant = int.tryParse(r.headers['x-droplet-heure'] ?? '');
+    if (distant == null) {
+      final date = r.headers['date'];
+      if (date != null) {
+        try {
+          distant = HttpDateLecture.lire(date).millisecondsSinceEpoch ~/ 1000;
+        } catch (_) {}
+      }
+    }
+    if (distant != null) {
+      final ecart = distant - local;
+      // En deçà de 30 s, le bruit du réseau ; inutile de bouger.
+      if ((ecart - decalage).abs() > 30) {
+        decalage = ecart;
+        debugPrint('[Signature] horloge recalée : ${ecart}s d\'écart avec les serveurs');
+      }
+    }
+    if (r.statusCode == 401) {
+      final raison = r.headers['x-droplet-raison'] ?? 'inconnue';
+      dernierRefus.value = raison;
+      debugPrint('[Signature] refusée par ${r.request?.url.host} : $raison');
+    } else if (r.statusCode < 400) {
+      dernierRefus.value = null;
+    }
+  }
+
+  /// Envoie une requête signée ; si le serveur la refuse pour une question
+  /// d'heure, recale l'horloge et la renvoie une fois, signée à nouveau
+  /// (une signature ne sert qu'une fois : on ne peut pas renvoyer l'ancienne).
+  static Future<http.Response> envoyer({
+    required String peerId,
+    required String methode,
+    required Uri adresse,
+    List<int> corps = const [],
+    required Future<http.Response> Function(Map<String, String> entetes) requete,
+  }) async {
+    Future<http.Response> une() async {
+      final r = await requete(await entetes(peerId: peerId, methode: methode, adresse: adresse, corps: corps));
+      noter(r);
+      return r;
+    }
+
+    final avant = decalage;
+    final r = await une();
+    if (r.statusCode == 401 && (r.headers['x-droplet-raison'] == 'heure' || decalage != avant)) {
+      return une();
+    }
+    return r;
+  }
 
   /// Les en-têtes à joindre à une requête HTTP. Vide si l'identité n'est
   /// pas encore prête : la requête part alors sans signature, comme avant.
@@ -78,7 +154,7 @@ class SignatureServeur {
     try {
       final k = await _cle();
       if (k == null || peerId.isEmpty) return null;
-      final ts = '${DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000}';
+      final ts = '${heureServeur()}';
       final nonce = base64Url.encode(List<int>.generate(16, (_) => _hasard.nextInt(256))).replaceAll('=', '');
       final canon = '${methode.toUpperCase()}\n$chemin\n$ts\n$nonce\n${c.sha256.convert(corps)}';
       final sig = base64Url.encode(c.Hmac(c.sha256, k).convert(utf8.encode(canon)).bytes).replaceAll('=', '');
@@ -86,5 +162,20 @@ class SignatureServeur {
     } catch (_) {
       return null;
     }
+  }
+}
+
+/// Lecture d'une date HTTP (« Tue, 20 Oct 2026 08:05:57 GMT »), sans
+/// dépendre de `dart:io` (le même code sert sur le web).
+class HttpDateLecture {
+  static const _mois = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  static DateTime lire(String s) {
+    final m = RegExp(r'(\d{1,2}) (\w{3}) (\d{4}) (\d{2}):(\d{2}):(\d{2})').firstMatch(s);
+    if (m == null) throw FormatException(s);
+    final mois = _mois.indexOf(m.group(2)!) + 1;
+    if (mois == 0) throw FormatException(s);
+    return DateTime.utc(int.parse(m.group(3)!), mois, int.parse(m.group(1)!),
+        int.parse(m.group(4)!), int.parse(m.group(5)!), int.parse(m.group(6)!));
   }
 }

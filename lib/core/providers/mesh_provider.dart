@@ -2418,7 +2418,8 @@ class CallNotifier extends StateNotifier<CallState> {
       case remote_call.CallState.disconnected:
         if (!_isRemoteCall || state.direction != CallDirection.incoming) return;
         CallRingerService.stop();
-        _finishCallLog(null);
+        // Décroché sur Droplet Web : la conversation a eu lieu, ailleurs.
+        _finishCallLog((_inboxCallService?.consommerDecrocheAilleurs() ?? false) ? CallOutcome.answered : null);
         _isRemoteCall = false;
         state = const CallState();
       case remote_call.CallState.idle:
@@ -3403,8 +3404,15 @@ class Conversation {
     this.isPinned = false,
     this.isMuted = false,
     this.isLocked = false,
+    this.marqueeNonLue = false,
     this.dernier,
   });
+
+  /// Marquée « non lue » à la main (un point sans nombre, comme WhatsApp).
+  final bool marqueeNonLue;
+
+  /// Non lue, d'une façon ou d'une autre : messages non lus ou marque.
+  bool get aLire => unreadCount > 0 || marqueeNonLue;
 
   bool get isBroadcast => kind == ConversationKind.broadcast;
   bool get isGroup => kind == ConversationKind.group;
@@ -3520,6 +3528,7 @@ final conversationsProvider = Provider<List<Conversation>>((ref) {
   final pinned = StorageService.getPinnedConversations();
   final muted = StorageService.getMutedConversations();
   final locked = StorageService.getLockedConversations();
+  final marquees = StorageService.getMarkedUnreadConversations();
   NotificationService.setArchivedConversations(archived);
 
   final byPeer = <String, List<MeshMessage>>{};
@@ -3597,6 +3606,7 @@ final conversationsProvider = Provider<List<Conversation>>((ref) {
       isPinned: pinned.contains(entry.key),
       isMuted: muted.contains(entry.key),
       isLocked: locked.contains(entry.key),
+      marqueeNonLue: marquees.contains(entry.key),
     ));
   }
 
@@ -3646,6 +3656,7 @@ final conversationsProvider = Provider<List<Conversation>>((ref) {
       isPinned: pinned.contains(entry.key),
       isMuted: muted.contains(entry.key),
       isLocked: locked.contains(entry.key),
+      marqueeNonLue: marquees.contains(entry.key),
     ));
   }
 

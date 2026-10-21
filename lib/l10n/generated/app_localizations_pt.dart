@@ -1172,6 +1172,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get giAdministrator => 'Administrador';
 
   @override
+  String get chatsMarkUnread => 'Marcar como não lida';
+
+  @override
+  String get chatsMarkRead => 'Marcar como lida';
+
+  @override
+  String get giMakeAdmin => 'Tornar administrador';
+
+  @override
+  String get giRemoveAdmin => 'Remover como administrador';
+
+  @override
   String get giLeaveGroup => 'Sair do grupo';
 
   @override

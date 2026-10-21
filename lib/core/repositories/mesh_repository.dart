@@ -3892,6 +3892,52 @@ class MeshRepository {
   /// Diffuse le manifeste complet du groupe (métadonnées + tous les membres,
   /// y compris retirés — nécessaire pour propager les tombstones) à
   /// [onlyTo], ou à tous les membres actifs par défaut.
+  /// Nomme [peerId] administrateur du groupe, ou lui retire ce rôle.
+  /// Réservé aux admins ; le dernier admin ne peut pas se retirer
+  /// lui-même (le groupe n'aurait plus personne pour le gérer).
+  Future<void> changerRoleMembre({required String groupId, required String peerId, required bool admin}) async {
+    final group = StorageService.getGroup(groupId);
+    if (group == null || !group.isAdmin(_myId)) return;
+    final membre = group.activeMembers.where((m) => m.peerId == peerId).firstOrNull;
+    if (membre == null) return;
+    final role = admin ? 'admin' : 'member';
+    if (membre.role == role) return;
+    if (!admin && group.activeMembers.where((m) => m.isAdmin).length <= 1) return;
+    await StorageService.upsertGroupMember(
+      groupId: groupId, peerId: peerId, role: role,
+      addedAt: membre.addedAt, removedAt: membre.removedAt, addedBy: membre.addedBy,
+    );
+    await _noterDateRole(groupId, peerId, DateTime.now());
+    // L'écran d'informations et Droplet Web se redessinent aussitôt.
+    _groupsChangedCtrl.add(groupId);
+    await _syncGroupToMembers(groupId);
+  }
+
+  static const _cleDatesRoles = 'roles_groupes';
+
+  DateTime? _dateRole(String groupId, String peerId) {
+    try {
+      final brut = StorageService.getString(_cleDatesRoles);
+      if (brut == null || brut.isEmpty) return null;
+      final ms = ((json.decode(brut) as Map)[groupId] as Map?)?[peerId];
+      return ms is int ? DateTime.fromMillisecondsSinceEpoch(ms) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _noterDateRole(String groupId, String peerId, DateTime quand) async {
+    Map<String, dynamic> tout = {};
+    try {
+      final brut = StorageService.getString(_cleDatesRoles);
+      if (brut != null && brut.isNotEmpty) tout = (json.decode(brut) as Map).cast<String, dynamic>();
+    } catch (_) {}
+    final groupe = ((tout[groupId] as Map?) ?? {}).cast<String, dynamic>();
+    groupe[peerId] = quand.millisecondsSinceEpoch;
+    tout[groupId] = groupe;
+    await StorageService.setString(_cleDatesRoles, json.encode(tout));
+  }
+
   /// Rediffuse le manifeste apres un changement de reglages (description,
   /// droit d'ecriture). Les membres gardent la version la plus recente.
   Future<void> diffuserReglagesGroupe(String groupId) =>
@@ -3916,6 +3962,9 @@ class MeshRepository {
         'addedAt': m.addedAt.toIso8601String(),
         'removedAt': m.removedAt?.toIso8601String(),
         'addedBy': m.addedBy,
+        // La date du dernier changement de rôle (admin ↔ membre), à part :
+        // la changer ne doit pas réécrire « X a ajouté Y ».
+        if (_dateRole(group.id, m.peerId) case final t?) 'roleAt': t.toIso8601String(),
       }).toList(),
     };
     final targets = (onlyTo ?? group.activeMembers.map((m) => m.peerId)).where((id) => id != _myId);
@@ -3968,6 +4017,33 @@ class MeshRepository {
           groupId: groupId, peerId: peerId, role: role,
           addedAt: addedAt, removedAt: removedAt, addedBy: addedBy,
         );
+      }
+    }
+
+    // Les changements de rôle : acceptés seulement s'ils viennent d'un
+    // admin du groupe (personne ne se nomme admin tout seul), et plus
+    // récents que ce qu'on sait. Un ancien client n'envoie pas `roleAt` :
+    // rien ne change pour lui.
+    final emetteurAdmin = StorageService.getGroup(groupId)?.isAdmin(senderId) ?? false;
+    if (emetteurAdmin) {
+      for (final m in incomingMembers) {
+        final brut = m['roleAt'] as String?;
+        final quand = brut == null ? null : DateTime.tryParse(brut);
+        if (quand == null) continue;
+        final peerId = m['peerId'] as String;
+        final role = m['role'] as String;
+        final connu = _dateRole(groupId, peerId);
+        if (connu != null && !quand.isAfter(connu)) continue;
+        final local = StorageService.getGroupMembers(groupId).where((x) => x.peerId == peerId).firstOrNull;
+        if (local == null || local.role == role) {
+          await _noterDateRole(groupId, peerId, quand);
+          continue;
+        }
+        await StorageService.upsertGroupMember(
+          groupId: groupId, peerId: peerId, role: role,
+          addedAt: local.addedAt, removedAt: local.removedAt, addedBy: local.addedBy,
+        );
+        await _noterDateRole(groupId, peerId, quand);
       }
     }
 

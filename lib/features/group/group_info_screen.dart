@@ -18,6 +18,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -242,6 +243,42 @@ class GroupInfoScreen extends ConsumerWidget {
     } catch (e) {
       if (!context.mounted) return;
       ref.read(toastProvider.notifier).show(AppLocalizations.of(context).giRemoveMemberFailed, type: DropletToastType.error);
+    }
+  }
+
+  /// Toucher un membre (admin seulement) : le nommer admin ou lui retirer
+  /// ce rôle, ou le retirer du groupe — comme chez WhatsApp.
+  Future<void> _actionsMembre(BuildContext context, WidgetRef ref, String peerId, String pseudo, bool estAdmin) async {
+    final l10n = AppLocalizations.of(context);
+    final choix = await showCupertinoModalPopup<String>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(pseudo),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, 'admin'),
+            child: Text(estAdmin ? l10n.giRemoveAdmin : l10n.giMakeAdmin),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx, 'retirer'),
+            child: Text(l10n.giRemove),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx, null),
+          child: Text(l10n.actionCancel),
+        ),
+      ),
+    );
+    if (!context.mounted) return;
+    switch (choix) {
+      case 'admin':
+        HapticFeedback.selectionClick();
+        await ref.read(meshRepositoryProvider).changerRoleMembre(groupId: groupId, peerId: peerId, admin: !estAdmin);
+      case 'retirer':
+        await _removeMember(context, ref, peerId);
     }
   }
 
@@ -611,10 +648,13 @@ class GroupInfoScreen extends ConsumerWidget {
                 subtitle: m.isAdmin
                     ? Text(l10n.giAdministrator, style: TextStyle(fontSize: 12, color: OuroColors.meshBlueBright))
                     : null,
+                onTap: isAdmin && m.peerId != myId
+                    ? () => _actionsMembre(context, ref, m.peerId, pseudo, m.isAdmin)
+                    : null,
                 trailing: isAdmin && m.peerId != myId
                     ? OuroIconButton(
-                        icon: Icon(Icons.remove_circle_outline_rounded, color: OuroColors.errorRed),
-                        onPressed: () => _removeMember(context, ref, m.peerId),
+                        icon: Icon(Icons.more_horiz_rounded, color: OuroColors.textSecondary),
+                        onPressed: () => _actionsMembre(context, ref, m.peerId, pseudo, m.isAdmin),
                       )
                     : null,
               ),

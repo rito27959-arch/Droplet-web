@@ -88,6 +88,16 @@ class CallService {
   MediaStream? get localStream => _localStream;
   MediaStream? get currentRemoteStream => _remoteStream;
   String? get remotePeerId => _remotePeerId;
+
+  /// Le dernier appel entrant a été décroché sur un autre appareil (Droplet
+  /// Web). Lu, puis remis à zéro, par le journal des appels.
+  bool consommerDecrocheAilleurs() {
+    final v = _decrocheAilleurs;
+    _decrocheAilleurs = false;
+    return v;
+  }
+
+  bool _decrocheAilleurs = false;
   bool get isInCall => _state == CallState.connected;
   bool get isIdle => _state == CallState.idle;
 
@@ -497,8 +507,21 @@ class CallService {
         break;
       case OfferEvent(:final fromPeerId, :final sdp, :final video):
         unawaited(_handleOffer(fromPeerId, sdp, video));
+      // DÉCROCHÉ SUR UN AUTRE APPAREIL. Droplet Web écoute la même boîte
+      // d'appels que ce téléphone, et répond EN SON NOM : une réponse qui
+      // porte mon propre identifiant, pendant que ça sonne ici, veut dire
+      // « Droplet Web a décroché ». On cesse de sonner, sans rien dire à
+      // l'appelant — l'appel continue, ailleurs.
+      case AnswerEvent(:final fromPeerId) when _state == CallState.ringing && fromPeerId == signalingClient.monId:
+        debugPrint('[CallService] Décroché sur un autre appareil');
+        _decrocheAilleurs = true;
+        unawaited(endCall(prevenir: false));
       case AnswerEvent(:final fromPeerId, :final sdp):
         unawaited(_handleAnswer(fromPeerId, sdp));
+      // Refusé sur un autre appareil : ici aussi, on cesse de sonner.
+      case ControleAppelEvent(:final fromPeerId, :final ctrl)
+          when ctrl == 'bye' && _state == CallState.ringing && fromPeerId == signalingClient.monId:
+        unawaited(endCall(prevenir: false));
       case IceCandidateEvent(:final fromPeerId, :final candidat):
         unawaited(_handleIceCandidate(fromPeerId, candidat));
       case ControleAppelEvent(:final fromPeerId, :final ctrl):

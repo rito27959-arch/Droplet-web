@@ -84,13 +84,16 @@ class MailboxClient {
         'to': toPeerId,
         'payload': encryptedPayload,
       }));
-      final response = await _client.post(
-        adresse,
-        headers: {
-          'Content-Type': 'application/json',
-          ...await SignatureServeur.entetes(peerId: fromPeerId, methode: 'POST', adresse: adresse, corps: corps),
-        },
-        body: corps,
+      final response = await SignatureServeur.envoyer(
+        peerId: fromPeerId,
+        methode: 'POST',
+        adresse: adresse,
+        corps: corps,
+        requete: (signature) => _client.post(
+          adresse,
+          headers: {'Content-Type': 'application/json', ...signature},
+          body: corps,
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -118,12 +121,14 @@ class MailboxClient {
     try {
       final chemin = Uri.parse('$serverUrl/messages/$peerId');
       final adresse = attendre > 0 ? chemin.replace(queryParameters: {'attendre': '$attendre'}) : chemin;
-      final response = await _client
-          .get(
-            adresse,
-            headers: await SignatureServeur.entetes(peerId: peerId, methode: 'GET', adresse: chemin),
-          )
-          .timeout(Duration(seconds: attendre + 20));
+      final response = await SignatureServeur.envoyer(
+        peerId: peerId,
+        methode: 'GET',
+        adresse: chemin,
+        requete: (signature) => _client
+            .get(adresse, headers: signature)
+            .timeout(Duration(seconds: attendre + 20)),
+      );
 
       if (response.statusCode == 200) {
         EtatInternet.signalerReussite();
@@ -145,9 +150,11 @@ class MailboxClient {
   Future<bool> acknowledge(String peerId, String messageId) async {
     try {
       final adresse = Uri.parse('$serverUrl/messages/$peerId/$messageId');
-      final response = await _client.delete(
-        adresse,
-        headers: await SignatureServeur.entetes(peerId: peerId, methode: 'DELETE', adresse: adresse),
+      final response = await SignatureServeur.envoyer(
+        peerId: peerId,
+        methode: 'DELETE',
+        adresse: adresse,
+        requete: (signature) => _client.delete(adresse, headers: signature),
       );
       return response.statusCode == 200;
     } catch (e) {

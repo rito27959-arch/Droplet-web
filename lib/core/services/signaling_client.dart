@@ -104,6 +104,9 @@ class SignalingClient {
 
   bool get isConnected => _channel != null;
 
+  /// L'identifiant sous lequel on est entré dans la salle.
+  String? get monId => _peerId;
+
   /// Derniers serveurs ICE obtenus (relais Cloudflare valables 24 h), partagés
   /// par tous les clients de l'app.
   static List<Map<String, dynamic>>? _derniersServeursIce;

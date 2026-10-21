@@ -148,6 +148,7 @@ import '../../core/providers/personnalisation_provider.dart';
 import 'messages_ephemeres.dart';
 import '../../core/services/presence_internet.dart';
 import '../../core/services/battement_presence.dart';
+import '../../core/services/miroir_appareils.dart';
 import '../lecteur/lecteur_pdf.dart';
 import '../group/reglages_groupe.dart';
 import '../call/salon_vocal.dart';
@@ -682,6 +683,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     // La présence du contact à jour dès l'ouverture, sans attendre le
     // prochain battement périodique.
     BattementPresence.maintenant();
+    // Ouvrir une discussion marquée « non lue » retire la marque.
+    if (StorageService.getMarkedUnreadConversations().contains(_cleConversation)) {
+      unawaited(StorageService.setConversationMarkedUnread(_cleConversation, false)
+          .then((_) => MiroirAppareils.revisionEtat.value++));
+    }
     final cible = widget.messageCible;
     if (cible != null) {
       // Après la première image : la liste doit exister pour qu'on y

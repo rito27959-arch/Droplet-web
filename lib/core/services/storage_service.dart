@@ -768,6 +768,27 @@ class StorageService {
   // par des virgules, dans les mêmes SharedPreferences que les autres
   // préférences utilisateur.
 
+  // ── Discussions marquées « non lues » ─────────────────────────────
+  //
+  // Comme WhatsApp : une discussion lue qu'on veut garder sous les yeux.
+  // Un point (sans nombre) dans la liste, compté par le filtre « Non
+  // lues » ; la marque tombe quand on ouvre la discussion. Synchronisée
+  // avec Droplet Web (voir `miroir_appareils.dart`).
+  static const String _marqueesNonLuesKey = 'conversations_non_lues';
+
+  static Set<String> getMarkedUnreadConversations() {
+    final raw = getString(_marqueesNonLuesKey);
+    if (raw == null || raw.isEmpty) return <String>{};
+    return raw.split(',').where((s) => s.isNotEmpty).toSet();
+  }
+
+  static Future<void> setConversationMarkedUnread(String key, bool oui) async {
+    final current = getMarkedUnreadConversations();
+    final change = oui ? current.add(key) : current.remove(key);
+    if (!change) return;
+    await setString(_marqueesNonLuesKey, current.join(','));
+  }
+
   static const String _blockedContactsKey = 'blocked_contacts';
 
   /// Change à chaque blocage ou déblocage : la discussion, les réglages et la

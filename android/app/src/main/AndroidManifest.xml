@@ -89,6 +89,9 @@
     </queries>
 
     <application
+        tools:replace="android:allowBackup"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
         android:label="Droplet"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"

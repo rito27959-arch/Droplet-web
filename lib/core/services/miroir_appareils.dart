@@ -54,6 +54,7 @@
 //
 //           {"t":"etat", "d", "champ", "valeur"}
 //                                    champ : epinglee | archivee | sourdine
+//                                            | ephemere | bloque | nonLue
 //                                    | ephemere (secondes) | bloque (1:1)
 //           {"t":"msg_etat", "id", "champ", "valeur"}
 //                                    champ : epingle | important
@@ -264,6 +265,7 @@ class MiroirAppareils {
     final sourdines = StorageService.getMutedConversations();
     final verrouillees = StorageService.getLockedConversations();
     final ephemeres = StorageService.getEphemeralTimers();
+    final nonLues = StorageService.getMarkedUnreadConversations();
     final etat = <String, Map<String, dynamic>>{};
     final epingles = <String, List<String>>{};
     final presence = <String, Map<String, dynamic>>{};
@@ -275,6 +277,8 @@ class MiroirAppareils {
         's': sourdines.contains(cle),
         'v': verrouillees.contains(cle),
         'x': ephemeres[cle] ?? 0,
+        // « Marquée comme non lue » : la pastille, des deux côtés.
+        'n': nonLues.contains(cle),
       };
       final ep = Epingles.lire(cle);
       if (ep.isNotEmpty) epingles[d] = ep;
@@ -570,6 +574,8 @@ class MiroirAppareils {
         if (s is int && s >= 0 && s <= 90 * 24 * 3600) await StorageService.setEphemeralTimer(cle, s);
       case 'bloque':
         if (d.startsWith('p:')) await StorageService.setContactBlocked(cle, oui);
+      case 'nonLue':
+        await StorageService.setConversationMarkedUnread(cle, oui);
       default:
         return;
     }
@@ -603,6 +609,12 @@ class MiroirAppareils {
         if (p.isNotEmpty && p != _repo.myId) await _repo.removeGroupMember(groupId: g, peerId: p);
       case 'quitter':
         await _repo.leaveGroup(g);
+      // Nommer ou retirer un admin : mêmes règles que sur le téléphone
+      // (réservé aux admins ; le dernier admin ne peut pas se retirer).
+      case 'admin':
+        final p = j['membre'] as String? ?? '';
+        if (p.isEmpty) return;
+        await _repo.changerRoleMembre(groupId: g, peerId: p == 'moi' ? _repo.myId : p, admin: j['admin'] == true);
       default:
         return;
     }

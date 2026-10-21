@@ -1171,6 +1171,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get giAdministrator => 'एडमिन';
 
   @override
+  String get chatsMarkUnread => 'अपठित के रूप में चिह्नित करें';
+
+  @override
+  String get chatsMarkRead => 'पठित के रूप में चिह्नित करें';
+
+  @override
+  String get giMakeAdmin => 'एडमिन बनाएँ';
+
+  @override
+  String get giRemoveAdmin => 'एडमिन से हटाएँ';
+
+  @override
   String get giLeaveGroup => 'समूह छोड़ें';
 
   @override

@@ -78,8 +78,12 @@ class DirectoryClient {
   Future<bool> revoquerAppareil({required String peerId, required String appareilId}) async {
     try {
       final adresse = Uri.parse('$serverUrl/appareils/${Uri.encodeComponent(peerId)}/${Uri.encodeComponent(appareilId)}');
-      final response = await _client
-          .delete(adresse, headers: await SignatureServeur.entetes(peerId: peerId, methode: 'DELETE', adresse: adresse))
+      final response = await SignatureServeur.envoyer(
+            peerId: peerId,
+            methode: 'DELETE',
+            adresse: adresse,
+            requete: (signature) => _client.delete(adresse, headers: signature),
+          )
           .timeout(const Duration(seconds: 12));
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
@@ -95,15 +99,17 @@ class DirectoryClient {
     try {
       final adresse = Uri.parse('$serverUrl/appareils/${Uri.encodeComponent(peerId)}/${Uri.encodeComponent(appareilId)}/cle');
       final corps = utf8.encode(jsonEncode({'cle': cle}));
-      final response = await _client
-          .post(
+      final response = await SignatureServeur.envoyer(
+          peerId: peerId,
+          methode: 'POST',
+          adresse: adresse,
+          corps: corps,
+          requete: (signature) => _client.post(
             adresse,
-            headers: {
-              'Content-Type': 'application/json',
-              ...await SignatureServeur.entetes(peerId: peerId, methode: 'POST', adresse: adresse, corps: corps),
-            },
+            headers: {'Content-Type': 'application/json', ...signature},
             body: corps,
-          )
+          ),
+        )
           .timeout(const Duration(seconds: 12));
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
@@ -134,14 +140,17 @@ class DirectoryClient {
         'publicKey': publicKey,
         if (fcmToken != null) 'fcmToken': fcmToken,
       }));
-      final response = await _client.post(
-        adresse,
-        headers: {
-          'Content-Type': 'application/json',
-          ...await SignatureServeur.entetes(peerId: peerId, methode: 'POST', adresse: adresse, corps: corps),
-        },
-        body: corps,
-      );
+      final response = await SignatureServeur.envoyer(
+          peerId: peerId,
+          methode: 'POST',
+          adresse: adresse,
+          corps: corps,
+          requete: (signature) => _client.post(
+            adresse,
+            headers: {'Content-Type': 'application/json', ...signature},
+            body: corps,
+          ),
+        );
 
       if (response.statusCode == 200) {
         // Une vraie réponse de l'annuaire prouve qu'Internet marche.
@@ -169,14 +178,17 @@ class DirectoryClient {
     try {
       final adresse = Uri.parse('$serverUrl/presence');
       final corps = utf8.encode(jsonEncode({'peerId': peerId}));
-      final response = await _client.post(
-        adresse,
-        headers: {
-          'Content-Type': 'application/json',
-          ...await SignatureServeur.entetes(peerId: peerId, methode: 'POST', adresse: adresse, corps: corps),
-        },
-        body: corps,
-      );
+      final response = await SignatureServeur.envoyer(
+          peerId: peerId,
+          methode: 'POST',
+          adresse: adresse,
+          corps: corps,
+          requete: (signature) => _client.post(
+            adresse,
+            headers: {'Content-Type': 'application/json', ...signature},
+            body: corps,
+          ),
+        );
       if (response.statusCode == 200) {
         EtatInternet.signalerReussite();
         return true;
@@ -198,6 +210,7 @@ class DirectoryClient {
       final response = await _client.get(
         Uri.parse('$serverUrl/presence?ids=${peerIds.take(40).join(',')}'),
       );
+      SignatureServeur.noter(response);
       if (response.statusCode != 200) return const {};
       final brut = jsonDecode(response.body);
       if (brut is! Map) return const {};
@@ -218,14 +231,17 @@ class DirectoryClient {
     try {
       final adresse = Uri.parse('$serverUrl/register');
       final corps = utf8.encode(jsonEncode({'peerId': peerId}));
-      final response = await _client.delete(
-        adresse,
-        headers: {
-          'Content-Type': 'application/json',
-          ...await SignatureServeur.entetes(peerId: peerId, methode: 'DELETE', adresse: adresse, corps: corps),
-        },
-        body: corps,
-      );
+      final response = await SignatureServeur.envoyer(
+          peerId: peerId,
+          methode: 'DELETE',
+          adresse: adresse,
+          corps: corps,
+          requete: (signature) => _client.delete(
+            adresse,
+            headers: {'Content-Type': 'application/json', ...signature},
+            body: corps,
+          ),
+        );
 
       return response.statusCode == 200;
     } catch (e) {

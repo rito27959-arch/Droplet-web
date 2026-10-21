@@ -2118,6 +2118,30 @@ abstract class AppLocalizations {
   /// **'Administrateur'**
   String get giAdministrator;
 
+  /// No description provided for @chatsMarkUnread.
+  ///
+  /// In fr, this message translates to:
+  /// **'Marquer comme non lu'**
+  String get chatsMarkUnread;
+
+  /// No description provided for @chatsMarkRead.
+  ///
+  /// In fr, this message translates to:
+  /// **'Marquer comme lu'**
+  String get chatsMarkRead;
+
+  /// No description provided for @giMakeAdmin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nommer administrateur'**
+  String get giMakeAdmin;
+
+  /// No description provided for @giRemoveAdmin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer des administrateurs'**
+  String get giRemoveAdmin;
+
   /// No description provided for @giLeaveGroup.
   ///
   /// In fr, this message translates to:

@@ -87,6 +87,7 @@ import '../chat/location_message.dart';
 import 'dart:io' show File;
 import '../../core/providers/locale_provider.dart' show kSupportedLocales;
 import '../status/anneau_statuts.dart';
+import '../../core/services/miroir_appareils.dart';
 
 class ChatsScreen extends ConsumerStatefulWidget {
   const ChatsScreen({super.key});
@@ -381,7 +382,7 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
     final compteurs = <FiltreChats, int>{
       FiltreChats.proches: conversations.where(estProche).length,
       FiltreChats.toutes: conversations.length,
-      FiltreChats.nonLues: conversations.where((c) => c.unreadCount > 0).length,
+      FiltreChats.nonLues: conversations.where((c) => c.aLire).length,
       FiltreChats.groupes: conversations.where((c) => c.isGroup).length,
       // ⚠️ + 1 : L'ASSISTANT. Il est épinglé en tête de liste, punaise
       // comprise, mais n'est pas une conversation du maillage : le filtre
@@ -392,7 +393,7 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
     final filtrees = switch (_filtre) {
       FiltreChats.toutes => conversations,
       FiltreChats.proches => conversations.where(estProche).toList(),
-      FiltreChats.nonLues => conversations.where((c) => c.unreadCount > 0).toList(),
+      FiltreChats.nonLues => conversations.where((c) => c.aLire).toList(),
       FiltreChats.groupes => conversations.where((c) => c.isGroup).toList(),
       FiltreChats.epinglees => conversations.where((c) => c.isPinned).toList(),
     };
@@ -1132,7 +1133,7 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
   @override
   Widget build(BuildContext context) {
     final c = widget.conversation;
-    final unread = c.unreadCount > 0;
+    final unread = c.aLire;
     // Quelqu'un m'écrit en ce moment dans cette discussion.
     final ecrit = c.peerId != null && ref.watch(typingPeersProvider).contains(c.peerId);
 
@@ -1450,6 +1451,26 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
     if (mounted) afficherToast(context, l10n.chatsDeleted);
   }
 
+  /// « Marquer comme non lu » / « Marquer comme lu », comme WhatsApp.
+  /// Lue : la marque tombe et les messages non lus sont lus pour de bon.
+  Future<void> _basculerNonLue() async {
+    final c = widget.conversation;
+    if (c.aLire) {
+      await StorageService.setConversationMarkedUnread(c.key, false);
+      final notifier = ref.read(meshMessagesProvider.notifier);
+      if (c.unreadCount > 0) {
+        if (c.groupId != null) {
+          await notifier.envoyerLecturesGroupe(c.groupId!);
+        } else {
+          await notifier.sendReadReceipts(c.peerId);
+        }
+      }
+    } else {
+      await StorageService.setConversationMarkedUnread(c.key, true);
+    }
+    MiroirAppareils.revisionEtat.value++;
+  }
+
   void _showContextMenu() {
     final c = widget.conversation;
     final l10n = AppLocalizations.of(context);
@@ -1499,6 +1520,11 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
           icon: c.isMuted ? Icons.volume_up_rounded : Icons.volume_off_rounded,
           label: c.isMuted ? l10n.swipeUnmute : l10n.swipeMute,
           onTap: widget.onMute,
+        ),
+        MessageAction(
+          icon: c.aLire ? Icons.mark_chat_read_outlined : Icons.mark_chat_unread_outlined,
+          label: c.aLire ? l10n.chatsMarkRead : l10n.chatsMarkUnread,
+          onTap: _basculerNonLue,
         ),
         MessageAction(
           icon: Icons.archive_rounded,
@@ -3692,6 +3718,16 @@ class _MarquesLigne extends StatelessWidget {
     final c = conversation;
     final unread = c.unreadCount > 0;
     final marques = <Widget>[
+      // Marquée « non lue » à la main : un point, sans nombre.
+      if (!unread && c.marqueeNonLue)
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: c.isMuted ? OuroColors.systemGray : OuroColors.accentRempli,
+            shape: BoxShape.circle,
+          ),
+        ),
       if (c.isMuted)
         Icon(Icons.volume_off_rounded, size: 15, color: OuroColors.tertiaryLabel),
       // Une mention non lue passe devant le compte : on veut savoir tout

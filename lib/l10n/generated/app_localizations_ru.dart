@@ -1193,6 +1193,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get giAdministrator => 'Администратор';
 
   @override
+  String get chatsMarkUnread => 'Отметить как непрочитанное';
+
+  @override
+  String get chatsMarkRead => 'Отметить как прочитанное';
+
+  @override
+  String get giMakeAdmin => 'Назначить администратором';
+
+  @override
+  String get giRemoveAdmin => 'Снять права администратора';
+
+  @override
   String get giLeaveGroup => 'Покинуть группу';
 
   @override

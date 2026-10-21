@@ -1172,6 +1172,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get giAdministrator => 'Admin';
 
   @override
+  String get chatsMarkUnread => 'Mark as unread';
+
+  @override
+  String get chatsMarkRead => 'Mark as read';
+
+  @override
+  String get giMakeAdmin => 'Make admin';
+
+  @override
+  String get giRemoveAdmin => 'Dismiss as admin';
+
+  @override
   String get giLeaveGroup => 'Leave group';
 
   @override
