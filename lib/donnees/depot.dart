@@ -174,8 +174,14 @@ class Depot extends ChangeNotifier {
   // ══ DISCUSSIONS ══════════════════════════════════════════════════════
 
   void ouvrir(String? discussionId) {
+    final avant = discussionOuverte;
     discussionOuverte = discussionId;
-    if (discussionId == null) return;
+    if (discussionId == null) {
+      // Retour à la liste (petit écran) : sans ce signal, la discussion
+      // restait affichée — la flèche de retour semblait ne rien faire.
+      if (avant != null) notifyListeners();
+      return;
+    }
     final d = discussions[discussionId];
     if (d == null) return;
     if (d.marquee) {
