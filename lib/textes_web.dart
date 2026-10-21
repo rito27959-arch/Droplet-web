@@ -3,6 +3,7 @@
 // comme l'app. Les paramètres s'écrivent entre accolades : {nom}.
 const Map<String, Map<String, String>> textesWeb = {
   'fr': {
+    'appelGroupeTelephone': 'Les appels de groupe se passent sur votre téléphone pour l’instant.',
     'statutVideo': 'Vidéo',
     'statutVocal': 'Vocal',
     'statutEnregistrer': 'Appuyez pour enregistrer',
@@ -115,6 +116,7 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} groupe(s) en commun',
   },
   'en': {
+    'appelGroupeTelephone': 'Group calls happen on your phone for now.',
     'statutVideo': 'Video',
     'statutVocal': 'Voice',
     'statutEnregistrer': 'Click to record',
@@ -227,6 +229,7 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} group(s) in common',
   },
   'de': {
+    'appelGroupeTelephone': 'Gruppenanrufe laufen vorerst über dein Telefon.',
     'statutVideo': 'Video',
     'statutVocal': 'Sprachnachricht',
     'statutEnregistrer': 'Zum Aufnehmen klicken',
@@ -339,6 +342,7 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} gemeinsame Gruppe(n)',
   },
   'es': {
+    'appelGroupeTelephone': 'Por ahora, las llamadas de grupo se hacen desde tu teléfono.',
     'statutVideo': 'Vídeo',
     'statutVocal': 'Nota de voz',
     'statutEnregistrer': 'Haz clic para grabar',
@@ -451,6 +455,7 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} grupo(s) en común',
   },
   'it': {
+    'appelGroupeTelephone': 'Per ora le chiamate di gruppo si fanno dal telefono.',
     'statutVideo': 'Video',
     'statutVocal': 'Vocale',
     'statutEnregistrer': 'Fai clic per registrare',
@@ -563,6 +568,7 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} gruppo/i in comune',
   },
   'pt': {
+    'appelGroupeTelephone': 'Por enquanto, as chamadas em grupo são feitas no seu telefone.',
     'statutVideo': 'Vídeo',
     'statutVocal': 'Áudio',
     'statutEnregistrer': 'Clique para gravar',
@@ -675,6 +681,7 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} grupo(s) em comum',
   },
   'ru': {
+    'appelGroupeTelephone': 'Групповые звонки пока доступны только на телефоне.',
     'statutVideo': 'Видео',
     'statutVocal': 'Голосовое',
     'statutEnregistrer': 'Нажмите, чтобы записать',
@@ -787,6 +794,7 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': 'Общих групп: {n}',
   },
   'zh': {
+    'appelGroupeTelephone': '群组通话目前请在手机上进行。',
     'statutVideo': '视频',
     'statutVocal': '语音',
     'statutEnregistrer': '点击录音',
@@ -899,6 +907,7 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} 个共同群组',
   },
   'ar': {
+    'appelGroupeTelephone': 'المكالمات الجماعية تتم على هاتفك في الوقت الحالي.',
     'statutVideo': 'فيديو',
     'statutVocal': 'رسالة صوتية',
     'statutEnregistrer': 'انقر للتسجيل',
@@ -1011,6 +1020,7 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': 'المجموعات المشتركة: {n}',
   },
   'hi': {
+    'appelGroupeTelephone': 'अभी समूह कॉल आपके फ़ोन पर ही होती हैं।',
     'statutVideo': 'वीडियो',
     'statutVocal': 'वॉइस',
     'statutEnregistrer': 'रिकॉर्ड करने के लिए क्लिक करें',

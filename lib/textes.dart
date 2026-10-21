@@ -100,6 +100,7 @@ class Textes {
   String get statutEnregistrer => _('statutEnregistrer');
   String get statutArreter => _('statutArreter');
   String get fichierTropLourd => _('fichierTropLourd');
+  String get appelGroupeTelephone => _('appelGroupeTelephone');
   String get statutChargement => _('statutChargement');
   String get chiffrementDetail => _('chiffrementDetail');
   String get cliquerInfos => _('cliquerInfos');

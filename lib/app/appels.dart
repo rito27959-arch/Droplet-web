@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 
 import '../design_system/ouro_colors.dart';
 import '../design_system/ouro_typography.dart';
+import '../donnees/appels_reseau.dart';
 import '../donnees/depot.dart';
 import '../donnees/modeles.dart';
 import '../web/navigateur.dart';
@@ -26,7 +27,21 @@ import 'liste_discussions.dart' show LigneContact;
 import 'portee.dart';
 
 /// Lancer un appel depuis n'importe où.
-Future<void> lancerAppel(BuildContext context, Discussion d, {required bool video}) {
+Future<void> lancerAppel(BuildContext context, Discussion d, {required bool video}) async {
+  final reseau = context.lire.depot.reseau;
+  if (reseau != null) {
+    // Les appels de groupe passent encore par le téléphone.
+    if (d.estGroupe || !d.id.startsWith('p:')) {
+      annoncer(context, context.t.appelGroupeTelephone, icone: Icons.groups_rounded);
+      return;
+    }
+    if (reseau.phase != PhaseAppel.aucune && reseau.phase != PhaseAppel.fin) return;
+    unawaited(reseau.appeler(d.id.substring(2), avecVideo: video));
+  }
+  return _ouvrirEcranAppel(context, d, video: video);
+}
+
+Future<void> _ouvrirEcranAppel(BuildContext context, Discussion d, {required bool video}) {
   return Navigator.of(context, rootNavigator: true).push(PageRouteBuilder<void>(
     opaque: true,
     transitionDuration: const Duration(milliseconds: 420),
@@ -327,10 +342,21 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
   late bool _videoActive = widget.video;
   late final Depot _depot;
 
+  /// Le vrai appel, quand ce navigateur est lié à un téléphone.
+  AppelsReseau? get _reseau => _depot.reseau;
+
   @override
   void initState() {
     super.initState();
     _depot = context.lire.depot;
+    final r = _reseau;
+    if (r != null) {
+      r.addListener(_suivre);
+      _tic = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted && r.phase == PhaseAppel.enCours) setState(() {});
+      });
+      return;
+    }
     _ouvrirMedia();
     // En démonstration, l'autre décroche après quelques sonneries.
     if (_depot.demo) {
@@ -359,7 +385,29 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
     setState(() => _camera = c);
   }
 
+  bool _ferme = false;
+
+  void _suivre() {
+    final r = _reseau;
+    if (!mounted || r == null) return;
+    setState(() {});
+    if ((r.phase == PhaseAppel.fin || r.phase == PhaseAppel.aucune) && !_ferme) {
+      _ferme = true;
+      if (r.fin == FinAppel.microRefuse) {
+        annoncer(context, widget.video ? context.l.camUnavailable : context.l.chMicPermissionDenied, icone: Icons.mic_off_rounded);
+      }
+      Future<void>.delayed(const Duration(milliseconds: 900), () {
+        if (mounted) Navigator.of(context).pop();
+      });
+    }
+  }
+
   void _raccrocher() {
+    final r = _reseau;
+    if (r != null) {
+      unawaited(r.raccrocher());
+      return;
+    }
     if (_phase == _Phase.fin) return;
     final duree = _debut == null ? 0 : DateTime.now().difference(_debut!).inSeconds;
     setState(() => _phase = _Phase.fin);
@@ -374,6 +422,7 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
 
   @override
   void dispose() {
+    _reseau?.removeListener(_suivre);
     _souffle.dispose();
     _tic?.cancel();
     _decroche?.cancel();
@@ -386,12 +435,36 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
     final l = context.l;
     final d = widget.discussion;
     final palette = palettesAvatar[d.couleur % palettesAvatar.length];
-    final etat = switch (_phase) {
-      _Phase.sonnerie => l.clOutgoingCall,
-      _Phase.enCours => chrono(DateTime.now().difference(_debut ?? DateTime.now())),
-      _Phase.fin => l.clCallEnded,
-    };
-    final cam = _camera;
+    final r = _reseau;
+    final String etat;
+    final bool sonne;
+    if (r != null) {
+      sonne = r.phase == PhaseAppel.appel || r.phase == PhaseAppel.sonne;
+      etat = switch (r.phase) {
+        PhaseAppel.appel => l.clOutgoingCall,
+        PhaseAppel.sonne => r.video ? l.clIncomingVideoCall : l.clIncomingCall,
+        PhaseAppel.connexion => l.clConnecting,
+        PhaseAppel.enCours => r.reconnexion ? l.clReconnecting : chrono(DateTime.now().difference(r.debut ?? DateTime.now())),
+        PhaseAppel.fin || PhaseAppel.aucune => switch (r.fin) {
+            FinAppel.pasDeReponse => l.callsNoAnswer,
+            FinAppel.echec => l.callsConnectionFailed,
+            FinAppel.refuse => l.callsNoAnswer,
+            _ => l.clCallEnded,
+          },
+      };
+    } else {
+      sonne = _phase == _Phase.sonnerie;
+      etat = switch (_phase) {
+        _Phase.sonnerie => l.clOutgoingCall,
+        _Phase.enCours => chrono(DateTime.now().difference(_debut ?? DateTime.now())),
+        _Phase.fin => l.clCallEnded,
+      };
+    }
+    final micro = r?.micro ?? _micro;
+    final videoActive = r?.camera ?? _videoActive;
+    final videoProposee = r?.video ?? widget.video;
+    final distante = r != null && r.videoDistante && (r.phase == PhaseAppel.enCours || r.phase == PhaseAppel.connexion);
+    final vignette = r != null ? (r.aVideoLocale ? r.vueLocale.typeVue : null) : (_camera != null && _camera!.aVideo ? _camera!.typeVue : null);
     return Scaffold(
       backgroundColor: OuroColors.callBackground,
       body: Stack(
@@ -415,6 +488,33 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
               child: const ColoredBox(color: Color(0x33000000)),
             ),
           ),
+          // L'image de l'autre, plein écran, dès qu'elle arrive.
+          if (r != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedOpacity(
+                  opacity: distante ? 1 : 0,
+                  duration: const Duration(milliseconds: 420),
+                  // Toujours monté : c'est aussi lui qui joue le SON de l'autre.
+                  child: HtmlElementView(viewType: r.vueDistante.typeVue),
+                ),
+              ),
+            ),
+          if (distante)
+            const Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x99000000), Color(0x00000000), Color(0x00000000), Color(0xB3000000)],
+                      stops: [0, 0.22, 0.7, 1],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           SafeArea(
             child: Column(
               children: [
@@ -429,13 +529,13 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
                 ),
                 const Spacer(),
                 // La photo, et ses ondes tant que ça sonne.
-                SizedBox(
+                if (distante) const SizedBox(height: 260) else SizedBox(
                   width: 260,
                   height: 260,
                   child: AnimatedBuilder(
                     animation: _souffle,
                     builder: (context, enfant) => CustomPaint(
-                      painter: _Ondes(progres: _souffle.value, actif: _phase == _Phase.sonnerie, couleur: palette[0]),
+                      painter: _Ondes(progres: _souffle.value, actif: sonne, couleur: palette[0]),
                       child: enfant,
                     ),
                     child: Center(
@@ -452,7 +552,7 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
                   duration: const Duration(milliseconds: 240),
                   child: Text(
                     etat,
-                    key: ValueKey(_phase),
+                    key: ValueKey(r?.phase ?? _phase),
                     style: OuroTypography.title3.copyWith(
                       color: OuroColors.callSecondaryLabel,
                       fontFeatures: const [FontFeature.tabularFigures()],
@@ -477,23 +577,31 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _Commande(
-                            icone: _micro ? Icons.mic_rounded : Icons.mic_off_rounded,
+                            icone: micro ? Icons.mic_rounded : Icons.mic_off_rounded,
                             libelle: l.clLabelMic,
-                            aide: _micro ? l.clMuteMic : l.clEnableMic,
-                            allume: !_micro,
+                            aide: micro ? l.clMuteMic : l.clEnableMic,
+                            allume: !micro,
                             onTap: () {
+                              if (r != null) {
+                                r.basculerMicro();
+                                return;
+                              }
                               setState(() => _micro = !_micro);
                               _camera?.micro(_micro);
                             },
                           ),
                           const SizedBox(width: 18),
                           _Commande(
-                            icone: _videoActive ? Icons.videocam_rounded : Icons.videocam_off_rounded,
+                            icone: videoActive ? Icons.videocam_rounded : Icons.videocam_off_rounded,
                             libelle: l.clLabelCamera,
-                            aide: _videoActive ? l.clDisableCamera : l.clEnableCamera,
-                            allume: !_videoActive,
-                            onTap: widget.video
+                            aide: videoActive ? l.clDisableCamera : l.clEnableCamera,
+                            allume: !videoActive,
+                            onTap: videoProposee && (r == null || r.aVideoLocale)
                                 ? () {
+                                    if (r != null) {
+                                      r.basculerCamera();
+                                      return;
+                                    }
                                     setState(() => _videoActive = !_videoActive);
                                     _camera?.video(_videoActive);
                                   }
@@ -517,12 +625,12 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
             ),
           ),
           // Ma caméra, en vignette.
-          if (cam != null && cam.aVideo)
+          if (vignette != null)
             Positioned(
               right: 24,
               bottom: 130,
               child: AnimatedOpacity(
-                opacity: _videoActive ? 1 : 0.0,
+                opacity: videoActive ? 1 : 0.0,
                 duration: const Duration(milliseconds: 240),
                 child: Container(
                   width: 220,
@@ -532,7 +640,7 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
                     boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 24, offset: const Offset(0, 8))],
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: HtmlElementView(viewType: cam.typeVue),
+                  child: HtmlElementView(viewType: vignette),
                 ),
               ),
             ),
@@ -641,4 +749,203 @@ class _Commande extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── L'appel entrant ────────────────────────────────────────────────────
+
+/// Le bandeau qui descend en haut de la fenêtre quand un contact appelle :
+/// sa photo, son nom, « Appel vidéo entrant », Refuser et Répondre. Il sonne
+/// en même temps que le téléphone ; le premier qui décroche l'emporte.
+class BandeauAppelEntrant extends StatelessWidget {
+  const BandeauAppelEntrant({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final depot = context.depot;
+    final r = depot.reseau;
+    if (r == null) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: r,
+      builder: (context, _) {
+        final visible = r.phase == PhaseAppel.sonne && r.contact != null;
+        final contact = r.contact;
+        final d = contact == null ? null : (depot.discussions['p:$contact'] ?? depot.discussionAvec(contact));
+        return IgnorePointer(
+          ignoring: !visible,
+          child: AnimatedSlide(
+            offset: visible ? Offset.zero : const Offset(0, -1.4),
+            duration: const Duration(milliseconds: 460),
+            curve: visible ? kSortie : Curves.easeInCubic,
+            child: AnimatedOpacity(
+              opacity: visible ? 1 : 0,
+              duration: const Duration(milliseconds: 260),
+              child: d == null ? const SizedBox(height: 92) : _CarteAppelEntrant(appel: r, discussion: d),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CarteAppelEntrant extends StatelessWidget {
+  const _CarteAppelEntrant({required this.appel, required this.discussion});
+
+  final AppelsReseau appel;
+  final Discussion discussion;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l;
+    final d = discussion;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 14),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(26),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 34, sigmaY: 34),
+            child: Container(
+              width: 420,
+              padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+              decoration: BoxDecoration(
+                color: const Color(0xE61C1C1E),
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.10), width: 0.6),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 40, offset: const Offset(0, 14))],
+              ),
+              child: Row(
+                children: [
+                  AvatarDroplet(nom: d.titre, couleur: d.couleur, taille: 52),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(d.titre, maxLines: 1, overflow: TextOverflow.ellipsis, style: OuroTypography.headline.copyWith(color: Colors.white)),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(appel.video ? Icons.videocam_rounded : Icons.phone_rounded, size: 14, color: Colors.white60),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                appel.video ? l.clIncomingVideoCall : l.clIncomingCall,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: OuroTypography.subheadline.copyWith(color: Colors.white60),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  _RondAppel(
+                    couleur: const Color(0xFFFF3B30),
+                    icone: Icons.call_end_rounded,
+                    aide: l.ntfDecline,
+                    onTap: () => unawaited(appel.refuser()),
+                  ),
+                  const SizedBox(width: 10),
+                  _RondAppel(
+                    couleur: const Color(0xFF34C759),
+                    icone: appel.video ? Icons.videocam_rounded : Icons.phone_rounded,
+                    aide: l.ntfAnswer,
+                    pulse: true,
+                    onTap: () {
+                      final video = appel.video;
+                      unawaited(appel.decrocher());
+                      unawaited(_ouvrirEcranAppel(context, d, video: video));
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RondAppel extends StatefulWidget {
+  const _RondAppel({required this.couleur, required this.icone, required this.aide, required this.onTap, this.pulse = false});
+
+  final Color couleur;
+  final IconData icone;
+  final String aide;
+  final VoidCallback onTap;
+  final bool pulse;
+
+  @override
+  State<_RondAppel> createState() => _RondAppelState();
+}
+
+class _RondAppelState extends State<_RondAppel> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.pulse) _c.repeat();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: widget.aide,
+      child: Survol(
+        onTap: widget.onTap,
+        builder: (context, survol) => AnimatedBuilder(
+          animation: _c,
+          builder: (context, enfant) {
+            final t = widget.pulse ? _c.value : 0.0;
+            return CustomPaint(
+              painter: _Halo(progres: t, couleur: widget.couleur, actif: widget.pulse),
+              child: enfant,
+            );
+          },
+          child: AnimatedScale(
+            scale: survol ? 1.06 : 1,
+            duration: const Duration(milliseconds: 160),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(color: widget.couleur, shape: BoxShape.circle),
+              child: Icon(widget.icone, color: Colors.white, size: 24),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Halo extends CustomPainter {
+  _Halo({required this.progres, required this.couleur, required this.actif});
+
+  final double progres;
+  final Color couleur;
+  final bool actif;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!actif) return;
+    final c = size.center(Offset.zero);
+    final r = size.shortestSide / 2;
+    final p = Curves.easeOutCubic.transform(progres);
+    canvas.drawCircle(c, r + 10 * p, Paint()..color = couleur.withValues(alpha: 0.45 * (1 - p)));
+  }
+
+  @override
+  bool shouldRepaint(_Halo o) => o.progres != progres || o.actif != actif;
 }

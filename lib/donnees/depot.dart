@@ -18,6 +18,7 @@ import 'package:flutter/widgets.dart';
 import 'package:web/web.dart' as web;
 
 import '../web/navigateur.dart' show urlBlob, tailleImageDe;
+import 'appels_reseau.dart';
 import 'modeles.dart';
 import 'transport.dart';
 
@@ -38,6 +39,9 @@ class Depot extends ChangeNotifier {
   final Map<String, List<Message>> _messages = {};
   final List<Statut> statuts = [];
   final List<Appel> appels = [];
+
+  /// Les vrais appels par Internet (null en démonstration).
+  AppelsReseau? reseau;
 
   /// Qui est en train d'écrire, par discussion.
   final Map<String, Set<String>> enTrainDecrire = {};
@@ -825,12 +829,13 @@ class Depot extends ChangeNotifier {
     _changer();
   }
 
-  Appel enregistrerAppel(Discussion d, {required bool video, int duree = 0}) {
+  Appel enregistrerAppel(Discussion d, {required bool video, int duree = 0, bool entrant = false, bool manque = false}) {
     final a = Appel(
       id: _id('a'),
       discussionId: d.id,
       video: video,
-      entrant: false,
+      entrant: entrant,
+      manque: manque,
       date: DateTime.now(),
       dureeSecondes: duree,
     );

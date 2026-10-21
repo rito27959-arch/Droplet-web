@@ -203,10 +203,16 @@ class _CoquilleState extends State<Coquille> {
       backgroundColor: OuroColors.systemGroupedBackground,
       body: _Raccourcis(
         onDeconnexion: widget.onDeconnexion,
-        child: Column(
+        child: Stack(
           children: [
-            if (depot.demo) _BandeauDemo(onQuitter: widget.onDeconnexion) else if (!depot.telephoneVu) const _BandeauSynchro(),
-            Expanded(child: corps),
+            Column(
+              children: [
+                if (depot.demo) _BandeauDemo(onQuitter: widget.onDeconnexion) else if (!depot.telephoneVu) const _BandeauSynchro(),
+                Expanded(child: corps),
+              ],
+            ),
+            // Un contact appelle : le bandeau descend par-dessus tout.
+            const Positioned(top: 0, left: 0, right: 0, child: BandeauAppelEntrant()),
           ],
         ),
       ),

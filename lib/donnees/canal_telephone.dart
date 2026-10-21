@@ -130,6 +130,13 @@ class CanalTelephone {
     };
   }
 
+  /// La preuve d'identité d'une entrée dans une salle d'appel : la même
+  /// signature que pour la boîte, sur `GET /ws/<salle>` sans corps.
+  Future<({String ts, String nonce, String sig})> preuveSalle(String salle) async {
+    final e = await _signer('GET', '/ws/$salle', const []);
+    return (ts: e['x-droplet-ts']!, nonce: e['x-droplet-nonce']!, sig: e['x-droplet-sig']!);
+  }
+
   Future<ReponseHttp> _signee(String methode, String chemin, {String? corps, String requeteSuite = '', Duration delai = const Duration(seconds: 30)}) async {
     final octets = corps == null ? const <int>[] : utf8.encode(corps);
     final entetes = await _signer(methode, chemin, octets);

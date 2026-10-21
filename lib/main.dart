@@ -25,6 +25,7 @@ import 'design_system/droplet_design.dart';
 import 'design_system/ouro_colors.dart';
 import 'design_system/ouro_typography.dart';
 import 'design_system/reglages_apparence.dart';
+import 'donnees/appels_reseau.dart';
 import 'donnees/depot.dart';
 import 'donnees/modeles.dart';
 import 'donnees/transport.dart';
@@ -108,6 +109,22 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
         );
       }
     };
+    // Les appels par Internet : ce navigateur écoute la boîte d'appels du
+    // téléphone, et peut appeler au nom du compte.
+    final appels = AppelsReseau(canal: transport.canal)
+      ..auJournal = (contact, {required entrant, required video, required duree, required manque}) {
+        final d = depot.discussions['p:$contact'];
+        if (d != null) depot.enregistrerAppel(d, video: video, duree: duree, entrant: entrant, manque: manque);
+      }
+      ..auSonne = (contact, video) {
+        final d = depot.discussions['p:$contact'];
+        if (depot.reglages.notifications) {
+          final l = lookupAppLocalizations(Locale(_textes.code));
+          Navigateur.notifier(d?.titre ?? 'Droplet', video ? l.clIncomingVideoCall : l.clIncomingCall);
+        }
+      };
+    depot.reseau = appels;
+    appels.demarrer();
     depot.demarrer();
     if (depot.profil.pseudo.isEmpty) depot.majProfil(pseudo: compte.pseudo);
     setState(() {
@@ -146,6 +163,8 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
   void _quitter() {
     final t = _depot?.transport;
     if (t is TransportDroplet) t.arreter();
+    _depot?.reseau?.arreter();
+    _depot?.reseau = null;
     if (_compte != null) {
       CompteLie.oublier();
       _depot?.toutEffacer();
