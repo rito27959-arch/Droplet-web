@@ -64,7 +64,12 @@ class LigneIlot extends StatelessWidget {
     this.debut,
     this.onTap,
     this.lignesTitre = 1,
+    this.selectionnee = false,
   });
+
+  /// La section ouverte à droite (Réglages sur grand écran) : la ligne
+  /// prend l'accent, comme la barre latérale de Réglages sur iPad.
+  final bool selectionnee;
 
   final String titre;
   final String? sousTitre;
@@ -81,9 +86,12 @@ class LigneIlot extends StatelessWidget {
   Widget build(BuildContext context) {
     return Survol(
       onTap: onTap,
-      builder: (context, survol) => Container(
+      builder: (context, survol) => AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
         constraints: const BoxConstraints(minHeight: 48),
-        color: survol && onTap != null ? OuroColors.label.withValues(alpha: 0.04) : Colors.transparent,
+        color: selectionnee
+            ? OuroColors.accent
+            : (survol && onTap != null ? OuroColors.label.withValues(alpha: 0.04) : Colors.transparent),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         child: Row(
           children: [
@@ -104,25 +112,25 @@ class LigneIlot extends StatelessWidget {
                     titre,
                     maxLines: lignesTitre,
                     overflow: TextOverflow.ellipsis,
-                    style: OuroTypography.body.copyWith(color: couleurTitre ?? OuroColors.label),
+                    style: OuroTypography.body.copyWith(color: selectionnee ? Colors.white : (couleurTitre ?? OuroColors.label)),
                   ),
                   if (sousTitre != null)
                     Text(
                       sousTitre!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: OuroTypography.footnote.copyWith(color: OuroColors.secondaryLabel),
+                      style: OuroTypography.footnote.copyWith(color: selectionnee ? Colors.white70 : OuroColors.secondaryLabel),
                     ),
                 ],
               ),
             ),
             if (valeur != null) ...[
               const SizedBox(width: 8),
-              Text(valeur!, style: OuroTypography.body.copyWith(color: OuroColors.secondaryLabel)),
+              Text(valeur!, style: OuroTypography.body.copyWith(color: selectionnee ? Colors.white70 : OuroColors.secondaryLabel)),
             ],
             if (fin != null) fin! else if (onTap != null) ...[
               const SizedBox(width: 4),
-              Icon(Icons.chevron_right_rounded, color: OuroColors.tertiaryLabel, size: 22),
+              Icon(Icons.chevron_right_rounded, color: selectionnee ? Colors.white70 : OuroColors.tertiaryLabel, size: 22),
             ],
           ],
         ),

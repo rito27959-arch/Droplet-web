@@ -41,6 +41,11 @@ class Interface extends ChangeNotifier {
 
   GlobalKey<NavigatorState> get cleGauche => cles[onglet]!;
 
+  /// Sur grand écran, les pages des Réglages s'ouvrent à droite, en grand —
+  /// comme Réglages sur iPad — et la section choisie reste surlignée.
+  final cleDetail = GlobalKey<NavigatorState>(debugLabel: 'detail-reglages');
+  String? section;
+
   /// Le champ de recherche de la liste (Ctrl+Alt+/).
   final focusRecherche = FocusNode();
 
@@ -51,6 +56,7 @@ class Interface extends ChangeNotifier {
       return;
     }
     onglet = o;
+    section = null;
     notifyListeners();
   }
 

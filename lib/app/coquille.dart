@@ -49,7 +49,63 @@ Color fondBarreLaterale(BuildContext context) {
 
 /// Pousser un panneau dans la colonne de gauche de l'onglet actif.
 void pousserPanneau(BuildContext context, Widget panneau) {
+  // Déjà dans le détail de droite (Réglages sur grand écran) : la page
+  // suivante s'y empile, pas dans la colonne de gauche.
+  if (DetailDroit.dedans(context)) {
+    Navigator.of(context).push(CupertinoPageRoute<void>(builder: (_) => DetailDroit.centre(panneau)));
+    return;
+  }
   context.lire.ui.cleGauche.currentState?.push(CupertinoPageRoute<void>(builder: (_) => panneau));
+}
+
+/// Ouvre une page des Réglages : à droite et en grand sur un grand écran
+/// (la section reste surlignée à gauche), sinon dans la colonne, comme sur
+/// iPhone.
+void ouvrirReglage(BuildContext context, String section, Widget panneau) {
+  final ui = context.lire.ui;
+  final detail = ui.cleDetail.currentState;
+  if (MediaQuery.sizeOf(context).width >= 900 && detail != null) {
+    if (ui.section == section) return;
+    ui.section = section;
+    ui.rafraichir();
+    detail.pushAndRemoveUntil(
+      PageRouteBuilder<void>(
+        transitionDuration: const Duration(milliseconds: 260),
+        pageBuilder: (_, __, ___) => DetailDroit.centre(panneau),
+        transitionsBuilder: (_, a, __, enfant) => FadeTransition(
+          opacity: CurvedAnimation(parent: a, curve: Curves.easeOut),
+          child: SlideTransition(
+            position: Tween(begin: const Offset(0.012, 0), end: Offset.zero).animate(CurvedAnimation(parent: a, curve: kSortie)),
+            child: enfant,
+          ),
+        ),
+      ),
+      (_) => false,
+    );
+    return;
+  }
+  pousserPanneau(context, panneau);
+}
+
+/// Le détail de droite des Réglages : une page y est « à la racine » (grand
+/// titre, sans chevron de retour), le contenu centré sur une largeur lisible.
+class DetailDroit extends InheritedWidget {
+  const DetailDroit({super.key, required super.child});
+
+  static bool dedans(BuildContext context) => context.getInheritedWidgetOfExactType<DetailDroit>() != null;
+
+  /// Une page du détail, sur une largeur lisible (720 px), comme Réglages
+  /// sur un grand iPad : pas de lignes de 1 000 px de large.
+  static Widget centre(Widget page) => ColoredBox(
+        color: OuroColors.secondarySystemGroupedBackground,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 720), child: page),
+        ),
+      );
+
+  @override
+  bool updateShouldNotify(DetailDroit oldWidget) => false;
 }
 
 /// Ouvrir une discussion, d'où que l'on soit.
@@ -83,7 +139,12 @@ class _CoquilleState extends State<Coquille> {
     _visites.add(ui.onglet);
     final largeur = MediaQuery.sizeOf(context).width;
     final large = largeur >= 900;
-    final ouverte = depot.discussionOuverte == null ? null : depot.discussions[depot.discussionOuverte];
+    // Comme Réglages ou Messages sur iPad : le détail suit la section. Une
+    // discussion ne reste à droite que dans l'onglet Discussions — dans
+    // Actus, Appels ou Réglages, on retrouvait la dernière discussion ouverte.
+    final ouverte = depot.discussionOuverte == null || (large && ui.onglet != Onglet.discussions)
+        ? null
+        : depot.discussions[depot.discussionOuverte];
     final colonne = (largeur * 0.3).clamp(340.0, 440.0);
 
     final gauche = IndexedStack(
@@ -161,6 +222,19 @@ class _CoquilleState extends State<Coquille> {
                 : const SizedBox.shrink(),
           ),
         ],
+      );
+    } else if (large && ui.onglet == Onglet.reglages) {
+      droite = DetailDroit(
+        child: ColoredBox(
+          color: OuroColors.secondarySystemGroupedBackground,
+          child: Navigator(
+            key: ui.cleDetail,
+            onGenerateInitialRoutes: (_, __) => [
+              PageRouteBuilder<void>(pageBuilder: (_, __, ___) => const _Accueil(onglet: Onglet.reglages)),
+            ],
+            observers: [_SectionOubliee(ui)],
+          ),
+        ),
       );
     } else {
       droite = _Accueil(onglet: ui.onglet);
@@ -1003,4 +1077,24 @@ List<(String, String)> listeRaccourcis(BuildContext context) {
     (t.fermer, 'Esc'),
     (t.nouvelleLigne, k('Maj+Entrée').replaceAll('Entrée', t.toucheEntree)),
   ];
+}
+
+
+/// Revenir à l'accueil du détail (retour depuis une page) : plus de section
+/// surlignée.
+class _SectionOubliee extends NavigatorObserver {
+  _SectionOubliee(this.ui);
+
+  final Interface ui;
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (previousRoute?.isFirst ?? false) {
+      final nav = navigator;
+      if (nav != null && !nav.canPop()) {
+        ui.section = null;
+        ui.rafraichir();
+      }
+    }
+  }
 }

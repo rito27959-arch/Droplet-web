@@ -17,6 +17,7 @@ import '../design_system/ouro_avatar.dart';
 import '../design_system/ouro_colors.dart';
 import '../design_system/ouro_typography.dart';
 import '../donnees/depot.dart';
+import 'coquille.dart' show DetailDroit;
 
 /// La courbe de sortie de l'app : rapide au départ, très douce à
 /// l'arrivée.
@@ -392,7 +393,10 @@ class EntetePanneau extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (retour == null) {
+    // À la racine du détail de droite (Réglages sur grand écran) : grand
+    // titre, pas de chevron — on y arrive depuis la barre latérale.
+    final racineDetail = retour != null && DetailDroit.dedans(context) && (ModalRoute.of(context)?.isFirst ?? false);
+    if (retour == null || racineDetail) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(20, 18, 10, 6),
         child: Row(
