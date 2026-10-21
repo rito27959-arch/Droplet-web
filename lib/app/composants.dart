@@ -331,13 +331,13 @@ class AvatarDroplet extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: palette),
-        image: photo == null || photo!.isEmpty
+        image: photo == null || photo.isEmpty
             ? null
-            : DecorationImage(image: NetworkImage(photo!), fit: BoxFit.cover),
+            : DecorationImage(image: NetworkImage(photo), fit: BoxFit.cover),
       ),
       foregroundDecoration: const BoxDecoration(shape: BoxShape.circle, gradient: DegradesAvatar.reflet),
       alignment: Alignment.center,
-      child: photo != null && photo!.isNotEmpty
+      child: photo != null && photo.isNotEmpty
           ? null
           : groupe && initiales.isEmpty
               ? Icon(Icons.groups_rounded, color: Colors.white, size: taille * 0.5)
