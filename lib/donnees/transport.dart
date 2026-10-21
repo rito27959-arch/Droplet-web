@@ -20,6 +20,7 @@ import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
 
 import 'canal_telephone.dart';
+import 'multi_appareils.dart';
 import 'modeles.dart' show PieceJointe;
 
 enum TypePaquet { message, accuse, reaction, edition, suppression, frappe, appel }
@@ -144,7 +145,13 @@ class TransportDemo extends Transport {
 ///   ses propres clés, puis le renvoie avec ses vraies coches.
 /// • Au premier démarrage, il demande une synchro complète.
 class TransportDroplet extends Transport {
-  TransportDroplet({required this.canal, required this.verifier, required this.annuaire});
+  TransportDroplet({required this.canal, required this.verifier, required this.annuaire})
+      : multi = MultiAppareils(canal: canal, annuaire: annuaire) {
+    canal.autres = multi.recevoir;
+  }
+
+  /// Recevoir et envoyer sans le téléphone (voir `multi_appareils.dart`).
+  final MultiAppareils multi;
 
   /// L'adresse de l'annuaire (recherche par pseudo).
   final String annuaire;
@@ -257,6 +264,14 @@ class TransportDroplet extends Transport {
     if (piece is Map && (piece['url'] as String? ?? '').isNotEmpty) {
       await _envoyerPiece(d, m, piece.cast<String, dynamic>(), inconnu);
       return;
+    }
+    // Le téléphone n'est plus indispensable : un contact dont l'app sait lire
+    // un appareil lié reçoit le message directement, téléphone éteint ou non.
+    if (d.startsWith('p:') && inconnu == null) {
+      final direct = await multi
+          .envoyer(contact: d.substring(2), id: m['id'] as String, texte: m['texte'] as String? ?? '', reponseA: m['reponseA'] as String?)
+          .catchError((Object _) => false);
+      if (direct) return;
     }
     await canal.demander({
       't': 'envoyer',

@@ -157,12 +157,16 @@ class CanalTelephone {
       final message = (m as Map).cast<String, dynamic>();
       final id = message['id'] as String;
       try {
-        if (message['from'] == peerId) {
-          final p = jsonDecode(message['payload'] as String) as Map<String, dynamic>;
-          if (p['w'] == 1) {
-            final clair = await _dechiffrer(p['c'] as String, p['n'] as String);
-            if (clair != null) lots.add((jsonDecode(clair) as Map).cast<String, dynamic>());
-          }
+        final p = jsonDecode(message['payload'] as String) as Map<String, dynamic>;
+        if (message['from'] == peerId && p['w'] == 1) {
+          final clair = await _dechiffrer(p['c'] as String, p['n'] as String);
+          if (clair != null) lots.add((jsonDecode(clair) as Map).cast<String, dynamic>());
+        } else if (p['md'] == 1 && autres != null) {
+          // Une copie déposée directement pour ce navigateur par un contact
+          // (multi-appareils) : lisible même téléphone éteint.
+          final quand = DateTime.tryParse(message['timestamp'] as String? ?? '') ?? DateTime.now();
+          final lot = await autres!(message['from'] as String? ?? '', p, quand);
+          if (lot != null) lots.add(lot);
         }
       } catch (_) {
         // Illisible : on l'acquitte quand même, il ne deviendra pas lisible.
@@ -170,6 +174,19 @@ class CanalTelephone {
       unawaited(_signee('DELETE', '$chemin/${Uri.encodeComponent(id)}').then((_) {}, onError: (_) {}));
     }
     return lots;
+  }
+
+  /// Les dépôts qui ne viennent pas du téléphone (copies multi-appareils) :
+  /// branché par [MultiAppareils].
+  Future<Map<String, dynamic>?> Function(String de, Map<String, dynamic> p, DateTime quand)? autres;
+
+  /// Dépose [enveloppe] (déjà chiffrée) dans la boîte de [destinataire], au
+  /// nom de ce navigateur — signé avec sa clé.
+  Future<void> deposer(String destinataire, Map<String, dynamic> enveloppe) async {
+    final corps = jsonEncode({'from': appareil, 'to': destinataire, 'payload': jsonEncode(enveloppe)});
+    final r = await _signee('POST', '/messages', corps: corps);
+    if (r.statut == 401) throw const AppareilRefuse();
+    if (!r.ok) throw StateError('boîte : ${r.statut}');
   }
 
   /// Dépose une demande pour le téléphone.

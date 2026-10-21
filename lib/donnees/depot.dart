@@ -1015,7 +1015,9 @@ class Depot extends ChangeNotifier {
         discussions[id] = Discussion(
           id: id,
           type: d['type'] == 'groupe' ? TypeDiscussion.groupe : TypeDiscussion.directe,
-          titre: titre,
+          // Une discussion ouverte par un message reçu directement (téléphone
+          // éteint) n'a pas encore de titre : le pseudo connu, sinon l'id.
+          titre: titre.isNotEmpty ? titre : (membres.isEmpty ? id : (contacts[membres.first]?.pseudo ?? membres.first)),
           membres: membres,
           couleur: _couleurDe(id),
           nonLus: (d['nonLus'] as int?) ?? 0,
