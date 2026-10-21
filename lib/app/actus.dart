@@ -330,6 +330,78 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
     _demarrer();
   }
 
+  /// Aller directement aux statuts de l'auteur [i].
+  void _allerA(int i) {
+    if (i < 0 || i >= widget.auteurs.length || i == _auteur) return;
+    setState(() {
+      _auteur = i;
+      final l = _statuts;
+      final premier = l.indexWhere((s) => !s.vuPar.contains(kMoi));
+      _index = premier < 0 ? 0 : premier;
+    });
+    _demarrer();
+  }
+
+  List<Widget> _cotes(BuildContext context) {
+    final taille = MediaQuery.sizeOf(context);
+    final hCarte = taille.height - 40;
+    final lCarte = hCarte * 9 / 16;
+    final hVignette = hCarte * 0.5;
+    final lVignette = hVignette * 9 / 16;
+    const ecart = 64.0;
+    // Pas la place : la carte seule, comme sur téléphone.
+    if (taille.width < lCarte + 2 * (ecart + lVignette) + 48) return const [];
+    final cx = taille.width / 2;
+    Widget fleche(IconData icone, VoidCallback? onTap, double x) => Positioned(
+          left: x - 22,
+          top: taille.height / 2 - 22,
+          child: AnimatedOpacity(
+            opacity: onTap == null ? 0 : 1,
+            duration: const Duration(milliseconds: 200),
+            child: Survol(
+              onTap: onTap,
+              builder: (context, survol) => AnimatedScale(
+                scale: survol ? 1.08 : 1,
+                duration: const Duration(milliseconds: 160),
+                child: ClipOval(
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      color: Colors.white.withValues(alpha: survol ? 0.28 : 0.18),
+                      child: Icon(icone, color: Colors.white, size: 26),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+    final premierStatut = _index == 0 && _auteur == 0;
+    final dernierStatut = _auteur == widget.auteurs.length - 1 && _index >= _statuts.length - 1;
+    return [
+      if (_auteur > 0)
+        Positioned(
+          left: cx - lCarte / 2 - ecart - lVignette,
+          top: (taille.height - hVignette) / 2,
+          width: lVignette,
+          height: hVignette,
+          child: _Vignette(auteur: widget.auteurs[_auteur - 1], onTap: () => _allerA(_auteur - 1)),
+        ),
+      if (_auteur < widget.auteurs.length - 1)
+        Positioned(
+          left: cx + lCarte / 2 + ecart,
+          top: (taille.height - hVignette) / 2,
+          width: lVignette,
+          height: hVignette,
+          child: _Vignette(auteur: widget.auteurs[_auteur + 1], onTap: () => _allerA(_auteur + 1)),
+        ),
+      fleche(Icons.chevron_left_rounded, premierStatut ? null : _precedent, cx - lCarte / 2 - ecart / 2),
+      fleche(Icons.chevron_right_rounded, dernierStatut ? null : _suivant, cx + lCarte / 2 + ecart / 2),
+    ];
+  }
+
   bool _ferme = false;
   void _fermer() {
     if (_ferme) return;
@@ -376,6 +448,38 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
                   child: const ColoredBox(color: Color(0xF0000000)),
                 ),
               ),
+              // Le halo : les couleurs du statut, immenses et floues, derrière
+              // la carte — l'écran entier prend la teinte de ce qu'on regarde.
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 600),
+                    child: KeyedSubtree(
+                      key: ValueKey('halo-${s.id}'),
+                      child: Opacity(
+                        opacity: 0.55,
+                        child: ImageFiltered(
+                          imageFilter: ui.ImageFilter.blur(sigmaX: 90, sigmaY: 90, tileMode: TileMode.decal),
+                          child: s.image != null
+                              ? Image.network(s.image!, fit: BoxFit.cover)
+                              : DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    color: s.couleur != null ? Color(s.couleur!) : null,
+                                    gradient: s.couleur != null
+                                        ? null
+                                        : RadialGradient(colors: [...fond, Colors.transparent], radius: 0.9),
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned.fill(child: IgnorePointer(child: ColoredBox(color: Colors.black.withValues(alpha: 0.35)))),
+              // Sur grand écran : le contact précédent et le suivant, en
+              // vignettes de part et d'autre, et des flèches pour avancer.
+              ..._cotes(context),
               Center(
                 child: AspectRatio(
                   aspectRatio: 9 / 16,
@@ -622,6 +726,85 @@ Future<void> creerStatut(BuildContext context, {bool photo = false, String? mode
     pageBuilder: (_, __, ___) => _Createur(image: type == 'photo' ? piece?.url : null, piece: piece, type: type),
     transitionsBuilder: (_, a, __, enfant) => FadeTransition(opacity: a, child: enfant),
   ));
+}
+
+/// Les statuts d'un autre contact, en vignette à côté de la visionneuse :
+/// son premier statut, assombri, sa photo et son nom par-dessus.
+class _Vignette extends StatelessWidget {
+  const _Vignette({required this.auteur, required this.onTap});
+
+  final String auteur;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final depot = context.depot;
+    final l = depot.statutsDe(auteur);
+    if (l.isEmpty) return const SizedBox.shrink();
+    final s = l.firstWhere((x) => !x.vuPar.contains(kMoi), orElse: () => l.first);
+    final fond = fondsStatut[s.fond % fondsStatut.length];
+    final contact = depot.contacts[auteur];
+    return Survol(
+      onTap: onTap,
+      builder: (context, survol) => AnimatedScale(
+        scale: survol ? 1.03 : 1,
+        duration: const Duration(milliseconds: 200),
+        curve: kSortie,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (s.image != null)
+                Image.network(s.image!, fit: BoxFit.cover)
+              else
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: s.couleur != null ? Color(s.couleur!) : null,
+                    gradient: s.couleur != null ? null : LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: fond),
+                  ),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Text(
+                        s.texte,
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: OuroTypography.subheadline.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                color: Colors.black.withValues(alpha: survol ? 0.25 : 0.45),
+              ),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AvatarDroplet(nom: depot.nom(auteur), couleur: contact?.couleur ?? 0, taille: 52, anneau: !depot.statutsTousVus(auteur)),
+                    const SizedBox(height: 8),
+                    Text(
+                      depot.nom(auteur),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: OuroTypography.subheadline.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      ilYa(context, s.date),
+                      style: OuroTypography.caption1.copyWith(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _Createur extends StatefulWidget {
