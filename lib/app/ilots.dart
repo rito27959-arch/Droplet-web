@@ -89,10 +89,18 @@ class LigneIlot extends StatelessWidget {
       builder: (context, survol) => AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         constraints: const BoxConstraints(minHeight: 48),
-        color: selectionnee
-            ? OuroColors.accent
-            : (survol && onTap != null ? OuroColors.label.withValues(alpha: 0.04) : Colors.transparent),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        // Sélectionnée : une pastille d'accent arrondie, légèrement en
+        // retrait des bords de l'îlot — la barre latérale d'iPadOS 26.
+        margin: selectionnee ? const EdgeInsets.symmetric(horizontal: 5, vertical: 3) : EdgeInsets.zero,
+        decoration: BoxDecoration(
+          color: selectionnee
+              ? OuroColors.accent
+              : (survol && onTap != null ? OuroColors.label.withValues(alpha: 0.04) : Colors.transparent),
+          borderRadius: BorderRadius.circular(selectionnee ? 11 : 0),
+        ),
+        padding: selectionnee
+            ? const EdgeInsets.symmetric(horizontal: 7, vertical: 6)
+            : const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         child: Row(
           children: [
             if (debut != null) ...[debut!, const SizedBox(width: 12)] else if (icone != null) ...[
