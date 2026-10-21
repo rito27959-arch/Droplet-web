@@ -56,6 +56,7 @@ import '../../design_system/ouro_retour_ios.dart';
 import 'contacts_bloques_screen.dart';
 import '../../core/services/reglages_notifs.dart';
 import '../../core/services/appareils_lies.dart';
+import '../../core/services/miroir_appareils.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -474,6 +475,9 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
         .then<void>((_) {}, onError: (Object e) {
       debugPrint('[Réglages] photo non poussée par Internet: $e');
     }));
+    // Et Droplet Web, s'il est lié, affiche la même photo.
+    final miroir = MiroirAppareils.actuel;
+    if (miroir != null) unawaited(miroir.annoncerMaPhoto());
     if (!mounted) return;
     if (nom != null) OuroHaptics.success();
     setState(() => _nom = nom);

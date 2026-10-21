@@ -129,6 +129,7 @@ import '../../features/group/reglages_groupe.dart';
 import '../../features/status/ordre_statuts.dart';
 import '../models/status_media.dart';
 import 'appareils_lies.dart';
+import 'avatar_service.dart';
 import 'epingles.dart';
 import 'presence_internet.dart';
 import 'crypto_service.dart';
@@ -453,6 +454,9 @@ class MiroirAppareils {
       if (i == 0) lot['profil'] = profil;
       await _deposer(appareil, lot);
     }
+    // Ma photo de profil, dans un dépôt à part : quelques dizaines de Ko
+    // qu'on n'ajoute pas à un lot de 300 messages, déjà gros.
+    await _deposer(appareil, {'v': 1, 'profil': _maPhoto()});
     for (final m in _dernier) {
       _empreintes[m.id] = _empreinte(m);
     }
@@ -644,19 +648,83 @@ class MiroirAppareils {
 
   /// Le pseudo changé sur le web : enregistré et annoncé comme depuis les
   /// réglages du téléphone.
+  /// Ma photo telle que le navigateur la reçoit : `photo` (JPEG en
+  /// base64), ou `sansPhoto` si je n'en ai pas.
+  Map<String, dynamic> _maPhoto() {
+    final octets = AvatarService.mesOctets();
+    return octets == null ? {'sansPhoto': true} : {'photo': base64.encode(octets)};
+  }
+
+  /// Le profil changé depuis Droplet Web : pseudo, photo, ou retrait de
+  /// la photo.
+  ///
+  /// ⚠️ LA PHOTO CHOISIE SUR LE WEB DEVIENT CELLE DU COMPTE. Avant, elle
+  /// restait dans le navigateur : mes contacts (et mon propre téléphone)
+  /// ne la voyaient jamais. C'est le téléphone qui la distribue, exactement
+  /// comme une photo choisie dans ses Réglages : « hello » portant la
+  /// nouvelle empreinte, et envoi direct aux contacts joints par Internet.
   Future<void> _appliquerProfil(Map<String, dynamic> j) async {
-    final pseudo = (j['pseudo'] as String? ?? '').trim();
     final moi = StorageService.currentUser;
-    if (moi == null || pseudo.isEmpty || pseudo.length > 40 || pseudo == moi.pseudo) return;
-    await StorageService.saveUser(DropletUserModel(id: moi.id, pseudo: pseudo, publicKey: moi.publicKey, avatarUrl: moi.avatarUrl));
+    if (moi == null) return;
+    var pseudo = moi.pseudo;
+    var avatar = moi.avatarUrl;
+    final changes = <String, dynamic>{};
+
+    final p = (j['pseudo'] as String? ?? '').trim();
+    if (p.isNotEmpty && p.length <= 40 && p != moi.pseudo) {
+      pseudo = p;
+      changes['pseudo'] = p;
+    }
+
+    var photoChangee = false;
+    final b64 = j['photo'];
+    if (b64 is String && b64.isNotEmpty) {
+      Uint8List? octets;
+      try {
+        octets = base64.decode(b64);
+      } catch (_) {}
+      // Une vignette JPEG (le navigateur la réduit à 320 × 320 avant
+      // l'envoi) : on refuse tout ce qui n'en a pas l'allure.
+      final jpeg = octets != null && octets.length > 3 && octets[0] == 0xFF && octets[1] == 0xD8;
+      if (jpeg && octets.length <= 400 * 1024 && AvatarService.empreinteDe(octets) != AvatarService.monEmpreinte()) {
+        final nom = await AvatarService.enregistrer(octets);
+        if (nom != null) {
+          avatar = nom;
+          photoChangee = true;
+          changes['photo'] = b64;
+        }
+      }
+    } else if (j['retirerPhoto'] == true && moi.avatarUrl != null) {
+      await AvatarService.supprimer();
+      avatar = null;
+      photoChangee = true;
+      changes['sansPhoto'] = true;
+    }
+
+    if (changes.isEmpty) return;
+    await StorageService.saveUser(DropletUserModel(id: moi.id, pseudo: pseudo, publicKey: moi.publicKey, avatarUrl: avatar));
+    if (photoChangee) AvatarService.oublierMonEmpreinte();
+    // Le « hello » porte le pseudo et l'empreinte de la photo : les
+    // contacts proches voient le changement et redemandent la photo.
     unawaited(_repo.sendHello().then<void>((_) {}, onError: (Object _) {}));
+    // Le « hello » ne franchit pas Internet : la photo est poussée aux
+    // contacts éloignés directement.
+    if (photoChangee) {
+      unawaited(_repo.diffuserMaPhotoAuxContacts().then<void>((_) {}, onError: (Object _) {}));
+    }
+    // Les autres navigateurs liés suivent.
     for (final a in _appareils()) {
-      await _deposer(a, {
-        'v': 1,
-        'profil': {'pseudo': pseudo},
-      });
+      await _deposer(a, {'v': 1, 'profil': changes});
     }
   }
+
+  /// Ma photo a changé sur le téléphone : les navigateurs liés suivent.
+  Future<void> annoncerMaPhoto() async {
+    for (final a in _appareils()) {
+      await _deposer(a, {'v': 1, 'profil': _maPhoto()});
+    }
+  }
+
 
   /// Une discussion seule (sans message), pour en rafraîchir le titre, les
   /// membres et les admins sur le web.
