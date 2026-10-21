@@ -16,6 +16,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../design_system/ouro_colors.dart';
@@ -63,6 +64,11 @@ class _VueDiscussionState extends State<VueDiscussion> {
   List<PieceJointe>? _aEnvoyer;
   String? _clignote;
   bool _basLoin = false;
+
+  /// Hauteurs de l'en-tête (et de la barre épinglée) et de la barre de
+  /// saisie, mesurées : le fil réserve exactement cette place.
+  double _hautHaut = 64;
+  double _hautBas = 62;
   int _nouveauxEnBas = 0;
   int _epingle = 0;
 
@@ -379,40 +385,12 @@ class _VueDiscussionState extends State<VueDiscussion> {
         child: Stack(
           children: [
             Positioned.fill(child: Fond(index: depot.reglages.fond)),
+            // Comme Messages et WhatsApp sur iOS : le fil défile SOUS l'en-tête
+            // et la barre de saisie, dont le verre dépoli laisse deviner les
+            // bulles qui passent derrière.
             Positioned.fill(
-              child: Column(
+              child: Stack(
                 children: [
-                  _Entete(
-                    discussion: d,
-                    onRetour: widget.onRetour,
-                    recherche: recherche,
-                    champRecherche: _champRecherche,
-                    resultats: resultats.length,
-                    resultat: _resultat,
-                    onRecherche: (v) => setState(() {
-                      _q = v.trim().toLowerCase();
-                      _resultat = 0;
-                    }),
-                    onResultat: (sens) {
-                      if (resultats.isEmpty) return;
-                      setState(() => _resultat = (_resultat + sens) % resultats.length);
-                      _allerA(resultats[_resultat].id);
-                    },
-                  ),
-                  if (epingles.isNotEmpty)
-                    _BarreEpingle(
-                      messages: epingles,
-                      index: _epingle % epingles.length,
-                      onTap: () {
-                        final m = epingles[_epingle % epingles.length];
-                        _allerA(m.id);
-                        setState(() => _epingle++);
-                      },
-                      onRetirer: () => depot.epingler(epingles[_epingle % epingles.length]),
-                    ),
-                  Expanded(
-                    child: Stack(
-                      children: [
                         Positioned.fill(
                           child: ListView.builder(
                               controller: _defilement,
@@ -422,8 +400,9 @@ class _VueDiscussionState extends State<VueDiscussion> {
                               // d'une bulle reçue à une bulle envoyée.
                               padding: EdgeInsets.symmetric(
                                 horizontal: c.maxWidth > 900 ? ((c.maxWidth - 1000) / 2).clamp(56.0, double.infinity) : 14.0,
-                                vertical: 14,
-                              ),
+                                // Le fil passe SOUS l'en-tête et la barre de saisie, en
+                                // verre : on n'en réserve que la hauteur.
+                              ).copyWith(top: _hautHaut + 14, bottom: _hautBas + 14),
                               itemCount: elements.length + 1,
                               itemBuilder: (context, i) {
                                 if (i == 0) {
@@ -455,11 +434,66 @@ class _VueDiscussionState extends State<VueDiscussion> {
                               },
                             ),
                         ),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: _Mesure(
+                      onTaille: (t) {
+                        if ((t.height - _hautHaut).abs() > 0.5) setState(() => _hautHaut = t.height);
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                  _Entete(
+                    discussion: d,
+                    onRetour: widget.onRetour,
+                    recherche: recherche,
+                    champRecherche: _champRecherche,
+                    resultats: resultats.length,
+                    resultat: _resultat,
+                    onRecherche: (v) => setState(() {
+                      _q = v.trim().toLowerCase();
+                      _resultat = 0;
+                    }),
+                    onResultat: (sens) {
+                      if (resultats.isEmpty) return;
+                      setState(() => _resultat = (_resultat + sens) % resultats.length);
+                      _allerA(resultats[_resultat].id);
+                    },
+                  ),
+                  if (epingles.isNotEmpty)
+                    _BarreEpingle(
+                      messages: epingles,
+                      index: _epingle % epingles.length,
+                      onTap: () {
+                        final m = epingles[_epingle % epingles.length];
+                        _allerA(m.id);
+                        setState(() => _epingle++);
+                      },
+                      onRetirer: () => depot.epingler(epingles[_epingle % epingles.length]),
+                    ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: _Mesure(
+                      onTaille: (t) {
+                        if ((t.height - _hautBas).abs() > 0.5) setState(() => _hautBas = t.height);
+                      },
+                      child: _pied(context, d, contact),
+                    ),
+                  ),
                         // Le bouton ⌄ : revenir en bas, avec le nombre de
                         // messages arrivés entre-temps.
                         Positioned(
                           right: 18,
-                          bottom: 14,
+                          bottom: _hautBas + 14,
                           child: AnimatedScale(
                             scale: _basLoin ? 1 : 0,
                             duration: const Duration(milliseconds: 260),
@@ -467,10 +501,6 @@ class _VueDiscussionState extends State<VueDiscussion> {
                             child: _BoutonBas(compte: _nouveauxEnBas, onTap: _enBas),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  _pied(context, d, contact),
                 ],
               ),
             ),
@@ -1494,4 +1524,35 @@ class _ApercuEnvoiState extends State<_ApercuEnvoi> {
 void reagirRapide(BuildContext context, Message m, String emoji) {
   retenirEmoji(emoji);
   context.lire.depot.reagir(m, emoji);
+}
+
+
+/// Rend la taille de son enfant à chaque mise en page où elle change.
+class _Mesure extends SingleChildRenderObjectWidget {
+  const _Mesure({required this.onTaille, required super.child});
+
+  final ValueChanged<Size> onTaille;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenduMesure(onTaille);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenduMesure renderObject) => renderObject.onTaille = onTaille;
+}
+
+class _RenduMesure extends RenderProxyBox {
+  _RenduMesure(this.onTaille);
+
+  ValueChanged<Size> onTaille;
+  Size? _derniere;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    if (size != _derniere) {
+      _derniere = size;
+      final t = size;
+      WidgetsBinding.instance.addPostFrameCallback((_) => onTaille(t));
+    }
+  }
 }
