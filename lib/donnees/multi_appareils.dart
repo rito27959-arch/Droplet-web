@@ -25,7 +25,7 @@ import 'package:cryptography/cryptography.dart';
 
 import 'canal_telephone.dart';
 
-typedef InfosContact = ({bool md, String? cle, List<({String id, String cle})> appareils});
+typedef InfosContact = ({bool md, String? cle, String? pseudo, List<({String id, String cle})> appareils});
 
 class MultiAppareils {
   MultiAppareils({required this.canal, required this.annuaire});
@@ -66,6 +66,7 @@ class MultiAppareils {
       final i = (
         md: j['md'] == true,
         cle: j['cle'] as String?,
+        pseudo: j['pseudo'] as String?,
         appareils: [
           for (final a in (j['appareils'] as List? ?? const []))
             if (a is Map && a['id'] is String && a['cle'] is String) (id: a['id'] as String, cle: a['cle'] as String),
@@ -137,8 +138,12 @@ class MultiAppareils {
     final texte = await _dechiffrer(k, c, n);
     if (texte == null) return null;
     final d = 'p:$auteur';
+    final pseudo = (await infos(auteur))?.pseudo;
     return {
       'v': 1,
+      if (pseudo != null && pseudo.isNotEmpty) 'contacts': [
+        {'id': auteur, 'pseudo': pseudo},
+      ],
       'discussions': [
         {'id': d, 'type': 'directe', 'titre': '', 'membres': [auteur]},
       ],

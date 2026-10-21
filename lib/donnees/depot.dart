@@ -1132,6 +1132,12 @@ class Depot extends ChangeNotifier {
       // En démonstration, « parti » suffit. Avec un compte lié, la coche
       // n'avance que quand le téléphone confirme l'envoi (lot suivant).
       if (demo && m.statut == StatutMessage.envoi) m.statut = StatutMessage.envoye;
+      // Parti directement chez le contact (multi-appareils) : déposé, donc
+      // envoyé, sans attendre le téléphone.
+      final t = transport;
+      if (t is TransportDroplet && t.envoyesDirect.remove(m.id) && m.statut == StatutMessage.envoi) {
+        m.statut = StatutMessage.envoye;
+      }
     } catch (_) {
       m.statut = StatutMessage.echec;
     }

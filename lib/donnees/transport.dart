@@ -153,6 +153,10 @@ class TransportDroplet extends Transport {
   /// Recevoir et envoyer sans le téléphone (voir `multi_appareils.dart`).
   final MultiAppareils multi;
 
+  /// Les messages partis directement chez le contact (sans le téléphone) :
+  /// leur coche « envoyé » ne dépend plus du téléphone.
+  final Set<String> envoyesDirect = {};
+
   /// L'adresse de l'annuaire (recherche par pseudo).
   final String annuaire;
 
@@ -271,7 +275,10 @@ class TransportDroplet extends Transport {
       final direct = await multi
           .envoyer(contact: d.substring(2), id: m['id'] as String, texte: m['texte'] as String? ?? '', reponseA: m['reponseA'] as String?)
           .catchError((Object _) => false);
-      if (direct) return;
+      if (direct) {
+        envoyesDirect.add(m['id'] as String);
+        return;
+      }
     }
     await canal.demander({
       't': 'envoyer',
