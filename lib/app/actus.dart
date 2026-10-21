@@ -759,21 +759,11 @@ class _Vignette extends StatelessWidget {
                 Image.network(s.image!, fit: BoxFit.cover)
               else
                 DecoratedBox(
+                  // Le fond seul : le texte du statut se lit en l'ouvrant,
+                  // il ne se mêle pas au nom posé par-dessus.
                   decoration: BoxDecoration(
                     color: s.couleur != null ? Color(s.couleur!) : null,
                     gradient: s.couleur != null ? null : LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: fond),
-                  ),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Text(
-                        s.texte,
-                        maxLines: 5,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: OuroTypography.subheadline.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
-                      ),
-                    ),
                   ),
                 ),
               AnimatedContainer(
