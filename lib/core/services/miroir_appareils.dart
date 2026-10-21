@@ -162,7 +162,12 @@ class ActionsMiroir {
     required this.epingler,
     required this.frappe,
     required this.supprimerConversation,
+    this.noterEnvoiAutonome,
   });
+
+  /// Droplet Web a envoyé un message LUI-MÊME (téléphone éteint) : on
+  /// l'inscrit dans l'historique du téléphone, sans le renvoyer.
+  final Future<void> Function({required String peer, required String id, required String texte, required DateTime date, String? reponseA})? noterEnvoiAutonome;
 
   final Future<void> Function(String peerId) lire;
   final Future<void> Function(String groupId) lireGroupe;
@@ -531,6 +536,18 @@ class MiroirAppareils {
           final d = j['d'] as String? ?? '';
           if (d.startsWith('p:')) actions.frappe(peer: d.substring(2));
           if (d.startsWith('g:')) actions.frappe(groupe: d.substring(2));
+        case 'envoye':
+          final d = j['d'] as String? ?? '';
+          final texte = j['texte'] as String? ?? '';
+          final quand = j['date'];
+          if (!d.startsWith('p:') || texte.isEmpty || texte.length > 20000) return true;
+          await actions.noterEnvoiAutonome?.call(
+            peer: d.substring(2),
+            id: j['id'] as String? ?? '',
+            texte: texte,
+            date: quand is int ? DateTime.fromMillisecondsSinceEpoch(quand) : DateTime.now(),
+            reponseA: j['r'] as String?,
+          );
         case 'envoyer':
           final d = j['d'] as String? ?? '';
           final texte = (j['texte'] as String? ?? '').trim();

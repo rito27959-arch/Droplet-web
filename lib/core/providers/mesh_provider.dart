@@ -39,6 +39,8 @@ import '../../features/chat/location_message.dart';
 import '../../features/chat/poll_message.dart';
 import '../services/nom_pair.dart';
 import '../services/crypto_service.dart';
+import '../services/appareils_contacts.dart';
+import '../services/appareils_lies.dart';
 import '../services/miroir_appareils.dart';
 import '../services/presence_internet.dart';
 import '../services/storage_service.dart';
@@ -358,6 +360,7 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         supprimer: deleteMessage,
         epingler: (id, e) => epingler(id, epingle: e),
         supprimerConversation: ({String? peer, String? groupe}) => supprimerConversation(peerId: peer, groupId: groupe),
+        noterEnvoiAutonome: _noterEnvoiAutonome,
         // « En train d'écrire » tapé sur le web : par le maillage, et par
         // Internet comme le fait l'écran de discussion du téléphone.
         frappe: ({String? peer, String? groupe}) {
@@ -373,6 +376,9 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         },
       ),
     );
+    // Les navigateurs déjà liés rejoignent la liste des appareils du compte
+    // (multi-appareils), une fois le réseau parti.
+    Future<void>.delayed(const Duration(seconds: 25), () => AppareilsLies.redeclarer().catchError((Object _) {}));
     addListener(_miroir.surMessages);
     _peerSub = _repo.peerEvents?.listen((_) => _flushOutbox());
     _ackSub = _repo.ackEvents.listen((messageId) {
@@ -635,6 +641,16 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
           continue;
         }
 
+        // ── Un message écrit sur le DROPLET WEB d'un contact ───────────
+        // Déposé par son appareil lié, au nom de son compte (`compte`), même
+        // téléphone éteint. Voir `appareils_contacts.dart`.
+        if (parsed?['md'] == 1 && parsed?['compte'] is String) {
+          final recu = await _recevoirDUnAppareil(mbMsg, parsed!, cipherText, nonce);
+          if (recu != null) (livres[recu.$1] ??= []).add(recu.$2);
+          await _repo.transport.acknowledgeMailboxMessage(mbMsg.id);
+          continue;
+        }
+
         // ⚠️ APPRENDRE LA CLÉ DE L'EXPÉDITEUR AVANT DE DÉCHIFFRER. Le dépôt
         // est acquitté plus bas même s'il reste illisible : c'est donc
         // MAINTENANT ou jamais. Sans ça, un premier message d'une personne
@@ -810,6 +826,99 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
     } catch (e) {
       debugPrint('[MeshNotifier] Erreur polling mailbox: $e');
     }
+  }
+
+  /// Un message déposé par l'appareil lié (Droplet Web) d'un contact. Rend
+  /// (compte, identifiant du message) s'il a été accepté.
+  Future<(String, String)?> _recevoirDUnAppareil(
+    MailboxMessage mbMsg,
+    Map<String, dynamic> parsed,
+    String cipherText,
+    String nonce,
+  ) async {
+    final compte = parsed['compte'] as String;
+    final appareil = mbMsg.fromPeerId;
+    final cle = parsed['k'] as String? ?? '';
+    final id = parsed['m'] as String? ?? '';
+    if (compte.isEmpty || compte == _repo.myId || cle.isEmpty || id.isEmpty) return null;
+    if (StorageService.isContactBlocked(compte)) return null;
+    // Déjà reçu (renvoi) : on redonne l'accusé.
+    if (state.any((m) => m.id == id)) return (compte, id);
+    // Cet appareil appartient-il VRAIMENT à ce compte, avec cette clé ?
+    if (!await AppareilsContacts.appartient(compte, appareil, cle)) {
+      debugPrint('[MeshNotifier] message d\'un appareil non rattaché à $compte : ignoré');
+      return null;
+    }
+    final k = await AppareilsContacts.clePour(appareil, cle);
+    final texte = k == null ? null : await CryptoService.decrypt(k, cipherText, nonce);
+    if (texte == null) return null;
+    final msg = MeshMessage(
+      id: id,
+      authorPseudo: StorageService.getPeerRecord(compte)?.pseudo ?? compte,
+      content: texte,
+      replyToId: parsed['r'] as String?,
+      type: 'text',
+      timestamp: mbMsg.timestamp,
+      senderId: compte,
+      targetId: _repo.myId,
+      hopCount: 0,
+      status: MessageStatus.sent,
+    );
+    await StorageService.saveMessage(msg);
+    state = [...state, msg];
+    _repo.announceIncoming(msg);
+    return (compte, id);
+  }
+
+  /// Une copie de [content] pour chaque appareil lié (Droplet Web) de
+  /// [targetId] : il la lit même son téléphone éteint. Sans appareil lié,
+  /// rien ne part. Voir `appareils_contacts.dart`.
+  Future<void> _copierPourAppareils(String targetId, String content, String messageId, String? replyToId) async {
+    try {
+      final liste = await AppareilsContacts.de(targetId);
+      if (liste == null || liste.appareils.isEmpty) return;
+      final maCle = await CryptoService.ensureIdentityKeyPair();
+      for (final a in liste.appareils.take(4)) {
+        final k = await AppareilsContacts.clePour(a.id, a.cle);
+        if (k == null) continue;
+        final (c, n) = await CryptoService.encrypt(k, content);
+        await _repo.transport.storeMailboxMessage(
+          toPeerId: a.id,
+          encryptedPayload: jsonEncode({
+            'c': c,
+            'n': n,
+            'k': maCle,
+            'm': messageId,
+            'r': ?replyToId,
+            'md': 1,
+            // Le compte auquel ce message est adressé.
+            'pour': targetId,
+          }),
+        );
+      }
+    } catch (e) {
+      debugPrint('[MeshNotifier] copie pour les appareils de $targetId : $e');
+    }
+  }
+
+  /// Un message que Droplet Web a envoyé LUI-MÊME à un contact (téléphone
+  /// éteint) : on l'inscrit dans l'historique, sans le renvoyer.
+  Future<void> _noterEnvoiAutonome({required String peer, required String id, required String texte, required DateTime date, String? reponseA}) async {
+    if (id.isEmpty || state.any((m) => m.id == id)) return;
+    final msg = MeshMessage(
+      id: id,
+      authorPseudo: StorageService.currentUser?.pseudo ?? '',
+      content: texte,
+      replyToId: reponseA,
+      type: 'text',
+      timestamp: date,
+      senderId: _repo.myId,
+      targetId: peer,
+      hopCount: 0,
+      status: MessageStatus.sent,
+    );
+    await StorageService.saveMessage(msg);
+    state = [...state, msg];
   }
 
   /// Tente d'envoyer un message via la mailbox .onion.
@@ -1311,6 +1420,13 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
 
     await StorageService.saveMessage(msg);
     state = [...state, msg];
+
+    // Le Droplet Web du destinataire reçoit sa copie, quel que soit le
+    // chemin pris par l'original (maillage ou Internet), même son téléphone
+    // éteint. Sans appareil lié chez lui, rien ne part.
+    if (targetId != null && type == 'text' && EtatInternet.disponible()) {
+      unawaited(_copierPourAppareils(targetId, content, msg.id, replyToId));
+    }
 
     // ⚠️ POURQUOI ON NE SE FIE PAS À `connectedPeerCount > 0` SEUL.
     //

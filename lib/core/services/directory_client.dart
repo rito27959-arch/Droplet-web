@@ -139,6 +139,10 @@ class DirectoryClient {
         'onion': onionAddress,
         'publicKey': publicKey,
         if (fcmToken != null) 'fcmToken': fcmToken,
+        // Cette app chiffre aussi pour les appareils liés (Droplet Web) de
+        // ses contacts, et comprend ce qu'un appareil lié envoie au nom de
+        // son compte : Droplet Web peut lui écrire téléphone éteint.
+        'md': true,
       }));
       final response = await SignatureServeur.envoyer(
           peerId: peerId,
@@ -204,6 +208,30 @@ class DirectoryClient {
   /// Les identifiants demandés partent en clair vers l'annuaire : c'est le
   /// prix de la présence, et c'est pourquoi elle ne part qu'au premier plan
   /// et seulement si le mode en ligne est accepté.
+  /// Les appareils liés (Droplet Web) de [peerId], avec leur clé, et si son
+  /// app sait elle-même chiffrer pour ceux des autres (`md`). `null` si
+  /// l'annuaire ne répond pas.
+  Future<({bool md, List<({String id, String cle})> appareils})?> appareilsDe(String peerId) async {
+    try {
+      final r = await _client
+          .get(Uri.parse('$serverUrl/appareils/${Uri.encodeComponent(peerId)}/liste'))
+          .timeout(const Duration(seconds: 12));
+      SignatureServeur.noter(r);
+      if (r.statusCode != 200) return null;
+      final j = jsonDecode(r.body);
+      if (j is! Map) return null;
+      final liste = <({String id, String cle})>[];
+      for (final a in (j['appareils'] as List? ?? const [])) {
+        if (a is Map && a['id'] is String && a['cle'] is String) {
+          liste.add((id: a['id'] as String, cle: a['cle'] as String));
+        }
+      }
+      return (md: j['md'] == true, appareils: liste);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Map<String, DateTime>> presences(List<String> peerIds) async {
     if (peerIds.isEmpty) return const {};
     try {

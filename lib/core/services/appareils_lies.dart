@@ -143,6 +143,29 @@ class AppareilsLies {
 
   static DirectoryClient get _annuaire => DirectoryClient(serverUrl: kDirectoryUrl);
 
+  /// Redéclare, une fois par lancement, les appareils déjà liés : l'annuaire
+  /// les rattache alors au compte (liste publique des appareils), ce qui
+  /// permet aux contacts de chiffrer pour eux — Droplet Web reçoit ainsi les
+  /// messages téléphone éteint, y compris pour un navigateur lié AVANT le
+  /// multi-appareils. Sans effet si rien n'a changé.
+  static Future<void> redeclarer() async {
+    if (_redeclare) return;
+    final moi = StorageService.currentUser;
+    if (moi == null) return;
+    _redeclare = true;
+    for (final a in liste()) {
+      final cle = a.cle;
+      if (cle == null) continue;
+      try {
+        await _annuaire.declarerAppareil(peerId: moi.id, appareilId: a.id, cle: cle);
+      } catch (_) {
+        _redeclare = false; // on réessaiera au prochain lancement du réseau
+      }
+    }
+  }
+
+  static bool _redeclare = false;
+
   /// Lier le navigateur qui affiche [invitation].
   static Future<ResultatLiaison> lier(InvitationLien invitation) async {
     if (liste().length >= maximum) return ResultatLiaison.limiteAtteinte;
