@@ -134,33 +134,49 @@ class _Salle {
 }
 
 /// Une vue `<video>` pour Flutter (`HtmlElementView`).
+///
+/// ⚠️ UN ÉLÉMENT NEUF À CHAQUE AFFICHAGE. Un `<video>` retiré de la page est
+/// mis en pause par le navigateur ; réinséré (deuxième appel, écran rouvert),
+/// il restait noir. Chaque vue reçoit donc son propre élément, branché sur le
+/// flux du moment, et tous suivent les changements de flux.
 class VueFlux {
-  VueFlux._(this.typeVue, this.element);
+  VueFlux({required this.miroir, required this.muet}) : typeVue = 'droplet-flux-${_n++}' {
+    ui_web.platformViewRegistry.registerViewFactory(typeVue, (int _) {
+      final v = web.HTMLVideoElement()
+        ..autoplay = true
+        ..muted = muet
+        ..playsInline = true;
+      v.style
+        ..width = '100%'
+        ..height = '100%'
+        ..objectFit = 'cover'
+        ..backgroundColor = 'transparent'
+        ..borderRadius = 'inherit';
+      if (miroir) v.style.transform = 'scaleX(-1)';
+      _elements.removeWhere((e) => !e.isConnected);
+      _elements.add(v);
+      _brancher(v);
+      return v;
+    });
+  }
 
   final String typeVue;
-  final web.HTMLVideoElement element;
+  final bool miroir;
+  final bool muet;
   static int _n = 0;
+  final List<web.HTMLVideoElement> _elements = [];
+  web.MediaStream? _flux;
 
-  factory VueFlux({required bool miroir, required bool muet}) {
-    final type = 'droplet-flux-${_n++}';
-    final v = web.HTMLVideoElement()
-      ..autoplay = true
-      ..muted = muet
-      ..playsInline = true;
-    v.style
-      ..width = '100%'
-      ..height = '100%'
-      ..objectFit = 'cover'
-      ..backgroundColor = 'transparent'
-      ..borderRadius = 'inherit';
-    if (miroir) v.style.transform = 'scaleX(-1)';
-    ui_web.platformViewRegistry.registerViewFactory(type, (int _) => v);
-    return VueFlux._(type, v);
+  void _brancher(web.HTMLVideoElement v) {
+    v.srcObject = _flux;
+    if (_flux != null) unawaited(v.play().toDart.then((_) {}, onError: (_) {}));
   }
 
   void afficher(web.MediaStream? flux) {
-    element.srcObject = flux;
-    if (flux != null) unawaited(element.play().toDart.then((_) {}, onError: (_) {}));
+    _flux = flux;
+    for (final v in _elements) {
+      _brancher(v);
+    }
   }
 }
 
@@ -378,8 +394,12 @@ class AppelsReseau extends ChangeNotifier {
       final sdp = pc.localDescription?.sdp ?? '';
       // Répondu AU NOM DU COMPTE : l'appelant attend la réponse du compte.
       _boite?.envoyer({'type': 'answer', 'from': _compte, 'to': de, 'sdp': sdp});
+      if (_dejaRelie) {
+        _relie();
+        return;
+      }
       _delai = Timer(const Duration(seconds: 30), () {
-        if (phase == PhaseAppel.connexion) unawaited(_terminer(FinAppel.echec, prevenir: true));
+        if (phase == PhaseAppel.connexion && !_dejaRelie) unawaited(_terminer(FinAppel.echec, prevenir: true));
       });
     } catch (e) {
       debugPrint('Droplet Web : décrocher impossible ($e)');
@@ -442,11 +462,15 @@ class AppelsReseau extends ChangeNotifier {
       _distantePosee = true;
       _renvoi?.cancel();
       _delai?.cancel();
-      phase = PhaseAppel.connexion;
+      if (phase == PhaseAppel.appel) phase = PhaseAppel.connexion;
       notifyListeners();
       await _viderCandidats();
+      if (_dejaRelie) {
+        _relie();
+        return;
+      }
       _delai = Timer(const Duration(seconds: 30), () {
-        if (phase == PhaseAppel.connexion) unawaited(_terminer(FinAppel.echec, prevenir: true));
+        if (phase == PhaseAppel.connexion && !_dejaRelie) unawaited(_terminer(FinAppel.echec, prevenir: true));
       });
     } catch (e) {
       debugPrint('Droplet Web : réponse refusée ($e)');
@@ -559,13 +583,7 @@ class AppelsReseau extends ChangeNotifier {
       switch (etat) {
         case 'connected':
         case 'completed':
-          _delai?.cancel();
-          reconnexion = false;
-          if (phase == PhaseAppel.connexion) {
-            phase = PhaseAppel.enCours;
-            debut ??= DateTime.now();
-          }
-          notifyListeners();
+          _relie();
         case 'disconnected':
           reconnexion = true;
           notifyListeners();
@@ -574,6 +592,26 @@ class AppelsReseau extends ChangeNotifier {
       }
     }).toJS;
     return pc;
+  }
+
+  /// La liaison est établie. Elle peut l'être AVANT que la réponse de
+  /// l'autre ait fini d'être traitée ici : on passe alors en communication
+  /// depuis « appel » aussi, sinon l'écran restait sur « Connexion… » et le
+  /// délai de connexion finissait par couper un appel qui marchait.
+  void _relie() {
+    _delai?.cancel();
+    reconnexion = false;
+    if (phase == PhaseAppel.connexion || phase == PhaseAppel.appel) {
+      phase = PhaseAppel.enCours;
+      debut ??= DateTime.now();
+      _renvoi?.cancel();
+    }
+    notifyListeners();
+  }
+
+  bool get _dejaRelie {
+    final e = _pc?.iceConnectionState;
+    return e == 'connected' || e == 'completed';
   }
 
   Future<void> _attendreCollecte(Duration max) async {
