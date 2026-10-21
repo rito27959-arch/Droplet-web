@@ -238,10 +238,37 @@ class AppelsReseau extends ChangeNotifier {
   DateTime? _dateServeursIce;
 
   /// Entrer, pour de bon, dans la boîte d'appels du téléphone.
+  ///
+  /// ⚠️ SEULEMENT SI LE SERVEUR SAIT « ÉCOUTER ». Un serveur d'appels plus
+  /// ancien prend l'entrée du navigateur dans la boîte du téléphone pour un
+  /// appel, et réveille le téléphone (« Quelqu'un essaie de vous joindre ») à
+  /// chaque connexion. On le lui demande d'abord (`/health`), et on réessaie
+  /// toutes les 10 minutes : l'écoute s'allume d'elle-même une fois le
+  /// serveur à jour. Appeler, lui, marche dans tous les cas.
   void demarrer() {
     if (_actif) return;
     _actif = true;
-    unawaited(_ouvrirBoite());
+    unawaited(_attendreServeurQuiEcoute());
+  }
+
+  bool ecouteDisponible = false;
+
+  Future<void> _attendreServeurQuiEcoute() async {
+    while (_actif) {
+      try {
+        final r = await requete('GET', '$kServeurAppels/health', delai: const Duration(seconds: 12));
+        if (r.ok) {
+          final f = (jsonDecode(r.corps) as Map)['fonctions'];
+          if (f is List && f.contains('ecoute')) {
+            ecouteDisponible = true;
+            notifyListeners();
+            await _ouvrirBoite();
+            return;
+          }
+        }
+      } catch (_) {}
+      await Future<void>.delayed(const Duration(minutes: 10));
+    }
   }
 
   Future<void> _ouvrirBoite() async {
