@@ -110,6 +110,9 @@ class _Salle {
       'ts': p.ts,
       'nonce': p.nonce,
       'sig': p.sig,
+      // Le compte au nom duquel ce navigateur parle : le serveur le fait
+      // confirmer par l'annuaire, puis refuse tout « from » non prouvé.
+      'compte': canal.peerId,
       if (ecoute) 'ecoute': true,
     });
     return true;
