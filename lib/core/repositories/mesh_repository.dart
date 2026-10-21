@@ -325,21 +325,26 @@ class MeshRepository {
 
   /// Dépose un paquet dans la boîte aux lettres d'un pair — posé par
   /// `MeshNotifier`, qui détient le client de boîte aux lettres.
-  Future<bool> Function(String peerId, Uint8List paquet)? deposerPaquetEnLigne;
+  ///
+  /// [notifier] : vrai pour un message que le destinataire doit voir (message
+  /// de groupe) — la boîte le réveille alors par « Nouveau message ». Faux
+  /// pour tout le reste (contrôles, réactions, statuts, morceaux) : avant,
+  /// chacun de ces paquets faisait apparaître « Nouveau message » pour rien.
+  Future<bool> Function(String peerId, Uint8List paquet, {bool notifier})? deposerPaquetEnLigne;
 
   bool _joignableEnMesh(String peerId) =>
       _transport.connectedPeers.any((p) => p.peerId == peerId && !p.reconnecting);
 
   /// Double [paquet] par Internet vers ceux de [destinataires] que le mesh ne
   /// joint pas et dont la clé est connue. Renvoie le nombre de dépôts réussis.
-  Future<int> _doublerParInternet(Iterable<String> destinataires, Uint8List paquet) async {
+  Future<int> _doublerParInternet(Iterable<String> destinataires, Uint8List paquet, {bool notifier = false}) async {
     final deposer = deposerPaquetEnLigne;
     if (deposer == null) return 0;
     final cibles = destinataires
         .where((id) => id.isNotEmpty && id != _myId && !_joignableEnMesh(id) && clePubliqueConnue(id))
         .toSet();
     if (cibles.isEmpty) return 0;
-    final resultats = await Future.wait(cibles.map((id) => deposer(id, paquet).catchError((Object e) {
+    final resultats = await Future.wait(cibles.map((id) => deposer(id, paquet, notifier: notifier).catchError((Object e) {
           debugPrint('[MeshRepo] paquet non déposé pour $id: $e');
           return false;
         })));
@@ -4144,7 +4149,7 @@ class MeshRepository {
     data.setRange(2, data.length, payloadBytes);
     // Les membres que le mesh ne joint pas le reçoivent par Internet.
     final membres = StorageService.getGroup(groupId)?.activeMembers.map((m) => m.peerId) ?? const <String>[];
-    final parInternet = await _doublerParInternet(membres, data);
+    final parInternet = await _doublerParInternet(membres, data, notifier: true);
     if (_transport.connectedPeerCount == 0) {
       if (parInternet == 0 && membres.any((id) => id != _myId)) {
         throw StateError('Aucun chemin vers les membres du groupe');
@@ -4614,7 +4619,7 @@ class MeshRepository {
 
     _fileProgressCtrl.add((fileId: id, progression: 0, envoi: true));
     if (parInternet.isNotEmpty) {
-      await _doublerParInternet(parInternet, packet);
+      await _doublerParInternet(parInternet, packet, notifier: true);
       if (_transport.connectedPeerCount == 0) {
         _fileProgressCtrl.add((fileId: id, progression: 1, envoi: true));
         return;

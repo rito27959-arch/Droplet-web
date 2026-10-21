@@ -562,7 +562,7 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
   /// Dépose un paquet mesh (groupe, statut, clé de groupe…) dans la boîte
   /// aux lettres de [peerId], chiffré pour lui — marqué `pk: 1`. Voir
   /// `MeshRepository.deposerPaquetEnLigne`.
-  Future<bool> _deposerPaquet(String peerId, Uint8List paquet) async {
+  Future<bool> _deposerPaquet(String peerId, Uint8List paquet, {bool notifier = false}) async {
     if (paquet.length > FichierEnLigne.maximum || !_repo.clePubliqueConnue(peerId)) {
       return false;
     }
@@ -576,6 +576,9 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         'n': nonce,
         'k': await CryptoService.ensureIdentityKeyPair(),
         'pk': 1,
+        // Lu par la boîte (enveloppe en clair) : réveiller ou non le
+        // destinataire par « Nouveau message ».
+        'nt': notifier ? 1 : 0,
       }),
     );
     return depot != null;
@@ -683,6 +686,11 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
             ? parsed!['m'] as String
             : mbMsg.id;
         if (state.any((m) => m.id == idMessage)) {
+          // Déjà reçu : l'expéditeur le renvoie parce que notre accusé
+          // « distribué » ne lui est pas parvenu. On le lui redonne — sinon
+          // il renvoyait le même message indéfiniment, et chaque renvoi nous
+          // réveillait par « Nouveau message » sans rien de nouveau à lire.
+          (livres[mbMsg.fromPeerId] ??= []).add(idMessage);
           await _repo.transport.acknowledgeMailboxMessage(mbMsg.id);
           continue;
         }
@@ -762,6 +770,8 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
           );
           // Le même message Signal, déjà reçu par le mesh.
           if (content == MeshRepository.kDoublonSignal) {
+            // Même règle qu'un doublon ordinaire : on redonne l'accusé.
+            (livres[mbMsg.fromPeerId] ??= []).add(idMessage);
             await _repo.transport.acknowledgeMailboxMessage(mbMsg.id);
             continue;
           }
