@@ -178,6 +178,10 @@ class Depot extends ChangeNotifier {
     if (discussionId == null) return;
     final d = discussions[discussionId];
     if (d == null) return;
+    if (d.marquee) {
+      d.marquee = false;
+      if (!demo) _etatAuTelephone(d.id, 'nonLue', false);
+    }
     if (d.nonLus > 0) {
       d.nonLus = 0;
       _changer();
@@ -368,6 +372,17 @@ class Depot extends ChangeNotifier {
       if (!_attend('${d.id}|archivee')) d.archivee = s['a'] == true;
       if (!_attend('${d.id}|sourdine')) d.sourdine = s['s'] == true;
       if (!_attend('${d.id}|ephemere')) d.ephemereSecondes = (s['x'] as num?)?.toInt() ?? 0;
+      if (!_attend('${d.id}|nonLue') && s.containsKey('n')) {
+        final marquee = s['n'] == true;
+        if (marquee && !d.marquee) {
+          d.marquee = true;
+          if (d.nonLus == 0) d.nonLus = 1;
+        } else if (!marquee && d.marquee) {
+          // Démarquée sur le téléphone (ouverte, ou « marquer comme lue »).
+          d.marquee = false;
+          if (d.nonLus == 1) d.nonLus = 0;
+        }
+      }
     }
     final epingles = <String>{
       for (final l in ((e['epingles'] as Map?)?.values ?? const <Object?>[]))
@@ -492,9 +507,16 @@ class Depot extends ChangeNotifier {
     });
   }
 
+  /// « Marquer comme non lue » / « comme lue », partagé avec le téléphone.
   void marquerNonLue(Discussion d) {
-    d.nonLus = d.nonLus > 0 ? 0 : 1;
+    final lire = d.nonLus > 0 || d.marquee;
+    d.nonLus = lire ? 0 : 1;
+    d.marquee = !lire;
     _changer();
+    if (demo) return;
+    _etatAuTelephone(d.id, 'nonLue', !lire);
+    // De vrais messages non lus, lus ici : le téléphone les lit aussi.
+    if (lire) unawaited(transport.demander({'t': 'lu', 'd': d.id}).then((_) {}, onError: (_) {}));
   }
 
   void vider(Discussion d) {
@@ -561,8 +583,14 @@ class Depot extends ChangeNotifier {
   }
 
   void basculerAdmin(Discussion d, String membre) {
-    d.admins = d.admins.contains(membre) ? ([...d.admins]..remove(membre)) : [...d.admins, membre];
+    final etaitAdmin = d.admins.contains(membre);
+    // Le dernier admin ne peut pas se retirer (même règle que le téléphone).
+    if (etaitAdmin && d.admins.length <= 1) return;
+    d.admins = etaitAdmin ? ([...d.admins]..remove(membre)) : [...d.admins, membre];
     _changer();
+    // Le téléphone refait le changement et l'annonce au groupe ; la
+    // discussion revient avec les admins tels qu'il les a appliqués.
+    _groupeAuTelephone(d, {'op': 'admin', 'membre': membre == kMoi ? 'moi' : membre, 'admin': !etaitAdmin});
   }
 
   void _systeme(Discussion d, String code) => _ajouter(Message(

@@ -97,6 +97,10 @@ class Discussion {
 
   /// J'ai quitté ce groupe : on le lit encore, on n'y écrit plus.
   bool quitte;
+
+  /// Marquée « non lue » à la main (ici ou sur le téléphone) : la pastille
+  /// sans message nouveau. Tenue par l'instantané du téléphone.
+  bool marquee = false;
   final DateTime creeeLe;
 
   bool get estGroupe => type == TypeDiscussion.groupe;

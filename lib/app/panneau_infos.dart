@@ -454,9 +454,8 @@ class _Infos extends StatelessWidget {
           libelle: t.envoyerMessageA(depot.nom(id)),
           onTap: () => ouvrirDiscussion(context, depot.discussionAvec(id).id),
         ),
-        // Le téléphone ne sait pas nommer un admin : avec un téléphone lié,
-        // ce bouton ne changerait que le navigateur. Démo seulement.
-        if (admin && depot.demo)
+        // Nommer ou retirer un admin : le téléphone le refait et l'annonce.
+        if (admin)
           ElementMenu(
             icone: Icons.shield_outlined,
             libelle: d.admins.contains(id) ? t.retirerAdmin : t.nommerAdmin,
