@@ -973,6 +973,17 @@ class Depot extends ChangeNotifier {
   /// Applique un lot envoyé par le téléphone (voir `miroir_appareils.dart`
   /// dans l'app) : contacts, discussions et messages, créés ou mis à jour.
   void appliquerLot(Map<String, dynamic> lot) {
+    // Des accusés arrivés directement du contact (multi-appareils).
+    final accuses = lot['accuses'];
+    if (accuses is Map) {
+      final statut = accuses['statut'] == 'lu' ? StatutMessage.lu : StatutMessage.recu;
+      for (final id in (accuses['ids'] as List? ?? const []).whereType<String>()) {
+        final m = message(id);
+        if (m != null && m.auteurId == kMoi && statut.index > m.statut.index && m.statut != StatutMessage.echec) m.statut = statut;
+      }
+      _changer();
+      return;
+    }
     telephoneVu = true;
     final etat = lot['etat'];
     if (etat is Map) _appliquerEtat(etat.cast<String, dynamic>());
@@ -1058,11 +1069,14 @@ class Depot extends ChangeNotifier {
       var type = TypeMessage.texte;
       if (fiche is Map) {
         final mime = fiche['mime'] as String? ?? '';
+        final recus = m['_octets'];
         piece = PieceJointe(
           nom: fiche['nom'] as String? ?? 'fichier',
           mime: mime,
           taille: fiche['taille'] as int? ?? 0,
-          url: '',
+          // Arrivé directement (téléphone éteint) : déjà là, en mémoire. Après
+          // un rechargement, la pièce se redemandera au téléphone.
+          url: recus is Uint8List ? urlBlob(recus, mime) : '',
           distant: true,
         );
         type = mime.startsWith('image/') && !mime.contains('svg')

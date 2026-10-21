@@ -335,6 +335,35 @@ class TransportDroplet extends Transport {
     if (octets.isEmpty) throw StateError('Fichier illisible');
     if (octets.length > maxFichier) throw const FichierTropGros();
     final id = m['id'] as String;
+    // Directement chez le contact quand son app sait lire un appareil lié :
+    // la photo part même téléphone éteint. Le téléphone en reçoit ensuite
+    // une copie pour son historique (`deja`), sans la renvoyer.
+    if (d.startsWith('p:') && inconnu == null) {
+      final direct = await multi
+          .envoyerFichier(
+            contact: d.substring(2),
+            id: id,
+            nom: piece['nom'] as String? ?? 'fichier',
+            mime: piece['mime'] as String? ?? 'application/octet-stream',
+            octets: octets,
+            legende: m['texte'] as String?,
+            reponseA: m['reponseA'] as String?,
+            progres: (x) => progression.value = {...progression.value, id: x},
+          )
+          .catchError((Object _) => false);
+      progression.value = {...progression.value}..remove(id);
+      if (direct) {
+        envoyesDirect.add(id);
+        unawaited(_versTelephone(d, m, piece, octets, null, deja: true).catchError((Object _) {}));
+        return;
+      }
+    }
+    await _versTelephone(d, m, piece, octets, inconnu);
+    progression.value = {...progression.value}..remove(id);
+  }
+
+  Future<void> _versTelephone(String d, Map<String, dynamic> m, Map<String, dynamic> piece, Uint8List octets, ResultatRecherche? inconnu, {bool deja = false}) async {
+    final id = m['id'] as String;
     final n = (octets.length / tailleMorceau).ceil();
     for (var i = 0; i < n; i++) {
       final fin = min((i + 1) * tailleMorceau, octets.length);
@@ -353,11 +382,11 @@ class TransportDroplet extends Transport {
           if (m['reponseA'] != null) 'r': m['reponseA'],
           if (inconnu != null) 'pseudo': inconnu.pseudo,
           if (inconnu?.cle != null) 'cle': inconnu!.cle,
+          if (deja) 'deja': true,
         },
       });
-      progression.value = {...progression.value, id: (i + 1) / n};
+      if (!deja) progression.value = {...progression.value, id: (i + 1) / n};
     }
-    progression.value = {...progression.value}..remove(id);
   }
 }
 
