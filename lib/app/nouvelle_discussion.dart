@@ -350,7 +350,7 @@ class _Choisi extends StatelessWidget {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  AvatarDroplet(nom: contact.pseudo, couleur: contact.couleur, taille: 50),
+                  AvatarDroplet(personne: contact.id, nom: contact.pseudo, couleur: contact.couleur, taille: 50),
                   Positioned(
                     right: -2,
                     top: -2,
@@ -499,7 +499,7 @@ class _PanneauNomGroupeState extends State<_PanneauNomGroupe> {
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              AvatarDroplet(nom: depot.nom(id), couleur: depot.contacts[id]?.couleur ?? 0, taille: 46),
+                              AvatarDroplet(personne: id, nom: depot.nom(id), couleur: depot.contacts[id]?.couleur ?? 0, taille: 46),
                               const SizedBox(height: 4),
                               SizedBox(
                                 width: 56,

@@ -321,7 +321,7 @@ class LigneDiscussion extends StatelessWidget {
           decoration: BoxDecoration(color: fond, borderRadius: BorderRadius.circular(12)),
           child: Row(
             children: [
-              AvatarDroplet(
+              AvatarDroplet(personne: d.pair, 
                 nom: d.titre,
                 couleur: d.couleur,
                 taille: 52,
@@ -741,7 +741,7 @@ class LigneContact extends StatelessWidget {
               CaseRonde(cochee: coche!),
               const SizedBox(width: 12),
             ],
-            AvatarDroplet(nom: c.pseudo, couleur: c.couleur, taille: 44, enLigne: c.enLigne),
+            AvatarDroplet(personne: c.id, nom: c.pseudo, couleur: c.couleur, taille: 44, enLigne: c.enLigne),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

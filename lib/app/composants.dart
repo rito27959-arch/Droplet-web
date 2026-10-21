@@ -17,6 +17,8 @@ import '../design_system/ouro_avatar.dart';
 import '../design_system/ouro_colors.dart';
 import '../design_system/ouro_typography.dart';
 import '../donnees/depot.dart';
+import '../donnees/modeles.dart' show kMoi;
+import '../donnees/photos_contacts.dart';
 import 'coquille.dart' show DetailDroit;
 
 /// La courbe de sortie de l'app : rapide au départ, très douce à
@@ -292,11 +294,17 @@ class AvatarDroplet extends StatelessWidget {
     this.enLigne = false,
     this.anneau,
     this.groupe = false,
+    this.personne,
   });
 
   final String nom;
   final int couleur;
   final String? photo;
+
+  /// L'identifiant du contact représenté : sa photo de profil (tenue par
+  /// le téléphone, voir `PhotosContacts`) s'affiche alors d'elle-même.
+  /// Sans effet si [photo] est donnée, pour un groupe, ou pour moi.
+  final String? personne;
   final double taille;
   final bool enLigne;
 
@@ -306,6 +314,15 @@ class AvatarDroplet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = personne;
+    if (photo != null || groupe || p == null || p == kMoi) return _construire(photo);
+    return ValueListenableBuilder<int>(
+      valueListenable: PhotosContacts.revision,
+      builder: (context, _, _) => _construire(PhotosContacts.de(p)),
+    );
+  }
+
+  Widget _construire(String? photo) {
     final palette = palettesAvatar[couleur % palettesAvatar.length];
     final initiales = DegradesAvatar.initiales(nom);
     Widget rond = Container(

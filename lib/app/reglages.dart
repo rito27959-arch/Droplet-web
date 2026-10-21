@@ -466,7 +466,7 @@ class _PanneauConfidentialite extends StatelessWidget {
             for (final c in bloques)
               LigneIlot(
                 titre: c.pseudo,
-                debut: AvatarDroplet(nom: c.pseudo, couleur: c.couleur, taille: 34),
+                debut: AvatarDroplet(personne: c.id, nom: c.pseudo, couleur: c.couleur, taille: 34),
                 fin: TextButton(
                   onPressed: () => depot.bloquer(c),
                   child: Text(l.blkUnblock, style: OuroTypography.subheadline.copyWith(color: OuroColors.accent)),

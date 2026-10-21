@@ -104,7 +104,7 @@ class _CarteImportant extends StatelessWidget {
           children: [
             Row(
               children: [
-                AvatarDroplet(nom: auteur, couleur: depot.contacts[m.auteurId]?.couleur ?? depot.profil.couleur, photo: m.deMoi ? depot.profil.photo : null, taille: 26),
+                AvatarDroplet(personne: m.auteurId, nom: auteur, couleur: depot.contacts[m.auteurId]?.couleur ?? depot.profil.couleur, photo: m.deMoi ? depot.profil.photo : null, taille: 26),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text.rich(

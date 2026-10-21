@@ -20,10 +20,15 @@ import 'package:web/web.dart' as web;
 import '../web/navigateur.dart' show urlBlob, tailleImageDe, vignetteDe;
 import 'appels_reseau.dart';
 import 'modeles.dart';
+import 'photos_contacts.dart';
 import 'transport.dart';
 
 class Depot extends ChangeNotifier {
-  Depot({required this.transport, required this.langue, this.demo = false});
+  Depot({required this.transport, required this.langue, this.demo = false}) {
+    // Les photos de profil de mes contacts sont demandées au téléphone,
+    // au moment de les afficher (voir `PhotosContacts`).
+    PhotosContacts.demandeur = (ids) => transport.demander({'t': 'avatars', 'ids': ids});
+  }
 
   final Transport transport;
   final String langue;
@@ -924,6 +929,7 @@ class Depot extends ChangeNotifier {
 
   /// « Se déconnecter » : ce navigateur oublie tout.
   void toutEffacer() {
+    PhotosContacts.oublier();
     try {
       web.window.localStorage.removeItem(_cle);
     } catch (_) {}
@@ -1012,6 +1018,11 @@ class Depot extends ChangeNotifier {
       return;
     }
     telephoneVu = true;
+    final avatars = lot['avatars'];
+    if (avatars is Map) {
+      PhotosContacts.recevoir(avatars.cast<String, dynamic>());
+      return;
+    }
     final etat = lot['etat'];
     if (etat is Map) _appliquerEtat(etat.cast<String, dynamic>());
     final frappe = lot['frappe'];
@@ -1052,6 +1063,8 @@ class Depot extends ChangeNotifier {
       if (c is! Map || c['id'] is! String) continue;
       final id = c['id'] as String;
       final pseudo = c['pseudo'] as String? ?? id;
+      // L'empreinte de sa photo de profil (absente : il n'en a pas).
+      PhotosContacts.noterEmpreinte(id, c['av'] as String?);
       final x = contacts[id];
       if (x == null) {
         contacts[id] = Contact(id: id, pseudo: pseudo, couleur: _couleurDe(id));

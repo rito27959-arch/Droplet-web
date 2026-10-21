@@ -109,7 +109,7 @@ class _VisionneuseState extends State<_Visionneuse> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      AvatarDroplet(
+                      AvatarDroplet(personne: m.auteurId, 
                         nom: depot.nom(m.auteurId),
                         couleur: m.deMoi ? depot.profil.couleur : depot.contacts[m.auteurId]?.couleur ?? 0,
                         photo: m.deMoi ? depot.profil.photo : null,
@@ -288,7 +288,7 @@ class _ChoixDiscussionsState extends State<_ChoixDiscussions> {
                                     children: [
                                       CaseRonde(cochee: _choisis.contains(d.id)),
                                       const SizedBox(width: 12),
-                                      AvatarDroplet(nom: d.titre, couleur: d.couleur, taille: 40, groupe: d.estGroupe),
+                                      AvatarDroplet(personne: d.pair, nom: d.titre, couleur: d.couleur, taille: 40, groupe: d.estGroupe),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(d.titre, style: OuroTypography.headline.copyWith(color: OuroColors.label)),

@@ -102,7 +102,7 @@ class _Infos extends StatelessWidget {
               children: [
                 // ── L'identité
                 Center(
-                  child: AvatarDroplet(
+                  child: AvatarDroplet(personne: d.pair, 
                     nom: d.titre,
                     couleur: d.couleur,
                     taille: 116,
@@ -254,6 +254,7 @@ class _Infos extends StatelessWidget {
                         ),
                       for (final id in d.membres)
                         _LigneMembre(
+                          personne: id,
                           nom: depot.nom(id),
                           couleur: depot.contacts[id]?.couleur ?? 0,
                           aPropos: depot.contacts[id]?.aPropos ?? '',
@@ -424,7 +425,7 @@ class _Infos extends StatelessWidget {
                       children: [
                         CaseRonde(cochee: choisis.contains(c.id)),
                         const SizedBox(width: 10),
-                        AvatarDroplet(nom: c.pseudo, couleur: c.couleur, taille: 34),
+                        AvatarDroplet(personne: c.id, nom: c.pseudo, couleur: c.couleur, taille: 34),
                         const SizedBox(width: 10),
                         Expanded(child: Text(c.pseudo, style: OuroTypography.body.copyWith(color: OuroColors.label))),
                       ],
@@ -714,7 +715,10 @@ class _LigneMembre extends StatelessWidget {
     this.photo,
     this.enLigne = false,
     this.onTap,
+    this.personne,
   });
+
+  final String? personne;
 
   final String nom;
   final int couleur;
@@ -740,7 +744,7 @@ class _LigneMembre extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
-              AvatarDroplet(nom: nom, couleur: couleur, photo: photo, taille: 36, enLigne: enLigne),
+              AvatarDroplet(personne: personne, nom: nom, couleur: couleur, photo: photo, taille: 36, enLigne: enLigne),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

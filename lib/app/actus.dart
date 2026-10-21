@@ -200,7 +200,7 @@ class _LigneStatut extends StatelessWidget {
         ),
         child: Row(
           children: [
-            AvatarDroplet(nom: depot.nom(auteur), couleur: c?.couleur ?? 0, taille: 54, anneau: !depot.statutsTousVus(auteur)),
+            AvatarDroplet(personne: auteur, nom: depot.nom(auteur), couleur: c?.couleur ?? 0, taille: 54, anneau: !depot.statutsTousVus(auteur)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -580,7 +580,7 @@ class _VisionneuseState extends State<_Visionneuse> with SingleTickerProviderSta
                                   const SizedBox(height: 10),
                                   Row(
                                     children: [
-                                      AvatarDroplet(
+                                      AvatarDroplet(personne: s.auteurId, 
                                         nom: depot.nom(s.auteurId),
                                         couleur: mien ? depot.profil.couleur : depot.contacts[s.auteurId]?.couleur ?? 0,
                                         photo: mien ? depot.profil.photo : null,
@@ -774,7 +774,7 @@ class _Vignette extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    AvatarDroplet(nom: depot.nom(auteur), couleur: contact?.couleur ?? 0, taille: 52, anneau: !depot.statutsTousVus(auteur)),
+                    AvatarDroplet(personne: auteur, nom: depot.nom(auteur), couleur: contact?.couleur ?? 0, taille: 52, anneau: !depot.statutsTousVus(auteur)),
                     const SizedBox(height: 8),
                     Text(
                       depot.nom(auteur),

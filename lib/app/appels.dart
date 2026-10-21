@@ -183,7 +183,7 @@ class _LigneAppel extends StatelessWidget {
         ),
         child: Row(
           children: [
-            AvatarDroplet(nom: d.titre, couleur: d.couleur, taille: 46, groupe: d.estGroupe),
+            AvatarDroplet(personne: d.pair, nom: d.titre, couleur: d.couleur, taille: 46, groupe: d.estGroupe),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -541,7 +541,7 @@ class _EcranAppelState extends State<EcranAppel> with SingleTickerProviderStateM
                     child: Center(
                       child: d.estGroupe
                           ? _Mosaique(discussion: d)
-                          : AvatarDroplet(nom: d.titre, couleur: d.couleur, taille: 140),
+                          : AvatarDroplet(personne: d.pair, nom: d.titre, couleur: d.couleur, taille: 140),
                     ),
                   ),
                 ),
@@ -664,7 +664,7 @@ class _Mosaique extends StatelessWidget {
       runSpacing: 10,
       alignment: WrapAlignment.center,
       children: [
-        for (final id in membres) AvatarDroplet(nom: depot.nom(id), couleur: depot.contacts[id]?.couleur ?? 0, taille: membres.length > 2 ? 72 : 96),
+        for (final id in membres) AvatarDroplet(personne: id, nom: depot.nom(id), couleur: depot.contacts[id]?.couleur ?? 0, taille: membres.length > 2 ? 72 : 96),
       ],
     );
   }
@@ -816,7 +816,7 @@ class _CarteAppelEntrant extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  AvatarDroplet(nom: d.titre, couleur: d.couleur, taille: 52),
+                  AvatarDroplet(personne: d.pair, nom: d.titre, couleur: d.couleur, taille: 52),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(

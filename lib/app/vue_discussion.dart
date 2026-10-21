@@ -416,7 +416,7 @@ class _VueDiscussionState extends State<VueDiscussion> {
                                             child: Row(
                                               children: [
                                                 if (d.estGroupe) ...[
-                                                  AvatarDroplet(
+                                                  AvatarDroplet(personne: ecrivent.first, 
                                                     nom: depot.nom(ecrivent.first),
                                                     couleur: depot.contacts[ecrivent.first]?.couleur ?? 0,
                                                     taille: 30,
@@ -797,7 +797,7 @@ class _Entete extends StatelessWidget {
                         onTap: () => ui.basculerInfos(),
                         builder: (context, survol) => Row(
                           children: [
-                            AvatarDroplet(
+                            AvatarDroplet(personne: d.pair, 
                               nom: d.titre,
                               couleur: d.couleur,
                               taille: 38,
@@ -1064,7 +1064,7 @@ class _DebutDiscussion extends StatelessWidget {
         padding: const EdgeInsets.only(top: 36, bottom: 28),
         child: Column(
           children: [
-            AvatarDroplet(nom: d.titre, couleur: d.couleur, taille: 96, groupe: d.estGroupe, enLigne: enLigne),
+            AvatarDroplet(personne: d.pair, nom: d.titre, couleur: d.couleur, taille: 96, groupe: d.estGroupe, enLigne: enLigne),
             const SizedBox(height: 16),
             Text(
               d.estGroupe ? t.debutGroupe(d.titre) : t.debutAvec(d.titre),

@@ -83,6 +83,9 @@ class Discussion {
 
   /// Les identifiants des participants, sans moi.
   List<String> membres;
+
+  /// L'autre personne d'une discussion à deux (rien pour un groupe).
+  String? get pair => estGroupe || membres.isEmpty ? null : membres.first;
   int couleur;
   bool epinglee;
   bool archivee;

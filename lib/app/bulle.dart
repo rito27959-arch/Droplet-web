@@ -171,7 +171,7 @@ class _BulleState extends State<Bulle> {
             child: widget.finSerie
                 ? Padding(
                     padding: EdgeInsets.only(bottom: avecReactions ? 18 : 2),
-                    child: AvatarDroplet(
+                    child: AvatarDroplet(personne: m.auteurId, 
                       nom: depot.nom(m.auteurId),
                       couleur: depot.contacts[m.auteurId]?.couleur ?? 0,
                       taille: 30,
