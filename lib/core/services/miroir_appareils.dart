@@ -256,6 +256,44 @@ class MiroirAppareils {
     _veilleEtat ??= Timer.periodic(const Duration(milliseconds: 1500), (_) => unawaited(_pousserEtat()));
     _subFrappe ??= _repo.typingEvents.listen((p) => unawaited(_pousserFrappe('p:$p', p)));
     _subFrappeGroupe ??= _repo.frappeGroupeEvents.listen((e) => unawaited(_pousserFrappe('g:${e.groupId}', e.peerId)));
+    // Un contact change (ou retire) sa photo : le web suit aussitôt.
+    _subAvatars ??= _repo.peerAvatarEvents.listen((p) => unawaited(_pousserAvatars([p])));
+  }
+
+  StreamSubscription<String>? _subAvatars;
+
+  /// Les photos de profil de mes contacts, pour le web. Une photo pèse
+  /// 20 à 60 Ko : on en groupe jusqu'à ~900 Ko par dépôt (la boîte
+  /// accepte 2 Mo une fois chiffré et encodé). Un contact sans photo part
+  /// avec `av: null` — c'est ainsi que le web apprend un retrait.
+  Future<void> _pousserAvatars(List<String> ids, {AppareilLie? seul}) async {
+    var lot = <String, dynamic>{};
+    var taille = 0;
+    Future<void> vider() async {
+      if (lot.isEmpty) return;
+      for (final a in seul != null ? [seul] : _appareils()) {
+        await _deposer(a, {'v': 1, 'avatars': lot});
+      }
+      lot = <String, dynamic>{};
+      taille = 0;
+    }
+
+    for (final id in ids.take(200)) {
+      final chemin = AvatarService.cheminPair(id);
+      final av = AvatarService.empreintePair(id);
+      if (chemin == null || av == null) {
+        lot[id] = {'av': null};
+        continue;
+      }
+      try {
+        final b64 = base64.encode(await File(chemin).readAsBytes());
+        if (b64.length > 600 * 1024) continue;
+        if (taille + b64.length > 900 * 1024) await vider();
+        lot[id] = {'av': av, 'photo': b64};
+        taille += b64.length;
+      } catch (_) {}
+    }
+    await vider();
   }
 
   /// L'instantané complet de l'état, pour les 60 discussions les plus
@@ -518,6 +556,9 @@ class MiroirAppareils {
           await _appliquerGroupe(j);
         case 'profil':
           await _appliquerProfil(j);
+        case 'avatars':
+          final ids = (j['ids'] as List? ?? const []).whereType<String>().toList();
+          if (ids.isNotEmpty) await _pousserAvatars(ids, seul: appareil);
         case 'statut':
           final texte = (j['texte'] as String? ?? '').trim();
           if (texte.isEmpty || texte.length > 700) return true;
@@ -1049,6 +1090,18 @@ class MiroirAppareils {
   }
 
   Future<void> _deposer(AppareilLie a, Map<String, dynamic> lot) async {
+    // Chaque contact envoyé au web porte l'EMPREINTE de sa photo de
+    // profil (16 caractères, ou rien) : le web demande la photo elle-même
+    // (`avatars`) quand il ne l'a pas, ou quand elle a changé.
+    final contacts = lot['contacts'];
+    if (contacts is List) {
+      for (final c in contacts) {
+        if (c is Map && c['id'] is String && !c.containsKey('av')) {
+          final av = AvatarService.empreintePair(c['id'] as String);
+          if (av != null && AvatarService.cheminPair(c['id'] as String) != null) c['av'] = av;
+        }
+      }
+    }
     final k = await _cle(a);
     if (k == null) return;
     try {
