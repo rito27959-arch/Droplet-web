@@ -41,6 +41,7 @@ import '../services/nom_pair.dart';
 import '../services/crypto_service.dart';
 import '../services/appareils_contacts.dart';
 import '../services/appareils_lies.dart';
+import '../services/mailbox_client.dart' show MailboxMessage;
 import '../services/miroir_appareils.dart';
 import '../services/presence_internet.dart';
 import '../services/storage_service.dart';
