@@ -640,9 +640,9 @@ class _Gouttelette {
 }
 
 const _gouttelettes = [
-  _Gouttelette(-0.12, 0.25, -0.55, -1.10, 0.024),
-  _Gouttelette(0.13, 0.25, 0.62, -1.25, 0.020),
-  _Gouttelette(0.02, 0.21, 0.12, -1.50, 0.015),
+  _Gouttelette(-0.12, 0.25, -0.55, -1.10, 0.032),
+  _Gouttelette(0.13, 0.25, 0.62, -1.25, 0.027),
+  _Gouttelette(0.02, 0.21, 0.12, -1.50, 0.021),
 ];
 const double _gravite = 7.5; // unités de marque par seconde²
 const double _vieGouttelette = 360;
@@ -810,6 +810,7 @@ class _PeintreOuverture extends CustomPainter {
       echelle: e.pose.echelle,
       opacite: e.pose.opacite * o,
       opaciteGoutte: e.pose.opaciteGoutte,
+      decalageGoutte: e.pose.decalageGoutte,
     );
     PeintreMarque.peindre(canvas, e.centre, h, e.couleur, pose);
 
