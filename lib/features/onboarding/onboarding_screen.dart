@@ -795,7 +795,7 @@ class _EtapeNom extends StatelessWidget {
             delai: 180,
             child: Container(
               decoration: BoxDecoration(
-                color: OuroColors.secondarySystemBackground,
+                color: OuroColors.tertiarySystemFill,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: TextField(
@@ -819,28 +819,28 @@ class _EtapeNom extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 20,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 40),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               // L'indication n'apparaît que quand elle sert : on a commencé
               // à écrire, mais c'est encore trop court.
               child: court
                   ? Text(l10n.obMinChars, key: const ValueKey('court'), style: OuroTypography.footnote.copyWith(color: OuroColors.secondaryLabel))
-                  : Row(
+                  : Text.rich(
                       key: const ValueKey('cles'),
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(CupertinoIcons.lock_fill, size: 13, color: OuroColors.tertiaryLabel),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            l10n.acNameFootnote,
-                            textAlign: TextAlign.center,
-                            style: OuroTypography.footnote.copyWith(color: OuroColors.tertiaryLabel),
+                      TextSpan(children: [
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 5),
+                            child: Icon(CupertinoIcons.lock_fill, size: 13, color: OuroColors.tertiaryLabel),
                           ),
                         ),
-                      ],
+                        TextSpan(text: l10n.acNameFootnote),
+                      ]),
+                      textAlign: TextAlign.center,
+                      style: OuroTypography.footnote.copyWith(color: OuroColors.tertiaryLabel),
                     ),
             ),
           ),
