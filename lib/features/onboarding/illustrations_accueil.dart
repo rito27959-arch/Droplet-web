@@ -346,12 +346,13 @@ class _PeintreChiffrement extends CustomPainter {
     final rr = RRect.fromRectAndRadius(bulle, Radius.circular(bulle.height * 0.3));
 
     // La bulle, avec sa queue en bas à gauche — celle du logo.
-    final chemin = Path()
-      ..addRRect(rr)
-      ..moveTo(bulle.left + bulle.width * 0.12, bulle.bottom - 6)
-      ..lineTo(bulle.left + bulle.width * 0.02, bulle.bottom + bulle.height * 0.2)
-      ..lineTo(bulle.left + bulle.width * 0.3, bulle.bottom - 4)
+    final queue = Path()
+      // La queue part de l'intérieur de la bulle : aucune couture visible.
+      ..moveTo(bulle.left + bulle.width * 0.1, bulle.bottom - bulle.height * 0.25)
+      ..lineTo(bulle.left + bulle.width * 0.03, bulle.bottom + bulle.height * 0.2)
+      ..lineTo(bulle.left + bulle.width * 0.3, bulle.bottom - bulle.height * 0.2)
       ..close();
+    final chemin = Path.combine(PathOperation.union, Path()..addRRect(rr), queue);
     canvas.drawShadow(chemin, ombre.withValues(alpha: 0.35), 10, false);
     canvas.drawPath(chemin, Paint()..color = accent);
 
