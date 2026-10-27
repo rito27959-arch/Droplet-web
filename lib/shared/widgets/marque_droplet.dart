@@ -144,6 +144,7 @@ class PoseMarque {
     this.gonflement = 0,
     this.echelle = 1,
     this.opacite = 1,
+    this.opaciteGoutte = 1,
   });
 
   /// L'écrasement de la goutte : 0 au repos, positif quand elle s'aplatit
@@ -162,6 +163,10 @@ class PoseMarque {
 
   final double opacite;
 
+  /// L'opacité propre de la goutte (multipliée par [opacite]) : à
+  /// l'ouverture, elle s'efface avant la bulle.
+  final double opaciteGoutte;
+
   static const repos = PoseMarque();
 
   @override
@@ -170,10 +175,11 @@ class PoseMarque {
       other.ecrasement == ecrasement &&
       other.gonflement == gonflement &&
       other.echelle == echelle &&
-      other.opacite == opacite;
+      other.opacite == opacite &&
+      other.opaciteGoutte == opaciteGoutte;
 
   @override
-  int get hashCode => Object.hash(ecrasement, gonflement, echelle, opacite);
+  int get hashCode => Object.hash(ecrasement, gonflement, echelle, opacite, opaciteGoutte);
 }
 
 /// Peint la marque centrée sur [centre], à la hauteur [hauteur].
@@ -234,14 +240,17 @@ class PeintreMarque extends CustomPainter {
     }
     // Le logo d'origine éclaircit très légèrement le bas de la goutte, côté
     // droit : c'est ce qui lui donne du volume. Même dégradé ici.
-    final goutte = Paint()
-      ..isAntiAlias = true
-      ..shader = ui.Gradient.linear(
-        const Offset(-0.12, -0.2),
-        const Offset(0.16, 0.29),
-        [plein, couleur.withValues(alpha: alpha * 0.84)],
-      );
-    canvas.drawPath(GeometrieMarque.goutte, goutte);
+    final ag = alpha * pose.opaciteGoutte.clamp(0.0, 1.0);
+    if (ag > 0) {
+      final goutte = Paint()
+        ..isAntiAlias = true
+        ..shader = ui.Gradient.linear(
+          const Offset(-0.12, -0.2),
+          const Offset(0.16, 0.29),
+          [couleur.withValues(alpha: ag), couleur.withValues(alpha: ag * 0.84)],
+        );
+      canvas.drawPath(GeometrieMarque.goutte, goutte);
+    }
     canvas.restore();
 
     canvas.restore();

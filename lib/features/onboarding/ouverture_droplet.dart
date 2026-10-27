@@ -126,10 +126,10 @@ const double _tAppui = 60; // la première image reste celle du système
 const double _tRelache = 210; // 150 ms d'appui
 const double _tImpact = 470; // l'onde touche la paroi
 const double _tRevelation = 500; // l'onde ressort et ouvre l'app
-const double _dRevelation = 420;
+const double _dRevelation = 440;
 const double _tNom = 400; // premier lancement : le nom apparaît
-const double _tPassage = 1250; // … et la marque rejoint l'accueil
-const double _dPassage = 560;
+const double _tPassage = 1150; // … et la marque rejoint l'accueil
+const double _dPassage = 520;
 const double _cycleAttente = 1500;
 const double _legendeApres = 1600;
 const double _dFondu = 220; // « Réduire les animations »
@@ -369,7 +369,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
     var couleurMarque = couleur;
     var opaciteScene = 1.0;
     double? rayonTrou;
-    var opaciteFront = 0.0;
+    var voile = 0.0;
     var onde = _Onde.aucune;
     var nom = 0.0;
     var legende = 0.0;
@@ -387,7 +387,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
         pose: pose,
         onde: onde,
         rayonTrou: null,
-        opaciteFront: 0,
+        voile: 0,
         opaciteScene: opaciteScene,
         nom: nom,
         legende: 0,
@@ -420,28 +420,39 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       nom = math.max(nom, Curves.easeOutCubic.transform(_seg(t, _tNom, _tNom + 340)));
     }
 
-    // ── 4a : l'onde ouvre l'app.
+    // ── 4a : on entre dans la bulle.
+    //
+    // La bulle, tendue par l'onde, s'agrandit — toute la marque avec elle,
+    // autour du centre de son cercle — et son intérieur devient la
+    // fenêtre par laquelle on voit l'app : on « entre » dans la
+    // conversation. Lente au départ (elle prolonge le gonflement de la
+    // paroi), elle accélère pour s'écarter du chemin. La goutte s'efface
+    // la première, puis l'anneau, avant d'être assez grand pour devenir
+    // une bande de couleur ; l'intérieur de la bulle se dissout en même
+    // temps, pour que l'app n'y apparaisse pas d'un coup.
     if (_phase == _Phase.revelation) {
       final p = _seg(t, _debutSortie, _debutSortie + _dRevelation);
-      final c = Offset(centre.dx, centre.dy + GeometrieMarque.centreBulle.dy * h);
+      final cB = centre + GeometrieMarque.centreBulle * h;
       final loin = [
         Offset.zero,
         Offset(taille.width, 0),
         Offset(0, taille.height),
         Offset(taille.width, taille.height),
-      ].map((coin) => (coin - c).distance).reduce(math.max);
-      final depart = GeometrieMarque.rayonExterieurBulle * h * (1 + pose.gonflement);
-      // Lente au départ — c'est l'onde qui sort de la paroi, à sa vitesse —
-      // puis de plus en plus rapide : elle s'écarte du chemin.
-      rayonTrou = depart + (loin + 2 - depart) * Curves.easeInCubic.transform(p);
-      opaciteFront = 0.22 * (1 - p);
-      final q = _seg(t, _debutSortie, _debutSortie + 220);
+      ].map((coin) => (coin - cB).distance).reduce(math.max);
+      final rInt = GeometrieMarque.rayonInterieurBulle * h * (1 + pose.gonflement);
+      final kMax = (loin + 4) / rInt;
+      final k = 1 + (kMax - 1) * Curves.easeInCubic.transform(p);
+      rayonTrou = rInt * k;
+      voile = 1 - Curves.easeInOutSine.transform(_seg(p, 0, 0.4));
+      centreMarque = cB + (centre - cB) * k;
       pose = PoseMarque(
         ecrasement: pose.ecrasement,
         gonflement: pose.gonflement,
-        echelle: 1 + 0.06 * Curves.easeOutCubic.transform(_seg(t, _debutSortie, _debutSortie + 300)),
-        opacite: 1 - Curves.easeInOutSine.transform(q),
+        echelle: k,
+        opacite: 1 - Curves.easeInCubic.transform(_seg(k, 1, 2.6)),
+        opaciteGoutte: 1 - _seg(k, 1, 1.45),
       );
+      final q = _seg(t, _debutSortie, _debutSortie + 160);
       nom *= 1 - q;
       legende *= 1 - q;
     }
@@ -450,7 +461,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
     if (_phase == _Phase.passage) {
       final cible = OuvertureDroplet.cible.value;
       final p = _seg(t, _debutSortie, _debutSortie + _dPassage);
-      final m = Curves.easeInOutCubicEmphasized.transform(p);
+      final m = Curves.easeInOutCubic.transform(p);
       if (cible != null) {
         centreMarque = Offset.lerp(centre, cible.rect.center, m)!;
         hauteur = h + (cible.rect.height - h) * m;
@@ -470,7 +481,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
         pose: PoseMarque(gonflement: pose.gonflement * (1 - m), ecrasement: pose.ecrasement * (1 - m)),
         onde: _Onde.aucune,
         rayonTrou: null,
-        opaciteFront: 0,
+        voile: 0,
         opaciteScene: 1,
         nom: nom,
         legende: legende,
@@ -489,7 +500,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       pose: pose,
       onde: onde,
       rayonTrou: rayonTrou,
-      opaciteFront: opaciteFront,
+      voile: voile,
       opaciteScene: opaciteScene,
       nom: nom,
       legende: legende,
@@ -588,7 +599,7 @@ class _Etat {
     required this.pose,
     required this.onde,
     required this.rayonTrou,
-    required this.opaciteFront,
+    required this.voile,
     required this.opaciteScene,
     required this.nom,
     required this.legende,
@@ -604,8 +615,9 @@ class _Etat {
   /// Le rayon de l'ouverture (en pixels), ou rien.
   final double? rayonTrou;
 
-  /// Le liseré qui suit le bord de l'ouverture : la crête de l'onde.
-  final double opaciteFront;
+  /// L'opacité du fond À L'INTÉRIEUR de l'ouverture : il s'y dissout
+  /// pendant que la bulle s'agrandit.
+  final double voile;
   final double opaciteScene;
   final double nom;
   final double legende;
@@ -621,7 +633,8 @@ class _PeintreOuverture extends CustomPainter {
     if (o <= 0) return;
     final fond = e.fond.withValues(alpha: e.fond.a * o);
     final h = e.hauteur;
-    final centreBulle = e.centre + GeometrieMarque.centreBulle * h;
+    // Le centre du cercle de la bulle, à l'échelle courante de la marque.
+    final centreBulle = e.centre + GeometrieMarque.centreBulle * h * e.pose.echelle;
 
     // Le fond, percé par l'onde qui ouvre l'app.
     final trou = e.rayonTrou;
@@ -633,15 +646,8 @@ class _PeintreOuverture extends CustomPainter {
         ..addRect(Offset.zero & size)
         ..addOval(Rect.fromCircle(center: centreBulle, radius: trou));
       canvas.drawPath(chemin, Paint()..color = fond);
-      if (e.opaciteFront > 0) {
-        canvas.drawCircle(
-          centreBulle,
-          trou,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5
-            ..color = e.couleur.withValues(alpha: e.opaciteFront * o),
-        );
+      if (e.voile > 0) {
+        canvas.drawCircle(centreBulle, trou, Paint()..color = fond.withValues(alpha: fond.a * e.voile));
       }
     }
 
@@ -663,6 +669,7 @@ class _PeintreOuverture extends CustomPainter {
       gonflement: e.pose.gonflement,
       echelle: e.pose.echelle,
       opacite: e.pose.opacite * o,
+      opaciteGoutte: e.pose.opaciteGoutte,
     );
     PeintreMarque.peindre(canvas, e.centre, h, e.couleur, pose);
   }

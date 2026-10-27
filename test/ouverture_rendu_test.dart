@@ -31,6 +31,10 @@ final _dossier = Directory('build/rendu');
 Future<void> _polices() async {
   final inter = FontLoader('Inter Tight')..addFont(rootBundle.load('assets/fonts/InterTight_700Bold.ttf'));
   await inter.load();
+  // Les tests dessinent le texte par défaut avec une police de blocs
+  // (« Ahem ») : on lui substitue Inter Tight pour lire la légende.
+  final defaut = FontLoader('Roboto')..addFont(rootBundle.load('assets/fonts/InterTight_600SemiBold.ttf'));
+  await defaut.load();
 }
 
 /// Une liste de discussions factice, pour voir l'onde ouvrir l'app.
