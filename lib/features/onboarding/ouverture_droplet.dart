@@ -122,13 +122,18 @@ enum _Phase { entree, attente, revelation, passage, fondu, finie }
 //
 // Chaque valeur a été ajustée image par image (voir
 // `test/ouverture_rendu_test.dart`, qui rend la séquence au ralenti).
-const double _tAppui = 60; // la première image reste celle du système
-const double _tRelache = 210; // 150 ms d'appui
-const double _tImpact = 470; // l'onde touche la paroi
-const double _tRevelation = 500; // l'onde ressort et ouvre l'app
+// L'entrée : la goutte tombe dans la bulle.
+const double _tChute = 90; // la première image (la bulle seule) reste celle du système
+const double _tPose = 430; // 340 ms de chute : la goutte touche le fond
+const double _dOnde = 210; // l'onde va de la goutte à la paroi
+const double _tRevelation = 780; // la bulle s'ouvre sur l'app
+// La « respiration » d'une attente longue (un appui, une onde).
+const double _tAppui = 60;
+const double _tRelache = 210;
+const double _tImpact = 470;
 const double _dRevelation = 440;
-const double _tNom = 400; // premier lancement : le nom apparaît
-const double _tPassage = 1150; // … et la marque rejoint l'accueil
+const double _tNom = 520; // le nom s'écrit
+const double _tPassage = 1400; // premier lancement : la marque rejoint l'accueil
 const double _dPassage = 520;
 const double _cycleAttente = 1500;
 const double _legendeApres = 1600;
@@ -376,6 +381,8 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
     var legende = 0.0;
 
     if (_reduit) {
+      // Sans mouvement : la goutte apparaît dans la bulle en fondu.
+      pose = PoseMarque(opaciteGoutte: _seg(t, 60, 260));
       if (widget.versAccueil) {
         nom = 1;
         revele = 1;
@@ -399,10 +406,16 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       );
     }
 
-    // ── 1 à 3 : l'appui, l'onde, la paroi (toujours joués).
-    final e = _geste(t, debut: 0, amplitude: 0.075);
-    pose = PoseMarque(ecrasement: e.ecrasement, gonflement: e.gonflement);
+    // ── 1 à 3 : la goutte tombe dans la bulle, l'onde, la paroi.
+    final e = _chute(t);
+    pose = PoseMarque(
+      ecrasement: e.ecrasement,
+      gonflement: e.gonflement,
+      decalageGoutte: e.decalage,
+      opaciteGoutte: e.opaciteGoutte,
+    );
     onde = e.onde;
+    final eclaboussure = t >= _tPose ? t - _tPose : -1.0;
 
     // Une attente prolongée : la goutte respire, une onde toutes les
     // 1,5 s. Chaque cycle S'AJOUTE au mouvement en cours au lieu de le
@@ -414,7 +427,12 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       final fin = _phase == _Phase.attente ? t : _debutSortie;
       final k = ((fin - _debutAttente) / _cycleAttente).floor();
       final g = _geste(t - (_debutAttente + k * _cycleAttente), debut: 40, amplitude: 0.05);
-      pose = PoseMarque(ecrasement: pose.ecrasement + g.ecrasement, gonflement: pose.gonflement + g.gonflement);
+      pose = PoseMarque(
+        ecrasement: pose.ecrasement + g.ecrasement,
+        gonflement: pose.gonflement + g.gonflement,
+        decalageGoutte: pose.decalageGoutte,
+        opaciteGoutte: pose.opaciteGoutte,
+      );
       if (g.onde.opacite > 0) onde = g.onde;
       revele = _seg(fin - _debutAttente, 600, 1020);
       legende = _seg(fin - _debutAttente, _legendeApres, _legendeApres + 300);
@@ -455,8 +473,9 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
         ecrasement: pose.ecrasement,
         gonflement: pose.gonflement,
         echelle: k,
+        decalageGoutte: pose.decalageGoutte,
         opacite: 1 - Curves.easeInCubic.transform(_seg(k, 1, 2.6)),
-        opaciteGoutte: 1 - _seg(k, 1, 1.45),
+        opaciteGoutte: pose.opaciteGoutte * (1 - _seg(k, 1, 1.45)),
       );
       final q = _seg(t, _debutSortie, _debutSortie + 160);
       nom *= 1 - q;
@@ -492,6 +511,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
         nom: nom,
         revele: revele,
         legende: legende,
+        eclaboussure: -1,
       );
     }
 
@@ -512,6 +532,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       nom: nom,
       revele: revele,
       legende: legende,
+      eclaboussure: _phase == _Phase.revelation ? -1 : eclaboussure,
     );
   }
 }
@@ -555,6 +576,76 @@ class _Geste {
   final double gonflement;
   final _Onde onde;
 }
+
+// ── LA CHUTE : la goutte tombe dans la bulle ─────────────────────────
+
+class _Chute {
+  const _Chute(this.decalage, this.ecrasement, this.gonflement, this.opaciteGoutte, this.onde);
+  final double decalage;
+  final double ecrasement;
+  final double gonflement;
+  final double opaciteGoutte;
+  final _Onde onde;
+}
+
+/// D'où part la goutte : au-dessus de la bulle (unités de marque).
+const double _hauteurChute = -0.95;
+
+_Chute _chute(double t) {
+  // Avant la chute : la bulle seule, comme l'écran de lancement natif.
+  if (t < _tChute) return const _Chute(_hauteurChute, 0, 0, 0, _Onde.aucune);
+
+  // La chute : position en t² (la pesanteur), donc vitesse maximale à
+  // l'impact. La goutte s'étire en tombant, comme une vraie goutte de
+  // pluie, et naît en un instant au-dessus de la bulle.
+  if (t < _tPose) {
+    final p = _seg(t, _tChute, _tPose);
+    return _Chute(
+      _hauteurChute * (1 - p * p),
+      -0.14 * p * p,
+      0,
+      Curves.easeOut.transform(_seg(p, 0, 0.22)),
+      _Onde.aucune,
+    );
+  }
+
+  // L'impact : la vitesse se change en écrasement (une impulsion, qui part
+  // de zéro AVEC une vitesse), pendant que l'étirement de la chute se
+  // relâche. Une vraie goutte : elle s'aplatit franchement, remonte en
+  // s'étirant, oscille deux fois et se pose.
+  final tau = (t - _tPose) / 1000;
+  final ecrasement = 0.24 * _impulsion(tau, periode: 0.26, amortissement: 0.36) -
+      0.14 * _relache(tau, periode: 0.26, amortissement: 0.36);
+
+  // L'onde part de l'impact et touche la paroi…
+  var onde = _Onde.aucune;
+  final tParoi = _tPose + _dOnde;
+  if (t <= tParoi) {
+    final p = _seg(t, _tPose, tParoi);
+    onde = _Onde(
+      rayon: GeometrieMarque.rayonVentre + (GeometrieMarque.rayonInterieurBulle - 0.018 - GeometrieMarque.rayonVentre) * Curves.easeOutCubic.transform(p),
+      epaisseur: 0.034 - 0.018 * p,
+      opacite: 0.5 * math.min(1, p * 7) * math.pow(1 - p, 1.3).toDouble(),
+    );
+  }
+  // … qui se tend sous le choc.
+  final gonflement = t >= tParoi ? 0.045 * _impulsion((t - tParoi) / 1000, periode: 0.30, amortissement: 0.38) : 0.0;
+  return _Chute(0, ecrasement, gonflement, 1, onde);
+}
+
+// L'éclaboussure.
+class _Gouttelette {
+  const _Gouttelette(this.x, this.y, this.vx, this.vy, this.r);
+  final double x, y, vx, vy, r;
+}
+
+const _gouttelettes = [
+  _Gouttelette(-0.12, 0.25, -0.55, -1.10, 0.024),
+  _Gouttelette(0.13, 0.25, 0.62, -1.25, 0.020),
+  _Gouttelette(0.02, 0.21, 0.12, -1.50, 0.015),
+];
+const double _gravite = 7.5; // unités de marque par seconde²
+const double _vieGouttelette = 360;
 
 /// Le geste complet, à l'instant [t] (ms), commencé à [debut].
 _Geste _geste(double t, {required double debut, required double amplitude}) {
@@ -642,6 +733,7 @@ class _Etat {
     required this.opaciteScene,
     required this.nom,
     this.revele = 1,
+    this.eclaboussure = -1,
     required this.legende,
   });
 
@@ -665,6 +757,10 @@ class _Etat {
   /// Où en est sa RÉVÉLATION, de gauche à droite (0 → 1).
   final double revele;
   final double legende;
+
+  /// Millisecondes depuis que la goutte a touché le fond (négatif : pas
+  /// d'éclaboussure à dessiner).
+  final double eclaboussure;
 }
 
 class _PeintreOuverture extends CustomPainter {
@@ -716,6 +812,23 @@ class _PeintreOuverture extends CustomPainter {
       opaciteGoutte: e.pose.opaciteGoutte,
     );
     PeintreMarque.peindre(canvas, e.centre, h, e.couleur, pose);
+
+    // L'éclaboussure : trois gouttelettes chassées par l'impact, qui
+    // montent, retombent sous leur poids et s'évaporent.
+    if (e.eclaboussure >= 0 && e.eclaboussure < _vieGouttelette) {
+      final s = e.eclaboussure / 1000;
+      for (final g in _gouttelettes) {
+        final x = g.x + g.vx * s;
+        final y = g.y + g.vy * s + 0.5 * _gravite * s * s;
+        final vie = e.eclaboussure / _vieGouttelette;
+        final a = vie < 0.55 ? 1.0 : 1 - (vie - 0.55) / 0.45;
+        canvas.drawCircle(
+          e.centre + Offset(x, y) * h,
+          g.r * h * (1 - 0.35 * vie),
+          Paint()..color = e.couleur.withValues(alpha: e.couleur.a * a * o),
+        );
+      }
+    }
   }
 
   @override

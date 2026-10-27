@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
-  Écran de lancement iOS : la marque de Droplet (la bulle et sa goutte),
+  Écran de lancement iOS : la bulle de Droplet, seule (sa goutte y tombe
+  ensuite, dans l'ouverture Flutter),
   112 points, au centre exact, sur le fond du système (blanc ou noir selon
   le mode). Ce sont la taille, la place et les couleurs de la première
   image de l'ouverture Flutter (`ouverture_droplet.dart`), qui la reprend

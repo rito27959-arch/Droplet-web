@@ -145,6 +145,7 @@ class PoseMarque {
     this.echelle = 1,
     this.opacite = 1,
     this.opaciteGoutte = 1,
+    this.decalageGoutte = 0,
   });
 
   /// L'écrasement de la goutte : 0 au repos, positif quand elle s'aplatit
@@ -167,6 +168,10 @@ class PoseMarque {
   /// l'ouverture, elle s'efface avant la bulle.
   final double opaciteGoutte;
 
+  /// Le décalage vertical de la goutte (unités de marque) : négatif, elle
+  /// est au-dessus de sa place — à l'ouverture, elle tombe dans la bulle.
+  final double decalageGoutte;
+
   static const repos = PoseMarque();
 
   @override
@@ -176,10 +181,11 @@ class PoseMarque {
       other.gonflement == gonflement &&
       other.echelle == echelle &&
       other.opacite == opacite &&
-      other.opaciteGoutte == opaciteGoutte;
+      other.opaciteGoutte == opaciteGoutte &&
+      other.decalageGoutte == decalageGoutte;
 
   @override
-  int get hashCode => Object.hash(ecrasement, gonflement, echelle, opacite, opaciteGoutte);
+  int get hashCode => Object.hash(ecrasement, gonflement, echelle, opacite, opaciteGoutte, decalageGoutte);
 }
 
 /// Peint la marque centrée sur [centre], à la hauteur [hauteur].
@@ -232,6 +238,7 @@ class PeintreMarque extends CustomPainter {
     // volume, mais une goutte retenue par sa tension de surface ne
     // s'étale pas non plus librement.
     canvas.save();
+    if (pose.decalageGoutte != 0) canvas.translate(0, pose.decalageGoutte);
     if (pose.ecrasement != 0) {
       const b = GeometrieMarque.baseGoutte;
       canvas.translate(b.dx, b.dy);

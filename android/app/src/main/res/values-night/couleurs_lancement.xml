@@ -4,5 +4,4 @@
 <resources>
     <color name="lancement_fond">#FF000000</color>
     <color name="lancement_marque">#FF0A84FF</color>
-    <color name="lancement_marque_fondu">#D60A84FF</color>
 </resources>
