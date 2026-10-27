@@ -41,9 +41,10 @@ class ReglagesApparence {
   static const double rayonDefaut = 19;
 
   /// Les accents proposés : ceux de toute la famille Droplet, dans le même
-  /// ordre que sur le site et dans Droplet Drop (Droplet Design). La GOUTTE
-  /// (rose) ouvre la liste : c'est la couleur du logo, donc celle qu'on voit
-  /// sans rien choisir. Les versions sombres sont celles d'iOS.
+  /// ordre que sur le site et dans Droplet Drop (Droplet Design). Le BLEU
+  /// ouvre la liste : c'est la couleur du logo (la bulle et sa goutte), donc
+  /// celle qu'on voit sans rien choisir. Les versions sombres sont celles
+  /// d'iOS.
   static final List<Accent> accents = [
     for (final a in DDAccents.liste) Accent(a.cle, a.clair, a.sombre),
   ];

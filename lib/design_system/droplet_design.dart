@@ -12,7 +12,7 @@ const String versionDropletDesign = '1.0.0';
 
 /// La couleur de chaque produit.
 abstract final class DDMarque {
-  static const Color goutte = Color(0xFFFF2D55);
+  static const Color goutte = Color(0xFF007AFF);
   static const Color drop = Color(0xFF168BFF);
   static const Color drop2 = Color(0xFF34D8FF);
 }
@@ -29,8 +29,8 @@ class DDAccent {
 /// Les accents proposés à l'utilisateur, dans l'ordre de la famille.
 abstract final class DDAccents {
   static const List<DDAccent> liste = [
-    DDAccent('rose', Color(0xFFFF2D55), Color(0xFFFF375F)),
     DDAccent('bleu', Color(0xFF007AFF), Color(0xFF0A84FF)),
+    DDAccent('rose', Color(0xFFFF2D55), Color(0xFFFF375F)),
     DDAccent('indigo', Color(0xFF5856D6), Color(0xFF5E5CE6)),
     DDAccent('violet', Color(0xFFAF52DE), Color(0xFFBF5AF2)),
     DDAccent('rouge', Color(0xFFFF3B30), Color(0xFFFF453A)),
@@ -40,7 +40,7 @@ abstract final class DDAccents {
     DDAccent('cyan', Color(0xFF32ADE6), Color(0xFF64D2FF)),
     DDAccent('graphite', Color(0xFF8E8E93), Color(0xFF98989D)),
   ];
-  static const String defaut = 'rose';
+  static const String defaut = 'bleu';
   static DDAccent parCle(String? cle) => liste.firstWhere((a) => a.cle == cle, orElse: () => liste.firstWhere((a) => a.cle == defaut));
 }
 

@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 
 import '../design_system/ouro_colors.dart';
 import '../design_system/ouro_typography.dart';
+import '../design_system/droplet_design.dart';
 import '../design_system/reglages_apparence.dart';
 import '../donnees/modeles.dart';
 import '../fond/goutte.dart';
@@ -689,7 +690,7 @@ class _PanneauDiscussions extends StatelessWidget {
               couleurTitre: OuroColors.accent,
               onTap: () => depot.majReglages((x) {
                 x.theme = ThemeChoisi.systeme;
-                x.accent = 'rose';
+                x.accent = DDAccents.defaut;
                 x.tailleTexte = ReglagesApparence.tailleTexteDefaut;
                 x.fond = 0;
               }),

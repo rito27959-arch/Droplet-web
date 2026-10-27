@@ -437,7 +437,7 @@ class Profil {
 class ReglagesWeb {
   ReglagesWeb({
     this.theme = ThemeChoisi.systeme,
-    this.accent = 'rose',
+    this.accent = 'bleu',
     this.tailleTexte = 15,
     this.fond = 0,
     this.notifications = true,
@@ -469,11 +469,15 @@ class ReglagesWeb {
         'entreeEnvoie': entreeEnvoie,
         'apercuLiens': apercuLiens,
         'lecture': confirmationsLecture,
+        // Version 2 : le bleu (la couleur du logo) est redevenu le défaut.
+        'v': 2,
       };
 
   factory ReglagesWeb.fromJson(Map<String, dynamic> j) => ReglagesWeb(
         theme: ThemeChoisi.values.byName(j['theme'] as String? ?? 'systeme'),
-        accent: j['accent'] as String? ?? 'rose',
+        // Avant la version 2, le rose était le défaut, enregistré tel quel :
+        // impossible de le distinguer d'un choix, on repasse au bleu une fois.
+        accent: (j['v'] != 2 && (j['accent'] == null || j['accent'] == 'rose')) ? 'bleu' : j['accent'] as String,
         tailleTexte: (j['tailleTexte'] as num?)?.toDouble() ?? 15,
         fond: j['fond'] as int? ?? 0,
         notifications: j['notifications'] as bool? ?? true,
