@@ -51,6 +51,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../design_system/droplet_design.dart';
 import '../../l10n/generated/app_localizations.dart';
