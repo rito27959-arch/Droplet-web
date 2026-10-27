@@ -812,7 +812,12 @@ class _EtapeNom extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: l10n.obPseudoHint,
                   hintStyle: OuroTypography.title3.copyWith(color: OuroColors.tertiaryLabel),
+                  // Le fond est celui du conteneur : celui du thème (blanc en
+                  // mode clair) le recouvrait.
+                  filled: false,
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 ),
               ),
