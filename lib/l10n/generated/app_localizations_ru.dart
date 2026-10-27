@@ -6082,4 +6082,72 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get adTorch => 'Фонарик';
+
+  @override
+  String get acStory1Text => 'Мессенджер, который работает даже без сети.';
+
+  @override
+  String get acStory2Title => 'От телефона\nк телефону';
+
+  @override
+  String get acStory2Text => 'Без интернета ваши сообщения передаются от устройства к устройству, пока не дойдут до получателя. С интернетом — уходят сразу.';
+
+  @override
+  String get acStory3Title => 'Только\nвы двое';
+
+  @override
+  String get acStory3Text => 'Сквозное шифрование: даже телефоны, которые передают ваши сообщения, не могут их прочитать.';
+
+  @override
+  String get acStory4Title => 'Когда всё\nостанавливается';
+
+  @override
+  String get acStory4Text => 'Офлайн-карты, местоположения и «Я в безопасности» передаются без вышек и операторов.';
+
+  @override
+  String get acSkip => 'Пропустить';
+
+  @override
+  String get acHaveAccount => 'У меня уже есть аккаунт';
+
+  @override
+  String get acNameFootnote => 'Ваши ключи шифрования создаются на этом телефоне.';
+
+  @override
+  String get acPhotoTitle => 'Добавьте\nфото';
+
+  @override
+  String get acPhotoText => 'Контакты увидят его рядом с вашим именем. Его можно изменить в любой момент.';
+
+  @override
+  String get acLater => 'Позже';
+
+  @override
+  String acReadyTitle(String pseudo) {
+    return 'Добро пожаловать,\n$pseudo';
+  }
+
+  @override
+  String get acReadyText => 'Droplet становится полезнее с каждым близким, кто его установит. Отправьте его — даже без интернета.';
+
+  @override
+  String get acRestoreTitle => 'Восстановить аккаунт';
+
+  @override
+  String get acRestoreMessage => 'Верните свои чаты и свою личность.';
+
+  @override
+  String get acRestoreFile => 'Из файла';
+
+  @override
+  String get acRestoreOnline => 'Из онлайн-копии';
+
+  @override
+  String get acRestorePseudoTitle => 'Ваше имя';
+
+  @override
+  String get acRestorePseudoMessage => 'Имя аккаунта, сохранённого онлайн.';
+
+  @override
+  String get acBack => 'Назад';
 }

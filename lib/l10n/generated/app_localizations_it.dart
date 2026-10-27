@@ -6021,4 +6021,72 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get adTorch => 'Torcia';
+
+  @override
+  String get acStory1Text => 'La messaggistica che arriva, anche senza rete.';
+
+  @override
+  String get acStory2Title => 'Da telefono\na telefono';
+
+  @override
+  String get acStory2Text => 'Senza internet, i tuoi messaggi saltano da un dispositivo all\'altro fino al destinatario. Con internet, partono subito.';
+
+  @override
+  String get acStory3Title => 'Solo\nvoi due';
+
+  @override
+  String get acStory3Text => 'Crittografati end-to-end: nemmeno i telefoni che inoltrano i tuoi messaggi possono leggerli.';
+
+  @override
+  String get acStory4Title => 'Quando tutto\nsi ferma';
+
+  @override
+  String get acStory4Text => 'Mappe offline, posizioni e «Sono al sicuro» viaggiano senza antenne né operatori.';
+
+  @override
+  String get acSkip => 'Salta';
+
+  @override
+  String get acHaveAccount => 'Ho già un account';
+
+  @override
+  String get acNameFootnote => 'Le tue chiavi di crittografia vengono create su questo telefono.';
+
+  @override
+  String get acPhotoTitle => 'Aggiungi\nuna foto';
+
+  @override
+  String get acPhotoText => 'I tuoi contatti la vedranno accanto al tuo nome. Puoi cambiarla quando vuoi.';
+
+  @override
+  String get acLater => 'Più tardi';
+
+  @override
+  String acReadyTitle(String pseudo) {
+    return 'Benvenuto,\n$pseudo';
+  }
+
+  @override
+  String get acReadyText => 'Droplet diventa più utile con ogni persona vicina che lo installa. Mandaglielo, anche senza internet.';
+
+  @override
+  String get acRestoreTitle => 'Ripristina il tuo account';
+
+  @override
+  String get acRestoreMessage => 'Recupera le tue chat e la tua identità.';
+
+  @override
+  String get acRestoreFile => 'Da un file';
+
+  @override
+  String get acRestoreOnline => 'Dal backup online';
+
+  @override
+  String get acRestorePseudoTitle => 'Il tuo nome';
+
+  @override
+  String get acRestorePseudoMessage => 'Quello dell\'account salvato online.';
+
+  @override
+  String get acBack => 'Indietro';
 }

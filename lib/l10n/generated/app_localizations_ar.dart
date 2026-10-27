@@ -6093,4 +6093,72 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adTorch => 'مصباح';
+
+  @override
+  String get acStory1Text => 'مراسلة تصل، حتى بلا شبكة.';
+
+  @override
+  String get acStory2Title => 'من هاتف\nإلى هاتف';
+
+  @override
+  String get acStory2Text => 'بلا إنترنت، تقفز رسائلك من جهاز إلى آخر حتى تصل إلى صاحبها. ومع الإنترنت، تنطلق فورًا.';
+
+  @override
+  String get acStory3Title => 'أنتما\nفقط';
+
+  @override
+  String get acStory3Text => 'مشفّرة من طرف إلى طرف: حتى الهواتف التي تمرّر رسائلك لا تستطيع قراءتها.';
+
+  @override
+  String get acStory4Title => 'حين يتوقف\nكل شيء';
+
+  @override
+  String get acStory4Text => 'خرائط بلا اتصال، ومواقع، و«أنا بأمان» تنتقل بلا أبراج ولا مشغّلين.';
+
+  @override
+  String get acSkip => 'تخطٍّ';
+
+  @override
+  String get acHaveAccount => 'لدي حساب بالفعل';
+
+  @override
+  String get acNameFootnote => 'تُنشأ مفاتيح التشفير الخاصة بك على هذا الهاتف.';
+
+  @override
+  String get acPhotoTitle => 'أضف\nصورة';
+
+  @override
+  String get acPhotoText => 'سيراها جهات اتصالك بجانب اسمك. يمكنك تغييرها في أي وقت.';
+
+  @override
+  String get acLater => 'لاحقًا';
+
+  @override
+  String acReadyTitle(String pseudo) {
+    return 'مرحبًا،\n$pseudo';
+  }
+
+  @override
+  String get acReadyText => 'يصبح Droplet أكثر فائدة مع كل قريب يثبّته. أرسله إليه، حتى بلا إنترنت.';
+
+  @override
+  String get acRestoreTitle => 'استعادة حسابك';
+
+  @override
+  String get acRestoreMessage => 'استرجع محادثاتك وهويتك.';
+
+  @override
+  String get acRestoreFile => 'من ملف';
+
+  @override
+  String get acRestoreOnline => 'من النسخة الاحتياطية عبر الإنترنت';
+
+  @override
+  String get acRestorePseudoTitle => 'اسمك المستعار';
+
+  @override
+  String get acRestorePseudoMessage => 'اسم الحساب المحفوظ عبر الإنترنت.';
+
+  @override
+  String get acBack => 'رجوع';
 }

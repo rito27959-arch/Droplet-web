@@ -6017,4 +6017,72 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adTorch => 'Lampe';
+
+  @override
+  String get acStory1Text => 'La messagerie qui passe, même sans réseau.';
+
+  @override
+  String get acStory2Title => 'De téléphone\nen téléphone';
+
+  @override
+  String get acStory2Text => 'Sans Internet, vos messages sautent d\'un appareil à l\'autre jusqu\'à leur destinataire. Avec Internet, ils partent aussitôt.';
+
+  @override
+  String get acStory3Title => 'Rien que\nvous deux';
+
+  @override
+  String get acStory3Text => 'Chiffrés de bout en bout : même les téléphones qui relaient vos messages ne peuvent pas les lire.';
+
+  @override
+  String get acStory4Title => 'Quand tout\ns\'arrête';
+
+  @override
+  String get acStory4Text => 'Carte hors ligne, positions et « Je suis en sécurité » circulent sans antenne ni opérateur.';
+
+  @override
+  String get acSkip => 'Passer';
+
+  @override
+  String get acHaveAccount => 'J\'ai déjà un compte';
+
+  @override
+  String get acNameFootnote => 'Vos clés de chiffrement sont créées sur ce téléphone.';
+
+  @override
+  String get acPhotoTitle => 'Ajoutez\nune photo';
+
+  @override
+  String get acPhotoText => 'Vos contacts la verront à côté de votre nom. Vous pourrez la changer à tout moment.';
+
+  @override
+  String get acLater => 'Plus tard';
+
+  @override
+  String acReadyTitle(String pseudo) {
+    return 'Bienvenue,\n$pseudo';
+  }
+
+  @override
+  String get acReadyText => 'Droplet devient plus utile à chaque proche qui l\'installe. Envoyez-le, même sans Internet.';
+
+  @override
+  String get acRestoreTitle => 'Restaurer votre compte';
+
+  @override
+  String get acRestoreMessage => 'Retrouvez vos discussions et votre identité.';
+
+  @override
+  String get acRestoreFile => 'Depuis un fichier';
+
+  @override
+  String get acRestoreOnline => 'Depuis la sauvegarde en ligne';
+
+  @override
+  String get acRestorePseudoTitle => 'Votre pseudo';
+
+  @override
+  String get acRestorePseudoMessage => 'Celui du compte sauvegardé en ligne.';
+
+  @override
+  String get acBack => 'Retour';
 }

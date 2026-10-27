@@ -708,6 +708,138 @@ abstract class AppLocalizations {
   /// **'Elles ne quittent jamais ce téléphone. Pensez à faire une sauvegarde depuis les réglages : sans elle, une identité perdue l\'est définitivement.'**
   String get obFeatKeysText;
 
+  /// No description provided for @acStory1Text.
+  ///
+  /// In fr, this message translates to:
+  /// **'La messagerie qui passe, même sans réseau.'**
+  String get acStory1Text;
+
+  /// No description provided for @acStory2Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'De téléphone\nen téléphone'**
+  String get acStory2Title;
+
+  /// No description provided for @acStory2Text.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sans Internet, vos messages sautent d'un appareil à l'autre jusqu'à leur destinataire. Avec Internet, ils partent aussitôt.'**
+  String get acStory2Text;
+
+  /// No description provided for @acStory3Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien que\nvous deux'**
+  String get acStory3Title;
+
+  /// No description provided for @acStory3Text.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chiffrés de bout en bout : même les téléphones qui relaient vos messages ne peuvent pas les lire.'**
+  String get acStory3Text;
+
+  /// No description provided for @acStory4Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quand tout\ns'arrête'**
+  String get acStory4Title;
+
+  /// No description provided for @acStory4Text.
+  ///
+  /// In fr, this message translates to:
+  /// **'Carte hors ligne, positions et « Je suis en sécurité » circulent sans antenne ni opérateur.'**
+  String get acStory4Text;
+
+  /// No description provided for @acSkip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passer'**
+  String get acSkip;
+
+  /// No description provided for @acHaveAccount.
+  ///
+  /// In fr, this message translates to:
+  /// **'J'ai déjà un compte'**
+  String get acHaveAccount;
+
+  /// No description provided for @acNameFootnote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos clés de chiffrement sont créées sur ce téléphone.'**
+  String get acNameFootnote;
+
+  /// No description provided for @acPhotoTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoutez\nune photo'**
+  String get acPhotoTitle;
+
+  /// No description provided for @acPhotoText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos contacts la verront à côté de votre nom. Vous pourrez la changer à tout moment.'**
+  String get acPhotoText;
+
+  /// No description provided for @acLater.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plus tard'**
+  String get acLater;
+
+  /// No description provided for @acReadyTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bienvenue,\n{pseudo}'**
+  String acReadyTitle(String pseudo);
+
+  /// No description provided for @acReadyText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Droplet devient plus utile à chaque proche qui l'installe. Envoyez-le, même sans Internet.'**
+  String get acReadyText;
+
+  /// No description provided for @acRestoreTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Restaurer votre compte'**
+  String get acRestoreTitle;
+
+  /// No description provided for @acRestoreMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retrouvez vos discussions et votre identité.'**
+  String get acRestoreMessage;
+
+  /// No description provided for @acRestoreFile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Depuis un fichier'**
+  String get acRestoreFile;
+
+  /// No description provided for @acRestoreOnline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Depuis la sauvegarde en ligne'**
+  String get acRestoreOnline;
+
+  /// No description provided for @acRestorePseudoTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre pseudo'**
+  String get acRestorePseudoTitle;
+
+  /// No description provided for @acRestorePseudoMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Celui du compte sauvegardé en ligne.'**
+  String get acRestorePseudoMessage;
+
+  /// No description provided for @acBack.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retour'**
+  String get acBack;
+
   /// No description provided for @splashPreparing.
   ///
   /// In fr, this message translates to:

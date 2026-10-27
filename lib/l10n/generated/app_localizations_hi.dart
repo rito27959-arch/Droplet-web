@@ -5984,4 +5984,72 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get adTorch => 'टॉर्च';
+
+  @override
+  String get acStory1Text => 'ऐसा मैसेंजर जो नेटवर्क के बिना भी पहुँचता है।';
+
+  @override
+  String get acStory2Title => 'फ़ोन से\nफ़ोन तक';
+
+  @override
+  String get acStory2Text => 'इंटरनेट के बिना, आपके संदेश एक डिवाइस से दूसरे तक पहुँचते हुए प्राप्तकर्ता तक जाते हैं। इंटरनेट होने पर वे तुरंत भेजे जाते हैं।';
+
+  @override
+  String get acStory3Title => 'सिर्फ़ आप\nदोनों';
+
+  @override
+  String get acStory3Text => 'एंड-टू-एंड एन्क्रिप्टेड: आपके संदेश आगे बढ़ाने वाले फ़ोन भी उन्हें नहीं पढ़ सकते।';
+
+  @override
+  String get acStory4Title => 'जब सब कुछ\nरुक जाए';
+
+  @override
+  String get acStory4Text => 'ऑफ़लाइन मैप, लोकेशन और “मैं सुरक्षित हूँ” बिना टावर या ऑपरेटर के पहुँचते हैं।';
+
+  @override
+  String get acSkip => 'छोड़ें';
+
+  @override
+  String get acHaveAccount => 'मेरे पास पहले से खाता है';
+
+  @override
+  String get acNameFootnote => 'आपकी एन्क्रिप्शन कुंजियाँ इसी फ़ोन पर बनती हैं।';
+
+  @override
+  String get acPhotoTitle => 'एक फ़ोटो\nजोड़ें';
+
+  @override
+  String get acPhotoText => 'आपके संपर्क इसे आपके नाम के पास देखेंगे। आप इसे कभी भी बदल सकते हैं।';
+
+  @override
+  String get acLater => 'बाद में';
+
+  @override
+  String acReadyTitle(String pseudo) {
+    return 'स्वागत है,\n$pseudo';
+  }
+
+  @override
+  String get acReadyText => 'हर क़रीबी जो Droplet इंस्टॉल करता है, उसे और उपयोगी बनाता है। इसे भेजें, इंटरनेट के बिना भी।';
+
+  @override
+  String get acRestoreTitle => 'अपना खाता वापस लाएँ';
+
+  @override
+  String get acRestoreMessage => 'अपनी चैट और अपनी पहचान वापस पाएँ।';
+
+  @override
+  String get acRestoreFile => 'फ़ाइल से';
+
+  @override
+  String get acRestoreOnline => 'ऑनलाइन बैकअप से';
+
+  @override
+  String get acRestorePseudoTitle => 'आपका नाम';
+
+  @override
+  String get acRestorePseudoMessage => 'ऑनलाइन सहेजे गए खाते का नाम।';
+
+  @override
+  String get acBack => 'वापस';
 }

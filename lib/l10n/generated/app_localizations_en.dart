@@ -6008,4 +6008,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adTorch => 'Flashlight';
+
+  @override
+  String get acStory1Text => 'Messaging that gets through, even with no network.';
+
+  @override
+  String get acStory2Title => 'From phone\nto phone';
+
+  @override
+  String get acStory2Text => 'With no internet, your messages hop from device to device until they reach their recipient. With internet, they go straight away.';
+
+  @override
+  String get acStory3Title => 'Just the\ntwo of you';
+
+  @override
+  String get acStory3Text => 'End-to-end encrypted: even the phones that relay your messages can\'t read them.';
+
+  @override
+  String get acStory4Title => 'When everything\nstops';
+
+  @override
+  String get acStory4Text => 'Offline maps, locations and “I\'m safe” travel without towers or carriers.';
+
+  @override
+  String get acSkip => 'Skip';
+
+  @override
+  String get acHaveAccount => 'I already have an account';
+
+  @override
+  String get acNameFootnote => 'Your encryption keys are created on this phone.';
+
+  @override
+  String get acPhotoTitle => 'Add\na photo';
+
+  @override
+  String get acPhotoText => 'Your contacts will see it next to your name. You can change it anytime.';
+
+  @override
+  String get acLater => 'Later';
+
+  @override
+  String acReadyTitle(String pseudo) {
+    return 'Welcome,\n$pseudo';
+  }
+
+  @override
+  String get acReadyText => 'Droplet gets more useful with every friend who installs it. Send it to them — no internet needed.';
+
+  @override
+  String get acRestoreTitle => 'Restore your account';
+
+  @override
+  String get acRestoreMessage => 'Get back your chats and your identity.';
+
+  @override
+  String get acRestoreFile => 'From a file';
+
+  @override
+  String get acRestoreOnline => 'From the online backup';
+
+  @override
+  String get acRestorePseudoTitle => 'Your username';
+
+  @override
+  String get acRestorePseudoMessage => 'The one from the account you backed up online.';
+
+  @override
+  String get acBack => 'Back';
 }

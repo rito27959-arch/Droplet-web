@@ -6026,4 +6026,72 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get adTorch => 'Taschenlampe';
+
+  @override
+  String get acStory1Text => 'Der Messenger, der durchkommt – auch ohne Netz.';
+
+  @override
+  String get acStory2Title => 'Von Handy\nzu Handy';
+
+  @override
+  String get acStory2Text => 'Ohne Internet springen deine Nachrichten von Gerät zu Gerät, bis sie ankommen. Mit Internet gehen sie sofort raus.';
+
+  @override
+  String get acStory3Title => 'Nur ihr\nzwei';
+
+  @override
+  String get acStory3Text => 'Ende-zu-Ende-verschlüsselt: Selbst die Handys, die deine Nachrichten weiterleiten, können sie nicht lesen.';
+
+  @override
+  String get acStory4Title => 'Wenn alles\nstillsteht';
+
+  @override
+  String get acStory4Text => 'Offline-Karten, Standorte und „Ich bin in Sicherheit“ kommen ohne Funkmast und ohne Anbieter an.';
+
+  @override
+  String get acSkip => 'Überspringen';
+
+  @override
+  String get acHaveAccount => 'Ich habe schon ein Konto';
+
+  @override
+  String get acNameFootnote => 'Deine Schlüssel werden auf diesem Handy erstellt.';
+
+  @override
+  String get acPhotoTitle => 'Füg ein\nFoto hinzu';
+
+  @override
+  String get acPhotoText => 'Deine Kontakte sehen es neben deinem Namen. Du kannst es jederzeit ändern.';
+
+  @override
+  String get acLater => 'Später';
+
+  @override
+  String acReadyTitle(String pseudo) {
+    return 'Willkommen,\n$pseudo';
+  }
+
+  @override
+  String get acReadyText => 'Droplet wird mit jeder Person nützlicher, die es installiert. Schick es weiter – auch ohne Internet.';
+
+  @override
+  String get acRestoreTitle => 'Konto wiederherstellen';
+
+  @override
+  String get acRestoreMessage => 'Hol deine Chats und deine Identität zurück.';
+
+  @override
+  String get acRestoreFile => 'Aus einer Datei';
+
+  @override
+  String get acRestoreOnline => 'Aus der Online-Sicherung';
+
+  @override
+  String get acRestorePseudoTitle => 'Dein Name';
+
+  @override
+  String get acRestorePseudoMessage => 'Der Name des online gesicherten Kontos.';
+
+  @override
+  String get acBack => 'Zurück';
 }

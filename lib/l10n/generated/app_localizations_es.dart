@@ -6022,4 +6022,72 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get adTorch => 'Linterna';
+
+  @override
+  String get acStory1Text => 'La mensajería que llega, incluso sin red.';
+
+  @override
+  String get acStory2Title => 'De teléfono\nen teléfono';
+
+  @override
+  String get acStory2Text => 'Sin internet, tus mensajes saltan de un dispositivo a otro hasta llegar a su destinatario. Con internet, salen al instante.';
+
+  @override
+  String get acStory3Title => 'Solo\nustedes dos';
+
+  @override
+  String get acStory3Text => 'Cifrados de extremo a extremo: ni siquiera los teléfonos que retransmiten tus mensajes pueden leerlos.';
+
+  @override
+  String get acStory4Title => 'Cuando todo\nse detiene';
+
+  @override
+  String get acStory4Text => 'Mapas sin conexión, ubicaciones y «Estoy a salvo» circulan sin antenas ni operadores.';
+
+  @override
+  String get acSkip => 'Omitir';
+
+  @override
+  String get acHaveAccount => 'Ya tengo una cuenta';
+
+  @override
+  String get acNameFootnote => 'Tus claves de cifrado se crean en este teléfono.';
+
+  @override
+  String get acPhotoTitle => 'Añade\nuna foto';
+
+  @override
+  String get acPhotoText => 'Tus contactos la verán junto a tu nombre. Puedes cambiarla cuando quieras.';
+
+  @override
+  String get acLater => 'Más tarde';
+
+  @override
+  String acReadyTitle(String pseudo) {
+    return '¡Hola,\n$pseudo!';
+  }
+
+  @override
+  String get acReadyText => 'Droplet es más útil con cada persona cercana que lo instala. Envíaselo, incluso sin internet.';
+
+  @override
+  String get acRestoreTitle => 'Restaura tu cuenta';
+
+  @override
+  String get acRestoreMessage => 'Recupera tus chats y tu identidad.';
+
+  @override
+  String get acRestoreFile => 'Desde un archivo';
+
+  @override
+  String get acRestoreOnline => 'Desde la copia en línea';
+
+  @override
+  String get acRestorePseudoTitle => 'Tu seudónimo';
+
+  @override
+  String get acRestorePseudoMessage => 'El de la cuenta guardada en línea.';
+
+  @override
+  String get acBack => 'Atrás';
 }

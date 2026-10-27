@@ -6018,4 +6018,72 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get adTorch => 'Lanterna';
+
+  @override
+  String get acStory1Text => 'O mensageiro que chega, mesmo sem rede.';
+
+  @override
+  String get acStory2Title => 'De celular\nem celular';
+
+  @override
+  String get acStory2Text => 'Sem internet, suas mensagens pulam de um aparelho a outro até chegar ao destinatário. Com internet, elas saem na hora.';
+
+  @override
+  String get acStory3Title => 'Só vocês\ndois';
+
+  @override
+  String get acStory3Text => 'Criptografia de ponta a ponta: nem os celulares que repassam suas mensagens conseguem lê-las.';
+
+  @override
+  String get acStory4Title => 'Quando tudo\npara';
+
+  @override
+  String get acStory4Text => 'Mapas offline, localizações e “Estou seguro” circulam sem antenas nem operadoras.';
+
+  @override
+  String get acSkip => 'Pular';
+
+  @override
+  String get acHaveAccount => 'Já tenho uma conta';
+
+  @override
+  String get acNameFootnote => 'Suas chaves de criptografia são criadas neste celular.';
+
+  @override
+  String get acPhotoTitle => 'Adicione\numa foto';
+
+  @override
+  String get acPhotoText => 'Seus contatos vão vê-la ao lado do seu nome. Você pode trocá-la quando quiser.';
+
+  @override
+  String get acLater => 'Mais tarde';
+
+  @override
+  String acReadyTitle(String pseudo) {
+    return 'Olá,\n$pseudo';
+  }
+
+  @override
+  String get acReadyText => 'O Droplet fica mais útil a cada pessoa próxima que o instala. Envie para ela, mesmo sem internet.';
+
+  @override
+  String get acRestoreTitle => 'Restaure sua conta';
+
+  @override
+  String get acRestoreMessage => 'Recupere suas conversas e sua identidade.';
+
+  @override
+  String get acRestoreFile => 'De um arquivo';
+
+  @override
+  String get acRestoreOnline => 'Do backup online';
+
+  @override
+  String get acRestorePseudoTitle => 'Seu apelido';
+
+  @override
+  String get acRestorePseudoMessage => 'O da conta salva online.';
+
+  @override
+  String get acBack => 'Voltar';
 }

@@ -5839,4 +5839,72 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adTorch => '手电筒';
+
+  @override
+  String get acStory1Text => '即使没有网络，消息也能送达。';
+
+  @override
+  String get acStory2Title => '从一部手机\n到另一部';
+
+  @override
+  String get acStory2Text => '没有网络时，消息会在设备之间接力，直到送达对方。有网络时，消息立即发出。';
+
+  @override
+  String get acStory3Title => '只属于\n你们两人';
+
+  @override
+  String get acStory3Text => '端到端加密：就连帮忙转发消息的手机也无法读取。';
+
+  @override
+  String get acStory4Title => '当一切\n停止时';
+
+  @override
+  String get acStory4Text => '离线地图、位置和“我很安全”无需基站和运营商即可传递。';
+
+  @override
+  String get acSkip => '跳过';
+
+  @override
+  String get acHaveAccount => '我已有账户';
+
+  @override
+  String get acNameFootnote => '您的加密密钥在这部手机上生成。';
+
+  @override
+  String get acPhotoTitle => '添加\n一张照片';
+
+  @override
+  String get acPhotoText => '联系人会在您的名字旁看到它。您可以随时更换。';
+
+  @override
+  String get acLater => '稍后';
+
+  @override
+  String acReadyTitle(String pseudo) {
+    return '欢迎，\n$pseudo';
+  }
+
+  @override
+  String get acReadyText => '每多一位亲友安装，Droplet 就更有用。发给他们吧，无需网络。';
+
+  @override
+  String get acRestoreTitle => '恢复您的账户';
+
+  @override
+  String get acRestoreMessage => '找回您的聊天记录和身份。';
+
+  @override
+  String get acRestoreFile => '从文件恢复';
+
+  @override
+  String get acRestoreOnline => '从在线备份恢复';
+
+  @override
+  String get acRestorePseudoTitle => '您的昵称';
+
+  @override
+  String get acRestorePseudoMessage => '在线备份的账户所用的昵称。';
+
+  @override
+  String get acBack => '返回';
 }
