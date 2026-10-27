@@ -66,7 +66,7 @@ import 'design_system/ouro_theme.dart';
 import 'design_system/liquid_bridge.dart';
 import 'package:liquid_glass_ui_design/liquid_glass_ui.dart';
 import 'features/onboarding/onboarding_screen.dart';
-import 'features/onboarding/splash_screen.dart';
+import 'features/onboarding/ouverture_droplet.dart';
 import 'features/home/home_shell.dart';
 import 'features/chats/chats_screen.dart';
 import 'features/chat/chat_screen.dart';
@@ -355,7 +355,14 @@ class DropletApp extends ConsumerWidget {
         // verre (`ouroGlassDegraded`) : appareil sans shader ou en stress
         // thermique. Le mouvement se simplifie AVANT que la cadence ne
         // tombe, au lieu d'attendre les saccades.
-        builder: (context, child) => DefaultTextStyle(
+        // ── L'OUVERTURE ───────────────────────────────────────────────
+        //
+        // AU-DESSUS de tout (même des appels entrants) et une seule fois
+        // par lancement à froid : la marque, son onde, puis le premier
+        // écran — déjà construit dessous. Voir `ouverture_droplet.dart`.
+        builder: (context, child) => OuvertureDroplet(
+          versAccueil: !StorageService.hasIdentity,
+          child: DefaultTextStyle(
           // ⚠️ LES DOUBLES SOULIGNEMENTS JAUNES. Flutter les dessine sous tout
           // texte qui n'a pas de `Material` au-dessus de lui : les toasts, les
           // bandeaux d'appel et tout ce qui vit dans une surcouche. Un style
@@ -413,6 +420,7 @@ class DropletApp extends ConsumerWidget {
               ),
             ),
           ),
+        ),
         ),
         ),
       ),
@@ -793,10 +801,12 @@ final _router = GoRouter(
   // de rediriger ailleurs — un peu comme un videur à l'entrée d'une boîte
   // qui vérifie si tu as le droit d'entrer, et t'envoie ailleurs sinon.
   redirect: (context, state) {
-    // La racine '/' a maintenant sa propre route (SplashScreen) : elle gère
-    // elle-même sa redirection après sa courte chorégraphie d'entrée, donc
-    // on la laisse passer ici plutôt que de la court-circuiter comme avant.
-    if (state.matchedLocation == '/') return null;
+    // La racine '/' n'a plus d'écran à elle : l'ouverture se joue PAR-DESSUS
+    // le premier écran (voir `OuvertureDroplet`), qui doit donc être là dès
+    // la première image.
+    if (state.matchedLocation == '/') {
+      return StorageService.hasIdentity ? '/chats' : '/onboarding';
+    }
     // Est-ce qu'on a déjà créé une identité sur cet appareil ?
     final loggedIn = StorageService.hasIdentity;
     final onBoarding = state.matchedLocation == '/onboarding';
@@ -820,7 +830,7 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      pageBuilder: (context, state) => _fadePage(const SplashScreen()),
+      redirect: (context, state) => StorageService.hasIdentity ? '/chats' : '/onboarding',
     ),
     GoRoute(
       path: '/onboarding',

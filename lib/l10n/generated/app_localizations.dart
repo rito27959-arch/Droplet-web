@@ -708,6 +708,12 @@ abstract class AppLocalizations {
   /// **'Elles ne quittent jamais ce téléphone. Pensez à faire une sauvegarde depuis les réglages : sans elle, une identité perdue l\'est définitivement.'**
   String get obFeatKeysText;
 
+  /// No description provided for @splashPreparing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préparation de Droplet…'**
+  String get splashPreparing;
+
   /// No description provided for @splashCaption.
   ///
   /// In fr, this message translates to:

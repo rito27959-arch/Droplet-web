@@ -15,8 +15,8 @@ jobs:
           cache: true
       - run: |
           set +e
-          { flutter pub get; echo "pub: $?"; flutter analyze --no-fatal-infos --no-fatal-warnings lib; echo "analyse: $?"; python3 outils/actifs_factices.py; flutter test test/crypto_service_test.dart --reporter expanded; echo "tests crypto: $?"; } > journal.txt 2>&1
-          cp journal.txt /tmp/j.txt
+          { flutter pub get; echo "pub: $?"; flutter analyze --no-fatal-infos --no-fatal-warnings lib; echo "analyse: $?"; python3 outils/actifs_factices.py; flutter test test/crypto_service_test.dart --reporter expanded; echo "tests crypto: $?"; flutter test test/ouverture_rendu_test.dart --reporter expanded; echo "rendu ouverture: $?"; } > journal.txt 2>&1
+          cp journal.txt /tmp/j.txt; rm -rf /tmp/rendu; cp -r build/rendu /tmp/rendu 2>/dev/null || true
           git config user.name ci; git config user.email ci@users.noreply.github.com
           git checkout --orphan journal-mobile; git rm -rfq . >/dev/null; cp /tmp/j.txt journal.txt
-          git add journal.txt; git commit -qm journal; git push -fq origin journal-mobile
+          cp -r /tmp/rendu rendu 2>/dev/null || true; git add journal.txt rendu 2>/dev/null || git add journal.txt; git commit -qm journal; git push -fq origin journal-mobile

@@ -345,6 +345,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Они никогда не покидают этот телефон. Не забудьте сделать резервную копию в настройках: без неё утраченная личность утрачена навсегда.';
 
   @override
+  String get splashPreparing => 'Подготовка Droplet…';
+
+  @override
   String get splashCaption => 'Офлайн. Без оператора.';
 
   @override

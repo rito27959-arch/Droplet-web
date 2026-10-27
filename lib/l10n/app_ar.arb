@@ -106,6 +106,7 @@
   "obPseudoHint": "اسمك المستعار",
   "obFeatKeysTitle": "مفاتيحك تُنشأ هنا، الآن",
   "obFeatKeysText": "لا تغادر هذا الهاتف أبدًا. تذكّر إجراء نسخة احتياطية من الإعدادات: بدونها، الهوية المفقودة تضيع للأبد.",
+  "splashPreparing": "جارٍ تجهيز Droplet…",
   "splashCaption": "بلا اتصال. بلا مشغل.",
   "chatsMeshNetwork": "الشبكة اللامركزية",
   "chatsNew": "جديد",

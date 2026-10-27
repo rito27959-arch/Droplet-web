@@ -54,6 +54,8 @@ class Personnalisation {
         'accent': accent,
         'lignes': lignesListe,
         'motifs': packMotifs,
+        // Version 2 : le bleu est redevenu la couleur par défaut.
+        'v': 2,
       };
 
   /// Lit un enregistrement, en bornant chaque valeur : un fichier abîmé ne
@@ -67,7 +69,14 @@ class Personnalisation {
             .clamp(ReglagesApparence.tailleTexteMin, ReglagesApparence.tailleTexteMax),
         rayonBulles: ((j['rayon'] as num?)?.toDouble() ?? ReglagesApparence.rayonDefaut)
             .clamp(ReglagesApparence.rayonMin, ReglagesApparence.rayonMax),
-        accent: ReglagesApparence.accentParCle(j['accent'] as String?).cle,
+        // ⚠️ LE ROSE D'AVANT N'ÉTAIT PAS UN CHOIX. Avant la version 2, le
+        // rose était la couleur par défaut, enregistrée telle quelle dès
+        // qu'on touchait à un autre réglage (taille du texte…). On ne peut
+        // pas distinguer ce rose-là d'un rose choisi : on repasse au bleu,
+        // la couleur du logo, une fois. Un rose choisi APRÈS se garde.
+        accent: (j['v'] != 2 && j['accent'] == 'rose')
+            ? 'bleu'
+            : ReglagesApparence.accentParCle(j['accent'] as String?).cle,
         lignesListe: (j['lignes'] as num?)?.toInt() == 2 ? 2 : 3,
         packMotifs: ((j['motifs'] as num?)?.toInt() ?? 0).clamp(0, 3),
       );

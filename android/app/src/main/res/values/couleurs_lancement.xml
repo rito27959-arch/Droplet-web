@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Les couleurs de l'écran de lancement, en mode clair. Les MÊMES que la
+  première image de l'ouverture Flutter (`ouverture_droplet.dart`) : le fond
+  du système (Droplet Design, `DDClair.fond`) et le bleu de la marque
+  (`DDAccents` « bleu », clair).
+-->
+<resources>
+    <color name="lancement_fond">#FFFFFFFF</color>
+    <color name="lancement_marque">#FF007AFF</color>
+    <!-- Le bas de la goutte, 84 % d'opacité : le dégradé du logo. -->
+    <color name="lancement_marque_fondu">#D6007AFF</color>
+</resources>

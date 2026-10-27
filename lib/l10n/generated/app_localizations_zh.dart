@@ -316,6 +316,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get obFeatKeysText => '它们永远不会离开这部手机。请记得在设置中进行备份：一旦丢失，身份将永久无法找回。';
 
   @override
+  String get splashPreparing => '正在准备 Droplet…';
+
+  @override
   String get splashCaption => '离线。无需运营商。';
 
   @override

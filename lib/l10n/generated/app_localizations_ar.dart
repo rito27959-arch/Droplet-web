@@ -342,6 +342,9 @@ class AppLocalizationsAr extends AppLocalizations {
       'لا تغادر هذا الهاتف أبدًا. تذكّر إجراء نسخة احتياطية من الإعدادات: بدونها، الهوية المفقودة تضيع للأبد.';
 
   @override
+  String get splashPreparing => 'جارٍ تجهيز Droplet…';
+
+  @override
   String get splashCaption => 'بلا اتصال. بلا مشغل.';
 
   @override

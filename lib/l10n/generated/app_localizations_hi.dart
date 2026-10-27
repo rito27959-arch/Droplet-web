@@ -344,6 +344,9 @@ class AppLocalizationsHi extends AppLocalizations {
       'वे इस फ़ोन से कभी बाहर नहीं जातीं। सेटिंग्स से बैकअप बनाना न भूलें: इसके बिना, खोई हुई पहचान हमेशा के लिए खो जाती है।';
 
   @override
+  String get splashPreparing => 'Droplet तैयार हो रहा है…';
+
+  @override
   String get splashCaption => 'ऑफ़लाइन। बिना ऑपरेटर।';
 
   @override

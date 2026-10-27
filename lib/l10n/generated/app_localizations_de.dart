@@ -344,6 +344,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Sie verlassen dieses Telefon nie. Denk daran, in den Einstellungen ein Backup zu erstellen: ohne es ist eine verlorene Identität für immer verloren.';
 
   @override
+  String get splashPreparing => 'Droplet wird vorbereitet …';
+
+  @override
   String get splashCaption => 'Offline. Ohne Anbieter.';
 
   @override

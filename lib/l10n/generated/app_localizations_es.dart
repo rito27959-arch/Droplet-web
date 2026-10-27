@@ -343,6 +343,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Nunca salen de este teléfono. Recuerda hacer una copia de seguridad desde los ajustes: sin ella, una identidad perdida lo está para siempre.';
 
   @override
+  String get splashPreparing => 'Preparando Droplet…';
+
+  @override
   String get splashCaption => 'Sin conexión. Sin operador.';
 
   @override

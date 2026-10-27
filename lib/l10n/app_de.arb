@@ -106,6 +106,7 @@
   "obPseudoHint": "Dein Name",
   "obFeatKeysTitle": "Deine Schlüssel werden hier, jetzt erstellt",
   "obFeatKeysText": "Sie verlassen dieses Telefon nie. Denk daran, in den Einstellungen ein Backup zu erstellen: ohne es ist eine verlorene Identität für immer verloren.",
+  "splashPreparing": "Droplet wird vorbereitet …",
   "splashCaption": "Offline. Ohne Anbieter.",
   "chatsMeshNetwork": "Mesh-Netzwerk",
   "chatsNew": "Neu",

@@ -110,6 +110,7 @@
   "obPseudoHint": "Votre pseudo",
   "obFeatKeysTitle": "Vos clés sont créées ici, maintenant",
   "obFeatKeysText": "Elles ne quittent jamais ce téléphone. Pensez à faire une sauvegarde depuis les réglages : sans elle, une identité perdue l'est définitivement.",
+  "splashPreparing": "Préparation de Droplet…",
   "splashCaption": "Hors ligne. Sans opérateur.",
   "chatsMeshNetwork": "Réseau mesh",
   "chatsNew": "Nouveau",

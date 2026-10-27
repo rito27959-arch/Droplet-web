@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  L'écran de lancement d'Android 6 à 11 (et, sur Android 12+, le fond qui
+  prend le relais entre l'écran du système et la première image de Flutter).
+
+  Le fond, puis la marque au centre, à sa taille exacte (288 dp de toile,
+  112 dp de marque) : la même image que la première de l'ouverture Flutter.
+  Les couleurs suivent le mode clair/sombre du téléphone
+  (`values[-night]/couleurs_lancement.xml`).
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/lancement_fond" />
+    <item
+        android:width="288dp"
+        android:height="288dp"
+        android:gravity="center"
+        android:drawable="@drawable/marque_lancement" />
+</layer-list>

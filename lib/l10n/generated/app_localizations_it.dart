@@ -343,6 +343,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'Non lasciano mai questo telefono. Ricordati di fare un backup dalle impostazioni: senza di esso, un\'identità persa lo è per sempre.';
 
   @override
+  String get splashPreparing => 'Preparazione di Droplet…';
+
+  @override
   String get splashCaption => 'Offline. Senza operatore.';
 
   @override

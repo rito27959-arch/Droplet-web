@@ -106,6 +106,7 @@
   "obPseudoHint": "您的昵称",
   "obFeatKeysTitle": "您的密钥此刻就在这里生成",
   "obFeatKeysText": "它们永远不会离开这部手机。请记得在设置中进行备份：一旦丢失，身份将永久无法找回。",
+  "splashPreparing": "正在准备 Droplet…",
   "splashCaption": "离线。无需运营商。",
   "chatsMeshNetwork": "网状网络",
   "chatsNew": "新建",

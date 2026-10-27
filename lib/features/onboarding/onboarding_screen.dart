@@ -58,6 +58,7 @@ import '../../design_system/ouro_typography.dart';
 import '../../shared/widgets/avatar_picker_sheet.dart';
 import '../../design_system/glassmorphism.dart';
 import 'onboarding_animations.dart';
+import 'ouverture_droplet.dart';
 import '../../shared/widgets/ios_magnifier_overlay.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../design_system/ouro_motion.dart';
@@ -463,7 +464,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ],
               ),
             ),
-            _bottomBar(),
+            // La barre du bas arrive avec les textes, une fois la marque
+            // posée : pendant l'ouverture, rien ne doit attirer l'œil
+            // ailleurs que sur elle.
+            ValueListenableBuilder<bool>(
+              valueListenable: OuvertureDroplet.active,
+              builder: (context, active, enfant) => AnimatedOpacity(
+                opacity: active ? 0 : 1,
+                duration: const Duration(milliseconds: 420),
+                curve: Curves.easeOutCubic,
+                child: enfant,
+              ),
+              child: _bottomBar(),
+            ),
           ],
         ),
         ),
@@ -568,49 +581,73 @@ class _WelcomePage extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return _PageBody(
       children: [
-        // L'icône de l'app, la même que celle sur laquelle on vient
-        // d'appuyer : c'est ce qui rattache cet écran à l'app plutôt
-        // qu'à un diaporama générique.
-        ClipRRect(
-          borderRadius: BorderRadius.circular(88 * 0.2237),
-          child: Image.asset('assets/icon/droplet_icon.png',
-              width: 88, height: 88, filterQuality: FilterQuality.medium),
-        )
-            .animate()
-            .fadeIn(duration: 380.ms)
-            .scaleXY(
-              begin: 0.76,
-              duration: 620.ms,
-              curve: Curves.fastEaseInToSlowEaseOut,
-            ),
+        // LA MARQUE, SEULE — la bulle et sa goutte, sans le carré de
+        // l'icône. Au premier lancement, c'est celle de l'ouverture qui
+        // vient s'y poser (voir `CibleOuverture`) : l'objet qu'on vient de
+        // voir est celui qu'on retrouve, au lieu d'une image qui en
+        // remplace une autre.
+        const _MarqueAccueil(),
         const SizedBox(height: DesignTokens.space5),
-        _Title(l10n.obWelcomeTitle),
-        const SizedBox(height: DesignTokens.space3),
-        _Subtitle(l10n.obWelcomeSubtitle),
-        const SizedBox(height: 40),
-        _Feature(
-          icon: Icons.wifi_off_rounded,
-          color: const Color(0xFF30B0C7),
-          title: l10n.obFeatOfflineTitle,
-          text: l10n.obFeatOfflineText,
-          delay: 220,
-        ),
-        _Feature(
-          icon: Icons.lock_rounded,
-          color: const Color(0xFF34C759),
-          title: l10n.obFeatEncryptedTitle,
-          text: l10n.obFeatEncryptedText,
-          delay: 360,
-        ),
-        _Feature(
-          icon: Icons.smartphone_rounded,
-          color: const Color(0xFF5E5CE6),
-          title: l10n.obFeatLocalTitle,
-          text: l10n.obFeatLocalText,
-          delay: 500,
+        // Le reste n'entre qu'une fois la marque posée — mais il est mis
+        // en page dès le début, sans quoi la place de la marque changerait
+        // pendant qu'elle voyage.
+        ApresOuverture(
+          builder: (context) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _Title(l10n.obWelcomeTitle),
+              const SizedBox(height: DesignTokens.space3),
+              _Subtitle(l10n.obWelcomeSubtitle),
+              const SizedBox(height: 40),
+              _Feature(
+                icon: Icons.wifi_off_rounded,
+                color: const Color(0xFF30B0C7),
+                title: l10n.obFeatOfflineTitle,
+                text: l10n.obFeatOfflineText,
+                delay: 220,
+              ),
+              _Feature(
+                icon: Icons.lock_rounded,
+                color: const Color(0xFF34C759),
+                title: l10n.obFeatEncryptedTitle,
+                text: l10n.obFeatEncryptedText,
+                delay: 360,
+              ),
+              _Feature(
+                icon: Icons.smartphone_rounded,
+                color: const Color(0xFF5E5CE6),
+                title: l10n.obFeatLocalTitle,
+                text: l10n.obFeatLocalText,
+                delay: 500,
+              ),
+            ],
+          ),
         ),
       ],
     );
+  }
+}
+
+/// La marque en tête de l'écran de bienvenue.
+class _MarqueAccueil extends StatelessWidget {
+  const _MarqueAccueil();
+
+  /// 72 points : la marque n'a pas de fond, elle paraît plus grande que
+  /// l'ancienne icône de 88 points à surface égale.
+  static const double hauteur = 72;
+
+  @override
+  Widget build(BuildContext context) {
+    final marque = CibleOuverture(hauteur: hauteur, couleur: OuroColors.accent);
+    // Arrivée par l'ouverture : elle est déjà là, on ne la refait pas
+    // apparaître. Sinon (ouverture déjà jouée, puis retour à l'accueil),
+    // elle entre seule.
+    if (OuvertureDroplet.active.value || OuvertureDroplet.aRejointLAccueil) return marque;
+    return marque
+        .animate()
+        .fadeIn(duration: 380.ms)
+        .scaleXY(begin: 0.8, duration: 620.ms, curve: Curves.fastEaseInToSlowEaseOut);
   }
 }
 

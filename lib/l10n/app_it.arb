@@ -106,6 +106,7 @@
   "obPseudoHint": "Il tuo nome",
   "obFeatKeysTitle": "Le tue chiavi vengono create qui, ora",
   "obFeatKeysText": "Non lasciano mai questo telefono. Ricordati di fare un backup dalle impostazioni: senza di esso, un'identità persa lo è per sempre.",
+  "splashPreparing": "Preparazione di Droplet…",
   "splashCaption": "Offline. Senza operatore.",
   "chatsMeshNetwork": "Rete mesh",
   "chatsNew": "Nuovo",

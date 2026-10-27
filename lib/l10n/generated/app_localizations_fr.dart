@@ -342,6 +342,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Elles ne quittent jamais ce téléphone. Pensez à faire une sauvegarde depuis les réglages : sans elle, une identité perdue l\'est définitivement.';
 
   @override
+  String get splashPreparing => 'Préparation de Droplet…';
+
+  @override
   String get splashCaption => 'Hors ligne. Sans opérateur.';
 
   @override
