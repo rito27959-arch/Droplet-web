@@ -309,16 +309,15 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
                     ),
                     // Le nom, sous la marque — au premier lancement, et
                     // pendant une attente (il dit alors QUI se prépare).
-                    if (etat.nom > 0)
+                    if (etat.nom > 0 && etat.revele > 0)
                       Positioned(
                         left: 0,
                         right: 0,
-                        top: centre.dy + kHauteurMarqueOuverture / 2 + 22 - 8 * (1 - etat.nom),
+                        top: centre.dy + kHauteurMarqueOuverture / 2 + 22 + 6 * (1 - Curves.easeOutCubic.transform(etat.revele)),
                         child: Opacity(
                           opacity: etat.nom * etat.opaciteScene,
-                          child: Text(
-                            'Droplet',
-                            textAlign: TextAlign.center,
+                          child: _NomRevele(
+                            progression: etat.revele,
                             style: TextStyle(
                               fontFamily: 'Inter Tight',
                               fontWeight: FontWeight.w700,
@@ -373,10 +372,14 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
     var voile = 0.0;
     var onde = _Onde.aucune;
     var nom = 0.0;
+    var revele = 0.0;
     var legende = 0.0;
 
     if (_reduit) {
-      if (widget.versAccueil) nom = 1;
+      if (widget.versAccueil) {
+        nom = 1;
+        revele = 1;
+      }
       if (_phase == _Phase.fondu) {
         opaciteScene = 1 - _seg(t, _debutSortie, _debutSortie + _dFondu);
       }
@@ -391,6 +394,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
         voile: 0,
         opaciteScene: opaciteScene,
         nom: nom,
+        revele: revele,
         legende: 0,
       );
     }
@@ -412,14 +416,15 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       final g = _geste(t - (_debutAttente + k * _cycleAttente), debut: 40, amplitude: 0.05);
       pose = PoseMarque(ecrasement: pose.ecrasement + g.ecrasement, gonflement: pose.gonflement + g.gonflement);
       if (g.onde.opacite > 0) onde = g.onde;
-      nom = _seg(fin - _debutAttente, 600, 900);
+      revele = _seg(fin - _debutAttente, 600, 1020);
       legende = _seg(fin - _debutAttente, _legendeApres, _legendeApres + 300);
     }
 
     // Le nom, au premier lancement.
     if (widget.versAccueil) {
-      nom = math.max(nom, Curves.easeOutCubic.transform(_seg(t, _tNom, _tNom + 340)));
+      revele = math.max(revele, _seg(t, _tNom, _tNom + 420));
     }
+    nom = revele > 0 ? 1 : 0;
 
     // ── 4a : on entre dans la bulle.
     //
@@ -485,6 +490,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
         voile: 0,
         opaciteScene: 1,
         nom: nom,
+        revele: revele,
         legende: legende,
       );
     }
@@ -504,7 +510,39 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       voile: voile,
       opaciteScene: opaciteScene,
       nom: nom,
+      revele: revele,
       legende: legende,
+    );
+  }
+}
+
+/// Le nom, révélé de gauche à droite par un bord adouci — lettre après
+/// lettre, comme écrit d'un geste, sans casser l'approche (le crénage)
+/// d'Inter Tight, ce que ferait une animation lettre par lettre.
+class _NomRevele extends StatelessWidget {
+  const _NomRevele({required this.progression, required this.style});
+
+  final double progression;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    // Le bord parcourt le mot en ralentissant sur la fin ; sa douceur
+    // (35 % de la largeur) fait apparaître chaque lettre en fondu plutôt
+    // que coupée net.
+    const douceur = 0.35;
+    final x = -douceur + (1 + douceur) * Curves.easeOutCubic.transform(progression);
+    final texte = Text('Droplet', textAlign: TextAlign.center, style: style);
+    if (progression >= 1) return texte;
+    return Center(
+      child: ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (r) => LinearGradient(
+          colors: const [Color(0xFFFFFFFF), Color(0x00FFFFFF)],
+          stops: [x.clamp(0.0, 1.0), (x + douceur).clamp(0.0, 1.0)],
+        ).createShader(r),
+        child: texte,
+      ),
     );
   }
 }
@@ -603,6 +641,7 @@ class _Etat {
     required this.voile,
     required this.opaciteScene,
     required this.nom,
+    this.revele = 1,
     required this.legende,
   });
 
@@ -620,7 +659,11 @@ class _Etat {
   /// pendant que la bulle s'agrandit.
   final double voile;
   final double opaciteScene;
+  /// L'opacité du nom (1 une fois là ; baisse quand on quitte l'ouverture).
   final double nom;
+
+  /// Où en est sa RÉVÉLATION, de gauche à droite (0 → 1).
+  final double revele;
   final double legende;
 }
 
