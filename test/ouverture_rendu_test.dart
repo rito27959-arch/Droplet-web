@@ -33,7 +33,7 @@ Future<void> _polices() async {
   await inter.load();
   // Les tests dessinent le texte par défaut avec une police de blocs
   // (« Ahem ») : on lui substitue Inter Tight pour lire la légende.
-  final defaut = FontLoader('Roboto')..addFont(rootBundle.load('assets/fonts/InterTight_600SemiBold.ttf'));
+  final defaut = FontLoader('Inter')..addFont(rootBundle.load('assets/fonts/InterTight_600SemiBold.ttf'));
   await defaut.load();
 }
 

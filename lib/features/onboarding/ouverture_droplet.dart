@@ -342,6 +342,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
                             l10n.splashPreparing,
                             textAlign: TextAlign.center,
                             style: TextStyle(
+                              fontFamily: 'Inter',
                               fontSize: 15,
                               height: 1.3,
                               color: texte2,
