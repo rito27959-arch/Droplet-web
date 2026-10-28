@@ -334,7 +334,7 @@ class _PanneauStickersState extends State<PanneauStickers> {
                 child: GridView.builder(
                   padding: EdgeInsets.zero,
                   gridDelegate:
-                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                      SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: grandes ? 96 : 68,
                     childAspectRatio: 1,
                   ),

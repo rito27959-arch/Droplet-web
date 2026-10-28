@@ -369,13 +369,19 @@ class _PeintreSticker extends CustomPainter {
     if (_irise >= 0) {
       // L'irisé des « Éclat » : un dégradé qui tourne lentement autour du
       // ventre, sur une base bleu nuit.
+      // La rotation passe par une matrice : les angles de départ et de
+      // fin d'un dégradé balayé doivent rester dans un seul tour.
+      final rotation = Matrix4.translationValues(0, 0.06, 0)
+        ..multiply(Matrix4.rotationZ(_irise * 1.2))
+        ..multiply(Matrix4.translationValues(0, -0.06, 0));
       shader = ui.Gradient.sweep(
         const Offset(0, 0.06),
         const [Color(0xFF7B61FF), Color(0xFF2FB8FF), Color(0xFF39E6C4), Color(0xFFFF6FD8), Color(0xFF7B61FF)],
-        null,
+        const [0.0, 0.25, 0.5, 0.75, 1.0],
         TileMode.clamp,
-        _irise * 1.2,
-        _irise * 1.2 + 2 * math.pi,
+        0,
+        2 * math.pi,
+        rotation.storage,
       );
     } else {
       final h = teinte == null ? _bleuHaut : Color.lerp(_bleuHaut, teinte, 0.75)!;
