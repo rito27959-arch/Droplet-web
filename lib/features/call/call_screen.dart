@@ -47,6 +47,7 @@ import '../../design_system/ouro_typography.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/widgets/peer_avatar.dart';
 import '../onboarding/ouverture_droplet.dart';
+import 'ecran_sonnerie.dart';
 import '../../design_system/ouro_spinner.dart';
 
 class CallScreen extends ConsumerStatefulWidget {
@@ -312,6 +313,29 @@ class _CallScreenState extends ConsumerState<CallScreen>
       if ((avant?.isCallActive ?? false) && !apres.isCallActive) _quitterApresFin();
     });
 
+    // ⚠️ UN SEUL ÉCRAN POUR UN APPEL QUI SONNE — celui de la fenêtre d'appel
+    // entrant (`EcranSonnerie`), identique qu'on arrive par la notification
+    // ou application ouverte. Avant, cet écran-ci affichait « Appel
+    // entrant… » avec un seul bouton (raccrocher), puis une seconde fenêtre
+    // surgissait quelques secondes plus tard, à l'arrivée de l'offre, pour
+    // enfin proposer de répondre. Répondre avant l'offre est retenu : on
+    // passe aussitôt à « Connexion… », et l'appel est pris dès qu'elle
+    // arrive.
+    if (_sonne(call)) {
+      return AnimatedOpacity(
+        opacity: _exiting ? 0 : 1,
+        duration: const Duration(milliseconds: 220),
+        child: EcranSonnerie(
+          peerId: widget.peerId,
+          pseudo: pseudo,
+          video: call.isVideoEnabled || widget.video,
+          viaInternet: call.isRemoteCall || !call.isCallActive,
+          onRepondre: _accepter,
+          onRefuser: _refuser,
+        ),
+      );
+    }
+
     final notifier = ref.read(callProvider.notifier);
     final rendDistant = notifier.remoteRenderer;
     final rendLocal = notifier.localRenderer;
@@ -513,35 +537,14 @@ class _CallScreenState extends ConsumerState<CallScreen>
                         depuisLeHaut: false,
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                          // ⚠️ UN SEUL ÉCRAN POUR UN APPEL ENTRANT. Avant, celui-ci
-                          // affichait « Appel entrant… » avec un seul bouton
-                          // (raccrocher), puis une seconde fenêtre surgissait
-                          // quelques secondes plus tard, quand l'offre arrivait,
-                          // pour enfin proposer de répondre. Maintenant, Répondre
-                          // et Refuser sont là dès l'ouverture ; répondre avant
-                          // l'offre est retenu, et l'appel est pris dès qu'elle
-                          // arrive (« Connexion… » entre-temps).
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 260),
-                            switchInCurve: Curves.easeOutCubic,
-                            child: _sonne(call)
-                                ? _BarreSonnerie(
-                                    key: const ValueKey('sonnerie'),
-                                    libelleRepondre: l10n.ntfAnswer,
-                                    libelleRefuser: l10n.ntfDecline,
-                                    video: call.isVideoEnabled || widget.video,
-                                    onRepondre: _accepter,
-                                    onRefuser: _refuser,
-                                  )
-                                : _BarreControles(
-                                    key: const ValueKey('controles'),
-                                    call: call,
-                                    onMute: notifier.toggleMute,
-                                    onSpeaker: notifier.toggleSpeaker,
-                                    onVideo: notifier.toggleVideo,
-                                    onFlip: () => unawaited(notifier.switchCamera()),
-                                    onHangUp: _handleHangUp,
-                                  ),
+                          child: _BarreControles(
+                            call: call,
+                            onMute: notifier.toggleMute,
+                            onSpeaker: notifier.toggleSpeaker,
+                            onVideo: notifier.toggleVideo,
+                            onFlip: () => unawaited(notifier.switchCamera()),
+                            onHangUp: _handleHangUp,
+                          ),
                           ),
                         ),
                       ),
@@ -562,67 +565,6 @@ class _CallScreenState extends ConsumerState<CallScreen>
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Répondre / Refuser, comme sur l'écran d'appel d'iOS : deux grands
-/// boutons ronds, rouge à gauche, vert à droite, nommés en dessous.
-class _BarreSonnerie extends StatelessWidget {
-  const _BarreSonnerie({
-    super.key,
-    required this.libelleRepondre,
-    required this.libelleRefuser,
-    required this.video,
-    required this.onRepondre,
-    required this.onRefuser,
-  });
-
-  final String libelleRepondre;
-  final String libelleRefuser;
-  final bool video;
-  final VoidCallback onRepondre;
-  final VoidCallback onRefuser;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget bouton(Color couleur, IconData icone, String libelle, VoidCallback onTap) {
-      return Semantics(
-        button: true,
-        label: libelle,
-        child: GestureDetector(
-          onTap: onTap,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 76,
-                height: 76,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: couleur),
-                child: Icon(icone, color: Colors.white, size: 34),
-              ),
-              const SizedBox(height: 10),
-              ExcludeSemantics(
-                child: Text(
-                  libelle,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: OuroColors.callLabel),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          bouton(const Color(0xFFFF3B30), Icons.call_end_rounded, libelleRefuser, onRefuser),
-          bouton(const Color(0xFF34C759), video ? Icons.videocam_rounded : Icons.call_rounded, libelleRepondre, onRepondre),
-        ],
       ),
     );
   }

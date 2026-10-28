@@ -77,6 +77,7 @@ import 'features/chat/new_message_screen.dart';
 import 'core/services/appel_systeme.dart';
 import 'features/call/bandeau_appel.dart';
 import 'features/call/call_screen.dart';
+import 'features/call/ecran_sonnerie.dart';
 import 'features/call/group_call_screen.dart';
 import 'features/safety/emergency_mode_screen.dart';
 import 'features/group/group_create_screen.dart';
@@ -511,94 +512,20 @@ class _IncomingCallView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     // On demande « comment s'appelle cette personne ? » à partir de son
     // identifiant technique (une longue suite de lettres/chiffres que
     // l'utilisateur ne voit jamais).
     final pseudo = ref.watch(peerPseudoProvider(peerId));
     final call = ref.watch(callProvider);
-    return Scaffold(
-      // Noir fixe, même quand l'app est en mode clair : voir
-      // `OuroColors.callBackground` pour le pourquoi.
-      backgroundColor: OuroColors.callBackground,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Un joli dégradé de couleur en fond, comme un ciel qui s'assombrit.
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment(0, -0.3),
-                radius: 1.2,
-                colors: [OuroColors.callGlow, OuroColors.callBackground],
-              ),
-            ),
-          ),
-          // Des petits ronds qui s'agrandissent doucement, comme des ronds
-          // dans l'eau — pour montrer que ça sonne « en direct ».
-          const Positioned.fill(child: DropletRipples(active: true)),
-          SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                Text(
-                  call.isVideoEnabled ? l10n.clIncomingVideoCall : l10n.ntfIncomingCall,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: OuroColors.callSecondaryLabel,
-                  ),
-                ),
-                const Spacer(),
-                const DropletLogo(radius: 62, glow: true),
-                const SizedBox(height: 24),
-                PeerAvatar(
-                  pseudo: pseudo,
-                  radius: 48,
-                  online: true,
-                  imagePath: AvatarService.cheminPair(peerId),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  pseudo,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: OuroColors.callLabel,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  call.isRemoteCall ? l10n.clViaInternet : l10n.mnMeshVoiceCall,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: OuroColors.callSecondaryLabel,
-                  ),
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _IncomingButton(
-                      icon: Icons.call_end_rounded,
-                      color: OuroColors.errorRed,
-                      label: l10n.ntfDecline,
-                      onTap: onReject,
-                    ),
-                    _IncomingButton(
-                      icon: call.isVideoEnabled ? Icons.videocam_rounded : Icons.call_rounded,
-                      color: OuroColors.successGreen,
-                      label: l10n.mnAccept,
-                      onTap: onAccept,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 48),
-              ],
-            ),
-          ),
-        ],
-      ),
+    // Le même écran que celui ouvert depuis la notification (voir
+    // `ecran_sonnerie.dart`) : un appel qui sonne a une seule apparence.
+    return EcranSonnerie(
+      peerId: peerId,
+      pseudo: pseudo,
+      video: call.isVideoEnabled,
+      viaInternet: call.isRemoteCall,
+      onRepondre: onAccept,
+      onRefuser: onReject,
     );
   }
 }
