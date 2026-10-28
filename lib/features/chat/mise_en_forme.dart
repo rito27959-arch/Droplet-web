@@ -533,7 +533,8 @@ class PastilleMention extends StatelessWidget {
     final bas = nom.toLowerCase();
     final tous = bas == Mentions.tous;
     final moi = Mentions.monPseudo.isNotEmpty && bas == Mentions.monPseudo.toLowerCase();
-    final sombre = Theme.of(context).brightness == Brightness.dark;
+    // Le thème qui colore réellement les bulles (celui d'`OuroColors`).
+    final sombre = OuroColors.isDark;
     // Dans MA bulle (texte blanc sur l'accent), une teinte de couleur
     // serait illisible : la pastille y est blanche translucide.
     final surClair = surCouleur;
