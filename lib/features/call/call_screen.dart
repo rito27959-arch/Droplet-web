@@ -545,7 +545,6 @@ class _CallScreenState extends ConsumerState<CallScreen>
                             onFlip: () => unawaited(notifier.switchCamera()),
                             onHangUp: _handleHangUp,
                           ),
-                          ),
                         ),
                       ),
                     ],
@@ -871,7 +870,6 @@ class _BarresQualite extends StatelessWidget {
 /// La barre de contrôle en verre : boutons légendés, et le rouge pour finir.
 class _BarreControles extends StatelessWidget {
   const _BarreControles({
-    super.key,
     required this.call,
     required this.onMute,
     required this.onSpeaker,
