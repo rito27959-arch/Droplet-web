@@ -856,10 +856,14 @@ class _PeintreOuverture extends CustomPainter {
 /// la marque d'ici reste invisible : c'est celle de l'ouverture qui
 /// voyage, et les deux ne doivent jamais se voir en même temps.
 class CibleOuverture extends StatefulWidget {
-  const CibleOuverture({super.key, required this.hauteur, required this.couleur});
+  const CibleOuverture({super.key, required this.hauteur, required this.couleur, this.dessiner = true});
 
   final double hauteur;
   final Color couleur;
+
+  /// Faux quand un autre dessin reprend la marque à l'arrivée (la scène
+  /// des récits) : la cible ne sert alors qu'à donner sa place.
+  final bool dessiner;
 
   @override
   State<CibleOuverture> createState() => _CibleOuvertureState();
@@ -895,7 +899,7 @@ class _CibleOuvertureState extends State<CibleOuverture> {
     final active = OuvertureDroplet.active.value;
     if (active) WidgetsBinding.instance.addPostFrameCallback((_) => _declarer());
     return Opacity(
-      opacity: active ? 0 : 1,
+      opacity: active || !widget.dessiner ? 0 : 1,
       child: MarqueDroplet(hauteur: widget.hauteur, couleur: widget.couleur),
     );
   }

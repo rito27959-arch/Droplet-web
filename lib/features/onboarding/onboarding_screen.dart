@@ -16,8 +16,10 @@
 //   ne doit pas lire une présentation pour retrouver ses discussions.
 // • UN SEUL BOUTON PRINCIPAL, toujours au même endroit, qui dit ce qui
 //   va se passer. Le reste en texte, discret.
-// • CHAQUE DESSIN MONTRE CE QUE DIT LE TEXTE, avec la goutte de la marque
-//   comme personnage (voir `illustrations_accueil.dart`).
+// • UN SEUL DESSIN QUI SE TRANSFORME SOUS LE DOIGT, comme l'intro de
+//   Telegram : la bulle devient un réseau de téléphones, puis un cadenas,
+//   puis une carte (voir `scene_presentation.dart`). Rien ne saute d'une
+//   page à l'autre ; on peut s'arrêter à mi-chemin.
 // • RIEN DE FAUX. Les anciens textes promettaient « pas de serveur » ;
 //   Droplet en utilise quand Internet est là (boîte aux lettres, appels,
 //   sauvegarde en ligne). Les nouveaux disent ce qui est vrai : sans
@@ -26,12 +28,13 @@
 // ── La continuité avec l'ouverture ───────────────────────────────────
 //
 // La marque de l'ouverture vient se poser au centre du premier récit
-// (`HeroMarque`, `CibleOuverture`) ; le texte et les boutons n'entrent
+// (`ScenePresentation`, `CibleOuverture`) ; le texte et les boutons n'entrent
 // qu'une fois qu'elle est posée (`ApresOuverture`).
 // ============================================================================
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -61,6 +64,7 @@ import '../../shared/widgets/avatar_picker_sheet.dart';
 import '../../shared/widgets/ios_magnifier_overlay.dart';
 import 'illustrations_accueil.dart';
 import 'ouverture_droplet.dart';
+import 'scene_presentation.dart';
 
 /// Les étapes de l'accueil.
 enum EtapeAccueil { recits, nom, photo, pret }
@@ -96,6 +100,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   bool _busy = false;
 
+  /// Pour ne donner le « clic » du nom valide qu'au passage.
+  late bool _etaitValide = (widget.pseudoDepart ?? '').trim().length >= 3;
+
   /// Le nom du fichier de la photo choisie, s'il y en a une.
   String? _avatarNom;
 
@@ -110,7 +117,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    _pseudoCtrl.addListener(() => setState(() {}));
+    _pseudoCtrl.addListener(() {
+      // Un petit « clic » quand le nom devient assez long : l'anneau se
+      // ferme dans la main en même temps qu'à l'écran.
+      final valide = _pseudoValid;
+      if (valide && !_etaitValide && _etape == EtapeAccueil.nom) OuroHaptics.selection();
+      _etaitValide = valide;
+      setState(() {});
+    });
   }
 
   @override
@@ -558,59 +572,61 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       (titre: l10n.acStory3Title, texte: l10n.acStory3Text),
       (titre: l10n.acStory4Title, texte: l10n.acStory4Text),
     ];
-    return PageView.builder(
-      controller: _recitsCtrl,
-      itemCount: _nbRecits,
-      onPageChanged: (i) {
-        OuroHaptics.selection();
-        setState(() => _recit = i);
-      },
-      itemBuilder: (context, i) {
-        final actif = i == _recit;
-        final dessin = switch (i) {
-          0 => HeroMarque(actif: actif),
-          1 => IllustrationRelais(actif: actif),
-          2 => IllustrationChiffrement(actif: actif),
-          _ => IllustrationSecurite(actif: actif),
-        };
-        // ⚠️ LE PREMIER RÉCIT ATTEND LA FIN DE L'OUVERTURE pour faire
-        // entrer son texte : la marque y est encore en vol.
-        final texte = _TexteRecit(titre: pages[i].titre, texte: pages[i].texte, nomDeMarque: i == 0);
-        return AnimatedBuilder(
-          animation: _recitsCtrl,
-          builder: (context, enfant) {
-            // Une légère parallaxe : le dessin glisse moins vite que le
-            // texte, et s'efface un peu en sortant — la profondeur des
-            // présentations d'Apple, sans effet de manège.
-            var decalage = 0.0;
-            if (_recitsCtrl.hasClients && _recitsCtrl.position.haveDimensions) {
-              decalage = (_recitsCtrl.page ?? _recit.toDouble()) - i;
-            }
-            final largeur = MediaQuery.sizeOf(context).width;
+    // ⚠️ LA SCÈNE EST HORS DU PAGEVIEW : c'est un seul dessin qui suit le
+    // doigt (voir `scene_presentation.dart`), pas quatre images qui
+    // glissent. Les pages ne portent que le texte, par-dessus.
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Column(
+            children: [
+              Expanded(
+                flex: 12,
+                child: ScenePresentation(controleur: _recitsCtrl, pageInitiale: _recit),
+              ),
+              const Spacer(flex: 7),
+            ],
+          ),
+        ),
+        PageView.builder(
+          controller: _recitsCtrl,
+          itemCount: _nbRecits,
+          onPageChanged: (i) {
+            OuroHaptics.selection();
+            setState(() => _recit = i);
+          },
+          itemBuilder: (context, i) {
+            // ⚠️ LE PREMIER RÉCIT ATTEND LA FIN DE L'OUVERTURE pour faire
+            // entrer son texte : la marque y est encore en vol.
+            final texte = _TexteRecit(titre: pages[i].titre, texte: pages[i].texte, nomDeMarque: i == 0);
             return Column(
               children: [
+                const Spacer(flex: 12),
                 Expanded(
-                  flex: 11,
-                  child: Opacity(
-                    opacity: (1 - decalage.abs() * 0.8).clamp(0.0, 1.0),
-                    child: Transform.translate(
-                      offset: Offset(decalage * largeur * 0.35, 0),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 320, maxHeight: 280),
-                          child: AspectRatio(aspectRatio: 320 / 260, child: dessin),
-                        ),
-                      ),
-                    ),
+                  flex: 7,
+                  child: AnimatedBuilder(
+                    animation: _recitsCtrl,
+                    builder: (context, enfant) {
+                      // Le texte glisse avec la page, mais s'efface plus
+                      // vite qu'elle ne sort, et le titre devance la phrase
+                      // d'un souffle : deux plans, comme chez Apple.
+                      var d = 0.0;
+                      if (_recitsCtrl.hasClients && _recitsCtrl.position.haveDimensions) {
+                        d = (_recitsCtrl.page ?? _recit.toDouble()) - i;
+                      }
+                      return Opacity(
+                        opacity: Curves.easeOut.transform((1 - d.abs() * 1.6).clamp(0.0, 1.0)),
+                        child: Transform.translate(offset: Offset(d * 40, 0), child: enfant),
+                      );
+                    },
+                    child: i == 0 ? ApresOuverture(builder: (_) => texte) : texte,
                   ),
                 ),
-                Expanded(flex: 8, child: enfant!),
               ],
             );
           },
-          child: i == 0 ? ApresOuverture(builder: (_) => texte) : texte,
-        );
-      },
+        ),
+      ],
     );
   }
 
@@ -771,7 +787,9 @@ class _EtapeNom extends StatelessWidget {
         children: [
           // L'avatar se remplit de l'initiale à mesure qu'on tape : on voit
           // tout de suite comment on apparaîtra chez les autres.
-          _Apparition(delai: 0, child: _Avatar(pseudo: pseudo, taille: 92)),
+          // Un anneau se remplit autour : un tiers par lettre, jusqu'aux
+          // trois qu'il faut — on voit le compte à rebours sans le lire.
+          _Apparition(delai: 0, child: _AnneauNom(lettres: pseudo.length, child: _Avatar(pseudo: pseudo, taille: 92))),
           const SizedBox(height: 26),
           _Apparition(
             delai: 60,
@@ -934,27 +952,28 @@ class _EtapePret extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(32, 8, 32, 12),
+      padding: const EdgeInsets.fromLTRB(32, 0, 32, 12),
+      clipBehavior: Clip.none,
       child: Column(
         children: [
           SizedBox(
-            width: 300,
-            height: 230,
+            width: double.infinity,
+            height: 300,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Deux ronds dans l'eau, une seule fois : le compte naît.
+                // Deux ronds dans l'eau et une gerbe de gouttes, une seule
+                // fois : le compte naît.
                 const Positioned.fill(child: OndesArrivee(rayon: 64)),
                 _Avatar(pseudo: pseudo, taille: 128, photo: apercu),
                 // La coche, qui arrive avec un petit rebond — le seul de tout
                 // l'accueil : c'est le seul moment de célébration.
-                Positioned(
-                  left: 150 + 28,
-                  top: 115 + 28,
+                Transform.translate(
+                  offset: const Offset(46, 46),
                   child: TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 520),
-                    curve: const Interval(0.25, 1, curve: Curves.easeOutBack),
+                    duration: const Duration(milliseconds: 620),
+                    curve: const Interval(0.3, 1, curve: Curves.elasticOut),
                     builder: (context, v, enfant) => Transform.scale(scale: v, child: enfant),
                     child: Container(
                       width: 40,
@@ -1130,6 +1149,63 @@ class _Avatar extends StatelessWidget {
   }
 }
 
+/// L'anneau autour de l'avatar de l'étape du nom : il se remplit d'un
+/// tiers par lettre, puis, complet, l'avatar fait un petit bond.
+class _AnneauNom extends StatelessWidget {
+  const _AnneauNom({required this.lettres, required this.child});
+
+  final int lettres;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final cible = (lettres / 3).clamp(0.0, 1.0);
+    final complet = lettres >= 3;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: cible),
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutCubic,
+      builder: (context, v, enfant) => CustomPaint(
+        foregroundPainter: _PeintreAnneau(v, OuroColors.accent, OuroColors.quaternarySystemFill),
+        child: Padding(padding: const EdgeInsets.all(9), child: enfant),
+      ),
+      child: TweenAnimationBuilder<double>(
+        key: ValueKey(complet),
+        tween: Tween(begin: complet ? 0 : 1, end: 1),
+        duration: const Duration(milliseconds: 520),
+        builder: (context, v, enfant) => Transform.scale(
+          scale: complet ? 1 + 0.07 * math.sin(math.pi * v) * (1 - v) * 2 : 1,
+          child: enfant,
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _PeintreAnneau extends CustomPainter {
+  _PeintreAnneau(this.v, this.couleur, this.piste);
+  final double v;
+  final Color couleur, piste;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.shortestSide / 2 - 2;
+    final pinceau = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(c, r, pinceau..color = piste);
+    if (v > 0.001) {
+      canvas.drawArc(Rect.fromCircle(center: c, radius: r), -math.pi / 2, 2 * math.pi * v, false, pinceau..color = couleur);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PeintreAnneau o) => o.v != v || o.couleur != couleur;
+}
+
 /// Le bouton principal : plein, large, toujours au même endroit.
 class _BoutonPrincipal extends StatelessWidget {
   const _BoutonPrincipal({required this.libelle, required this.actif, required this.occupe, required this.onTap});
@@ -1171,9 +1247,9 @@ class _BoutonPrincipal extends StatelessWidget {
   }
 }
 
-/// Les points des récits, comme le contrôle de page d'iOS : tous de la
-/// même taille, celui de la page courante plus sombre — et qui glisse
-/// avec le doigt, au lieu de sauter d'un point à l'autre.
+/// Les points des récits. Celui de la page courante s'ÉTIRE en capsule
+/// et la capsule glisse avec le doigt, en passant d'un point à l'autre —
+/// le détail qu'on retrouve chez Telegram et dans les apps d'Apple.
 class _Points extends StatelessWidget {
   const _Points({required this.nombre, required this.controleur, required this.actuel});
 
@@ -1192,15 +1268,18 @@ class _Points extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             for (var i = 0; i < nombre; i++)
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.symmetric(horizontal: 4.5),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color.lerp(OuroColors.label, OuroColors.quaternaryLabel, (page - i).abs().clamp(0.0, 1.0)),
-                ),
-              ),
+              Builder(builder: (context) {
+                final proche = Curves.easeInOut.transform((1 - (page - i).abs()).clamp(0.0, 1.0));
+                return Container(
+                  width: 7 + 17 * proche,
+                  height: 7,
+                  margin: const EdgeInsets.symmetric(horizontal: 3.5),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color: Color.lerp(OuroColors.quaternaryLabel, OuroColors.accent, proche),
+                  ),
+                );
+              }),
           ],
         );
       },

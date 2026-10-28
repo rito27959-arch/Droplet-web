@@ -14,6 +14,7 @@ import 'package:droplet/design_system/ouro_colors.dart';
 import 'package:droplet/design_system/ouro_theme.dart';
 import 'package:droplet/features/onboarding/onboarding_screen.dart';
 import 'package:droplet/features/onboarding/ouverture_droplet.dart';
+import 'package:droplet/features/onboarding/scene_presentation.dart';
 import 'package:droplet/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -111,5 +112,43 @@ void main() {
         });
       }
     }
+  }
+
+  // La scène seule, image par image d'un glissement : on vérifie que
+  // chaque transformation reste lisible À MI-CHEMIN, là où le doigt peut
+  // s'arrêter.
+  for (final sombre in [false, true]) {
+    final mode = sombre ? 'sombre' : 'clair';
+    testWidgets('scène, glissement $mode', (tester) async {
+      reinitialiserOuverture();
+      tester.view.physicalSize = const Size(390, 380) * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final b = sombre ? Brightness.dark : Brightness.light;
+      OuroColors.setBrightness(b);
+      for (final page in [0.0, 0.3, 0.6, 1.0, 1.3, 1.6, 2.0, 2.3, 2.6, 3.0]) {
+        final cle = GlobalKey();
+        await tester.pumpWidget(RepaintBoundary(
+          key: cle,
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: OuroTheme.of(b),
+            home: Scaffold(
+              backgroundColor: OuroColors.systemBackground,
+              body: ScenePresentation(pageFixe: page, tempsFixe: const Duration(milliseconds: 1500)),
+            ),
+          ),
+        ));
+        await tester.pump();
+        await tester.runAsync(() async {
+          final boite = cle.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+          final image = await boite.toImage(pixelRatio: 2);
+          final png = await image.toByteData(format: ui.ImageByteFormat.png);
+          File('${_dossier.path}/scene_${mode}_${page.toStringAsFixed(1)}.png').writeAsBytesSync(png!.buffer.asUint8List());
+          image.dispose();
+        });
+      }
+      await tester.pumpWidget(const SizedBox());
+    });
   }
 }
