@@ -884,9 +884,10 @@ class _EtapePhoto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SingleChildScrollView(
+    return _Centre(child: SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(32, 24, 32, 12),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           _Apparition(
             delai: 0,
@@ -937,7 +938,7 @@ class _EtapePhoto extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 
@@ -951,10 +952,11 @@ class _EtapePret extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SingleChildScrollView(
+    return _Centre(child: SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(32, 0, 32, 12),
       clipBehavior: Clip.none,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
             width: double.infinity,
@@ -1010,7 +1012,7 @@ class _EtapePret extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 
@@ -1145,6 +1147,23 @@ class _Avatar extends StatelessWidget {
                       ),
                     ),
             ),
+    );
+  }
+}
+
+/// Centre son contenu dans la hauteur disponible, un peu au-dessus du
+/// milieu (là où l'œil se pose), et le laisse défiler s'il ne tient pas.
+class _Centre extends StatelessWidget {
+  const _Centre({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) => Align(
+        alignment: const Alignment(0, -0.3),
+        child: ConstrainedBox(constraints: BoxConstraints(maxHeight: c.maxHeight), child: child),
+      ),
     );
   }
 }

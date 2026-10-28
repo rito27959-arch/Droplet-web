@@ -272,7 +272,7 @@ final List<_Pose> _poses = [
     goutteH: _kGoutteMarque,
   ),
   // 1 — le relais.
-  _Pose(rayon: 2.25, epaisseur: 0.04, pointilles: 0.55, opaciteAnneau: 0.85, neutre: 1, goutteH: 0.62, telephones: 1),
+  _Pose(rayon: 2.25, epaisseur: 0.032, pointilles: 0.6, opaciteAnneau: 0.6, neutre: 1, goutteH: 0.62, telephones: 1),
   // 2 — le cadenas.
   _Pose(rayon: 0.95, epaisseur: 0.27, remplissage: 0.12, goutteY: 0.1, goutteH: 0.7, anse: 1),
   // 3 — la carte.
@@ -315,7 +315,7 @@ class _PeintreScene extends CustomPainter {
   static Path get _queue => _queueUnite ??= Path.combine(
         PathOperation.difference,
         GeometrieMarque.bulle,
-        Path()..addOval(Rect.fromCircle(center: GeometrieMarque.centreBulle, radius: GeometrieMarque.rayonExterieurBulle - 0.004)),
+        Path()..addOval(Rect.fromCircle(center: GeometrieMarque.centreBulle, radius: GeometrieMarque.rayonExterieurBulle + 0.002)),
       );
 
   // Les cinq téléphones, en pentagone ; les cinq proches, éparpillés.
@@ -396,18 +396,30 @@ class _PeintreScene extends CustomPainter {
       _anse(canvas, c, rayon, epaisseur, R, anse, fermeture);
     }
 
-    _anneau(canvas, c, rayon, epaisseur, v((q) => q.pointilles), couleurAnneau.withValues(alpha: couleurAnneau.a * opaciteAnneau));
-
-    // La queue de la bulle, qui ne vit que sur la marque.
-    final queue = v((q) => q.queue);
-    if (queue > 0.01) {
-      final h = R / _kRayonMarque;
+    final h = R / _kRayonMarque;
+    if (p < 0.002) {
+      // Posée sur la marque : on dessine LA marque, au tracé près — celle
+      // que l'ouverture vient de déposer.
       canvas.save();
       canvas.translate(c.dx, c.dy);
-      canvas.scale(h * (rayon / R));
+      canvas.scale(h);
       canvas.translate(-GeometrieMarque.centreBulle.dx, -GeometrieMarque.centreBulle.dy);
-      canvas.drawPath(_queue, Paint()..color = couleurs.accent.withValues(alpha: queue));
+      canvas.drawPath(GeometrieMarque.bulle, Paint()..color = couleurs.accent);
       canvas.restore();
+    } else {
+      _anneau(canvas, c, rayon, epaisseur, v((q) => q.pointilles), couleurAnneau.withValues(alpha: couleurAnneau.a * opaciteAnneau));
+      // La queue de la bulle s'efface dès les premiers millimètres du
+      // glissement, sans changer de taille : elle ne se transforme pas,
+      // elle se retire.
+      final queue = i == 0 ? 1 - Curves.easeOut.transform(_seg(f, 0, 0.3)) : 0.0;
+      if (queue > 0.01) {
+        canvas.save();
+        canvas.translate(c.dx, c.dy);
+        canvas.scale(h);
+        canvas.translate(-GeometrieMarque.centreBulle.dx, -GeometrieMarque.centreBulle.dy);
+        canvas.drawPath(_queue, Paint()..color = couleurs.accent.withValues(alpha: queue));
+        canvas.restore();
+      }
     }
 
     // ── La goutte : le message, la serrure, vous.
@@ -628,23 +640,23 @@ class _PeintreScene extends CustomPainter {
     final zone = Rect.fromCircle(center: c, radius: rayon);
     canvas.saveLayer(zone, Paint());
     final rue = Paint()
-      ..color = couleurs.trait.withValues(alpha: (sombre ? 0.11 : 0.07) * a)
-      ..strokeWidth = R * 0.2
+      ..color = couleurs.trait.withValues(alpha: (sombre ? 0.07 : 0.045) * a)
+      ..strokeWidth = R * 0.16
       ..strokeCap = StrokeCap.round;
     canvas.save();
     canvas.translate(c.dx, c.dy);
     canvas.rotate(-0.32);
-    for (final y in [-1.9, -0.55, 1.15, 2.2]) {
+    for (final y in [-1.6, 0.9, 2.3]) {
       canvas.drawLine(Offset(-rayon, y * R), Offset(rayon, y * R + R * 0.25), rue);
     }
-    rue.strokeWidth = R * 0.13;
-    for (final x in [-2.1, -0.9, 0.7, 1.9]) {
+    rue.strokeWidth = R * 0.1;
+    for (final x in [-1.8, 0.55, 2.0]) {
       canvas.drawLine(Offset(x * R, -rayon), Offset(x * R + R * 0.35, rayon), rue);
     }
     // Un parc.
     canvas.drawRRect(
       RRect.fromRectAndRadius(Rect.fromLTWH(R * 0.9, R * 0.15, R * 0.85, R * 0.75), Radius.circular(R * 0.16)),
-      Paint()..color = couleurs.succes.withValues(alpha: (sombre ? 0.16 : 0.13) * a),
+      Paint()..color = couleurs.succes.withValues(alpha: (sombre ? 0.13 : 0.1) * a),
     );
     canvas.restore();
     // Le fondu vers les bords.
