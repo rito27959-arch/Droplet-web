@@ -6108,4 +6108,114 @@ class AppLocalizationsDe extends AppLocalizations {
   String blSpeed(String vitesse) {
     return 'Geschwindigkeit $vitesse';
   }
+
+  @override
+  String get vgYou => 'Du';
+
+  @override
+  String get vgGroup => 'Gruppe';
+
+  @override
+  String get vgCall => 'Anruf';
+
+  @override
+  String get vgAdd => 'Hinzufügen';
+
+  @override
+  String get vgInvite => 'Einladen';
+
+  @override
+  String get vgMedia => 'Medien';
+
+  @override
+  String vgCreatedBy(String qui, String date) {
+    return 'Erstellt von ${qui} am ${date}';
+  }
+
+  @override
+  String get vgMediaLinksDocs => 'Medien, Links und Doks';
+
+  @override
+  String get vgEncryption => 'Verschlüsselung';
+
+  @override
+  String get vgEncryptionBody => 'Ende-zu-Ende-verschlüsselt: Niemand sonst, nicht einmal die weiterleitenden Telefone, kann die Nachrichten lesen.';
+
+  @override
+  String get vgSettings => 'Gruppeneinstellungen';
+
+  @override
+  String get vgRequests => 'Beitrittsanfragen';
+
+  @override
+  String get vgAccept => 'Annehmen';
+
+  @override
+  String get vgDecline => 'Ablehnen';
+
+  @override
+  String get vgAddMembers => 'Mitglieder hinzufügen';
+
+  @override
+  String get vgInviteQr => 'Mit QR-Code einladen';
+
+  @override
+  String get vgOnline => 'online';
+
+  @override
+  String get vgAdmin => 'Admin';
+
+  @override
+  String vgMessage(String nom) {
+    return '${nom} schreiben';
+  }
+
+  @override
+  String vgCallMember(String nom) {
+    return '${nom} anrufen';
+  }
+
+  @override
+  String get vgViewInfo => 'Infos anzeigen';
+
+  @override
+  String vgRemoveFromGroup(String nom) {
+    return '${nom} aus der Gruppe entfernen';
+  }
+
+  @override
+  String get vgOnlyAdminsEdit => 'Nur Admins können die Gruppeninfos bearbeiten';
+
+  @override
+  String get vpMembersCan => 'Mitglieder können';
+
+  @override
+  String get vpOnlyAdminsChange => 'Nur Admins können diese Einstellungen ändern.';
+
+  @override
+  String get vpEditInfo => 'Gruppeninfos bearbeiten';
+
+  @override
+  String get vpEditInfoBody => 'Name, Foto und Beschreibung';
+
+  @override
+  String get vpSend => 'Nachrichten senden';
+
+  @override
+  String get vpAdd => 'Weitere Mitglieder hinzufügen';
+
+  @override
+  String get vpAdminsCan => 'Admins können';
+
+  @override
+  String get vpApprove => 'Neue Mitglieder genehmigen';
+
+  @override
+  String get vpApproveBody => 'Wenn aktiviert, warten Personen, die den QR-Code scannen, bis ein Admin sie annimmt.';
+
+  @override
+  String get vpEditAdmins => 'Admins bearbeiten';
+
+  @override
+  String get vpAdminsFooter => 'Admins dürfen in der Gruppe alles, auch weitere Admins ernennen.';
 }

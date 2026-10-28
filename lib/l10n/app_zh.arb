@@ -2112,5 +2112,70 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vgYou": "你",
+  "vgGroup": "群组",
+  "vgCall": "通话",
+  "vgAdd": "添加",
+  "vgInvite": "邀请",
+  "vgMedia": "媒体",
+  "vgCreatedBy": "由{qui}创建于{date}",
+  "@vgCreatedBy": {
+    "placeholders": {
+      "qui": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "vgMediaLinksDocs": "媒体、链接和文档",
+  "vgEncryption": "加密",
+  "vgEncryptionBody": "端到端加密：其他任何人，包括转发消息的手机，都无法读取消息。",
+  "vgSettings": "群组设置",
+  "vgRequests": "入群申请",
+  "vgAccept": "接受",
+  "vgDecline": "拒绝",
+  "vgAddMembers": "添加成员",
+  "vgInviteQr": "用二维码邀请",
+  "vgOnline": "在线",
+  "vgAdmin": "管理员",
+  "vgMessage": "给{nom}发消息",
+  "@vgMessage": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgCallMember": "呼叫{nom}",
+  "@vgCallMember": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgViewInfo": "查看信息",
+  "vgRemoveFromGroup": "将{nom}移出群组",
+  "@vgRemoveFromGroup": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgOnlyAdminsEdit": "只有管理员可以编辑群组信息",
+  "vpMembersCan": "成员可以",
+  "vpOnlyAdminsChange": "只有管理员可以更改这些设置。",
+  "vpEditInfo": "编辑群组信息",
+  "vpEditInfoBody": "名称、照片和简介",
+  "vpSend": "发送消息",
+  "vpAdd": "添加其他成员",
+  "vpAdminsCan": "管理员可以",
+  "vpApprove": "审核新成员",
+  "vpApproveBody": "开启后，扫描群二维码的人需等待管理员批准。",
+  "vpEditAdmins": "编辑管理员",
+  "vpAdminsFooter": "管理员可以在群里做任何事，包括任命其他管理员。"
 }

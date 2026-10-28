@@ -6066,4 +6066,114 @@ class AppLocalizationsHi extends AppLocalizations {
   String blSpeed(String vitesse) {
     return 'गति $vitesse';
   }
+
+  @override
+  String get vgYou => 'आप';
+
+  @override
+  String get vgGroup => 'समूह';
+
+  @override
+  String get vgCall => 'कॉल';
+
+  @override
+  String get vgAdd => 'जोड़ें';
+
+  @override
+  String get vgInvite => 'आमंत्रित';
+
+  @override
+  String get vgMedia => 'मीडिया';
+
+  @override
+  String vgCreatedBy(String qui, String date) {
+    return '${qui} ने ${date} को बनाया';
+  }
+
+  @override
+  String get vgMediaLinksDocs => 'मीडिया, लिंक और दस्तावेज़';
+
+  @override
+  String get vgEncryption => 'एन्क्रिप्शन';
+
+  @override
+  String get vgEncryptionBody => 'एंड-टू-एंड एन्क्रिप्टेड: कोई और, संदेश आगे भेजने वाले फ़ोन भी, उन्हें नहीं पढ़ सकते।';
+
+  @override
+  String get vgSettings => 'समूह सेटिंग्स';
+
+  @override
+  String get vgRequests => 'जुड़ने के अनुरोध';
+
+  @override
+  String get vgAccept => 'स्वीकारें';
+
+  @override
+  String get vgDecline => 'अस्वीकारें';
+
+  @override
+  String get vgAddMembers => 'सदस्य जोड़ें';
+
+  @override
+  String get vgInviteQr => 'QR कोड से आमंत्रित करें';
+
+  @override
+  String get vgOnline => 'ऑनलाइन';
+
+  @override
+  String get vgAdmin => 'एडमिन';
+
+  @override
+  String vgMessage(String nom) {
+    return '${nom} को संदेश भेजें';
+  }
+
+  @override
+  String vgCallMember(String nom) {
+    return '${nom} को कॉल करें';
+  }
+
+  @override
+  String get vgViewInfo => 'जानकारी देखें';
+
+  @override
+  String vgRemoveFromGroup(String nom) {
+    return '${nom} को समूह से हटाएँ';
+  }
+
+  @override
+  String get vgOnlyAdminsEdit => 'केवल एडमिन इस समूह की जानकारी बदल सकते हैं';
+
+  @override
+  String get vpMembersCan => 'सदस्य कर सकते हैं';
+
+  @override
+  String get vpOnlyAdminsChange => 'केवल एडमिन ये सेटिंग्स बदल सकते हैं।';
+
+  @override
+  String get vpEditInfo => 'समूह जानकारी बदलें';
+
+  @override
+  String get vpEditInfoBody => 'नाम, फ़ोटो और विवरण';
+
+  @override
+  String get vpSend => 'संदेश भेजें';
+
+  @override
+  String get vpAdd => 'अन्य सदस्य जोड़ें';
+
+  @override
+  String get vpAdminsCan => 'एडमिन कर सकते हैं';
+
+  @override
+  String get vpApprove => 'नए सदस्यों को मंज़ूरी दें';
+
+  @override
+  String get vpApproveBody => 'चालू होने पर, समूह का QR कोड स्कैन करने वाले लोग एडमिन की मंज़ूरी का इंतज़ार करेंगे।';
+
+  @override
+  String get vpEditAdmins => 'एडमिन बदलें';
+
+  @override
+  String get vpAdminsFooter => 'एडमिन समूह में सब कुछ कर सकते हैं, दूसरों को एडमिन बनाना भी।';
 }

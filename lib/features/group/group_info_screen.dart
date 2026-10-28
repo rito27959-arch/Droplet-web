@@ -1,18 +1,15 @@
 // ============================================================================
 // C'EST QUOI CE FICHIER ?
 // ----------------------------------------------------------------------------
-// C'est l'écran « Infos du groupe » — celui qu'on ouvre en tapant sur le
-// nom d'un groupe. On y voit son nom (modifiable), la liste de tous ses
-// membres avec une étoile « Administrateur » pour ceux qui gèrent le
-// groupe, et selon qu'on est soi-même administrateur ou pas, la
-// possibilité d'ajouter/retirer des membres. Il y a aussi un bouton pour
-// démarrer un appel de groupe, et un bouton rouge tout en bas pour
-// quitter le groupe.
+// L'écran « Infos du groupe » — celui qu'on ouvre en touchant le nom d'un
+// groupe. Ce fichier ne contient que les ACTIONS (renommer, photo,
+// description, ajouter, retirer, rôles, demandes d'adhésion, appel,
+// quitter) ; le dessin est dans `vue_infos_groupe.dart`, les permissions
+// dans `reglages_groupe.dart`, et leur écran dans
+// `parametres_groupe_screen.dart`.
 //
-// Toutes les actions ici (renommer, ajouter, retirer, quitter) sont de
-// vraies fonctions de `mesh_repository.dart` — voir ce fichier pour
-// comprendre comment un simple changement local se propage ensuite aux
-// autres membres via le réseau mesh.
+// Toutes les actions sont de vraies fonctions de `mesh_repository.dart` :
+// un changement local part ensuite aux autres membres par le maillage.
 // ============================================================================
 
 import 'dart:io';
@@ -23,7 +20,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/models/mesh_message.dart';
 import '../../core/providers/mesh_provider.dart';
 import '../../core/services/storage_service.dart';
@@ -37,9 +33,10 @@ import '../../design_system/design_tokens.dart';
 import '../../shared/widgets/peer_avatar.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/services/etat_internet.dart';
-import '../../design_system/ouro_icon_button.dart';
-import '../../design_system/ouro_retour_ios.dart';
 import 'reglages_groupe.dart';
+import 'parametres_groupe_screen.dart';
+import 'vue_infos_groupe.dart';
+import '../../core/services/nom_pair.dart';
 import '../../design_system/ouro_haptics.dart';
 import 'invitation_groupe_screen.dart';
 import 'stockage_groupe_screen.dart';
@@ -70,13 +67,6 @@ class GroupInfoScreen extends ConsumerWidget {
     );
     if (texte == null || texte == reglages.description) return;
     ReglagesGroupes.definir(groupId, reglages.copier(description: texte));
-    unawaited(ref.read(meshRepositoryProvider).diffuserReglagesGroupe(groupId));
-  }
-
-  /// Fermer ou rouvrir la parole. Le reglage voyage avec le manifeste.
-  void _changerDroitEcriture(WidgetRef ref, ReglagesGroupe reglages, bool valeur) {
-    OuroHaptics.selection();
-    ReglagesGroupes.definir(groupId, reglages.copier(envoiAdminsSeuls: valeur));
     unawaited(ref.read(meshRepositoryProvider).diffuserReglagesGroupe(groupId));
   }
 
@@ -246,42 +236,6 @@ class GroupInfoScreen extends ConsumerWidget {
     }
   }
 
-  /// Toucher un membre (admin seulement) : le nommer admin ou lui retirer
-  /// ce rôle, ou le retirer du groupe — comme chez WhatsApp.
-  Future<void> _actionsMembre(BuildContext context, WidgetRef ref, String peerId, String pseudo, bool estAdmin) async {
-    final l10n = AppLocalizations.of(context);
-    final choix = await showCupertinoModalPopup<String>(
-      context: context,
-      builder: (ctx) => CupertinoActionSheet(
-        title: Text(pseudo),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () => Navigator.pop(ctx, 'admin'),
-            child: Text(estAdmin ? l10n.giRemoveAdmin : l10n.giMakeAdmin),
-          ),
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.pop(ctx, 'retirer'),
-            child: Text(l10n.giRemove),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDefaultAction: true,
-          onPressed: () => Navigator.pop(ctx, null),
-          child: Text(l10n.actionCancel),
-        ),
-      ),
-    );
-    if (!context.mounted) return;
-    switch (choix) {
-      case 'admin':
-        HapticFeedback.selectionClick();
-        await ref.read(meshRepositoryProvider).changerRoleMembre(groupId: groupId, peerId: peerId, admin: !estAdmin);
-      case 'retirer':
-        await _removeMember(context, ref, peerId);
-    }
-  }
-
   /// Demande confirmation puis me fait quitter le groupe moi-même.
   Future<void> _leave(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
@@ -344,6 +298,43 @@ class GroupInfoScreen extends ConsumerWidget {
     context.go('/group-call');
   }
 
+  /// Toucher un membre, comme WhatsApp : écrire, appeler, voir ses infos —
+  /// et pour un administrateur, changer son rôle ou le retirer.
+  Future<void> _ficheMembre(BuildContext context, WidgetRef ref, GroupInfo group, String moi, GroupMemberRecord m, String nom) async {
+    final l10n = AppLocalizations.of(context);
+    final admin = group.isAdmin(moi);
+    final choix = await showCupertinoModalPopup<String>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(nom),
+        actions: [
+          CupertinoActionSheetAction(onPressed: () => Navigator.pop(ctx, 'ecrire'), child: Text(l10n.vgMessage(nom))),
+          CupertinoActionSheetAction(onPressed: () => Navigator.pop(ctx, 'appeler'), child: Text(l10n.vgCallMember(nom))),
+          CupertinoActionSheetAction(onPressed: () => Navigator.pop(ctx, 'infos'), child: Text(l10n.vgViewInfo)),
+          if (admin)
+            CupertinoActionSheetAction(onPressed: () => Navigator.pop(ctx, 'admin'), child: Text(m.isAdmin ? l10n.giRemoveAdmin : l10n.giMakeAdmin)),
+          if (admin)
+            CupertinoActionSheetAction(isDestructiveAction: true, onPressed: () => Navigator.pop(ctx, 'retirer'), child: Text(l10n.vgRemoveFromGroup(nom))),
+        ],
+        cancelButton: CupertinoActionSheetAction(isDefaultAction: true, onPressed: () => Navigator.pop(ctx), child: Text(l10n.actionCancel)),
+      ),
+    );
+    if (!context.mounted) return;
+    switch (choix) {
+      case 'ecrire':
+        context.push('/chat/${m.peerId}');
+      case 'appeler':
+        context.push('/call/${m.peerId}');
+      case 'infos':
+        context.push('/chat/${m.peerId}/info');
+      case 'admin':
+        HapticFeedback.selectionClick();
+        await ref.read(meshRepositoryProvider).changerRoleMembre(groupId: groupId, peerId: m.peerId, admin: !m.isAdmin);
+      case 'retirer':
+        await _removeMember(context, ref, m.peerId);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final group = ref.watch(groupInfoProvider(groupId));
@@ -353,443 +344,69 @@ class GroupInfoScreen extends ConsumerWidget {
 
     if (group == null) {
       return Scaffold(
-        backgroundColor: OuroColors.background,
+        backgroundColor: OuroColors.systemGroupedBackground,
         body: Center(child: Text(l10n.giGroupNotFound, style: TextStyle(color: OuroColors.textTertiary))),
       );
     }
-
-    final isAdmin = group.isAdmin(myId);
-    final members = group.activeMembers
-      ..sort((a, b) => a.role == b.role ? a.peerId.compareTo(b.peerId) : (a.role == 'admin' ? -1 : 1));
 
     String pseudoFor(String peerId) {
       for (final p in peers) {
         if (p.peerId == peerId) return p.pseudo;
       }
-      for (final p in StorageService.getKnownPeers()) {
-        if (p.peerId == peerId) return p.pseudo;
-      }
-      return peerId == myId ? l10n.giMe : peerId;
+      if (peerId == myId) return StorageService.currentUser?.pseudo ?? l10n.vgYou;
+      return nomDuPair(peerId, [StorageService.getPeerRecord(peerId)?.pseudo]);
     }
 
     bool onlineFor(String peerId) => peers.any((p) => p.peerId == peerId);
 
-    return Scaffold(
-      backgroundColor: OuroColors.background,
-      appBar: AppBar(
-        backgroundColor: OuroColors.background,
-        elevation: 0,
-        title: Text(l10n.giGroupInfo,
-            style: TextStyle(color: OuroColors.textPrimary, fontWeight: FontWeight.w700)),
-        leading: OuroBackButton(fallback: '/group/$groupId'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(DesignTokens.screenMargin, 8, DesignTokens.screenMargin, DesignTokens.space8),
-        children: [
-          Center(
-            child: Column(
-              children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: isAdmin ? () => _changerPhoto(context, ref, group) : null,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      PeerAvatar(
-                        pseudo: group.name,
-                        radius: 38,
-                        imagePath: group.avatarUrl,
-                      ),
-                      // Le badge d'appareil photo, en bas à droite : le
-                      // geste s'apprend sans notice.
-                      if (isAdmin)
-                        Positioned(
-                          right: -2,
-                          bottom: -2,
-                          child: Container(
-                            width: 26,
-                            height: 26,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: OuroColors.accentRempli,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: OuroColors.systemGroupedBackground,
-                                width: 2,
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.photo_camera_rounded,
-                              size: 14,
-                              color: OuroColors.texteSurAccent,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                GestureDetector(
-                  onTap: () => _rename(context, ref, group.name),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(group.name,
-                          style: TextStyle(color: OuroColors.textPrimary, fontSize: 17, fontWeight: FontWeight.w700)),
-                      SizedBox(width: 6),
-                      Icon(Icons.edit_rounded, size: 14, color: OuroColors.textTertiary),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(l10n.giMemberCount(members.length),
-                    style: TextStyle(color: OuroColors.textTertiary, fontSize: 13)),
-                SizedBox(height: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.lock_rounded, size: 14, color: OuroColors.successGreen),
-                    SizedBox(width: 6),
-                    Text(l10n.giEncryptedMessages, style: TextStyle(fontSize: 12, color: OuroColors.successGreen)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                OuroRetourIos(child: OutlinedButton.icon(
-                  onPressed: () => _startGroupCall(context, ref, group, myId, pseudoFor),
-                  style: OutlinedButton.styleFrom(overlayColor: Colors.transparent, 
-                    foregroundColor: OuroColors.meshBlue,
-                    side: BorderSide(color: OuroColors.meshBlue),
-                  ),
-                  icon: const Icon(Icons.call_rounded),
-                  label: Text(l10n.giGroupCall),
-                )),
-              ],
+    return ListenableBuilder(
+      listenable: Listenable.merge([ReglagesGroupes.revision, DemandesAdhesion.revision]),
+      builder: (context, _) {
+        final reglages = ReglagesGroupes.de(groupId);
+        final infos = reglages.peutModifierInfos(group, myId);
+        void refuse() => afficherToast(context, l10n.vgOnlyAdminsEdit, type: DropletToastType.warning);
+        return VueInfosGroupe(
+          retour: OuroBackButton(fallback: '/group/$groupId'),
+          donnees: DonneesInfosGroupe(
+            groupe: group,
+            moi: myId,
+            reglages: reglages,
+            nom: pseudoFor,
+            enLigne: onlineFor,
+            photoMembre: (id) => id == myId ? AvatarService.chemin(StorageService.currentUser?.avatarUrl) : AvatarService.cheminPair(id),
+            demandes: DemandesAdhesion.pour(groupId),
+          ),
+          ligneNotifs: LigneNotifsConversation(conversationId: groupId, nom: group.name, groupe: true),
+          actions: ActionsInfosGroupe(
+            changerPhoto: () => infos ? _changerPhoto(context, ref, group) : refuse(),
+            renommer: () => infos ? _rename(context, ref, group.name) : refuse(),
+            modifierDescription: () => infos ? _modifierDescription(context, ref, reglages) : refuse(),
+            appeler: () => _startGroupCall(context, ref, group, myId, pseudoFor),
+            ajouter: () => _addMember(context, ref, group),
+            inviter: () => ouvrirCodeGroupe(context, groupId: groupId, nom: group.name, moi: myId),
+            medias: () => _ouvrirStockage(context, group),
+            importants: () => context.push('/starred'),
+            parametres: () => Navigator.of(context).push(
+              CupertinoPageRoute<void>(builder: (_) => ParametresGroupeScreen(groupId: groupId)),
             ),
-          ),
-          const SizedBox(height: 20),
-
-          // Sourdine, mentions seulement, aperçu — pour ce groupe.
-          LigneNotifsConversation(
-            conversationId: groupId,
-            nom: group.name,
-            groupe: true,
-          ),
-          const SizedBox(height: 12),
-
-          // Ce que le groupe raconte de lui-meme : les administrateurs
-          // l'ecrivent, tout le monde le lit.
-          ValueListenableBuilder<int>(
-            valueListenable: ReglagesGroupes.revision,
-            builder: (context, _, _) {
-              final reglages = ReglagesGroupes.de(groupId);
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _CarteGroupe(
-                    onTap: isAdmin
-                        ? () => _modifierDescription(context, ref, reglages)
-                        : null,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.notes_rounded, size: 19, color: OuroColors.textTertiary),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.giDescription,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: OuroColors.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                reglages.description.isEmpty
-                                    ? (isAdmin ? l10n.giDescriptionAdd : l10n.giDescriptionNone)
-                                    : reglages.description,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  height: 1.35,
-                                  color: reglages.description.isEmpty
-                                      ? OuroColors.textTertiary
-                                      : OuroColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (isAdmin) ...[
-                          const SizedBox(width: 8),
-                          Icon(Icons.edit_rounded, size: 14, color: OuroColors.textTertiary),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                  // Qui peut ecrire. Le reglage voyage avec le manifeste :
-                  // tous les membres l'apprennent, pas seulement celui qui
-                  // l'a pose.
-                  if (isAdmin || reglages.envoiAdminsSeuls) ...[
-                    const SizedBox(height: 8),
-                    _CarteGroupe(
-                      child: Row(
-                        children: [
-                          Icon(Icons.lock_outline_rounded, size: 19, color: OuroColors.textTertiary),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l10n.giOnlyAdminsSend,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: OuroColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  l10n.giOnlyAdminsSendBody,
-                                  style: TextStyle(fontSize: 12, color: OuroColors.textTertiary),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (isAdmin)
-                            Switch.adaptive(
-                              value: reglages.envoiAdminsSeuls,
-                              onChanged: (v) => _changerDroitEcriture(ref, reglages, v),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              );
+            membre: (m) => _ficheMembre(context, ref, group, myId, m, pseudoFor(m.peerId)),
+            accepterDemande: (d) async {
+              HapticFeedback.mediumImpact();
+              try {
+                await ref.read(meshRepositoryProvider).addGroupMember(groupId: groupId, peerId: d.peerId);
+              } catch (_) {
+                if (context.mounted) afficherToast(context, l10n.giAddMemberFailed, type: DropletToastType.error);
+              }
             },
-          ),
-
-          const SizedBox(height: 8),
-          _CarteGroupe(
-            onTap: () => _ouvrirStockage(context, group),
-            child: Row(
-              children: [
-                Icon(Icons.folder_outlined, size: 19, color: OuroColors.textTertiary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    l10n.sgTitle,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: OuroColors.textPrimary,
-                    ),
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded, size: 18, color: OuroColors.textTertiary),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Text(l10n.gcMembers, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: OuroColors.textSecondary)),
-              const Spacer(),
-              if (isAdmin)
-                OuroRetourIos(child: TextButton.icon(
-                  onPressed: () => ouvrirCodeGroupe(
-                    context,
-                    groupId: groupId,
-                    nom: group.name,
-                    moi: myId,
-                  ),
-                  icon: Icon(Icons.qr_code_rounded, size: 18, color: OuroColors.meshBlueBright),
-                  label: Text(l10n.giQrInvite, style: TextStyle(color: OuroColors.meshBlueBright)),
-                )),
-              if (isAdmin)
-                OuroRetourIos(child: TextButton.icon(
-                  onPressed: () => _addMember(context, ref, group),
-                  icon: Icon(Icons.person_add_alt_1_rounded, size: 18, color: OuroColors.meshBlueBright),
-                  label: Text(l10n.giAdd, style: TextStyle(color: OuroColors.meshBlueBright)),
-                )),
-            ],
-          ),
-          // Beaucoup de monde : on cherche plutôt que de faire défiler.
-          _MembresFiltres(
-            membres: members,
-            pseudoDe: pseudoFor,
-            hint: l10n.giSearchMembers,
-            ligne: (m) {
-              final i = members.indexOf(m);
-
-            final pseudo = pseudoFor(m.peerId);
-              return Container(
-              margin: const EdgeInsets.symmetric(vertical: 3),
-              decoration: BoxDecoration(
-                color: OuroColors.glassBg,
-                borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                border: Border.all(color: OuroColors.glassBorder),
-              ),
-              child: ListTile(
-                leading: PeerAvatar(
-                  pseudo: pseudo,
-                  radius: 20,
-                  online: onlineFor(m.peerId),
-                  imagePath: AvatarService.cheminPair(m.peerId),
-                ),
-                title: Text(m.peerId == myId ? '$pseudo (${l10n.giMe})' : pseudo,
-                    style: TextStyle(color: OuroColors.textPrimary, fontWeight: FontWeight.w600)),
-                subtitle: m.isAdmin
-                    ? Text(l10n.giAdministrator, style: TextStyle(fontSize: 12, color: OuroColors.meshBlueBright))
-                    : null,
-                onTap: isAdmin && m.peerId != myId
-                    ? () => _actionsMembre(context, ref, m.peerId, pseudo, m.isAdmin)
-                    : null,
-                trailing: isAdmin && m.peerId != myId
-                    ? OuroIconButton(
-                        icon: Icon(Icons.more_horiz_rounded, color: OuroColors.textSecondary),
-                        onPressed: () => _actionsMembre(context, ref, m.peerId, pseudo, m.isAdmin),
-                      )
-                    : null,
-              ),
-            )
-                .animate()
-                .fadeIn(delay: (i * 40).ms, duration: DesignTokens.durationFast)
-                .slideX(begin: 0.06);
+            refuserDemande: (d) {
+              HapticFeedback.selectionClick();
+              ref.read(meshRepositoryProvider).refuserDemandeAdhesion(groupId: groupId, peerId: d.peerId);
             },
+            quitter: () => _leave(context, ref),
           ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: OuroRetourIos(child: OutlinedButton.icon(
-              onPressed: () => _leave(context, ref),
-              style: OutlinedButton.styleFrom(overlayColor: Colors.transparent, 
-                foregroundColor: OuroColors.errorRed,
-                side: BorderSide(color: OuroColors.errorRed),
-              ),
-              icon: const Icon(Icons.logout_rounded),
-              label: Text(l10n.giLeaveGroup),
-            )),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-/// La carte des reglages du groupe : meme verre que les lignes de membres.
-class _CarteGroupe extends StatelessWidget {
-  const _CarteGroupe({required this.child, this.onTap});
-
-  final Widget child;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        decoration: BoxDecoration(
-          color: OuroColors.glassBg,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          border: Border.all(color: OuroColors.glassBorder),
-        ),
-        child: child,
-      ),
-    );
-  }
-}
-
-/// La liste des membres, avec un champ de recherche dès qu'ils sont
-/// nombreux. En dessous de huit, chercher n'a pas de sens : on voit tout.
-class _MembresFiltres extends StatefulWidget {
-  const _MembresFiltres({
-    required this.membres,
-    required this.pseudoDe,
-    required this.ligne,
-    required this.hint,
-  });
-
-  final List<GroupMemberRecord> membres;
-  final String Function(String peerId) pseudoDe;
-  final Widget Function(GroupMemberRecord membre) ligne;
-  final String hint;
-
-  @override
-  State<_MembresFiltres> createState() => _MembresFiltresState();
-}
-
-class _MembresFiltresState extends State<_MembresFiltres> {
-  final TextEditingController _recherche = TextEditingController();
-  String _requete = '';
-
-  @override
-  void dispose() {
-    _recherche.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final montrerRecherche = widget.membres.length > 8;
-    final filtres = _requete.isEmpty
-        ? widget.membres
-        : [
-            for (final m in widget.membres)
-              if (widget.pseudoDe(m.peerId).toLowerCase().contains(_requete)) m,
-          ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (montrerRecherche)
-          Padding(
-            padding: const EdgeInsets.only(top: 6, bottom: 2),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: OuroColors.glassBg,
-                borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                border: Border.all(color: OuroColors.glassBorder),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.search_rounded, size: 18, color: OuroColors.textTertiary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _recherche,
-                      onChanged: (v) => setState(() => _requete = v.trim().toLowerCase()),
-                      style: TextStyle(color: OuroColors.textPrimary, fontSize: 15),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        border: InputBorder.none,
-                        hintText: widget.hint,
-                        hintStyle: TextStyle(color: OuroColors.textTertiary, fontSize: 15),
-                      ),
-                    ),
-                  ),
-                  if (_requete.isNotEmpty)
-                    GestureDetector(
-                      onTap: () {
-                        _recherche.clear();
-                        setState(() => _requete = '');
-                      },
-                      child: Icon(Icons.close_rounded, size: 17, color: OuroColors.textTertiary),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        for (final m in filtres) widget.ligne(m),
-      ],
-    );
-  }
-}

@@ -2328,5 +2328,70 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vgYou": "Vous",
+  "vgGroup": "Groupe",
+  "vgCall": "Appel",
+  "vgAdd": "Ajouter",
+  "vgInvite": "Inviter",
+  "vgMedia": "Médias",
+  "vgCreatedBy": "Créé par {qui}, le {date}",
+  "@vgCreatedBy": {
+    "placeholders": {
+      "qui": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "vgMediaLinksDocs": "Médias, liens et docs",
+  "vgEncryption": "Chiffrement",
+  "vgEncryptionBody": "Chiffrés de bout en bout : personne d'autre, pas même les téléphones qui les relaient, ne peut lire les messages.",
+  "vgSettings": "Paramètres du groupe",
+  "vgRequests": "Demandes d'adhésion",
+  "vgAccept": "Accepter",
+  "vgDecline": "Refuser",
+  "vgAddMembers": "Ajouter des membres",
+  "vgInviteQr": "Inviter avec un code QR",
+  "vgOnline": "en ligne",
+  "vgAdmin": "Admin",
+  "vgMessage": "Écrire à {nom}",
+  "@vgMessage": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgCallMember": "Appeler {nom}",
+  "@vgCallMember": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgViewInfo": "Voir les infos",
+  "vgRemoveFromGroup": "Retirer {nom} du groupe",
+  "@vgRemoveFromGroup": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgOnlyAdminsEdit": "Seuls les administrateurs peuvent modifier les infos de ce groupe",
+  "vpMembersCan": "Les membres peuvent",
+  "vpOnlyAdminsChange": "Seuls les administrateurs peuvent changer ces paramètres.",
+  "vpEditInfo": "Modifier les infos du groupe",
+  "vpEditInfoBody": "Le nom, la photo et la description",
+  "vpSend": "Envoyer des messages",
+  "vpAdd": "Ajouter d'autres membres",
+  "vpAdminsCan": "Les administrateurs peuvent",
+  "vpApprove": "Approuver les nouveaux membres",
+  "vpApproveBody": "Activé, les personnes qui scannent le code QR du groupe attendent qu'un administrateur les accepte.",
+  "vpEditAdmins": "Modifier les administrateurs",
+  "vpAdminsFooter": "Les administrateurs peuvent tout faire dans le groupe, y compris nommer d'autres administrateurs."
 }

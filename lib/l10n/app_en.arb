@@ -2112,5 +2112,70 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vgYou": "You",
+  "vgGroup": "Group",
+  "vgCall": "Call",
+  "vgAdd": "Add",
+  "vgInvite": "Invite",
+  "vgMedia": "Media",
+  "vgCreatedBy": "Created by {qui} on {date}",
+  "@vgCreatedBy": {
+    "placeholders": {
+      "qui": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "vgMediaLinksDocs": "Media, links and docs",
+  "vgEncryption": "Encryption",
+  "vgEncryptionBody": "End-to-end encrypted: no one else, not even the phones relaying them, can read the messages.",
+  "vgSettings": "Group settings",
+  "vgRequests": "Join requests",
+  "vgAccept": "Accept",
+  "vgDecline": "Decline",
+  "vgAddMembers": "Add members",
+  "vgInviteQr": "Invite with a QR code",
+  "vgOnline": "online",
+  "vgAdmin": "Admin",
+  "vgMessage": "Message {nom}",
+  "@vgMessage": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgCallMember": "Call {nom}",
+  "@vgCallMember": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgViewInfo": "View info",
+  "vgRemoveFromGroup": "Remove {nom} from group",
+  "@vgRemoveFromGroup": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgOnlyAdminsEdit": "Only admins can edit this group's info",
+  "vpMembersCan": "Members can",
+  "vpOnlyAdminsChange": "Only admins can change these settings.",
+  "vpEditInfo": "Edit group info",
+  "vpEditInfoBody": "Name, photo and description",
+  "vpSend": "Send messages",
+  "vpAdd": "Add other members",
+  "vpAdminsCan": "Admins can",
+  "vpApprove": "Approve new members",
+  "vpApproveBody": "When on, people who scan the group's QR code wait for an admin to accept them.",
+  "vpEditAdmins": "Edit group admins",
+  "vpAdminsFooter": "Admins can do everything in the group, including making other admins."
 }

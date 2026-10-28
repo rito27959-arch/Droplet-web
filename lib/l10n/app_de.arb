@@ -2112,5 +2112,70 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vgYou": "Du",
+  "vgGroup": "Gruppe",
+  "vgCall": "Anruf",
+  "vgAdd": "Hinzufügen",
+  "vgInvite": "Einladen",
+  "vgMedia": "Medien",
+  "vgCreatedBy": "Erstellt von {qui} am {date}",
+  "@vgCreatedBy": {
+    "placeholders": {
+      "qui": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "vgMediaLinksDocs": "Medien, Links und Doks",
+  "vgEncryption": "Verschlüsselung",
+  "vgEncryptionBody": "Ende-zu-Ende-verschlüsselt: Niemand sonst, nicht einmal die weiterleitenden Telefone, kann die Nachrichten lesen.",
+  "vgSettings": "Gruppeneinstellungen",
+  "vgRequests": "Beitrittsanfragen",
+  "vgAccept": "Annehmen",
+  "vgDecline": "Ablehnen",
+  "vgAddMembers": "Mitglieder hinzufügen",
+  "vgInviteQr": "Mit QR-Code einladen",
+  "vgOnline": "online",
+  "vgAdmin": "Admin",
+  "vgMessage": "{nom} schreiben",
+  "@vgMessage": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgCallMember": "{nom} anrufen",
+  "@vgCallMember": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgViewInfo": "Infos anzeigen",
+  "vgRemoveFromGroup": "{nom} aus der Gruppe entfernen",
+  "@vgRemoveFromGroup": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgOnlyAdminsEdit": "Nur Admins können die Gruppeninfos bearbeiten",
+  "vpMembersCan": "Mitglieder können",
+  "vpOnlyAdminsChange": "Nur Admins können diese Einstellungen ändern.",
+  "vpEditInfo": "Gruppeninfos bearbeiten",
+  "vpEditInfoBody": "Name, Foto und Beschreibung",
+  "vpSend": "Nachrichten senden",
+  "vpAdd": "Weitere Mitglieder hinzufügen",
+  "vpAdminsCan": "Admins können",
+  "vpApprove": "Neue Mitglieder genehmigen",
+  "vpApproveBody": "Wenn aktiviert, warten Personen, die den QR-Code scannen, bis ein Admin sie annimmt.",
+  "vpEditAdmins": "Admins bearbeiten",
+  "vpAdminsFooter": "Admins dürfen in der Gruppe alles, auch weitere Admins ernennen."
 }

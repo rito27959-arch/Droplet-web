@@ -2112,5 +2112,70 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vgYou": "आप",
+  "vgGroup": "समूह",
+  "vgCall": "कॉल",
+  "vgAdd": "जोड़ें",
+  "vgInvite": "आमंत्रित",
+  "vgMedia": "मीडिया",
+  "vgCreatedBy": "{qui} ने {date} को बनाया",
+  "@vgCreatedBy": {
+    "placeholders": {
+      "qui": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "vgMediaLinksDocs": "मीडिया, लिंक और दस्तावेज़",
+  "vgEncryption": "एन्क्रिप्शन",
+  "vgEncryptionBody": "एंड-टू-एंड एन्क्रिप्टेड: कोई और, संदेश आगे भेजने वाले फ़ोन भी, उन्हें नहीं पढ़ सकते।",
+  "vgSettings": "समूह सेटिंग्स",
+  "vgRequests": "जुड़ने के अनुरोध",
+  "vgAccept": "स्वीकारें",
+  "vgDecline": "अस्वीकारें",
+  "vgAddMembers": "सदस्य जोड़ें",
+  "vgInviteQr": "QR कोड से आमंत्रित करें",
+  "vgOnline": "ऑनलाइन",
+  "vgAdmin": "एडमिन",
+  "vgMessage": "{nom} को संदेश भेजें",
+  "@vgMessage": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgCallMember": "{nom} को कॉल करें",
+  "@vgCallMember": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgViewInfo": "जानकारी देखें",
+  "vgRemoveFromGroup": "{nom} को समूह से हटाएँ",
+  "@vgRemoveFromGroup": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgOnlyAdminsEdit": "केवल एडमिन इस समूह की जानकारी बदल सकते हैं",
+  "vpMembersCan": "सदस्य कर सकते हैं",
+  "vpOnlyAdminsChange": "केवल एडमिन ये सेटिंग्स बदल सकते हैं।",
+  "vpEditInfo": "समूह जानकारी बदलें",
+  "vpEditInfoBody": "नाम, फ़ोटो और विवरण",
+  "vpSend": "संदेश भेजें",
+  "vpAdd": "अन्य सदस्य जोड़ें",
+  "vpAdminsCan": "एडमिन कर सकते हैं",
+  "vpApprove": "नए सदस्यों को मंज़ूरी दें",
+  "vpApproveBody": "चालू होने पर, समूह का QR कोड स्कैन करने वाले लोग एडमिन की मंज़ूरी का इंतज़ार करेंगे।",
+  "vpEditAdmins": "एडमिन बदलें",
+  "vpAdminsFooter": "एडमिन समूह में सब कुछ कर सकते हैं, दूसरों को एडमिन बनाना भी।"
 }

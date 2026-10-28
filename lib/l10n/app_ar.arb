@@ -2112,5 +2112,70 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vgYou": "أنت",
+  "vgGroup": "مجموعة",
+  "vgCall": "اتصال",
+  "vgAdd": "إضافة",
+  "vgInvite": "دعوة",
+  "vgMedia": "الوسائط",
+  "vgCreatedBy": "أنشأها {qui} في {date}",
+  "@vgCreatedBy": {
+    "placeholders": {
+      "qui": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "vgMediaLinksDocs": "الوسائط والروابط والمستندات",
+  "vgEncryption": "التشفير",
+  "vgEncryptionBody": "مشفرة تمامًا بين الطرفين: لا أحد غيركم، ولا حتى الهواتف التي تنقلها، يمكنه قراءة الرسائل.",
+  "vgSettings": "إعدادات المجموعة",
+  "vgRequests": "طلبات الانضمام",
+  "vgAccept": "قبول",
+  "vgDecline": "رفض",
+  "vgAddMembers": "إضافة أعضاء",
+  "vgInviteQr": "الدعوة برمز QR",
+  "vgOnline": "متصل",
+  "vgAdmin": "مشرف",
+  "vgMessage": "مراسلة {nom}",
+  "@vgMessage": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgCallMember": "الاتصال بـ{nom}",
+  "@vgCallMember": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgViewInfo": "عرض المعلومات",
+  "vgRemoveFromGroup": "إزالة {nom} من المجموعة",
+  "@vgRemoveFromGroup": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgOnlyAdminsEdit": "يمكن للمشرفين فقط تعديل معلومات هذه المجموعة",
+  "vpMembersCan": "يمكن للأعضاء",
+  "vpOnlyAdminsChange": "يمكن للمشرفين فقط تغيير هذه الإعدادات.",
+  "vpEditInfo": "تعديل معلومات المجموعة",
+  "vpEditInfoBody": "الاسم والصورة والوصف",
+  "vpSend": "إرسال الرسائل",
+  "vpAdd": "إضافة أعضاء آخرين",
+  "vpAdminsCan": "يمكن للمشرفين",
+  "vpApprove": "الموافقة على الأعضاء الجدد",
+  "vpApproveBody": "عند التفعيل، ينتظر من يمسح رمز QR الخاص بالمجموعة موافقة أحد المشرفين.",
+  "vpEditAdmins": "تعديل المشرفين",
+  "vpAdminsFooter": "يمكن للمشرفين فعل كل شيء في المجموعة، بما في ذلك تعيين مشرفين آخرين."
 }

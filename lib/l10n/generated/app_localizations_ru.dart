@@ -6164,4 +6164,114 @@ class AppLocalizationsRu extends AppLocalizations {
   String blSpeed(String vitesse) {
     return 'Скорость $vitesse';
   }
+
+  @override
+  String get vgYou => 'Вы';
+
+  @override
+  String get vgGroup => 'Группа';
+
+  @override
+  String get vgCall => 'Звонок';
+
+  @override
+  String get vgAdd => 'Добавить';
+
+  @override
+  String get vgInvite => 'Пригласить';
+
+  @override
+  String get vgMedia => 'Медиа';
+
+  @override
+  String vgCreatedBy(String qui, String date) {
+    return 'Создана: ${qui}, ${date}';
+  }
+
+  @override
+  String get vgMediaLinksDocs => 'Медиа, ссылки и документы';
+
+  @override
+  String get vgEncryption => 'Шифрование';
+
+  @override
+  String get vgEncryptionBody => 'Сквозное шифрование: никто другой, даже телефоны-ретрансляторы, не может прочитать сообщения.';
+
+  @override
+  String get vgSettings => 'Настройки группы';
+
+  @override
+  String get vgRequests => 'Запросы на вступление';
+
+  @override
+  String get vgAccept => 'Принять';
+
+  @override
+  String get vgDecline => 'Отклонить';
+
+  @override
+  String get vgAddMembers => 'Добавить участников';
+
+  @override
+  String get vgInviteQr => 'Пригласить по QR-коду';
+
+  @override
+  String get vgOnline => 'в сети';
+
+  @override
+  String get vgAdmin => 'Админ';
+
+  @override
+  String vgMessage(String nom) {
+    return 'Написать ${nom}';
+  }
+
+  @override
+  String vgCallMember(String nom) {
+    return 'Позвонить ${nom}';
+  }
+
+  @override
+  String get vgViewInfo => 'Сведения';
+
+  @override
+  String vgRemoveFromGroup(String nom) {
+    return 'Удалить ${nom} из группы';
+  }
+
+  @override
+  String get vgOnlyAdminsEdit => 'Только администраторы могут менять сведения о группе';
+
+  @override
+  String get vpMembersCan => 'Участники могут';
+
+  @override
+  String get vpOnlyAdminsChange => 'Только администраторы могут менять эти настройки.';
+
+  @override
+  String get vpEditInfo => 'Изменять сведения о группе';
+
+  @override
+  String get vpEditInfoBody => 'Название, фото и описание';
+
+  @override
+  String get vpSend => 'Отправлять сообщения';
+
+  @override
+  String get vpAdd => 'Добавлять участников';
+
+  @override
+  String get vpAdminsCan => 'Администраторы могут';
+
+  @override
+  String get vpApprove => 'Одобрять новых участников';
+
+  @override
+  String get vpApproveBody => 'Если включено, отсканировавшие QR-код группы ждут одобрения администратора.';
+
+  @override
+  String get vpEditAdmins => 'Изменить администраторов';
+
+  @override
+  String get vpAdminsFooter => 'Администраторы могут всё в группе, в том числе назначать других администраторов.';
 }

@@ -5921,4 +5921,114 @@ class AppLocalizationsZh extends AppLocalizations {
   String blSpeed(String vitesse) {
     return '速度 $vitesse';
   }
+
+  @override
+  String get vgYou => '你';
+
+  @override
+  String get vgGroup => '群组';
+
+  @override
+  String get vgCall => '通话';
+
+  @override
+  String get vgAdd => '添加';
+
+  @override
+  String get vgInvite => '邀请';
+
+  @override
+  String get vgMedia => '媒体';
+
+  @override
+  String vgCreatedBy(String qui, String date) {
+    return '由${qui}创建于${date}';
+  }
+
+  @override
+  String get vgMediaLinksDocs => '媒体、链接和文档';
+
+  @override
+  String get vgEncryption => '加密';
+
+  @override
+  String get vgEncryptionBody => '端到端加密：其他任何人，包括转发消息的手机，都无法读取消息。';
+
+  @override
+  String get vgSettings => '群组设置';
+
+  @override
+  String get vgRequests => '入群申请';
+
+  @override
+  String get vgAccept => '接受';
+
+  @override
+  String get vgDecline => '拒绝';
+
+  @override
+  String get vgAddMembers => '添加成员';
+
+  @override
+  String get vgInviteQr => '用二维码邀请';
+
+  @override
+  String get vgOnline => '在线';
+
+  @override
+  String get vgAdmin => '管理员';
+
+  @override
+  String vgMessage(String nom) {
+    return '给${nom}发消息';
+  }
+
+  @override
+  String vgCallMember(String nom) {
+    return '呼叫${nom}';
+  }
+
+  @override
+  String get vgViewInfo => '查看信息';
+
+  @override
+  String vgRemoveFromGroup(String nom) {
+    return '将${nom}移出群组';
+  }
+
+  @override
+  String get vgOnlyAdminsEdit => '只有管理员可以编辑群组信息';
+
+  @override
+  String get vpMembersCan => '成员可以';
+
+  @override
+  String get vpOnlyAdminsChange => '只有管理员可以更改这些设置。';
+
+  @override
+  String get vpEditInfo => '编辑群组信息';
+
+  @override
+  String get vpEditInfoBody => '名称、照片和简介';
+
+  @override
+  String get vpSend => '发送消息';
+
+  @override
+  String get vpAdd => '添加其他成员';
+
+  @override
+  String get vpAdminsCan => '管理员可以';
+
+  @override
+  String get vpApprove => '审核新成员';
+
+  @override
+  String get vpApproveBody => '开启后，扫描群二维码的人需等待管理员批准。';
+
+  @override
+  String get vpEditAdmins => '编辑管理员';
+
+  @override
+  String get vpAdminsFooter => '管理员可以在群里做任何事，包括任命其他管理员。';
 }

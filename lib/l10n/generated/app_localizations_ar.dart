@@ -6175,4 +6175,114 @@ class AppLocalizationsAr extends AppLocalizations {
   String blSpeed(String vitesse) {
     return 'السرعة $vitesse';
   }
+
+  @override
+  String get vgYou => 'أنت';
+
+  @override
+  String get vgGroup => 'مجموعة';
+
+  @override
+  String get vgCall => 'اتصال';
+
+  @override
+  String get vgAdd => 'إضافة';
+
+  @override
+  String get vgInvite => 'دعوة';
+
+  @override
+  String get vgMedia => 'الوسائط';
+
+  @override
+  String vgCreatedBy(String qui, String date) {
+    return 'أنشأها ${qui} في ${date}';
+  }
+
+  @override
+  String get vgMediaLinksDocs => 'الوسائط والروابط والمستندات';
+
+  @override
+  String get vgEncryption => 'التشفير';
+
+  @override
+  String get vgEncryptionBody => 'مشفرة تمامًا بين الطرفين: لا أحد غيركم، ولا حتى الهواتف التي تنقلها، يمكنه قراءة الرسائل.';
+
+  @override
+  String get vgSettings => 'إعدادات المجموعة';
+
+  @override
+  String get vgRequests => 'طلبات الانضمام';
+
+  @override
+  String get vgAccept => 'قبول';
+
+  @override
+  String get vgDecline => 'رفض';
+
+  @override
+  String get vgAddMembers => 'إضافة أعضاء';
+
+  @override
+  String get vgInviteQr => 'الدعوة برمز QR';
+
+  @override
+  String get vgOnline => 'متصل';
+
+  @override
+  String get vgAdmin => 'مشرف';
+
+  @override
+  String vgMessage(String nom) {
+    return 'مراسلة ${nom}';
+  }
+
+  @override
+  String vgCallMember(String nom) {
+    return 'الاتصال بـ${nom}';
+  }
+
+  @override
+  String get vgViewInfo => 'عرض المعلومات';
+
+  @override
+  String vgRemoveFromGroup(String nom) {
+    return 'إزالة ${nom} من المجموعة';
+  }
+
+  @override
+  String get vgOnlyAdminsEdit => 'يمكن للمشرفين فقط تعديل معلومات هذه المجموعة';
+
+  @override
+  String get vpMembersCan => 'يمكن للأعضاء';
+
+  @override
+  String get vpOnlyAdminsChange => 'يمكن للمشرفين فقط تغيير هذه الإعدادات.';
+
+  @override
+  String get vpEditInfo => 'تعديل معلومات المجموعة';
+
+  @override
+  String get vpEditInfoBody => 'الاسم والصورة والوصف';
+
+  @override
+  String get vpSend => 'إرسال الرسائل';
+
+  @override
+  String get vpAdd => 'إضافة أعضاء آخرين';
+
+  @override
+  String get vpAdminsCan => 'يمكن للمشرفين';
+
+  @override
+  String get vpApprove => 'الموافقة على الأعضاء الجدد';
+
+  @override
+  String get vpApproveBody => 'عند التفعيل، ينتظر من يمسح رمز QR الخاص بالمجموعة موافقة أحد المشرفين.';
+
+  @override
+  String get vpEditAdmins => 'تعديل المشرفين';
+
+  @override
+  String get vpAdminsFooter => 'يمكن للمشرفين فعل كل شيء في المجموعة، بما في ذلك تعيين مشرفين آخرين.';
 }

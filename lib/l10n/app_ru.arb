@@ -2112,5 +2112,70 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vgYou": "Вы",
+  "vgGroup": "Группа",
+  "vgCall": "Звонок",
+  "vgAdd": "Добавить",
+  "vgInvite": "Пригласить",
+  "vgMedia": "Медиа",
+  "vgCreatedBy": "Создана: {qui}, {date}",
+  "@vgCreatedBy": {
+    "placeholders": {
+      "qui": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "vgMediaLinksDocs": "Медиа, ссылки и документы",
+  "vgEncryption": "Шифрование",
+  "vgEncryptionBody": "Сквозное шифрование: никто другой, даже телефоны-ретрансляторы, не может прочитать сообщения.",
+  "vgSettings": "Настройки группы",
+  "vgRequests": "Запросы на вступление",
+  "vgAccept": "Принять",
+  "vgDecline": "Отклонить",
+  "vgAddMembers": "Добавить участников",
+  "vgInviteQr": "Пригласить по QR-коду",
+  "vgOnline": "в сети",
+  "vgAdmin": "Админ",
+  "vgMessage": "Написать {nom}",
+  "@vgMessage": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgCallMember": "Позвонить {nom}",
+  "@vgCallMember": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgViewInfo": "Сведения",
+  "vgRemoveFromGroup": "Удалить {nom} из группы",
+  "@vgRemoveFromGroup": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgOnlyAdminsEdit": "Только администраторы могут менять сведения о группе",
+  "vpMembersCan": "Участники могут",
+  "vpOnlyAdminsChange": "Только администраторы могут менять эти настройки.",
+  "vpEditInfo": "Изменять сведения о группе",
+  "vpEditInfoBody": "Название, фото и описание",
+  "vpSend": "Отправлять сообщения",
+  "vpAdd": "Добавлять участников",
+  "vpAdminsCan": "Администраторы могут",
+  "vpApprove": "Одобрять новых участников",
+  "vpApproveBody": "Если включено, отсканировавшие QR-код группы ждут одобрения администратора.",
+  "vpEditAdmins": "Изменить администраторов",
+  "vpAdminsFooter": "Администраторы могут всё в группе, в том числе назначать других администраторов."
 }

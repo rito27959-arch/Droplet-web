@@ -2112,5 +2112,70 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vgYou": "Tu",
+  "vgGroup": "Gruppo",
+  "vgCall": "Chiama",
+  "vgAdd": "Aggiungi",
+  "vgInvite": "Invita",
+  "vgMedia": "Media",
+  "vgCreatedBy": "Creato da {qui} il {date}",
+  "@vgCreatedBy": {
+    "placeholders": {
+      "qui": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "vgMediaLinksDocs": "Media, link e documenti",
+  "vgEncryption": "Crittografia",
+  "vgEncryptionBody": "Crittografia end-to-end: nessun altro, nemmeno i telefoni che li inoltrano, può leggere i messaggi.",
+  "vgSettings": "Impostazioni gruppo",
+  "vgRequests": "Richieste di adesione",
+  "vgAccept": "Accetta",
+  "vgDecline": "Rifiuta",
+  "vgAddMembers": "Aggiungi membri",
+  "vgInviteQr": "Invita con un codice QR",
+  "vgOnline": "online",
+  "vgAdmin": "Admin",
+  "vgMessage": "Scrivi a {nom}",
+  "@vgMessage": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgCallMember": "Chiama {nom}",
+  "@vgCallMember": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgViewInfo": "Vedi info",
+  "vgRemoveFromGroup": "Rimuovi {nom} dal gruppo",
+  "@vgRemoveFromGroup": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgOnlyAdminsEdit": "Solo gli amministratori possono modificare le info del gruppo",
+  "vpMembersCan": "I membri possono",
+  "vpOnlyAdminsChange": "Solo gli amministratori possono cambiare queste impostazioni.",
+  "vpEditInfo": "Modificare le info del gruppo",
+  "vpEditInfoBody": "Nome, foto e descrizione",
+  "vpSend": "Inviare messaggi",
+  "vpAdd": "Aggiungere altri membri",
+  "vpAdminsCan": "Gli amministratori possono",
+  "vpApprove": "Approvare i nuovi membri",
+  "vpApproveBody": "Se attivo, chi scansiona il codice QR del gruppo attende che un amministratore lo accetti.",
+  "vpEditAdmins": "Modifica amministratori",
+  "vpAdminsFooter": "Gli amministratori possono fare tutto nel gruppo, anche nominare altri amministratori."
 }

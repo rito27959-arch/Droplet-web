@@ -6090,4 +6090,114 @@ class AppLocalizationsEn extends AppLocalizations {
   String blSpeed(String vitesse) {
     return 'Speed $vitesse';
   }
+
+  @override
+  String get vgYou => 'You';
+
+  @override
+  String get vgGroup => 'Group';
+
+  @override
+  String get vgCall => 'Call';
+
+  @override
+  String get vgAdd => 'Add';
+
+  @override
+  String get vgInvite => 'Invite';
+
+  @override
+  String get vgMedia => 'Media';
+
+  @override
+  String vgCreatedBy(String qui, String date) {
+    return 'Created by ${qui} on ${date}';
+  }
+
+  @override
+  String get vgMediaLinksDocs => 'Media, links and docs';
+
+  @override
+  String get vgEncryption => 'Encryption';
+
+  @override
+  String get vgEncryptionBody => 'End-to-end encrypted: no one else, not even the phones relaying them, can read the messages.';
+
+  @override
+  String get vgSettings => 'Group settings';
+
+  @override
+  String get vgRequests => 'Join requests';
+
+  @override
+  String get vgAccept => 'Accept';
+
+  @override
+  String get vgDecline => 'Decline';
+
+  @override
+  String get vgAddMembers => 'Add members';
+
+  @override
+  String get vgInviteQr => 'Invite with a QR code';
+
+  @override
+  String get vgOnline => 'online';
+
+  @override
+  String get vgAdmin => 'Admin';
+
+  @override
+  String vgMessage(String nom) {
+    return 'Message ${nom}';
+  }
+
+  @override
+  String vgCallMember(String nom) {
+    return 'Call ${nom}';
+  }
+
+  @override
+  String get vgViewInfo => 'View info';
+
+  @override
+  String vgRemoveFromGroup(String nom) {
+    return 'Remove ${nom} from group';
+  }
+
+  @override
+  String get vgOnlyAdminsEdit => 'Only admins can edit this group\'s info';
+
+  @override
+  String get vpMembersCan => 'Members can';
+
+  @override
+  String get vpOnlyAdminsChange => 'Only admins can change these settings.';
+
+  @override
+  String get vpEditInfo => 'Edit group info';
+
+  @override
+  String get vpEditInfoBody => 'Name, photo and description';
+
+  @override
+  String get vpSend => 'Send messages';
+
+  @override
+  String get vpAdd => 'Add other members';
+
+  @override
+  String get vpAdminsCan => 'Admins can';
+
+  @override
+  String get vpApprove => 'Approve new members';
+
+  @override
+  String get vpApproveBody => 'When on, people who scan the group\'s QR code wait for an admin to accept them.';
+
+  @override
+  String get vpEditAdmins => 'Edit group admins';
+
+  @override
+  String get vpAdminsFooter => 'Admins can do everything in the group, including making other admins.';
 }

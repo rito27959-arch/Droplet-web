@@ -2112,5 +2112,70 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vgYou": "Você",
+  "vgGroup": "Grupo",
+  "vgCall": "Ligar",
+  "vgAdd": "Adicionar",
+  "vgInvite": "Convidar",
+  "vgMedia": "Mídia",
+  "vgCreatedBy": "Criado por {qui} em {date}",
+  "@vgCreatedBy": {
+    "placeholders": {
+      "qui": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "vgMediaLinksDocs": "Mídia, links e documentos",
+  "vgEncryption": "Criptografia",
+  "vgEncryptionBody": "Criptografia de ponta a ponta: ninguém mais, nem os telefones que os retransmitem, pode ler as mensagens.",
+  "vgSettings": "Configurações do grupo",
+  "vgRequests": "Pedidos de entrada",
+  "vgAccept": "Aceitar",
+  "vgDecline": "Recusar",
+  "vgAddMembers": "Adicionar membros",
+  "vgInviteQr": "Convidar com um código QR",
+  "vgOnline": "online",
+  "vgAdmin": "Admin",
+  "vgMessage": "Enviar mensagem a {nom}",
+  "@vgMessage": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgCallMember": "Ligar para {nom}",
+  "@vgCallMember": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgViewInfo": "Ver informações",
+  "vgRemoveFromGroup": "Remover {nom} do grupo",
+  "@vgRemoveFromGroup": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgOnlyAdminsEdit": "Só os administradores podem editar as informações deste grupo",
+  "vpMembersCan": "Os membros podem",
+  "vpOnlyAdminsChange": "Só os administradores podem alterar estas configurações.",
+  "vpEditInfo": "Editar informações do grupo",
+  "vpEditInfoBody": "Nome, foto e descrição",
+  "vpSend": "Enviar mensagens",
+  "vpAdd": "Adicionar outros membros",
+  "vpAdminsCan": "Os administradores podem",
+  "vpApprove": "Aprovar novos membros",
+  "vpApproveBody": "Quando ativado, quem ler o código QR do grupo aguarda a aprovação de um administrador.",
+  "vpEditAdmins": "Editar administradores",
+  "vpAdminsFooter": "Os administradores podem fazer tudo no grupo, inclusive nomear outros administradores."
 }

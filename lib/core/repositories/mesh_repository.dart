@@ -1487,11 +1487,18 @@ class MeshRepository {
             if (groupId != null &&
                 jeton != null &&
                 groupe != null &&
-                groupe.isAdmin(_myId) &&
+                ReglagesGroupes.de(groupId).peutAjouter(groupe, _myId) &&
                 !groupe.isActiveMember(senderId) &&
                 !StorageService.isContactBlocked(senderId) &&
                 JetonsInvitation.accepter(groupId, jeton)) {
-              await addGroupMember(groupId: groupId, peerId: senderId);
+              // « Approuver les nouveaux membres » : la demande attend
+              // qu'un administrateur la valide dans les infos du groupe.
+              if (ReglagesGroupes.de(groupId).approbation) {
+                DemandesAdhesion.ajouter(groupId, senderId);
+                _groupsChangedCtrl.add(groupId);
+              } else {
+                await addGroupMember(groupId: groupId, peerId: senderId);
+              }
             }
           } catch (e) {
             debugPrint('[MeshRepo] demande d entree illisible: $e');
@@ -3798,11 +3805,19 @@ class MeshRepository {
     });
   }
 
+  /// Refuse une demande d'adhésion (rien n'est envoyé au demandeur : un
+  /// refus ne doit rien lui apprendre).
+  void refuserDemandeAdhesion({required String groupId, required String peerId}) {
+    DemandesAdhesion.retirer(groupId, peerId);
+    _groupsChangedCtrl.add(groupId);
+  }
+
   Future<void> addGroupMember({required String groupId, required String peerId}) async {
     final group = StorageService.getGroup(groupId);
-    if (group == null || !group.isAdmin(_myId)) {
-      throw StateError('Seul un administrateur peut ajouter un membre à ce groupe');
+    if (group == null || !ReglagesGroupes.de(groupId).peutAjouter(group, _myId)) {
+      throw StateError('Vous ne pouvez pas ajouter de membre à ce groupe');
     }
+    DemandesAdhesion.retirer(groupId, peerId);
     final now = DateTime.now();
     await StorageService.upsertGroupMember(groupId: groupId, peerId: peerId, role: 'member', addedAt: now, addedBy: _myId);
     await StorageService.upsertGroup(
@@ -3860,8 +3875,8 @@ class MeshRepository {
   /// dans la plupart des messageries grand public).
   Future<void> renameGroup({required String groupId, required String name}) async {
     final group = StorageService.getGroup(groupId);
-    if (group == null || !group.isActiveMember(_myId)) {
-      throw StateError('Groupe introuvable ou vous n\'en êtes plus membre');
+    if (group == null || !ReglagesGroupes.de(groupId).peutModifierInfos(group, _myId)) {
+      throw StateError('Vous ne pouvez pas modifier les infos de ce groupe');
     }
     await StorageService.upsertGroup(
       id: group.id, name: name, avatarUrl: group.avatarUrl,
@@ -3995,10 +4010,21 @@ class MeshRepository {
 
     final existingGroup = StorageService.getGroup(groupId);
     final previouslyActive = existingGroup?.activeMembers.map((m) => m.peerId).toSet() ?? <String>{};
+    // ⚠️ LES DROITS S'ÉVALUENT SUR CE QU'ON SAVAIT AVANT ce manifeste : un
+    // manifeste ne peut pas se donner lui-même le droit qu'il exerce.
+    final reglagesAvant = ReglagesGroupes.de(groupId);
+    final emetteurEtaitAdmin = existingGroup?.isAdmin(senderId) ?? true;
 
     if (existingGroup == null || updatedAt.isAfter(existingGroup.updatedAt)) {
+      // « Seuls les admins modifient les infos » : un nom ou une photo
+      // changés par un simple membre ne sont pas repris.
+      final infosRefusees = existingGroup != null &&
+          (name != existingGroup.name || avatarUrl != existingGroup.avatarUrl) &&
+          !reglagesAvant.peutModifierInfos(existingGroup, senderId);
       await StorageService.upsertGroup(
-        id: groupId, name: name, avatarUrl: avatarUrl,
+        id: groupId,
+        name: infosRefusees ? existingGroup.name : name,
+        avatarUrl: infosRefusees ? existingGroup.avatarUrl : avatarUrl,
         createdBy: createdBy, createdAt: createdAt, updatedAt: updatedAt,
       );
     }
@@ -4017,6 +4043,16 @@ class MeshRepository {
         if (lm.peerId == peerId) { local = lm; break; }
       }
       final localEventTime = local == null ? null : (local.removedAt ?? local.addedAt);
+      // Un AJOUT n'est repris que si son auteur avait le droit d'ajouter
+      // (« seuls les admins ajoutent »). Les départs et retraits, eux,
+      // suivent la règle d'avant.
+      if (existingGroup != null &&
+          removedAt == null &&
+          !previouslyActive.contains(peerId) &&
+          addedBy != peerId &&
+          !reglagesAvant.peutAjouter(existingGroup, addedBy)) {
+        continue;
+      }
       if (local == null || localEventTime == null || incomingEventTime.isAfter(localEventTime)) {
         await StorageService.upsertGroupMember(
           groupId: groupId, peerId: peerId, role: role,
@@ -4052,7 +4088,7 @@ class MeshRepository {
       }
     }
 
-    ReglagesGroupes.appliquerDuSync(groupId, payload);
+    ReglagesGroupes.appliquerDuSync(groupId, payload, emetteurAdmin: emetteurEtaitAdmin);
 
     final updatedGroup = StorageService.getGroup(groupId);
     if (updatedGroup == null) return;

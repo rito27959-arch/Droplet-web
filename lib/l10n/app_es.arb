@@ -2112,5 +2112,70 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vgYou": "Tú",
+  "vgGroup": "Grupo",
+  "vgCall": "Llamar",
+  "vgAdd": "Añadir",
+  "vgInvite": "Invitar",
+  "vgMedia": "Archivos",
+  "vgCreatedBy": "Creado por {qui} el {date}",
+  "@vgCreatedBy": {
+    "placeholders": {
+      "qui": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "vgMediaLinksDocs": "Archivos, enlaces y documentos",
+  "vgEncryption": "Cifrado",
+  "vgEncryptionBody": "Cifrados de extremo a extremo: nadie más, ni siquiera los teléfonos que los retransmiten, puede leer los mensajes.",
+  "vgSettings": "Ajustes del grupo",
+  "vgRequests": "Solicitudes para unirse",
+  "vgAccept": "Aceptar",
+  "vgDecline": "Rechazar",
+  "vgAddMembers": "Añadir miembros",
+  "vgInviteQr": "Invitar con un código QR",
+  "vgOnline": "en línea",
+  "vgAdmin": "Admin",
+  "vgMessage": "Escribir a {nom}",
+  "@vgMessage": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgCallMember": "Llamar a {nom}",
+  "@vgCallMember": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgViewInfo": "Ver información",
+  "vgRemoveFromGroup": "Eliminar a {nom} del grupo",
+  "@vgRemoveFromGroup": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
+  "vgOnlyAdminsEdit": "Solo los administradores pueden editar la información de este grupo",
+  "vpMembersCan": "Los miembros pueden",
+  "vpOnlyAdminsChange": "Solo los administradores pueden cambiar estos ajustes.",
+  "vpEditInfo": "Editar la información del grupo",
+  "vpEditInfoBody": "Nombre, foto y descripción",
+  "vpSend": "Enviar mensajes",
+  "vpAdd": "Añadir otros miembros",
+  "vpAdminsCan": "Los administradores pueden",
+  "vpApprove": "Aprobar nuevos miembros",
+  "vpApproveBody": "Si está activado, quienes escaneen el código QR del grupo esperarán a que un administrador los acepte.",
+  "vpEditAdmins": "Editar administradores",
+  "vpAdminsFooter": "Los administradores pueden hacerlo todo en el grupo, incluso nombrar a otros administradores."
 }

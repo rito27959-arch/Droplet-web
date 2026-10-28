@@ -6103,4 +6103,114 @@ class AppLocalizationsIt extends AppLocalizations {
   String blSpeed(String vitesse) {
     return 'Velocità $vitesse';
   }
+
+  @override
+  String get vgYou => 'Tu';
+
+  @override
+  String get vgGroup => 'Gruppo';
+
+  @override
+  String get vgCall => 'Chiama';
+
+  @override
+  String get vgAdd => 'Aggiungi';
+
+  @override
+  String get vgInvite => 'Invita';
+
+  @override
+  String get vgMedia => 'Media';
+
+  @override
+  String vgCreatedBy(String qui, String date) {
+    return 'Creato da ${qui} il ${date}';
+  }
+
+  @override
+  String get vgMediaLinksDocs => 'Media, link e documenti';
+
+  @override
+  String get vgEncryption => 'Crittografia';
+
+  @override
+  String get vgEncryptionBody => 'Crittografia end-to-end: nessun altro, nemmeno i telefoni che li inoltrano, può leggere i messaggi.';
+
+  @override
+  String get vgSettings => 'Impostazioni gruppo';
+
+  @override
+  String get vgRequests => 'Richieste di adesione';
+
+  @override
+  String get vgAccept => 'Accetta';
+
+  @override
+  String get vgDecline => 'Rifiuta';
+
+  @override
+  String get vgAddMembers => 'Aggiungi membri';
+
+  @override
+  String get vgInviteQr => 'Invita con un codice QR';
+
+  @override
+  String get vgOnline => 'online';
+
+  @override
+  String get vgAdmin => 'Admin';
+
+  @override
+  String vgMessage(String nom) {
+    return 'Scrivi a ${nom}';
+  }
+
+  @override
+  String vgCallMember(String nom) {
+    return 'Chiama ${nom}';
+  }
+
+  @override
+  String get vgViewInfo => 'Vedi info';
+
+  @override
+  String vgRemoveFromGroup(String nom) {
+    return 'Rimuovi ${nom} dal gruppo';
+  }
+
+  @override
+  String get vgOnlyAdminsEdit => 'Solo gli amministratori possono modificare le info del gruppo';
+
+  @override
+  String get vpMembersCan => 'I membri possono';
+
+  @override
+  String get vpOnlyAdminsChange => 'Solo gli amministratori possono cambiare queste impostazioni.';
+
+  @override
+  String get vpEditInfo => 'Modificare le info del gruppo';
+
+  @override
+  String get vpEditInfoBody => 'Nome, foto e descrizione';
+
+  @override
+  String get vpSend => 'Inviare messaggi';
+
+  @override
+  String get vpAdd => 'Aggiungere altri membri';
+
+  @override
+  String get vpAdminsCan => 'Gli amministratori possono';
+
+  @override
+  String get vpApprove => 'Approvare i nuovi membri';
+
+  @override
+  String get vpApproveBody => 'Se attivo, chi scansiona il codice QR del gruppo attende che un amministratore lo accetti.';
+
+  @override
+  String get vpEditAdmins => 'Modifica amministratori';
+
+  @override
+  String get vpAdminsFooter => 'Gli amministratori possono fare tutto nel gruppo, anche nominare altri amministratori.';
 }

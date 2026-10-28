@@ -810,6 +810,210 @@ abstract class AppLocalizations {
   /// **'Vitesse {vitesse}'**
   String blSpeed(String vitesse);
 
+  /// No description provided for @vgYou.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous'**
+  String get vgYou;
+
+  /// No description provided for @vgGroup.
+  ///
+  /// In fr, this message translates to:
+  /// **'Groupe'**
+  String get vgGroup;
+
+  /// No description provided for @vgCall.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appel'**
+  String get vgCall;
+
+  /// No description provided for @vgAdd.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter'**
+  String get vgAdd;
+
+  /// No description provided for @vgInvite.
+  ///
+  /// In fr, this message translates to:
+  /// **'Inviter'**
+  String get vgInvite;
+
+  /// No description provided for @vgMedia.
+  ///
+  /// In fr, this message translates to:
+  /// **'Médias'**
+  String get vgMedia;
+
+  /// No description provided for @vgCreatedBy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créé par {qui}, le {date}'**
+  String vgCreatedBy(String qui, String date);
+
+  /// No description provided for @vgMediaLinksDocs.
+  ///
+  /// In fr, this message translates to:
+  /// **'Médias, liens et docs'**
+  String get vgMediaLinksDocs;
+
+  /// No description provided for @vgEncryption.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chiffrement'**
+  String get vgEncryption;
+
+  /// No description provided for @vgEncryptionBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chiffrés de bout en bout : personne d'autre, pas même les téléphones qui les relaient, ne peut lire les messages.'**
+  String get vgEncryptionBody;
+
+  /// No description provided for @vgSettings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paramètres du groupe'**
+  String get vgSettings;
+
+  /// No description provided for @vgRequests.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demandes d'adhésion'**
+  String get vgRequests;
+
+  /// No description provided for @vgAccept.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accepter'**
+  String get vgAccept;
+
+  /// No description provided for @vgDecline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Refuser'**
+  String get vgDecline;
+
+  /// No description provided for @vgAddMembers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter des membres'**
+  String get vgAddMembers;
+
+  /// No description provided for @vgInviteQr.
+  ///
+  /// In fr, this message translates to:
+  /// **'Inviter avec un code QR'**
+  String get vgInviteQr;
+
+  /// No description provided for @vgOnline.
+  ///
+  /// In fr, this message translates to:
+  /// **'en ligne'**
+  String get vgOnline;
+
+  /// No description provided for @vgAdmin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Admin'**
+  String get vgAdmin;
+
+  /// No description provided for @vgMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écrire à {nom}'**
+  String vgMessage(String nom);
+
+  /// No description provided for @vgCallMember.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appeler {nom}'**
+  String vgCallMember(String nom);
+
+  /// No description provided for @vgViewInfo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir les infos'**
+  String get vgViewInfo;
+
+  /// No description provided for @vgRemoveFromGroup.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer {nom} du groupe'**
+  String vgRemoveFromGroup(String nom);
+
+  /// No description provided for @vgOnlyAdminsEdit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seuls les administrateurs peuvent modifier les infos de ce groupe'**
+  String get vgOnlyAdminsEdit;
+
+  /// No description provided for @vpMembersCan.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les membres peuvent'**
+  String get vpMembersCan;
+
+  /// No description provided for @vpOnlyAdminsChange.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seuls les administrateurs peuvent changer ces paramètres.'**
+  String get vpOnlyAdminsChange;
+
+  /// No description provided for @vpEditInfo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier les infos du groupe'**
+  String get vpEditInfo;
+
+  /// No description provided for @vpEditInfoBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le nom, la photo et la description'**
+  String get vpEditInfoBody;
+
+  /// No description provided for @vpSend.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer des messages'**
+  String get vpSend;
+
+  /// No description provided for @vpAdd.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter d'autres membres'**
+  String get vpAdd;
+
+  /// No description provided for @vpAdminsCan.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les administrateurs peuvent'**
+  String get vpAdminsCan;
+
+  /// No description provided for @vpApprove.
+  ///
+  /// In fr, this message translates to:
+  /// **'Approuver les nouveaux membres'**
+  String get vpApprove;
+
+  /// No description provided for @vpApproveBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activé, les personnes qui scannent le code QR du groupe attendent qu'un administrateur les accepte.'**
+  String get vpApproveBody;
+
+  /// No description provided for @vpEditAdmins.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier les administrateurs'**
+  String get vpEditAdmins;
+
+  /// No description provided for @vpAdminsFooter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les administrateurs peuvent tout faire dans le groupe, y compris nommer d'autres administrateurs.'**
+  String get vpAdminsFooter;
+
   /// No description provided for @acReadyTitle.
   ///
   /// In fr, this message translates to:

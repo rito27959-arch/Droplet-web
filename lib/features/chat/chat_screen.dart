@@ -3532,15 +3532,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final peers = ref.watch(meshPeerListProvider);
     final repo = ref.watch(meshRepositoryProvider);
 
-    // Qui peut être mentionné ici : ceux qui ont déjà parlé dans le groupe.
-    // La liste est déposée pour l'analyse du texte, qui surligne alors les
-    // pseudos entiers, espaces compris.
+    // Qui peut être mentionné ici : dans un groupe, TOUS ses membres (comme
+    // WhatsApp) — pas seulement ceux qui ont déjà parlé, sans quoi on ne
+    // pouvait pas interpeller quelqu'un de silencieux. La liste est déposée
+    // pour l'analyse du texte, qui surligne alors les pseudos entiers,
+    // espaces compris.
+    final groupeMentions = _isGroup ? StorageService.getGroup(widget.groupId!) : null;
     Mentions.pseudos = _isGroup || _isBroadcast
         ? <String>{
+            if (groupeMentions != null)
+              for (final m in groupeMentions.activeMembers)
+                if (m.peerId != repo.myId)
+                  nomDuPair(m.peerId, [StorageService.getPeerRecord(m.peerId)?.pseudo]),
             for (final m in messages)
               if (m.senderId != repo.myId && m.authorPseudo.trim().isNotEmpty)
                 m.authorPseudo,
-          }.toList()
+          }.where((p) => p.trim().isNotEmpty).toList()
         : const [];
     final torConnected = ref.watch(torConnectedProvider);
     // Progression des fichiers en cours d'envoi/réception, et révision des
