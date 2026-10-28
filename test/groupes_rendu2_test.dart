@@ -192,6 +192,9 @@ void main() {
   for (final sombre in [false, true]) {
     final mode = sombre ? 'sombre' : 'clair';
     testWidgets('mentions $mode', (tester) async {
+      // ⚠️ LE THÈME AVANT DE CONSTRUIRE LES BULLES : leurs couleurs sont
+      // lues au moment où on les construit, ici, avant `rendre`.
+      OuroColors.setBrightness(sombre ? Brightness.dark : Brightness.light);
       Mentions.pseudos = ['Awa', 'Miguel', 'Rito'];
       Mentions.monPseudo = 'Rito';
       Mentions.couleurDe = (p) => p.toLowerCase() == 'awa' ? const Color(0xFF34C759) : const Color(0xFFFF9500);
