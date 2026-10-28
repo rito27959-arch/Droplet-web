@@ -551,8 +551,8 @@ class PastilleMention extends StatelessWidget {
       fond = couleur.withValues(alpha: sombre ? 0.85 : 0.9);
       encre = Colors.white;
     } else {
-      fond = couleur.withValues(alpha: sombre ? 0.26 : 0.16);
-      encre = sombre ? Color.lerp(couleur, Colors.white, 0.35)! : Color.lerp(couleur, Colors.black, 0.15)!;
+      fond = couleur.withValues(alpha: sombre ? 0.26 : 0.2);
+      encre = sombre ? Color.lerp(couleur, Colors.white, 0.35)! : Color.lerp(couleur, Colors.black, 0.42)!;
     }
     final taille = style.fontSize ?? 16;
     return Container(
