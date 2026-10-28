@@ -2101,5 +2101,16 @@
   "acRestoreOnline": "Desde la copia en línea",
   "acRestorePseudoTitle": "Tu seudónimo",
   "acRestorePseudoMessage": "El de la cuenta guardada en línea.",
-  "acBack": "Atrás"
+  "acBack": "Atrás",
+  "blPlay": "Reproducir",
+  "blPause": "Pausa",
+  "blClose": "Cerrar reproductor",
+  "blSpeed": "Velocidad {vitesse}",
+  "@blSpeed": {
+    "placeholders": {
+      "vitesse": {
+        "type": "String"
+      }
+    }
+  }
 }

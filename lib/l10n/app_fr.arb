@@ -2244,14 +2244,35 @@
   "adLink": "Lier un appareil",
   "adDevices": "Appareils",
   "adCount": "{n} sur {max}",
-  "@adCount": {"placeholders": {"n": {"type": "int"}, "max": {"type": "int"}}},
+  "@adCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "adNone": "Aucun appareil lié",
   "adFooter": "Vos messages sont chiffrés de bout en bout sur chacun de vos appareils. Chaque appareil lié a ses propres clés, et vous pouvez le déconnecter à tout moment.",
   "adLinkedOn": "Lié le {date}",
-  "@adLinkedOn": {"placeholders": {"date": {"type": "String"}}},
+  "@adLinkedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "adLogout": "Se déconnecter",
   "adLogoutTitle": "Déconnecter {nom} ?",
-  "@adLogoutTitle": {"placeholders": {"nom": {"type": "String"}}},
+  "@adLogoutTitle": {
+    "placeholders": {
+      "nom": {
+        "type": "String"
+      }
+    }
+  },
   "adLogoutBody": "Ce navigateur perdra l'accès à vos discussions. Vous pourrez le lier à nouveau à tout moment.",
   "adLogoutAll": "Déconnecter tous les appareils",
   "adLogoutAllBody": "Tous les navigateurs liés perdront l'accès à vos discussions.",
@@ -2290,5 +2311,22 @@
   "acRestorePseudoTitle": "Votre pseudo",
   "acRestorePseudoMessage": "Celui du compte sauvegardé en ligne.",
   "acBack": "Retour",
-  "@acReadyTitle": {"placeholders": {"pseudo": {"type": "String"}}}
+  "@acReadyTitle": {
+    "placeholders": {
+      "pseudo": {
+        "type": "String"
+      }
+    }
+  },
+  "blPlay": "Lire",
+  "blPause": "Pause",
+  "blClose": "Fermer le lecteur",
+  "blSpeed": "Vitesse {vitesse}",
+  "@blSpeed": {
+    "placeholders": {
+      "vitesse": {
+        "type": "String"
+      }
+    }
+  }
 }

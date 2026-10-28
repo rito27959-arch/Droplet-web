@@ -6086,4 +6086,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get acBack => 'Voltar';
+
+  @override
+  String get blPlay => 'Reproduzir';
+
+  @override
+  String get blPause => 'Pausar';
+
+  @override
+  String get blClose => 'Fechar leitor';
+
+  @override
+  String blSpeed(String vitesse) {
+    return 'Velocidade $vitesse';
+  }
 }

@@ -2101,5 +2101,16 @@
   "acRestoreOnline": "从在线备份恢复",
   "acRestorePseudoTitle": "您的昵称",
   "acRestorePseudoMessage": "在线备份的账户所用的昵称。",
-  "acBack": "返回"
+  "acBack": "返回",
+  "blPlay": "播放",
+  "blPause": "暂停",
+  "blClose": "关闭播放器",
+  "blSpeed": "速度 {vitesse}",
+  "@blSpeed": {
+    "placeholders": {
+      "vitesse": {
+        "type": "String"
+      }
+    }
+  }
 }

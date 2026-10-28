@@ -2101,5 +2101,16 @@
   "acRestoreOnline": "Dal backup online",
   "acRestorePseudoTitle": "Il tuo nome",
   "acRestorePseudoMessage": "Quello dell'account salvato online.",
-  "acBack": "Indietro"
+  "acBack": "Indietro",
+  "blPlay": "Riproduci",
+  "blPause": "Pausa",
+  "blClose": "Chiudi lettore",
+  "blSpeed": "Velocità {vitesse}",
+  "@blSpeed": {
+    "placeholders": {
+      "vitesse": {
+        "type": "String"
+      }
+    }
+  }
 }

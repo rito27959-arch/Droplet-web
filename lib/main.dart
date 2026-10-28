@@ -78,6 +78,7 @@ import 'core/services/appel_systeme.dart';
 import 'features/call/bandeau_appel.dart';
 import 'features/call/call_screen.dart';
 import 'features/call/ecran_sonnerie.dart';
+import 'features/chat/bandeau_lecture.dart';
 import 'features/call/group_call_screen.dart';
 import 'features/safety/emergency_mode_screen.dart';
 import 'features/group/group_create_screen.dart';
@@ -408,9 +409,15 @@ class DropletApp extends ConsumerWidget {
                           // change, comme Telegram. Ne pas le retirer ni le
                           // remplacer par un enfant simple.
                           key: ModeTransitionOverlay.repaintBoundaryKey,
-                          child: KeyedSubtree(
-                            key: ValueKey(brightness),
-                            child: child ?? const SizedBox(),
+                          // Le bandeau du vocal qui continue hors de sa
+                          // conversation : il POUSSE l'écran vers le bas
+                          // (voir `bandeau_lecture.dart`).
+                          child: BandeauLecture(
+                            routeur: _router,
+                            child: KeyedSubtree(
+                              key: ValueKey(brightness),
+                              child: child ?? const SizedBox(),
+                            ),
                           ),
                         ),
                       ),

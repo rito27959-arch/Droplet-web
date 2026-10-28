@@ -6052,4 +6052,18 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get acBack => 'वापस';
+
+  @override
+  String get blPlay => 'चलाएँ';
+
+  @override
+  String get blPause => 'रोकें';
+
+  @override
+  String get blClose => 'प्लेयर बंद करें';
+
+  @override
+  String blSpeed(String vitesse) {
+    return 'गति $vitesse';
+  }
 }

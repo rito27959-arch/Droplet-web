@@ -72,6 +72,8 @@
          rien. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
+    <!-- Le lecteur des messages vocaux hors de l'app (LectureVocaleService). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
@@ -368,6 +370,13 @@
         <service
             android:name=".AppelEnCoursService"
             android:foregroundServiceType="phoneCall|microphone|camera"
+            android:exported="false" />
+
+        <!-- Le lecteur d'un message vocal écouté hors de l'app : la
+             notification « média » et sa MediaSession. -->
+        <service
+            android:name=".LectureVocaleService"
+            android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
 
         <!-- Le bouton « Raccrocher » de la notification. -->

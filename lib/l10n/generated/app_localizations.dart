@@ -786,6 +786,30 @@ abstract class AppLocalizations {
   /// **'Plus tard'**
   String get acLater;
 
+  /// No description provided for @blPlay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lire'**
+  String get blPlay;
+
+  /// No description provided for @blPause.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pause'**
+  String get blPause;
+
+  /// No description provided for @blClose.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermer le lecteur'**
+  String get blClose;
+
+  /// No description provided for @blSpeed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vitesse {vitesse}'**
+  String blSpeed(String vitesse);
+
   /// No description provided for @acReadyTitle.
   ///
   /// In fr, this message translates to:

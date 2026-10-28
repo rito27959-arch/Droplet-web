@@ -2101,5 +2101,16 @@
   "acRestoreOnline": "من النسخة الاحتياطية عبر الإنترنت",
   "acRestorePseudoTitle": "اسمك المستعار",
   "acRestorePseudoMessage": "اسم الحساب المحفوظ عبر الإنترنت.",
-  "acBack": "رجوع"
+  "acBack": "رجوع",
+  "blPlay": "تشغيل",
+  "blPause": "إيقاف مؤقت",
+  "blClose": "إغلاق المشغّل",
+  "blSpeed": "السرعة {vitesse}",
+  "@blSpeed": {
+    "placeholders": {
+      "vitesse": {
+        "type": "String"
+      }
+    }
+  }
 }

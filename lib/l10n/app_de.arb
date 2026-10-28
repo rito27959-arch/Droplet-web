@@ -2101,5 +2101,16 @@
   "acRestoreOnline": "Aus der Online-Sicherung",
   "acRestorePseudoTitle": "Dein Name",
   "acRestorePseudoMessage": "Der Name des online gesicherten Kontos.",
-  "acBack": "Zurück"
+  "acBack": "Zurück",
+  "blPlay": "Abspielen",
+  "blPause": "Pause",
+  "blClose": "Player schließen",
+  "blSpeed": "Geschwindigkeit {vitesse}",
+  "@blSpeed": {
+    "placeholders": {
+      "vitesse": {
+        "type": "String"
+      }
+    }
+  }
 }

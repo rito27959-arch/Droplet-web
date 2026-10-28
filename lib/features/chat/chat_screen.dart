@@ -50,7 +50,6 @@ import 'package:video_player/video_player.dart';
 import 'package:go_router/go_router.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/models/mesh_message.dart';
@@ -67,6 +66,7 @@ import '../../core/services/notifs_conversation.dart';
 import '../../shared/widgets/explications.dart';
 import '../../core/services/journal_notifs.dart';
 import '../../core/services/brouillons.dart';
+import '../../core/services/lecteur_vocal.dart';
 import '../../core/services/epingles.dart';
 import '../../shared/widgets/banniere_notif.dart';
 import 'barre_enregistrement.dart';
@@ -450,21 +450,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// laisser dans la barre revenait à le lire depuis une autre classe —
   /// ce qui ne compile pas.
   final _RecordDrag _recDrag = _RecordDrag();
-  bool _playingAudio = false;
   final _recorder = AudioRecorder();
-  AudioPlayer? _player;
-  String? _activeAudioFile;
-  double _playbackProgress = 0;
-  Duration? _playbackPosition;
-  StreamSubscription<Duration>? _posSub;
-  StreamSubscription<Duration>? _durSub;
-  StreamSubscription<void>? _completeSub;
-  Duration? _activeAudioDuration;
 
-  /// Vitesse de lecture des messages vocaux (1×, 1,5× ou 2×). Conservée
-  /// d'un message à l'autre : quelqu'un qui écoute vite veut écouter
-  /// vite tout le temps, pas le redemander à chaque bulle.
-  double _playbackSpeed = 1.0;
+  // ── LECTURE DES VOCAUX ───────────────────────────────────────────
+  //
+  // ⚠️ LE LECTEUR N'EST PLUS ICI : c'est `LecteurVocal`, unique pour
+  // toute l'app, pour que la voix continue quand on quitte la
+  // conversation (bandeau en haut de l'app, notification hors de l'app).
+  // Ces accesseurs ne font que lire son état.
+  LecteurVocal get _lecteur => LecteurVocal.instance;
+  bool get _playingAudio => _lecteur.enLecture;
+  String? get _activeAudioFile => _lecteur.piste?.fileId;
+  double get _playbackProgress => _lecteur.progression;
+  Duration? get _playbackPosition => _lecteur.piste == null ? null : _lecteur.position;
+  double get _playbackSpeed => _lecteur.vitesse;
+
+  void _surLecteur() {
+    if (mounted) setState(() {});
+  }
+
+  void _vocalIlisible() {
+    if (!mounted) return;
+    ref.read(toastProvider.notifier).show(AppLocalizations.of(context).chVoiceUnreadable, type: DropletToastType.error);
+  }
 
   // ── TRANSCRIPTION DES VOCAUX ─────────────────────────────────────
   //
@@ -589,9 +597,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   }
 
   /// Les vocaux déjà écoutés, pour la pastille « non lu ». En mémoire
-  /// seulement : au prochain lancement, la pastille disparaît de toute
-  /// façon puisque les messages sont alors tous anciens.
-  final Set<String> _playedVoiceNotes = {};
+  /// seulement (dans `LecteurVocal`, pour survivre à la fermeture de la
+  /// conversation) : au prochain lancement, la pastille disparaît de
+  /// toute façon puisque les messages sont alors tous anciens.
+  Set<String> get _playedVoiceNotes => _lecteur.ecoutes;
 
   // ── Enregistrement en cours ──────────────────────────────────────
   //
@@ -669,6 +678,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   @override
   void initState() {
     super.initState();
+    LecteurVocal.instance.addListener(_surLecteur);
+    LecteurVocal.instance.surErreur = _vocalIlisible;
     final key = _isGroup
         ? widget.groupId
         : (_isBroadcast ? 'broadcast' : widget.peerId);
@@ -1112,12 +1123,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     _flashTimer?.cancel();
     _typingTimer?.cancel();
     _ampTimer?.cancel();
-    _posSub?.cancel();
-    _durSub?.cancel();
-    _completeSub?.cancel();
+    LecteurVocal.instance.removeListener(_surLecteur);
+    if (LecteurVocal.instance.surErreur == _vocalIlisible) LecteurVocal.instance.surErreur = null;
     _reactionSub?.cancel();
     _effectSub?.cancel();
-    _player?.dispose();
     // Quitter la conversation pendant un enregistrement doit couper le
     // micro : le laisser ouvert en arrière-plan est autant un problème de
     // vie privée que de batterie.
@@ -2647,10 +2656,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     }
   }
 
-  /// Démarre ou arrête la lecture d'un message vocal reçu — un simple
-  /// bouton « play/pause », avec une petite barre de progression qui
-  /// avance pendant la lecture.
+  /// Lecture ⇄ pause d'un message vocal — par le lecteur unique de
+  /// l'app (`LecteurVocal`), qui continue quand on quitte la conversation.
   Future<void> _toggleAudio(String fileId, String fileName) async {
+    if (_lecteur.estActif(fileId)) {
+      await _lecteur.basculer();
+      return;
+    }
     final path = await StorageService.getSharedFilePath(fileId, fileName);
     if (path == null) {
       if (!mounted) return;
@@ -2662,159 +2674,64 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           );
       return;
     }
-    if (_playingAudio && _activeAudioFile == fileId) {
-      await _stopPlayback();
-      return;
-    }
-    await _playAudioFile(fileId, path);
-  }
-
-  /// Lance la lecture d'un fichier audio déjà présent sur l'appareil.
-  Future<void> _playAudioFile(String fileId, String path) async {
-    _player ??= AudioPlayer();
-    await _player!.stop();
-
-    // ⚠️ Ces trois abonnements DOIVENT être annulés avant d'en créer de
-    // nouveaux. `listen` ajoute un auditeur de plus à chaque lecture sans
-    // jamais retirer le précédent : au bout de dix messages vocaux
-    // écoutés, dix rappels se déclenchaient à chaque battement du
-    // lecteur. L'oubli portait surtout sur `onPlayerComplete`, qui
-    // n'était même pas stocké dans une variable.
-    await _posSub?.cancel();
-    await _durSub?.cancel();
-    await _completeSub?.cancel();
-
-    _activeAudioFile = fileId;
-    _activeAudioDuration = null;
-    setState(() {
-      _playingAudio = true;
-      _playbackProgress = 0;
-      _playbackPosition = Duration.zero;
-      _playedVoiceNotes.add(fileId);
-    });
-
-    _durSub = _player!.onDurationChanged.listen((d) {
-      _activeAudioDuration = d;
-    });
-    _posSub = _player!.onPositionChanged.listen((pos) {
-      final total = _activeAudioDuration;
-      if (!mounted || total == null || total.inMilliseconds == 0) return;
-      setState(() {
-        _playbackPosition = pos;
-        _playbackProgress = (pos.inMilliseconds / total.inMilliseconds).clamp(
-          0.0,
-          1.0,
-        );
-      });
-    });
-    _completeSub = _player!.onPlayerComplete.listen((_) => _onPlaybackDone());
-
-    try {
-      await _player!.setPlaybackRate(_playbackSpeed);
-      await _player!.play(DeviceFileSource(path));
-    } catch (e) {
-      // Fichier tronqué par un transfert interrompu, ou format que
-      // l'appareil ne sait pas lire. On le dit, et on revient à l'état
-      // d'arrêt — plutôt que de laisser l'exception faire tomber l'app.
-      debugPrint('[Chat] lecture impossible: $e');
-      await _stopPlayback();
-      if (!mounted) return;
-      ref
-          .read(toastProvider.notifier)
-          .show(
-            AppLocalizations.of(context).chVoiceUnreadable,
-            type: DropletToastType.error,
-          );
-    }
-  }
-
-  Future<void> _stopPlayback() async {
-    await _player?.stop();
-    await _posSub?.cancel();
-    await _durSub?.cancel();
-    await _completeSub?.cancel();
-    _posSub = null;
-    _durSub = null;
-    _completeSub = null;
-    if (!mounted) return;
-    setState(() {
-      _playingAudio = false;
-      _activeAudioFile = null;
-      _playbackProgress = 0;
-      _playbackPosition = null;
-    });
-  }
-
-  /// Un vocal vient de se terminer : on enchaîne sur le suivant s'il y
-  /// en a un juste après, non encore écouté.
-  ///
-  /// C'est le comportement de WhatsApp, et il change tout quand on
-  /// reçoit plusieurs vocaux d'affilée : sans lui, il faut rappuyer sur
-  /// chaque bulle, ce qui casse l'écoute exactement comme si on coupait
-  /// la parole à quelqu'un.
-  Future<void> _onPlaybackDone() async {
-    final finished = _activeAudioFile;
-    await _stopPlayback();
-    if (finished == null || !mounted) return;
-
-    final messages = _isGroup
-        ? ref.read(groupMessagesProvider(widget.groupId!))
-        : ref.read(
-            conversationMessagesProvider(_isBroadcast ? null : widget.peerId),
-          );
-
-    final index = messages.indexWhere((m) => m.fileId == finished);
+    final messages = _messagesActuels();
+    final index = messages.indexWhere((m) => m.fileId == fileId);
     if (index < 0) return;
+    await _lecteur.jouer(_piste(messages[index]), suite: _suiteApres(messages, index));
+  }
 
+  List<MeshMessage> _messagesActuels() => _isGroup
+      ? ref.read(groupMessagesProvider(widget.groupId!))
+      : ref.read(conversationMessagesProvider(_isBroadcast ? null : widget.peerId));
+
+  /// La route de cette conversation, pour y revenir depuis le bandeau ou
+  /// la notification.
+  String get _routeConversation => _isGroup ? '/group/${widget.groupId}' : '/chat/${widget.peerId}';
+
+  PisteVocale _piste(MeshMessage m) {
+    final l10n = AppLocalizations.of(context);
+    final moi = m.senderId == ref.read(meshRepositoryProvider).myId;
+    final groupe = _isGroup ? StorageService.getGroup(widget.groupId!)?.name : null;
+    final nom = moi
+        ? (StorageService.currentUser?.pseudo ?? m.authorPseudo)
+        : nomDuPair(m.senderId ?? '', [m.authorPseudo, StorageService.getPeerRecord(m.senderId ?? '')?.pseudo]);
+    return PisteVocale(
+      fileId: m.fileId!,
+      fileName: m.fileName ?? '',
+      titre: nom,
+      sousTitre: groupe == null ? l10n.chVoiceMessageLabel : '${l10n.chVoiceMessageLabel} · $groupe',
+      route: _routeConversation,
+      image: moi ? null : AvatarService.cheminPair(m.senderId),
+    );
+  }
+
+  /// Les vocaux à enchaîner après celui d'indice [index] : les suivants
+  /// REÇUS et jamais écoutés, sans trou (comme WhatsApp : on s'arrête au
+  /// premier message de soi ou au premier vocal déjà entendu).
+  List<PisteVocale> _suiteApres(List<MeshMessage> messages, int index) {
+    final myId = ref.read(meshRepositoryProvider).myId;
+    final suite = <PisteVocale>[];
     for (var i = index + 1; i < messages.length; i++) {
       final m = messages[i];
-      final isVoice =
-          m.type == 'file' &&
-          ((mediaKindOf(m.fileMimeType, m.fileName) == MediaKind.audio)) &&
+      final isVoice = m.type == 'file' &&
+          mediaKindOf(m.fileMimeType, m.fileName) == MediaKind.audio &&
           VoiceNoteMeta.isVoiceNote(m.fileName);
       if (!isVoice) continue;
-      // On n'enchaîne que sur les vocaux REÇUS et jamais écoutés :
-      // rejouer ses propres messages, ou des messages déjà entendus,
-      // n'a aucun sens.
-      if (m.senderId == ref.read(meshRepositoryProvider).myId) return;
-      if (_playedVoiceNotes.contains(m.fileId)) return;
-      final path = await StorageService.getSharedFilePath(
-        m.fileId ?? '',
-        m.fileName ?? '',
-      );
-      if (path == null || !mounted) return;
-      await _playAudioFile(m.fileId!, path);
-      return;
+      if (m.senderId == myId) break;
+      if (_playedVoiceNotes.contains(m.fileId) || m.fileId == null) break;
+      suite.add(_piste(m));
     }
+    return suite;
   }
+
+  Future<void> _stopPlayback() => _lecteur.arreter();
 
   /// Déplace la lecture à [progress] (0..1) — glisser le doigt sur la
-  /// forme d'onde. Sans ça, réécouter un mot manqué au milieu d'un vocal
-  /// d'une minute obligeait à tout reprendre depuis le début.
-  Future<void> _seekAudio(double progress) async {
-    final total = _activeAudioDuration;
-    if (_player == null || total == null) return;
-    final target = Duration(
-      milliseconds: (total.inMilliseconds * progress.clamp(0.0, 1.0)).round(),
-    );
-    await _player!.seek(target);
-    if (!mounted) return;
-    setState(() {
-      _playbackPosition = target;
-      _playbackProgress = progress.clamp(0.0, 1.0);
-    });
-  }
+  /// forme d'onde.
+  Future<void> _seekAudio(double progress) => _lecteur.allerA(progress);
 
   /// Fait tourner la vitesse de lecture 1× → 1,5× → 2× → 1×.
-  Future<void> _cycleSpeed() async {
-    final next = switch (_playbackSpeed) {
-      1.0 => 1.5,
-      1.5 => 2.0,
-      _ => 1.0,
-    };
-    setState(() => _playbackSpeed = next);
-    await _player?.setPlaybackRate(next);
-  }
+  Future<void> _cycleSpeed() => _lecteur.vitesseSuivante();
 
   /// Répondre par la voix à un message précis : on vise ce message, et
   /// l'enregistrement démarre immédiatement, verrouillé (mains libres).
@@ -4512,8 +4429,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                             m.fileName,
                                           ) ==
                                           MediaKind.audio));
+                                  // Actif = le vocal du lecteur, qu'il soit en
+                                  // lecture OU en pause : la bulle garde sa
+                                  // progression et reste glissable en pause.
                                   final isActive =
-                                      _playingAudio &&
+                                      m.fileId != null &&
                                       _activeAudioFile == m.fileId;
                                   final bubble = _MessageBubble(
                                     key: ValueKey(m.id),
@@ -4541,7 +4461,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                               m.fileName,
                                             ) ==
                                             MediaKind.video)),
-                                    playingAudio: isActive,
+                                    playingAudio: isActive && _playingAudio,
                                     playbackProgress: isActive
                                         ? _playbackProgress
                                         : 0,

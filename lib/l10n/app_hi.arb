@@ -2101,5 +2101,16 @@
   "acRestoreOnline": "ऑनलाइन बैकअप से",
   "acRestorePseudoTitle": "आपका नाम",
   "acRestorePseudoMessage": "ऑनलाइन सहेजे गए खाते का नाम।",
-  "acBack": "वापस"
+  "acBack": "वापस",
+  "blPlay": "चलाएँ",
+  "blPause": "रोकें",
+  "blClose": "प्लेयर बंद करें",
+  "blSpeed": "गति {vitesse}",
+  "@blSpeed": {
+    "placeholders": {
+      "vitesse": {
+        "type": "String"
+      }
+    }
+  }
 }

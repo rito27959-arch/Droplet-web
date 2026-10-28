@@ -6090,4 +6090,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get acBack => 'Atrás';
+
+  @override
+  String get blPlay => 'Reproducir';
+
+  @override
+  String get blPause => 'Pausa';
+
+  @override
+  String get blClose => 'Cerrar reproductor';
+
+  @override
+  String blSpeed(String vitesse) {
+    return 'Velocidad $vitesse';
+  }
 }

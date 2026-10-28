@@ -6150,4 +6150,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get acBack => 'Назад';
+
+  @override
+  String get blPlay => 'Воспроизвести';
+
+  @override
+  String get blPause => 'Пауза';
+
+  @override
+  String get blClose => 'Закрыть плеер';
+
+  @override
+  String blSpeed(String vitesse) {
+    return 'Скорость $vitesse';
+  }
 }

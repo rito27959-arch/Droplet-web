@@ -2101,5 +2101,16 @@
   "acRestoreOnline": "Из онлайн-копии",
   "acRestorePseudoTitle": "Ваше имя",
   "acRestorePseudoMessage": "Имя аккаунта, сохранённого онлайн.",
-  "acBack": "Назад"
+  "acBack": "Назад",
+  "blPlay": "Воспроизвести",
+  "blPause": "Пауза",
+  "blClose": "Закрыть плеер",
+  "blSpeed": "Скорость {vitesse}",
+  "@blSpeed": {
+    "placeholders": {
+      "vitesse": {
+        "type": "String"
+      }
+    }
+  }
 }

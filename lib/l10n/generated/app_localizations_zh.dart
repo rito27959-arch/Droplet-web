@@ -5907,4 +5907,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get acBack => '返回';
+
+  @override
+  String get blPlay => '播放';
+
+  @override
+  String get blPause => '暂停';
+
+  @override
+  String get blClose => '关闭播放器';
+
+  @override
+  String blSpeed(String vitesse) {
+    return '速度 $vitesse';
+  }
 }

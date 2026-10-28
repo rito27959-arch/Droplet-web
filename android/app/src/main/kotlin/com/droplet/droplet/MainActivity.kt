@@ -66,6 +66,7 @@ class MainActivity : FlutterFragmentActivity() {
         // tapée dans le volet après la mort du moteur doit être NOTÉE
         // (`ActionsVolet`), pas envoyée dans un canal détruit.
         NotifConversations.debrancher()
+        LectureNotifPont.debrancher()
         super.onDestroy()
     }
 
@@ -288,6 +289,10 @@ class MainActivity : FlutterFragmentActivity() {
         // « Conversations » dans les réglages, pas de bulle, et aucun des
         // boutons Répondre / Lu / ❤️ du volet.
         NotifConversations.brancher(this, flutterEngine)
+
+        // Le lecteur des messages vocaux hors de l'app (voir
+        // `LectureVocaleService.kt`).
+        LectureNotifPont.brancher(this, flutterEngine)
 
         // Le clavier qui suit le doigt dans une conversation (Android 11+).
         ClavierInteractif.brancher(this, flutterEngine.dartExecutor.binaryMessenger)

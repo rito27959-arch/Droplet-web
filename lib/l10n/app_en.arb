@@ -2101,5 +2101,16 @@
   "acRestoreOnline": "From the online backup",
   "acRestorePseudoTitle": "Your username",
   "acRestorePseudoMessage": "The one from the account you backed up online.",
-  "acBack": "Back"
+  "acBack": "Back",
+  "blPlay": "Play",
+  "blPause": "Pause",
+  "blClose": "Close player",
+  "blSpeed": "Speed {vitesse}",
+  "@blSpeed": {
+    "placeholders": {
+      "vitesse": {
+        "type": "String"
+      }
+    }
+  }
 }

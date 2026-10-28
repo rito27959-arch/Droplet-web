@@ -6161,4 +6161,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get acBack => 'رجوع';
+
+  @override
+  String get blPlay => 'تشغيل';
+
+  @override
+  String get blPause => 'إيقاف مؤقت';
+
+  @override
+  String get blClose => 'إغلاق المشغّل';
+
+  @override
+  String blSpeed(String vitesse) {
+    return 'السرعة $vitesse';
+  }
 }
