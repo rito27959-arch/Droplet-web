@@ -13,6 +13,7 @@ import 'package:droplet/core/models/mesh_message.dart';
 import 'package:droplet/design_system/ouro_colors.dart';
 import 'package:droplet/design_system/ouro_list.dart';
 import 'package:droplet/design_system/ouro_theme.dart';
+import 'package:droplet/features/group/group_create_screen.dart';
 import 'package:droplet/features/group/parametres_groupe_screen.dart';
 import 'package:droplet/features/group/reglages_groupe.dart';
 import 'package:droplet/features/group/vue_infos_groupe.dart';
@@ -153,5 +154,36 @@ void main() {
         hauteur: 844,
       );
     });
+  }
+
+  const candidats = [
+    CandidatGroupe(peerId: 'awa', pseudo: 'Awa', enLigne: true),
+    CandidatGroupe(peerId: 'miguel', pseudo: 'Miguel', enLigne: true),
+    CandidatGroupe(peerId: 'sara', pseudo: 'Sara Mballa', enLigne: false),
+    CandidatGroupe(peerId: 'yann', pseudo: 'Yann', enLigne: false),
+    CandidatGroupe(peerId: 'lea', pseudo: 'Léa', enLigne: false),
+    CandidatGroupe(peerId: 'paul', pseudo: 'Paul Essomba', enLigne: false),
+  ];
+  for (final sombre in [false, true]) {
+    final mode = sombre ? 'sombre' : 'clair';
+    for (final etape in [0, 1]) {
+      testWidgets('création de groupe étape $etape $mode', (tester) async {
+        await rendre(
+          tester,
+          VueCreationGroupe(
+            candidats: candidats,
+            creer: (_, _, _, _) async => true,
+            fermer: () {},
+            choisirPhoto: () async => null,
+            etapeInitiale: etape,
+            selectionInitiale: const {'awa', 'sara', 'yann'},
+            nomInitial: etape == 1 ? 'Famille Ndongo' : '',
+          ),
+          'groupe_creation_${etape}_$mode',
+          sombre: sombre,
+          hauteur: 844,
+        );
+      });
+    }
   }
 }

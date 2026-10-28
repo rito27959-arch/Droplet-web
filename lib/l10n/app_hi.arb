@@ -2177,5 +2177,24 @@
   "vpApprove": "नए सदस्यों को मंज़ूरी दें",
   "vpApproveBody": "चालू होने पर, समूह का QR कोड स्कैन करने वाले लोग एडमिन की मंज़ूरी का इंतज़ार करेंगे।",
   "vpEditAdmins": "एडमिन बदलें",
-  "vpAdminsFooter": "एडमिन समूह में सब कुछ कर सकते हैं, दूसरों को एडमिन बनाना भी।"
+  "vpAdminsFooter": "एडमिन समूह में सब कुछ कर सकते हैं, दूसरों को एडमिन बनाना भी।",
+  "gnCount": "{total} में से {n}",
+  "@gnCount": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "gnNext": "आगे",
+  "gnCreate": "बनाएँ",
+  "gnSearch": "खोजें",
+  "gnNearby": "अभी पास में",
+  "gnKnown": "पहले मिले",
+  "gnPhoto": "समूह फ़ोटो",
+  "gnNameFooter": "समूह को नाम दें और चाहें तो एक फ़ोटो भी।",
+  "gnDescription": "विवरण (वैकल्पिक)"
 }

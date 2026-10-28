@@ -6176,4 +6176,33 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get vpAdminsFooter => 'एडमिन समूह में सब कुछ कर सकते हैं, दूसरों को एडमिन बनाना भी।';
+
+  @override
+  String gnCount(String n, String total) {
+    return '${total} में से ${n}';
+  }
+
+  @override
+  String get gnNext => 'आगे';
+
+  @override
+  String get gnCreate => 'बनाएँ';
+
+  @override
+  String get gnSearch => 'खोजें';
+
+  @override
+  String get gnNearby => 'अभी पास में';
+
+  @override
+  String get gnKnown => 'पहले मिले';
+
+  @override
+  String get gnPhoto => 'समूह फ़ोटो';
+
+  @override
+  String get gnNameFooter => 'समूह को नाम दें और चाहें तो एक फ़ोटो भी।';
+
+  @override
+  String get gnDescription => 'विवरण (वैकल्पिक)';
 }

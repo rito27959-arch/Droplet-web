@@ -6274,4 +6274,33 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get vpAdminsFooter => 'Администраторы могут всё в группе, в том числе назначать других администраторов.';
+
+  @override
+  String gnCount(String n, String total) {
+    return '${n} из ${total}';
+  }
+
+  @override
+  String get gnNext => 'Далее';
+
+  @override
+  String get gnCreate => 'Создать';
+
+  @override
+  String get gnSearch => 'Поиск';
+
+  @override
+  String get gnNearby => 'Сейчас рядом';
+
+  @override
+  String get gnKnown => 'Уже встречались';
+
+  @override
+  String get gnPhoto => 'Фото группы';
+
+  @override
+  String get gnNameFooter => 'Дайте группе название и, если хотите, фото.';
+
+  @override
+  String get gnDescription => 'Описание (необязательно)';
 }

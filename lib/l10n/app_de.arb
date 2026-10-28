@@ -2177,5 +2177,24 @@
   "vpApprove": "Neue Mitglieder genehmigen",
   "vpApproveBody": "Wenn aktiviert, warten Personen, die den QR-Code scannen, bis ein Admin sie annimmt.",
   "vpEditAdmins": "Admins bearbeiten",
-  "vpAdminsFooter": "Admins dürfen in der Gruppe alles, auch weitere Admins ernennen."
+  "vpAdminsFooter": "Admins dürfen in der Gruppe alles, auch weitere Admins ernennen.",
+  "gnCount": "{n} von {total}",
+  "@gnCount": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "gnNext": "Weiter",
+  "gnCreate": "Erstellen",
+  "gnSearch": "Suchen",
+  "gnNearby": "Jetzt in der Nähe",
+  "gnKnown": "Bereits getroffen",
+  "gnPhoto": "Gruppenfoto",
+  "gnNameFooter": "Gib der Gruppe einen Namen und, wenn du magst, ein Foto.",
+  "gnDescription": "Beschreibung (optional)"
 }

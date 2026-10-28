@@ -6214,4 +6214,33 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get vpAdminsFooter => 'Los administradores pueden hacerlo todo en el grupo, incluso nombrar a otros administradores.';
+
+  @override
+  String gnCount(String n, String total) {
+    return '${n} de ${total}';
+  }
+
+  @override
+  String get gnNext => 'Siguiente';
+
+  @override
+  String get gnCreate => 'Crear';
+
+  @override
+  String get gnSearch => 'Buscar';
+
+  @override
+  String get gnNearby => 'Cerca ahora';
+
+  @override
+  String get gnKnown => 'Ya conocidos';
+
+  @override
+  String get gnPhoto => 'Foto del grupo';
+
+  @override
+  String get gnNameFooter => 'Ponle un nombre al grupo y, si quieres, una foto.';
+
+  @override
+  String get gnDescription => 'Descripción (opcional)';
 }

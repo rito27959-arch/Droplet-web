@@ -2177,5 +2177,24 @@
   "vpApprove": "Approvare i nuovi membri",
   "vpApproveBody": "Se attivo, chi scansiona il codice QR del gruppo attende che un amministratore lo accetti.",
   "vpEditAdmins": "Modifica amministratori",
-  "vpAdminsFooter": "Gli amministratori possono fare tutto nel gruppo, anche nominare altri amministratori."
+  "vpAdminsFooter": "Gli amministratori possono fare tutto nel gruppo, anche nominare altri amministratori.",
+  "gnCount": "{n} di {total}",
+  "@gnCount": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "gnNext": "Avanti",
+  "gnCreate": "Crea",
+  "gnSearch": "Cerca",
+  "gnNearby": "Vicini ora",
+  "gnKnown": "Già incontrati",
+  "gnPhoto": "Foto del gruppo",
+  "gnNameFooter": "Dai un nome al gruppo e, se vuoi, una foto.",
+  "gnDescription": "Descrizione (facoltativa)"
 }

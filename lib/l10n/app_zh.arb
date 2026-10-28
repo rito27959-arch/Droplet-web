@@ -2177,5 +2177,24 @@
   "vpApprove": "审核新成员",
   "vpApproveBody": "开启后，扫描群二维码的人需等待管理员批准。",
   "vpEditAdmins": "编辑管理员",
-  "vpAdminsFooter": "管理员可以在群里做任何事，包括任命其他管理员。"
+  "vpAdminsFooter": "管理员可以在群里做任何事，包括任命其他管理员。",
+  "gnCount": "{n}/{total}",
+  "@gnCount": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "gnNext": "下一步",
+  "gnCreate": "创建",
+  "gnSearch": "搜索",
+  "gnNearby": "附近",
+  "gnKnown": "曾遇到",
+  "gnPhoto": "群头像",
+  "gnNameFooter": "为群组取个名字，也可以加张头像。",
+  "gnDescription": "简介（可选）"
 }

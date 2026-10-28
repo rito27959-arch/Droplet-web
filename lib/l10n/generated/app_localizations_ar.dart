@@ -6285,4 +6285,33 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get vpAdminsFooter => 'يمكن للمشرفين فعل كل شيء في المجموعة، بما في ذلك تعيين مشرفين آخرين.';
+
+  @override
+  String gnCount(String n, String total) {
+    return '${n} من ${total}';
+  }
+
+  @override
+  String get gnNext => 'التالي';
+
+  @override
+  String get gnCreate => 'إنشاء';
+
+  @override
+  String get gnSearch => 'بحث';
+
+  @override
+  String get gnNearby => 'قريبون الآن';
+
+  @override
+  String get gnKnown => 'تم لقاؤهم سابقًا';
+
+  @override
+  String get gnPhoto => 'صورة المجموعة';
+
+  @override
+  String get gnNameFooter => 'امنح المجموعة اسمًا، وصورة إن أردت.';
+
+  @override
+  String get gnDescription => 'الوصف (اختياري)';
 }

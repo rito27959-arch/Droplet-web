@@ -2177,5 +2177,24 @@
   "vpApprove": "Approve new members",
   "vpApproveBody": "When on, people who scan the group's QR code wait for an admin to accept them.",
   "vpEditAdmins": "Edit group admins",
-  "vpAdminsFooter": "Admins can do everything in the group, including making other admins."
+  "vpAdminsFooter": "Admins can do everything in the group, including making other admins.",
+  "gnCount": "{n} of {total}",
+  "@gnCount": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "gnNext": "Next",
+  "gnCreate": "Create",
+  "gnSearch": "Search",
+  "gnNearby": "Nearby now",
+  "gnKnown": "Met before",
+  "gnPhoto": "Group photo",
+  "gnNameFooter": "Give the group a name and, if you like, a photo.",
+  "gnDescription": "Description (optional)"
 }

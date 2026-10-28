@@ -6031,4 +6031,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get vpAdminsFooter => '管理员可以在群里做任何事，包括任命其他管理员。';
+
+  @override
+  String gnCount(String n, String total) {
+    return '${n}/${total}';
+  }
+
+  @override
+  String get gnNext => '下一步';
+
+  @override
+  String get gnCreate => '创建';
+
+  @override
+  String get gnSearch => '搜索';
+
+  @override
+  String get gnNearby => '附近';
+
+  @override
+  String get gnKnown => '曾遇到';
+
+  @override
+  String get gnPhoto => '群头像';
+
+  @override
+  String get gnNameFooter => '为群组取个名字，也可以加张头像。';
+
+  @override
+  String get gnDescription => '简介（可选）';
 }

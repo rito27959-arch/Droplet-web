@@ -1014,6 +1014,60 @@ abstract class AppLocalizations {
   /// **'Les administrateurs peuvent tout faire dans le groupe, y compris nommer d'autres administrateurs.'**
   String get vpAdminsFooter;
 
+  /// No description provided for @gnCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} sur {total}'**
+  String gnCount(String n, String total);
+
+  /// No description provided for @gnNext.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivant'**
+  String get gnNext;
+
+  /// No description provided for @gnCreate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer'**
+  String get gnCreate;
+
+  /// No description provided for @gnSearch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher'**
+  String get gnSearch;
+
+  /// No description provided for @gnNearby.
+  ///
+  /// In fr, this message translates to:
+  /// **'À portée maintenant'**
+  String get gnNearby;
+
+  /// No description provided for @gnKnown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déjà rencontrés'**
+  String get gnKnown;
+
+  /// No description provided for @gnPhoto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Photo du groupe'**
+  String get gnPhoto;
+
+  /// No description provided for @gnNameFooter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Donnez un nom au groupe et, si vous voulez, une photo.'**
+  String get gnNameFooter;
+
+  /// No description provided for @gnDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'Description (facultatif)'**
+  String get gnDescription;
+
   /// No description provided for @acReadyTitle.
   ///
   /// In fr, this message translates to:
