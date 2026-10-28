@@ -2497,7 +2497,16 @@ class CallNotifier extends StateNotifier<CallState> {
   /// pire que les deux cas — deux notifications d'appel empilées, dont
   /// aucune ne se balaie.
   Future<void> _poserNotification(CallState s) async {
-    final pseudo = s.peerPseudo ?? s.peerId!;
+    // ⚠️ JAMAIS L'IDENTIFIANT BRUT. Pour un appel REÇU par Internet,
+    // `peerPseudo` est vide (l'offre ne porte pas de nom) : la notification
+    // d'Android affichait alors l'empreinte de 64 caractères de l'appelant
+    // au lieu de son nom. On le cherche là où on le connaît : la fiche du
+    // contact, puis le nom donné à l'appel.
+    final pseudo = nomDuPair(s.peerId!, [
+      s.peerPseudo,
+      StorageService.getPeerRecord(s.peerId!)?.pseudo,
+      _callPeerPseudo,
+    ]);
     final natif = await AppelSysteme.demarrer(
       pairId: s.peerId!,
       pseudo: pseudo,
@@ -2656,7 +2665,11 @@ class CallNotifier extends StateNotifier<CallState> {
           isVideoEnabled: _inboxCallService?.offreVideo ?? false,
           isRemoteVideoActive: false,
         );
-        if (_doitDecrocherAutomatiquement(peerId)) {
+        if (_doitRefuserAutomatiquement(peerId)) {
+          // Déjà refusé (écran d'appel ou notification) : on raccroche sans
+          // sonner.
+          hangUp();
+        } else if (_doitDecrocherAutomatiquement(peerId)) {
           // Déjà accepté depuis la notification : pas de seconde sonnerie.
           unawaited(answerCall());
         } else {
@@ -2709,7 +2722,15 @@ class CallNotifier extends StateNotifier<CallState> {
           direction: CallDirection.incoming,
           connectionState: CallConnectionState.connecting,
         );
-        CallRingerService.startIncoming();
+        // Accepté ou refusé avant que l'offre n'arrive (écran ouvert depuis
+        // la notification) : on applique ce choix au lieu de sonner.
+        if (_doitRefuserAutomatiquement(msg.peerId)) {
+          hangUp();
+        } else if (_doitDecrocherAutomatiquement(msg.peerId)) {
+          unawaited(answerCall());
+        } else {
+          CallRingerService.startIncoming();
+        }
       }
     } catch (e) {
       debugPrint('[CallNotifier] message de signalisation invalide ignoré: $e');
@@ -2844,6 +2865,28 @@ class CallNotifier extends StateNotifier<CallState> {
       return;
     }
     _decrocherDesReception[peerId] = DateTime.now().add(const Duration(minutes: 1));
+  }
+
+  // ── REFUSER DEPUIS L'ÉCRAN OU LA NOTIFICATION, AVANT L'OFFRE ─────────
+  //
+  // Même situation que « Décrocher » : l'application démarre, l'offre n'est
+  // pas encore là. Refuser à ce moment-là ne faisait rien — puis l'offre
+  // arrivait, et le téléphone se mettait à sonner pour un appel qu'on
+  // venait de refuser. Le choix est retenu une minute, comme pour décrocher.
+  final Map<String, DateTime> _refuserDesReception = {};
+
+  void refuserDesQueLAppelArrive(String peerId) {
+    _decrocherDesReception.remove(peerId);
+    if (state.isCallActive && state.peerId == peerId && state.direction == CallDirection.incoming) {
+      hangUp();
+      return;
+    }
+    _refuserDesReception[peerId] = DateTime.now().add(const Duration(minutes: 1));
+  }
+
+  bool _doitRefuserAutomatiquement(String peerId) {
+    final limite = _refuserDesReception.remove(peerId);
+    return limite != null && DateTime.now().isBefore(limite);
   }
 
   bool _doitDecrocherAutomatiquement(String peerId) {

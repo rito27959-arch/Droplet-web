@@ -498,7 +498,26 @@ class CallService {
       case PeerJoinedEvent(:final peerId):
         debugPrint('[CallService] Pair dans la salle: $peerId');
       case PeerLeftEvent(:final peerId):
-        if (peerId == _remotePeerId) unawaited(endCall(prevenir: false));
+        if (peerId != _remotePeerId) return;
+        // ⚠️ UNE FOIS L'APPEL ÉTABLI, LA SALLE NE DÉCIDE PLUS DE RIEN.
+        //
+        // La voix passe DIRECTEMENT entre les deux téléphones (WebRTC) ; le
+        // serveur ne sert qu'à se trouver. Or la connexion au serveur d'un
+        // téléphone dont l'application passe en arrière-plan tombe souvent
+        // quelques secondes (réseau suspendu par Android, signe de vie
+        // manqué) — et l'autre téléphone, voyant son correspondant « quitter
+        // la salle », raccrochait. C'était l'appel qui « bugue puis
+        // s'arrête » dès qu'on sortait de l'application.
+        //
+        // Maintenant : avant la connexion, partir de la salle met fin à
+        // l'appel (il n'y a rien d'autre) ; après, seuls comptent un
+        // « bye » explicite et l'état de la liaison elle-même (ICE), qui a
+        // déjà son délai de grâce pour les coupures passagères.
+        if (_suivi.etablieUneFois) {
+          debugPrint('[CallService] $peerId a perdu le serveur — la liaison directe continue');
+          return;
+        }
+        unawaited(endCall(prevenir: false));
       // Deux événements de salon vocal. Un appel 1:1 n'en a que faire,
       // mais le `switch` porte sur une classe scellée : sans ces deux
       // branches, il cesse d'être exhaustif et ne compile plus.

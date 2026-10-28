@@ -444,11 +444,21 @@ class IncomingCallOverlay extends ConsumerWidget {
     // On regarde l'état actuel des appels (comme regarder un tableau
     // d'affichage qui se met à jour tout seul).
     final call = ref.watch(callProvider);
+    return ValueListenableBuilder<String?>(
+      valueListenable: CallScreen.ouvertPour,
+      builder: (context, _, _) => _construire(context, ref, call),
+    );
+  }
+
+  Widget _construire(BuildContext context, WidgetRef ref, CallState call) {
     // On n'affiche la fenêtre d'appel entrant QUE si toutes ces conditions
     // sont vraies en même temps : un appel est actif, il vient de
     // quelqu'un d'autre (pas moi qui appelle), il est encore en train de
     // sonner (pas encore décroché), et on sait qui appelle.
     final showIncoming =
+        // L'écran d'appel de ce correspondant est déjà ouvert : c'est lui qui
+        // propose de répondre — pas de seconde fenêtre par-dessus.
+        CallScreen.ouvertPour.value != call.peerId &&
         call.isCallActive &&
         call.direction == CallDirection.incoming &&
         call.connectionState == CallConnectionState.connecting &&
@@ -1413,7 +1423,10 @@ class _NotificationBridgeState extends ConsumerState<NotificationBridge>
           // croisés, aucun n'aboutissait.
           _router.go('/call/$peerId?entrant=1');
         } else {
-          ref.read(callProvider.notifier).hangUp();
+          // Refuser DEPUIS LA NOTIFICATION, application peut-être pas encore
+          // prête : si l'offre n'est pas arrivée, elle sera refusée dès
+          // réception au lieu de sonner.
+          ref.read(callProvider.notifier).refuserDesQueLAppelArrive(peerId);
         }
       },
     );

@@ -46,6 +46,7 @@ import '../../design_system/ouro_motion.dart';
 import '../../design_system/ouro_typography.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/widgets/peer_avatar.dart';
+import '../onboarding/ouverture_droplet.dart';
 import '../../design_system/ouro_spinner.dart';
 
 class CallScreen extends ConsumerStatefulWidget {
@@ -64,6 +65,11 @@ class CallScreen extends ConsumerStatefulWidget {
   /// Appel VIDÉO (route `/call/:peerId?video=1`) — sinon vocal.
   final bool video;
 
+  /// Le correspondant dont l'écran d'appel est affiché en ce moment. La
+  /// fenêtre d'appel entrant générale (`IncomingCallOverlay`) ne s'affiche
+  /// pas par-dessus : cet écran sait lui-même décrocher et refuser.
+  static final ValueNotifier<String?> ouvertPour = ValueNotifier<String?>(null);
+
   @override
   ConsumerState<CallScreen> createState() => _CallScreenState();
 }
@@ -72,6 +78,10 @@ class _CallScreenState extends ConsumerState<CallScreen>
     with SingleTickerProviderStateMixin {
   bool _started = false;
   bool _exiting = false;
+
+  /// « Répondre » touché sur cet écran, peut-être avant même que l'offre de
+  /// l'appelant ne soit arrivée (application qui démarre).
+  bool _accepte = false;
   Timer? _timer;
   int _elapsed = 0;
 
@@ -91,6 +101,10 @@ class _CallScreenState extends ConsumerState<CallScreen>
     )..bouclerSiAmbiant(reverse: true);
     // Visible et écran allumé même téléphone verrouillé, le temps de l'appel.
     unawaited(AppelVerrouillage.afficher(true));
+    CallScreen.ouvertPour.value = widget.peerId;
+    // Ouvert pour un appel (notification touchée, application qui démarre) :
+    // l'animation d'ouverture s'efface aussitôt — ce n'est pas le moment.
+    OuvertureDroplet.abreger();
     AppelVerrouillage.enVignette.addListener(_surVignette);
     // Après la mise en place de l'écran : la boîte système passe par-dessus.
     Future.delayed(const Duration(seconds: 3), () {
@@ -155,6 +169,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
   @override
   void dispose() {
+    if (CallScreen.ouvertPour.value == widget.peerId) CallScreen.ouvertPour.value = null;
     AppelVerrouillage.enVignette.removeListener(_surVignette);
     unawaited(AppelVerrouillage.autoriserVignette(false));
     unawaited(AppelVerrouillage.afficher(false));
@@ -172,8 +187,35 @@ class _CallScreenState extends ConsumerState<CallScreen>
     return h > 0 ? '$h:$mmss' : mmss;
   }
 
+  /// Ça sonne ICI : appel entrant pas encore pris — que l'offre soit déjà
+  /// là, ou pas encore (écran ouvert depuis la notification).
+  bool _sonne(CallState call) {
+    if (_accepte || call.decroche || _exiting) return false;
+    if (widget.entrant && !call.isCallActive) return true;
+    return call.isCallActive &&
+        call.peerId == widget.peerId &&
+        call.direction == CallDirection.incoming &&
+        call.connectionState == CallConnectionState.connecting;
+  }
+
+  void _accepter() {
+    HapticFeedback.mediumImpact();
+    setState(() => _accepte = true);
+    // Pris tout de suite si l'offre est là ; sinon dès qu'elle arrive.
+    ref.read(callProvider.notifier).accepterDesQueLAppelArrive(widget.peerId);
+  }
+
+  void _refuser() {
+    HapticFeedback.heavyImpact();
+    setState(() => _exiting = true);
+    ref.read(callProvider.notifier).refuserDesQueLAppelArrive(widget.peerId);
+    Future.delayed(const Duration(milliseconds: 220), () {
+      if (mounted) context.go('/chat/${widget.peerId}');
+    });
+  }
+
   String _statusText(AppLocalizations l10n, CallState call) {
-    if (call.decroche && call.connectionState == CallConnectionState.connecting) {
+    if ((call.decroche || _accepte) && call.connectionState != CallConnectionState.connected) {
       return l10n.clConnecting;
     }
     if (widget.entrant && !call.isCallActive && !_exiting) return l10n.clIncomingCall;
@@ -471,13 +513,35 @@ class _CallScreenState extends ConsumerState<CallScreen>
                         depuisLeHaut: false,
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                          child: _BarreControles(
-                            call: call,
-                            onMute: notifier.toggleMute,
-                            onSpeaker: notifier.toggleSpeaker,
-                            onVideo: notifier.toggleVideo,
-                            onFlip: () => unawaited(notifier.switchCamera()),
-                            onHangUp: _handleHangUp,
+                          // ⚠️ UN SEUL ÉCRAN POUR UN APPEL ENTRANT. Avant, celui-ci
+                          // affichait « Appel entrant… » avec un seul bouton
+                          // (raccrocher), puis une seconde fenêtre surgissait
+                          // quelques secondes plus tard, quand l'offre arrivait,
+                          // pour enfin proposer de répondre. Maintenant, Répondre
+                          // et Refuser sont là dès l'ouverture ; répondre avant
+                          // l'offre est retenu, et l'appel est pris dès qu'elle
+                          // arrive (« Connexion… » entre-temps).
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 260),
+                            switchInCurve: Curves.easeOutCubic,
+                            child: _sonne(call)
+                                ? _BarreSonnerie(
+                                    key: const ValueKey('sonnerie'),
+                                    libelleRepondre: l10n.ntfAnswer,
+                                    libelleRefuser: l10n.ntfDecline,
+                                    video: call.isVideoEnabled || widget.video,
+                                    onRepondre: _accepter,
+                                    onRefuser: _refuser,
+                                  )
+                                : _BarreControles(
+                                    key: const ValueKey('controles'),
+                                    call: call,
+                                    onMute: notifier.toggleMute,
+                                    onSpeaker: notifier.toggleSpeaker,
+                                    onVideo: notifier.toggleVideo,
+                                    onFlip: () => unawaited(notifier.switchCamera()),
+                                    onHangUp: _handleHangUp,
+                                  ),
                           ),
                         ),
                       ),
@@ -498,6 +562,67 @@ class _CallScreenState extends ConsumerState<CallScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Répondre / Refuser, comme sur l'écran d'appel d'iOS : deux grands
+/// boutons ronds, rouge à gauche, vert à droite, nommés en dessous.
+class _BarreSonnerie extends StatelessWidget {
+  const _BarreSonnerie({
+    super.key,
+    required this.libelleRepondre,
+    required this.libelleRefuser,
+    required this.video,
+    required this.onRepondre,
+    required this.onRefuser,
+  });
+
+  final String libelleRepondre;
+  final String libelleRefuser;
+  final bool video;
+  final VoidCallback onRepondre;
+  final VoidCallback onRefuser;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget bouton(Color couleur, IconData icone, String libelle, VoidCallback onTap) {
+      return Semantics(
+        button: true,
+        label: libelle,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: couleur),
+                child: Icon(icone, color: Colors.white, size: 34),
+              ),
+              const SizedBox(height: 10),
+              ExcludeSemantics(
+                child: Text(
+                  libelle,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: OuroColors.callLabel),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          bouton(const Color(0xFFFF3B30), Icons.call_end_rounded, libelleRefuser, onRefuser),
+          bouton(const Color(0xFF34C759), video ? Icons.videocam_rounded : Icons.call_rounded, libelleRepondre, onRepondre),
+        ],
       ),
     );
   }
@@ -804,6 +929,7 @@ class _BarresQualite extends StatelessWidget {
 /// La barre de contrôle en verre : boutons légendés, et le rouge pour finir.
 class _BarreControles extends StatelessWidget {
   const _BarreControles({
+    super.key,
     required this.call,
     required this.onMute,
     required this.onSpeaker,

@@ -112,6 +112,14 @@ class OuvertureDroplet extends StatefulWidget {
 
   static final ValueNotifier<int> _retenues = ValueNotifier<int>(0);
 
+  /// Coupe court à l'ouverture : l'application a été ouverte pour quelque
+  /// chose d'urgent (un appel entrant). Un simple fondu, tout de suite.
+  static void abreger() {
+    if (active.value) _abregee = true;
+  }
+
+  static bool _abregee = false;
+
   @override
   State<OuvertureDroplet> createState() => _OuvertureDropletState();
 }
@@ -179,6 +187,11 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
   void _tic(Duration ecoule) {
     final t = ecoule.inMicroseconds / 1000.0;
     _t.value = t;
+    if (OuvertureDroplet._abregee && (_phase == _Phase.entree || _phase == _Phase.attente)) {
+      OuvertureDroplet._abregee = false;
+      _sortir(t, _Phase.fondu);
+      return;
+    }
     switch (_phase) {
       case _Phase.entree:
         if (_reduit) {
@@ -918,4 +931,5 @@ void reinitialiserOuverture() {
   OuvertureDroplet.cible.value = null;
   OuvertureDroplet.active.value = false;
   OuvertureDroplet._retenues.value = 0;
+  OuvertureDroplet._abregee = false;
 }
