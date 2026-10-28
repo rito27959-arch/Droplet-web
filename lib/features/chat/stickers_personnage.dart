@@ -418,6 +418,17 @@ void _visage(Canvas c, Pose p, {required bool yeuxCoeur, required double batteme
       c.drawPath(a, _plume(0.018));
       continue;
     }
+    // Fermé : un trait courbe, pas un œil vide sous une paupière.
+    if (ferme >= 0.9) {
+      final w = 0.032 * raccourci * p.oeil;
+      c.drawPath(
+        Path()
+          ..moveTo(centre.dx - w, centre.dy - 0.002)
+          ..quadraticBezierTo(centre.dx, centre.dy + 0.024, centre.dx + w, centre.dy - 0.002),
+        _plume(0.017),
+      );
+      continue;
+    }
     // L'œil : blanc cerné, pupille, éclat, paupière.
     c.save();
     c.translate(centre.dx, centre.dy);
@@ -613,15 +624,15 @@ void dessinerSticker(Canvas c, String cle, double s, {required bool sombre, doub
         // Anticipation : on se tasse, le bras descend.
         Cle(0.1, Pose(ecrase: 0.08, brasD: math.pi * 0.45, paupiere: 0.2)),
         // L'action : la tête se tourne vers la main levée, sourcils hauts.
-        Cle(0.2, Pose(ecrase: -0.05, tourne: 0.35, rx: 0.3, sg: 0.8, sd: 1, brasD: -math.pi * 0.3, bouche: Bouche.rire, ouv: 0.55, joues: 0.8), Curves.easeOutBack),
-        Cle(0.72, Pose(tourne: 0.35, rx: 0.3, sg: 0.8, sd: 1, brasD: -math.pi * 0.3, bouche: Bouche.rire, ouv: 0.55, joues: 0.8)),
+        Cle(0.2, Pose(ecrase: -0.05, tourne: 0.35, rx: 0.3, sg: 0.8, sd: 1, brasD: -math.pi * 0.2, bouche: Bouche.rire, ouv: 0.55, joues: 0.8), Curves.easeOutBack),
+        Cle(0.72, Pose(tourne: 0.35, rx: 0.3, sg: 0.8, sd: 1, brasD: -math.pi * 0.2, bouche: Bouche.rire, ouv: 0.55, joues: 0.8)),
         // Le clin d'œil complice, à la fin.
         Cle(0.8, Pose(tourne: -0.2, rx: -0.2, sd: 0.6, sg: -0.2, clin: 1, bouche: Bouche.malin, joues: 0.8, brasD: math.pi * 0.2)),
         Cle(0.9, Pose(tourne: -0.2, rx: -0.2, sd: 0.6, sg: -0.2, clin: 1, bouche: Bouche.malin, joues: 0.8, brasD: math.pi * 0.2)),
         Cle(1.0, Pose(bouche: Bouche.sourire)),
       ]);
       // Le salut : trois balancements de la main pendant le maintien.
-      final balance = 0.5 * math.sin((u - 0.2) / 0.52 * 3 * 2 * math.pi) * bosse(u, 0.2, 0.72);
+      final balance = 0.32 * math.sin((u - 0.2) / 0.52 * 3 * 2 * math.pi) * bosse(u, 0.2, 0.72);
       p = p.c(brasD: p.brasD + balance, paupiere: math.max(p.paupiere, clignement(s)));
       dessinerGoutte(c, touche(p), sombre: sombre);
       _traits(c, const Offset(0.83, 0.33), 0.06, 0.1, [-1.2, -0.85, -0.5], const Color(0xFF2F86FF), bosse(u, 0.22, 0.7), 0.014);
@@ -719,7 +730,7 @@ void dessinerSticker(Canvas c, String cle, double s, {required bool sombre, doub
       p = p.c(brasG: p.brasG + 0.25 * math.sin(s * 20) * fureur, brasD: p.brasD - 0.25 * math.sin(s * 20) * fureur);
       c.save();
       c.translate(tremble, 0);
-      dessinerGoutte(c, touche(p), sombre: sombre, matiere: MatiereGoutte.bleue(teinte: Color.lerp(const Color(0xFF7A5CFF), const Color(0xFFFF3B30), fureur)));
+      dessinerGoutte(c, touche(p), sombre: sombre, matiere: MatiereGoutte.bleue(teinte: Color.lerp(const Color(0xFF2F86FF), const Color(0xFFFF3B30), fureur)));
       c.restore();
       for (var k = 0; k < 4; k++) {
         final q = ((u * 1.6 + k / 4) % 1.0);
@@ -833,12 +844,12 @@ void dessinerSticker(Canvas c, String cle, double s, {required bool sombre, doub
     case 'goutte/pense':
       final u = (s % 3.0) / 3.0;
       final p = animer(u, const [
-        Cle(0.0, Pose(tourne: 0.3, rx: 0.8, ry: -0.8, sg: 1, sd: -0.2, bouche: Bouche.malin, brasD: -math.pi * 0.62, joues: 0.3)),
-        Cle(0.45, Pose(tourne: 0.3, rx: 0.8, ry: -0.8, sg: 1, sd: -0.2, bouche: Bouche.malin, brasD: -math.pi * 0.62, joues: 0.3, incline: 0.08)),
+        Cle(0.0, Pose(tourne: 0.3, rx: 0.8, ry: -0.8, sg: 1, sd: -0.2, bouche: Bouche.malin, brasD: math.pi * 0.88, joues: 0.3)),
+        Cle(0.45, Pose(tourne: 0.3, rx: 0.8, ry: -0.8, sg: 1, sd: -0.2, bouche: Bouche.malin, brasD: math.pi * 0.88, joues: 0.3, incline: 0.08)),
         // Il change de côté : il cherche ailleurs.
-        Cle(0.55, Pose(tourne: -0.3, rx: -0.8, ry: -0.7, sg: -0.2, sd: 1, bouche: Bouche.plat, brasD: -math.pi * 0.62, joues: 0.3, incline: -0.05)),
-        Cle(0.9, Pose(tourne: -0.3, rx: -0.8, ry: -0.7, sg: -0.2, sd: 1, bouche: Bouche.plat, brasD: -math.pi * 0.62, joues: 0.3, incline: -0.05)),
-        Cle(1.0, Pose(tourne: 0.3, rx: 0.8, ry: -0.8, sg: 1, sd: -0.2, bouche: Bouche.malin, brasD: -math.pi * 0.62, joues: 0.3)),
+        Cle(0.55, Pose(tourne: -0.3, rx: -0.8, ry: -0.7, sg: -0.2, sd: 1, bouche: Bouche.plat, brasD: math.pi * 0.88, joues: 0.3, incline: -0.05)),
+        Cle(0.9, Pose(tourne: -0.3, rx: -0.8, ry: -0.7, sg: -0.2, sd: 1, bouche: Bouche.plat, brasD: math.pi * 0.88, joues: 0.3, incline: -0.05)),
+        Cle(1.0, Pose(tourne: 0.3, rx: 0.8, ry: -0.8, sg: 1, sd: -0.2, bouche: Bouche.malin, brasD: math.pi * 0.88, joues: 0.3)),
       ]);
       dessinerGoutte(c, touche(p.c(paupiere: clignement(s, periode: 2.7))), sombre: sombre);
       final ap = Curves.easeOutBack.transform(seg(u, 0.0, 0.12));
@@ -907,13 +918,13 @@ void dessinerSticker(Canvas c, String cle, double s, {required bool sombre, doub
       final u = (s % 2.8) / 2.8;
       _halo(c, const Offset(0.5, 0.5), 0.46, kOr, 0.3);
       final p = animer(u, const [
-        Cle(0.0, Pose(incline: -0.08, tourne: 0.35, paupiere: 0.45, rx: 0.5, sd: 0.8, sg: 0.2, bouche: Bouche.malin, joues: 0.6, brasD: -math.pi * 0.45)),
+        Cle(0.0, Pose(incline: -0.08, tourne: 0.35, paupiere: 0.45, rx: 0.5, sd: 0.8, sg: 0.2, bouche: Bouche.malin, joues: 0.6, brasD: -math.pi * 0.36)),
         // Il ajuste sa couronne, menton levé, l'air supérieur…
-        Cle(0.4, Pose(incline: -0.14, tourne: 0.35, paupiere: 0.5, rx: 0.5, sd: 1, sg: 0.2, bouche: Bouche.malin, joues: 0.6, brasD: -math.pi * 0.5)),
+        Cle(0.4, Pose(incline: -0.14, tourne: 0.35, paupiere: 0.5, rx: 0.5, sd: 1, sg: 0.2, bouche: Bouche.malin, joues: 0.6, brasD: -math.pi * 0.4)),
         // … puis regarde de l'autre côté, sûr de lui.
         Cle(0.55, Pose(incline: -0.1, tourne: -0.35, paupiere: 0.45, rx: -0.6, sg: 0.9, sd: 0.1, bouche: Bouche.sourire, joues: 0.7, brasD: math.pi * 0.3, brasG: math.pi * 0.85)),
         Cle(0.9, Pose(incline: -0.1, tourne: -0.35, paupiere: 0.45, rx: -0.6, sg: 0.9, sd: 0.1, bouche: Bouche.sourire, joues: 0.7, brasD: math.pi * 0.3, brasG: math.pi * 0.85)),
-        Cle(1.0, Pose(incline: -0.08, tourne: 0.35, paupiere: 0.45, rx: 0.5, sd: 0.8, sg: 0.2, bouche: Bouche.malin, joues: 0.6, brasD: -math.pi * 0.45)),
+        Cle(1.0, Pose(incline: -0.08, tourne: 0.35, paupiere: 0.45, rx: 0.5, sd: 0.8, sg: 0.2, bouche: Bouche.malin, joues: 0.6, brasD: -math.pi * 0.36)),
       ]);
       dessinerGoutte(c, touche(p), sombre: sombre, matiere: MatiereGoutte.irisee(s), tete: (c) {
         c.save();
