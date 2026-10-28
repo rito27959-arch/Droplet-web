@@ -16,7 +16,6 @@
 // en arrière sans rien perdre de ce qui a été choisi.
 // ============================================================================
 
-import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -185,7 +184,7 @@ class _VueCreationGroupeState extends State<VueCreationGroupe> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final etape1 = _etape == 0;
-    return Scaffold(
+    return _PoliceDroplet(child: Scaffold(
       backgroundColor: OuroColors.systemGroupedBackground,
       appBar: AppBar(
         backgroundColor: OuroColors.systemGroupedBackground,
@@ -245,7 +244,7 @@ class _VueCreationGroupeState extends State<VueCreationGroupe> {
           child: etape1 ? _membres(l10n) : _nommer(l10n),
         ),
       ),
-    );
+    ));
   }
 
   // ── Étape 1 : les membres ────────────────────────────────────────
@@ -498,6 +497,30 @@ class _LigneCandidat extends StatelessWidget {
         ],
       ),
       trailing: const SizedBox.shrink(),
+    );
+  }
+}
+
+/// Les champs et boutons iOS (`Cupertino…`) prennent par défaut la police
+/// d'Apple, absente d'Android : sans cela ils s'affichaient en Roboto au
+/// milieu d'un écran en Inter. On leur donne la police de Droplet.
+class _PoliceDroplet extends StatelessWidget {
+  const _PoliceDroplet({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = CupertinoTheme.of(context);
+    const famille = TextStyle(fontFamily: 'Inter', letterSpacing: -0.2);
+    return CupertinoTheme(
+      data: base.copyWith(
+        textTheme: base.textTheme.copyWith(
+          textStyle: base.textTheme.textStyle.merge(famille),
+          actionTextStyle: base.textTheme.actionTextStyle.merge(famille),
+          navActionTextStyle: base.textTheme.navActionTextStyle.merge(famille),
+        ),
+      ),
+      child: child,
     );
   }
 }
