@@ -2196,5 +2196,6 @@
   "gnKnown": "Met before",
   "gnPhoto": "Group photo",
   "gnNameFooter": "Give the group a name and, if you like, a photo.",
-  "gnDescription": "Description (optional)"
+  "gnDescription": "Description (optional)",
+  "cnRepliedToYou": "replied to your message"
 }

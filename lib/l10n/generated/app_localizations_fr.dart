@@ -6238,4 +6238,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get gnDescription => 'Description (facultatif)';
+
+  @override
+  String get cnRepliedToYou => 'a répondu à votre message';
 }

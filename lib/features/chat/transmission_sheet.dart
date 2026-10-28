@@ -54,6 +54,10 @@ import '../../design_system/ouro_colors.dart';
 import '../../design_system/ouro_haptics.dart';
 import '../../design_system/ouro_typography.dart';
 import '../../l10n/generated/app_localizations.dart';
+import 'package:intl/intl.dart';
+import '../../core/services/avatar_service.dart';
+import '../../core/services/nom_pair.dart';
+import '../../shared/widgets/peer_avatar.dart';
 
 /// Ouvre la feuille de transmission pour [message].
 Future<void> showTransmissionSheet(
@@ -100,42 +104,75 @@ class _TransmissionSheet extends StatelessWidget {
     };
   }
 
-  /// « Vu par » : le détail, membre par membre, d'un message de groupe.
+  /// « Lu par / Remis à / En attente » : le détail, membre par membre,
+  /// d'un message de groupe — chacun avec son visage et l'HEURE à laquelle
+  /// il a reçu ou lu, comme l'écran « Infos du message » de WhatsApp.
   List<Widget> _lignesGroupe(BuildContext context, AppLocalizations l10n) {
     final groupe = StorageService.getGroup(message.groupId!);
     if (groupe == null) return const [];
     final repo = ProviderScope.containerOf(context, listen: false).read(meshRepositoryProvider);
-    String nom(String id) =>
-        StorageService.getPeerRecord(id)?.pseudo ?? (id.length > 8 ? id.substring(0, 8) : id);
+    String nom(String id) => nomDuPair(id, [StorageService.getPeerRecord(id)?.pseudo]);
     final membres = groupe.activeMembers
         .map((m) => m.peerId)
         .where((id) => id != message.senderId)
         .toList();
-    final lus = repo.lecteursGroupe(message.id);
-    final recus = repo.recepteursGroupe(message.id).difference(lus);
-    final enAttente = membres.where((id) => !lus.contains(id) && !recus.contains(id)).toList();
+    final lus = repo.lecteursGroupe(message.id).where(membres.contains).toList()
+      ..sort((x, y) => (repo.heureLu(message.id, y) ?? DateTime(0)).compareTo(repo.heureLu(message.id, x) ?? DateTime(0)));
+    final recus = repo.recepteursGroupe(message.id).where((id) => membres.contains(id) && !lus.contains(id)).toList()
+      ..sort((x, y) => (repo.heureRecu(message.id, y) ?? DateTime(0)).compareTo(repo.heureRecu(message.id, x) ?? DateTime(0)));
+    final enAttente = membres.where((id) => !lus.contains(id) && !recus.contains(id)).toList()
+      ..sort((x, y) => nom(x).toLowerCase().compareTo(nom(y).toLowerCase()));
+    final langue = Localizations.localeOf(context).toLanguageTag();
+    String heure(DateTime? t) {
+      if (t == null) return '';
+      final maintenant = DateTime.now();
+      final memeJour = t.year == maintenant.year && t.month == maintenant.month && t.day == maintenant.day;
+      return memeJour ? DateFormat.Hm(langue).format(t) : DateFormat.MMMd(langue).add_Hm().format(t);
+    }
+
+    Widget section(String titre, IconData icone, Color couleur, List<String> ids, DateTime? Function(String) quand) => Padding(
+          padding: const EdgeInsets.only(bottom: DesignTokens.space3),
+          child: Container(
+            decoration: BoxDecoration(
+              color: OuroColors.secondarySystemGroupedBackground,
+              borderRadius: BorderRadius.circular(DesignTokens.radiusGroupedList),
+            ),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(icone, size: 17, color: couleur),
+                    const SizedBox(width: 6),
+                    Text(titre, style: OuroTypography.subheadline.copyWith(color: OuroColors.label, fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Text('${ids.length}', style: OuroTypography.subheadline.copyWith(color: OuroColors.secondaryLabel)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                for (final id in ids)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Row(
+                      children: [
+                        PeerAvatar(pseudo: nom(id), radius: 15, imagePath: AvatarService.cheminPair(id)),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(nom(id), maxLines: 1, overflow: TextOverflow.ellipsis, style: OuroTypography.body.copyWith(color: OuroColors.label))),
+                        Text(heure(quand(id)), style: OuroTypography.footnote.copyWith(color: OuroColors.secondaryLabel)),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+
     return [
-      if (lus.isNotEmpty)
-        _Ligne(
-          icone: Icons.done_all_rounded,
-          couleur: OuroColors.meshBlueBright,
-          titre: l10n.tsReadBy,
-          valeur: lus.map(nom).join(', '),
-        ),
-      if (recus.isNotEmpty)
-        _Ligne(
-          icone: Icons.done_all_rounded,
-          couleur: OuroColors.systemGray,
-          titre: l10n.tsDeliveredTo,
-          valeur: recus.map(nom).join(', '),
-        ),
-      if (enAttente.isNotEmpty)
-        _Ligne(
-          icone: Icons.schedule_rounded,
-          couleur: OuroColors.systemGray,
-          titre: l10n.tsWaitingFor,
-          valeur: enAttente.map(nom).join(', '),
-        ),
+      const SizedBox(height: DesignTokens.space2),
+      if (lus.isNotEmpty) section(l10n.tsReadBy, Icons.done_all_rounded, OuroColors.meshBlueBright, lus, (id) => repo.heureLu(message.id, id)),
+      if (recus.isNotEmpty) section(l10n.tsDeliveredTo, Icons.done_all_rounded, OuroColors.systemGray, recus, (id) => repo.heureRecu(message.id, id)),
+      if (enAttente.isNotEmpty) section(l10n.tsWaitingFor, Icons.schedule_rounded, OuroColors.systemGray, enAttente, (_) => null),
     ];
   }
 
@@ -200,7 +237,10 @@ class _TransmissionSheet extends StatelessWidget {
     return FrostedSheet(
       child: SafeArea(
         top: false,
-        child: Column(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.82),
+          child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -296,6 +336,8 @@ class _TransmissionSheet extends StatelessWidget {
 
             const SizedBox(height: DesignTokens.space2),
           ],
+        ),
+          ),
         ),
       ),
     );

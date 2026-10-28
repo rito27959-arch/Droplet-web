@@ -6205,4 +6205,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gnDescription => 'विवरण (वैकल्पिक)';
+
+  @override
+  String get cnRepliedToYou => 'ने आपके संदेश का जवाब दिया';
 }

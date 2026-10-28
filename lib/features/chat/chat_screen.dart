@@ -3549,6 +3549,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 m.authorPseudo,
           }.where((p) => p.trim().isNotEmpty).toList()
         : const [];
+    // La couleur d'une mention = celle du nom de la personne au-dessus de
+    // ses bulles (même calcul, sur son identifiant), et mon pseudo pour
+    // que « @moi » se détache.
+    final idParPseudo = <String, String>{
+      for (final m in messages)
+        if (m.senderId != null && m.authorPseudo.trim().isNotEmpty) m.authorPseudo.toLowerCase(): m.senderId!,
+      if (groupeMentions != null)
+        for (final m in groupeMentions.activeMembers)
+          nomDuPair(m.peerId, [StorageService.getPeerRecord(m.peerId)?.pseudo]).toLowerCase(): m.peerId,
+    };
+    Mentions.monPseudo = repo.myPseudo;
+    Mentions.couleurDe = (pseudo) => _MessageBubble._senderColor(idParPseudo[pseudo.toLowerCase()] ?? pseudo);
     final torConnected = ref.watch(torConnectedProvider);
     // Progression des fichiers en cours d'envoi/réception, et révision des
     // photos de profil : lues ICI, dans `build`, puis passées aux bulles —
@@ -7082,6 +7094,7 @@ class _MessageBubble extends StatelessWidget {
       return TexteMisEnForme(
         texte: text,
         style: style,
+        surCouleur: mine,
         brut: (morceau, styleMorceau) =>
             _fragmentsSurlignes(morceau, styleMorceau),
       );

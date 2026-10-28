@@ -61,6 +61,17 @@ class Mentions {
   /// La mention qui s'adresse à tout le groupe.
   static const String tous = 'tous';
 
+  /// Mon propre pseudo : une mention de moi se détache plus fort (fond
+  /// plein), comme WhatsApp quand on vous interpelle.
+  static String monPseudo = '';
+
+  /// La couleur d'un membre mentionné — la même que celle de son nom
+  /// au-dessus de ses bulles. Déposée par l'écran de discussion.
+  static Color Function(String pseudo)? couleurDe;
+
+  /// La couleur de « @tous » : un rose franc, celui de WhatsApp.
+  static const Color couleurTous = Color(0xFFFF2D78);
+
   /// Ce message me concerne-t-il personnellement ?
   static bool concerne(String texte, String monPseudo) {
     final bas = texte.toLowerCase();
@@ -173,7 +184,12 @@ class MiseEnForme {
   static int longueurVisible(String texte) => sansMarqueurs(texte).length;
 
   /// Vrai si [texte] porte au moins une marque de mise en forme.
-  static bool contientDuStyle(String texte) => _regex.hasMatch(texte);
+  static bool contientDuStyle(String texte) => _regex.hasMatch(texte) || _mentionPossible.hasMatch(texte);
+
+  /// Une arobase suivie d'une lettre, en début de texte ou après un blanc :
+  /// sans ce test, un message qui ne contenait QUE des mentions
+  /// (« @tous le cours a commencé ») s'affichait sans les colorer.
+  static final RegExp _mentionPossible = RegExp(r'(^|[\s(«"])@[\p{L}\p{N}_]', unicode: true);
 
   /// Le texte débarrassé de ses marqueurs — pour les aperçus de la liste
   /// des discussions et les notifications, où l'on ne montre pas de style.
@@ -226,7 +242,7 @@ class MiseEnForme {
     final tampon = StringBuffer();
     var i = 0;
     while (i < texte.length) {
-      if (texte[i] != '@') {
+      if (texte[i] != '@' || (i > 0 && RegExp(r'[\p{L}\p{N}_.]', unicode: true).hasMatch(texte[i - 1]))) {
         tampon.write(texte[i]);
         i++;
         continue;
@@ -323,6 +339,11 @@ class MiseEnForme {
         case Formatage.bloc:
           spans.add(WidgetSpan(
             child: _BlocCode(texte: m.texte, style: styleMorceau),
+          ));
+        case Formatage.mention:
+          spans.add(WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: PastilleMention(texte: m.texte, style: style),
           ));
         case null:
           // Le texte sans style peut encore contenir ce que l'écran veut
@@ -489,4 +510,61 @@ class _BlocCode extends StatelessWidget {
       child: Text(texte.trim(), style: style.copyWith(fontSize: (style.fontSize ?? 15) - 1)),
     );
   }
+}
+
+/// Une mention, en pastille — comme WhatsApp : « @tous » en rose, un
+/// membre dans la couleur de son nom, et MOI en fond plein, pour qu'on se
+/// voie interpellé d'un coup d'œil dans un fil de cent messages.
+class PastilleMention extends StatelessWidget {
+  const PastilleMention({super.key, required this.texte, required this.style, this.surCouleur = false});
+
+  /// « @nom », arobase comprise.
+  final String texte;
+
+  /// Le style du texte autour (taille, couleur de la bulle).
+  final TextStyle style;
+
+  /// Posée sur une bulle colorée (les miennes) : blanc translucide.
+  final bool surCouleur;
+
+  @override
+  Widget build(BuildContext context) {
+    final nom = texte.substring(1);
+    final bas = nom.toLowerCase();
+    final tous = bas == Mentions.tous;
+    final moi = Mentions.monPseudo.isNotEmpty && bas == Mentions.monPseudo.toLowerCase();
+    final sombre = Theme.of(context).brightness == Brightness.dark;
+    // Dans MA bulle (texte blanc sur l'accent), une teinte de couleur
+    // serait illisible : la pastille y est blanche translucide.
+    final surClair = surCouleur;
+    final couleur = tous
+        ? Mentions.couleurTous
+        : moi
+            ? OuroColors.accent
+            : (Mentions.couleurDe?.call(nom) ?? OuroColors.accent);
+    final Color fond;
+    final Color encre;
+    if (surClair) {
+      fond = Colors.white.withValues(alpha: moi || tous ? 0.34 : 0.22);
+      encre = Colors.white;
+    } else if (moi || tous) {
+      fond = couleur.withValues(alpha: sombre ? 0.85 : 0.9);
+      encre = Colors.white;
+    } else {
+      fond = couleur.withValues(alpha: sombre ? 0.26 : 0.16);
+      encre = sombre ? Color.lerp(couleur, Colors.white, 0.35)! : Color.lerp(couleur, Colors.black, 0.15)!;
+    }
+    final taille = style.fontSize ?? 16;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 1),
+      padding: EdgeInsets.symmetric(horizontal: taille * 0.38, vertical: taille * 0.06),
+      decoration: BoxDecoration(color: fond, borderRadius: BorderRadius.circular(taille * 0.6)),
+      child: Text(
+        texte,
+        style: style.copyWith(color: encre, fontWeight: FontWeight.w700, height: 1.2, backgroundColor: Colors.transparent),
+        textScaler: TextScaler.noScaling,
+      ),
+    );
+  }
+
 }

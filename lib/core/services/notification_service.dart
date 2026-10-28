@@ -600,7 +600,8 @@ class NotificationService {
   }
 
   static Future<AndroidBitmap<Object>?> _grandeIcone(String? id, String nom) async {
-    final photo = AvatarService.cheminPair(id);
+    // Un pair OU un groupe : la photo du groupe est rangée à part.
+    final photo = AvatarService.cheminPair(id) ?? AvatarService.cheminGroupe(id);
     if (photo != null) return FilePathAndroidBitmap(photo);
     final octets = await _pastilleInitiale(nom);
     return octets == null ? null : ByteArrayAndroidBitmap(octets);
@@ -933,7 +934,7 @@ class NotificationService {
     _meta[conversationId] = (
       nom: titreGroupe ?? pseudo,
       route: routePath,
-      photo: titreGroupe != null ? null : AvatarService.cheminPair(expediteurId),
+      photo: titreGroupe != null ? AvatarService.cheminGroupe(conversationId) : AvatarService.cheminPair(expediteurId),
       groupe: titreGroupe != null,
       dernierMessage: messageId,
     );
@@ -952,7 +953,7 @@ class NotificationService {
       id: conversationId,
       nom: titreGroupe ?? pseudo,
       route: routePath,
-      photo: titreGroupe != null ? null : AvatarService.cheminPair(expediteurId),
+      photo: titreGroupe != null ? AvatarService.cheminGroupe(conversationId) : AvatarService.cheminPair(expediteurId),
     ));
     // ── LA VOIE NATIVE, QUAND ELLE EXISTE ────────────────────────────
     //
@@ -981,8 +982,12 @@ class NotificationService {
       // horodatage — c'est ce qui permet à Android d'afficher l'heure de
       // chaque message, et pas celle du dernier pour tous. Un `quand`
       // global en plus serait soit redondant, soit contradictoire.
-      cheminPhoto:
-          titreGroupe != null ? null : AvatarService.cheminPair(expediteurId),
+      // La photo de la conversation : celle de la personne en tête-à-tête,
+      // celle du GROUPE pour un groupe (chaque ligne garde en plus le
+      // visage de son auteur, voir `photosAuteurs`).
+      cheminPhoto: titreGroupe != null
+          ? AvatarService.cheminGroupe(conversationId)
+          : AvatarService.cheminPair(expediteurId),
       groupe: titreGroupe != null,
     );
     if (natif) return;
@@ -1008,6 +1013,31 @@ class NotificationService {
         titreGroupe != null ? conversationId : expediteurId,
         titreGroupe ?? pseudo,
       ),
+    );
+  }
+
+  /// Notification « X a réagi à votre message » — app en arrière-plan.
+  /// Le visage de la personne en grande icône ; une seule notification de
+  /// réaction par conversation (la nouvelle remplace l'ancienne).
+  static Future<void> showReaction({
+    required String conversationId,
+    required String route,
+    required String auteur,
+    required String auteurId,
+    required String texte,
+    String? nomGroupe,
+    bool silencieux = false,
+  }) async {
+    if (_shouldSuppress(conversationId)) return;
+    await _show(
+      title: nomGroupe ?? auteur,
+      body: nomGroupe != null ? '$auteur $texte' : texte,
+      channel: _channelMessages,
+      payload: route,
+      dedupeKey: 'reaction:$conversationId',
+      silencieux: silencieux,
+      categorie: AndroidNotificationCategory.social,
+      largeIcon: await _grandeIcone(auteurId, auteur),
     );
   }
 

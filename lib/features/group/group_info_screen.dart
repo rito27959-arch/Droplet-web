@@ -12,8 +12,6 @@
 // un changement local part ensuite aux autres membres par le maillage.
 // ============================================================================
 
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +40,7 @@ import 'invitation_groupe_screen.dart';
 import 'stockage_groupe_screen.dart';
 import '../notifications/notifs_conversation_screen.dart' show LigneNotifsConversation;
 import '../../core/services/avatar_service.dart';
+import '../../shared/widgets/avatar_picker_sheet.dart';
 import '../../shared/widgets/afficher_toast.dart';
 
 /// Page « Infos du groupe » : membres, administration, renommage.
@@ -82,32 +81,18 @@ class GroupInfoScreen extends ConsumerWidget {
     GroupInfo group,
   ) async {
     final l10n = AppLocalizations.of(context);
-    // Le même sélecteur que partout ailleurs dans l'app : pas de
-    // dépendance de plus pour choisir une image.
-    final resultat = await FilePicker.platform.pickFiles(type: FileType.image);
-    final choisi = resultat?.files.single;
-    if (choisi?.path == null) return;
-    final octets = await File(choisi!.path!).readAsBytes();
-    final chemin = await AvatarService.enregistrer(octets);
-    if (chemin == null) {
-      if (context.mounted) {
-        afficherToast(context, l10n.giPhotoFailed, type: DropletToastType.error);
-      }
+    // Le même sélecteur que pour la photo de profil : il rend déjà une
+    // vignette carrée et légère, qui voyage vite vers les membres.
+    final octets = await choisirUnePhoto(context);
+    if (octets == null || !context.mounted) return;
+    final ok = await ref.read(meshRepositoryProvider).changerPhotoGroupe(group.id, octets);
+    if (!context.mounted) return;
+    if (!ok) {
+      afficherToast(context, l10n.giPhotoFailed, type: DropletToastType.error);
       return;
     }
-    await StorageService.upsertGroup(
-      id: group.id,
-      name: group.name,
-      avatarUrl: chemin,
-      createdBy: group.createdBy,
-      createdAt: group.createdAt,
-      updatedAt: DateTime.now(),
-    );
-    unawaited(ref.read(meshRepositoryProvider).diffuserReglagesGroupe(group.id));
-    if (context.mounted) {
-      OuroHaptics.light();
-      afficherToast(context, l10n.giPhotoChanged);
-    }
+    OuroHaptics.light();
+    afficherToast(context, l10n.giPhotoChanged);
   }
 
   /// Le stockage du groupe : ce qui a été envoyé, par qui, et le poids.

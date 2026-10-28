@@ -77,6 +77,14 @@ class AvatarGroupe extends StatelessWidget {
     final ids = _aMontrer();
     final cote = rayon * 2;
 
+    // La PHOTO DU GROUPE d'abord, quand le groupe en a une : c'est elle
+    // que tout le monde reconnaît dans la liste, comme sur WhatsApp. Les
+    // visages des membres ne servent qu'à défaut.
+    final photo = AvatarService.cheminGroupe(groupe?.id);
+    if (photo != null) {
+      return PeerAvatar(pseudo: groupe?.name ?? '', radius: rayon, imagePath: photo);
+    }
+
     // Aucun membre connu : on retombe sur le dessin générique, qui reste
     // préférable à un disque vide.
     if (ids.isEmpty) {

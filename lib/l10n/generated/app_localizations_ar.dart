@@ -6314,4 +6314,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gnDescription => 'الوصف (اختياري)';
+
+  @override
+  String get cnRepliedToYou => 'ردّ على رسالتك';
 }

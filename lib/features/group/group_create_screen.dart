@@ -74,17 +74,8 @@ class GroupCreateScreen extends ConsumerWidget {
           if (description.isNotEmpty) {
             ReglagesGroupes.definir(groupId, ReglagesGroupes.de(groupId).copier(description: description));
           }
-          if (photo != null) {
-            final chemin = await AvatarService.enregistrer(photo);
-            final g = StorageService.getGroup(groupId);
-            if (chemin != null && g != null) {
-              await StorageService.upsertGroup(
-                id: g.id, name: g.name, avatarUrl: chemin,
-                createdBy: g.createdBy, createdAt: g.createdAt, updatedAt: DateTime.now(),
-              );
-            }
-          }
-          if (description.isNotEmpty || photo != null) await repo.diffuserReglagesGroupe(groupId);
+          if (photo != null) await repo.changerPhotoGroupe(groupId, photo);
+          if (description.isNotEmpty) await repo.diffuserReglagesGroupe(groupId);
           if (context.mounted) context.go('/group/$groupId');
           return true;
         } catch (e) {

@@ -384,6 +384,7 @@ class _Carte extends StatelessWidget {
         TypeEntreeNotif.annonce => l10n.cnAnnouncement,
         TypeEntreeNotif.reponseStatut => l10n.cnStatusReply,
         TypeEntreeNotif.jaimeStatut => l10n.cnStatusLike,
+        TypeEntreeNotif.reponse => l10n.cnRepliedToYou,
       };
 
   @override
@@ -546,6 +547,11 @@ class _VisageEntree extends StatelessWidget {
           Icons.favorite_rounded,
           size: 11,
           color: Colors.white,
+        ),
+      TypeEntreeNotif.reponse => Icon(
+          Icons.reply_rounded,
+          size: 12,
+          color: OuroColors.texteSurAccent,
         ),
       TypeEntreeNotif.annonce => null,
     };

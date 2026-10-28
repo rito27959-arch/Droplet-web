@@ -6060,4 +6060,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gnDescription => '简介（可选）';
+
+  @override
+  String get cnRepliedToYou => '回复了你的消息';
 }

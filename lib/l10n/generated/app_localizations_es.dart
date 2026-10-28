@@ -6243,4 +6243,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get gnDescription => 'Descripción (opcional)';
+
+  @override
+  String get cnRepliedToYou => 'respondió a tu mensaje';
 }

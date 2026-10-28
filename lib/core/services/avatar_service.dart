@@ -307,6 +307,80 @@ class AvatarService {
     }
   }
 
+  // ── LES PHOTOS DE GROUPE ─────────────────────────────────────────────
+  //
+  // ⚠️ RANGÉES À PART, DANS `profil/groupes/`. Avant, la photo d'un groupe
+  // passait par [enregistrer]… qui VIDE le dossier de la photo de profil :
+  // changer la photo d'un groupe effaçait la sienne. Et elle était
+  // enregistrée par son NOM là où l'affichage attend un CHEMIN : elle
+  // n'apparaissait jamais.
+
+  static const _cleEmpreintesGroupes = 'avatars_groupes_empreintes';
+
+  static Directory? get _dossierGroupes {
+    final d = _dossier;
+    if (d == null) return null;
+    final g = Directory('${d.path}/groupes');
+    if (!g.existsSync()) g.createSync(recursive: true);
+    return g;
+  }
+
+  static String _nomGroupe(String groupId) =>
+      '${groupId.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')}.jpg';
+
+  /// Le chemin de la photo d'un groupe, si on l'a.
+  static String? cheminGroupe(String? groupId) {
+    if (groupId == null || groupId.isEmpty) return null;
+    final d = _dossierGroupes;
+    if (d == null) return null;
+    final f = File('${d.path}/${_nomGroupe(groupId)}');
+    return f.existsSync() ? f.path : null;
+  }
+
+  static Map<String, String> _empreintesGroupes() {
+    final brut = StorageService.getString(_cleEmpreintesGroupes);
+    if (brut == null || brut.isEmpty) return {};
+    try {
+      return (jsonDecode(brut) as Map<String, dynamic>).cast<String, String>();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  static String? empreinteGroupe(String groupId) => _empreintesGroupes()[groupId];
+
+  /// Enregistre la photo d'un groupe (choisie ici, ou reçue d'un membre).
+  /// Renvoie son empreinte, ou `null` si elle est refusée (trop grosse,
+  /// empreinte annoncée fausse).
+  static Future<String?> enregistrerGroupe(String groupId, Uint8List octets, {String? empreinteAnnoncee}) async {
+    if (octets.isEmpty || octets.length > 512 * 1024) return null;
+    final empreinte = empreinteDe(octets);
+    if (empreinteAnnoncee != null && empreinteAnnoncee != empreinte) return null;
+    final d = _dossierGroupes;
+    if (d == null) return null;
+    try {
+      await File('${d.path}/${_nomGroupe(groupId)}').writeAsBytes(octets, flush: true);
+      final m = _empreintesGroupes()..[groupId] = empreinte;
+      await StorageService.setString(_cleEmpreintesGroupes, jsonEncode(m));
+      PaintingBinding.instance.imageCache.clear();
+      return empreinte;
+    } catch (e) {
+      debugPrint('[Avatar] photo du groupe $groupId non enregistrée: $e');
+      return null;
+    }
+  }
+
+  /// Les octets de la photo d'un groupe, pour l'envoyer.
+  static Uint8List? octetsGroupe(String groupId) {
+    final c = cheminGroupe(groupId);
+    if (c == null) return null;
+    try {
+      return File(c).readAsBytesSync();
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Retire la photo de profil.
   static Future<void> supprimer() async {
     final d = _dossier;

@@ -6303,4 +6303,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gnDescription => 'Описание (необязательно)';
+
+  @override
+  String get cnRepliedToYou => 'ответил(а) на ваше сообщение';
 }

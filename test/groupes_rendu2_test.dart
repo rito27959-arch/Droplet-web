@@ -13,6 +13,7 @@ import 'package:droplet/core/models/mesh_message.dart';
 import 'package:droplet/design_system/ouro_colors.dart';
 import 'package:droplet/design_system/ouro_list.dart';
 import 'package:droplet/design_system/ouro_theme.dart';
+import 'package:droplet/features/chat/mise_en_forme.dart';
 import 'package:droplet/features/group/group_create_screen.dart';
 import 'package:droplet/features/group/parametres_groupe_screen.dart';
 import 'package:droplet/features/group/reglages_groupe.dart';
@@ -185,5 +186,52 @@ void main() {
         );
       });
     }
+  }
+
+  // Les mentions en pastille, dans une bulle reçue et dans une des miennes.
+  for (final sombre in [false, true]) {
+    final mode = sombre ? 'sombre' : 'clair';
+    testWidgets('mentions $mode', (tester) async {
+      Mentions.pseudos = ['Awa', 'Miguel', 'Rito'];
+      Mentions.monPseudo = 'Rito';
+      Mentions.couleurDe = (p) => p.toLowerCase() == 'awa' ? const Color(0xFF34C759) : const Color(0xFFFF9500);
+      Widget bulle(String texte, {required bool mien}) => Align(
+            alignment: mien ? Alignment.centerRight : Alignment.centerLeft,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+              constraints: const BoxConstraints(maxWidth: 300),
+              decoration: BoxDecoration(
+                color: mien ? OuroColors.bubbleOutgoing : OuroColors.bubbleIncoming,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: TexteMisEnForme(
+                texte: texte,
+                surCouleur: mien,
+                style: TextStyle(fontSize: 16, color: mien ? OuroColors.bubbleOutgoingText : OuroColors.bubbleIncomingText),
+              ),
+            ),
+          );
+      await rendre(
+        tester,
+        Scaffold(
+          backgroundColor: OuroColors.systemBackground,
+          body: SafeArea(
+            child: Column(
+              children: [
+                bulle('@tous le cours a commencé…', mien: false),
+                bulle('@Awa tu peux envoyer le TD1 ? Merci @Miguel aussi', mien: false),
+                bulle('@Rito tu as vu le message ?', mien: false),
+                bulle('Écris-moi à rito@exemple.cm', mien: false),
+                bulle('@tous rendez-vous à 14 h, @Awa apporte le projecteur', mien: true),
+              ],
+            ),
+          ),
+        ),
+        'mentions_$mode',
+        sombre: sombre,
+        hauteur: 520,
+      );
+    });
   }
 }

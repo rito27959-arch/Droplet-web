@@ -1489,10 +1489,34 @@ class _NotificationBridgeState extends ConsumerState<NotificationBridge>
       //
       // Seulement dans un groupe : en tête-à-tête, TOUT s'adresse à moi,
       // et un « @Nico » n'y change rien.
-      final mentionne = groupe &&
+      final mentionneDirect = groupe &&
           msg.type == 'text' &&
           Mentions.concerne(msg.content, repo.myPseudo);
-      if (mentionne) {
+      // ── ON ME RÉPOND ────────────────────────────────────────────────
+      //
+      // Une réponse à l'un de MES messages compte comme une mention, comme
+      // WhatsApp : elle traverse un groupe en sourdine « sauf mentions »,
+      // et elle entre dans le centre de notifications.
+      final citeId = msg.replyToId;
+      final repondAMoi = groupe &&
+          citeId != null &&
+          StorageService.getMessages().any((m) => m.id == citeId && m.senderId == repo.myId);
+      final mentionne = mentionneDirect || repondAMoi;
+      if (repondAMoi && !mentionneDirect) {
+        unawaited(JournalNotifs.instance.ajouter(EntreeNotif(
+          id: 'p:${msg.id}',
+          type: TypeEntreeNotif.reponse,
+          conversationId: conv,
+          route: route,
+          auteur: msg.authorPseudo,
+          auteurId: msg.senderId,
+          texte: msg.type == 'text' ? msg.content : preview,
+          groupe: true,
+          nomConversation: nomGroupe,
+          quand: msg.timestamp,
+        )));
+      }
+      if (mentionneDirect) {
         unawaited(JournalNotifs.instance.ajouter(EntreeNotif(
           id: 'm:${msg.id}',
           type: TypeEntreeNotif.mention,
@@ -1613,6 +1637,21 @@ class _NotificationBridgeState extends ConsumerState<NotificationBridge>
           auteurId: auteurId,
           groupeId: cible.groupId,
           monId: repo.myId,
+        ));
+      } else if (!NotificationService.isAppForeground && decision.afficher) {
+        // App en arrière-plan : une vraie notification, avec le visage de
+        // celui qui a réagi — comme WhatsApp (« Awa a réagi 😂 à : … »).
+        final l10n = lookupAppLocalizations(NotificationService.currentLocale);
+        unawaited(NotificationService.showReaction(
+          conversationId: conv,
+          route: route,
+          auteur: pseudo,
+          auteurId: auteurId,
+          nomGroupe: nomGroupe,
+          texte: extrait.isEmpty
+              ? l10n.cnReacted(r.emoji)
+              : '${l10n.cnReacted(r.emoji)} · ${l10n.cnQuoted(extrait)}',
+          silencieux: !decision.sonore,
         ));
       }
     });

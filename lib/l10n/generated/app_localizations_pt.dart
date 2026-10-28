@@ -6239,4 +6239,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gnDescription => 'Descrição (opcional)';
+
+  @override
+  String get cnRepliedToYou => 'respondeu à sua mensagem';
 }

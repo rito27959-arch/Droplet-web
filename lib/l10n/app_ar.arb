@@ -2196,5 +2196,6 @@
   "gnKnown": "تم لقاؤهم سابقًا",
   "gnPhoto": "صورة المجموعة",
   "gnNameFooter": "امنح المجموعة اسمًا، وصورة إن أردت.",
-  "gnDescription": "الوصف (اختياري)"
+  "gnDescription": "الوصف (اختياري)",
+  "cnRepliedToYou": "ردّ على رسالتك"
 }

@@ -2196,5 +2196,6 @@
   "gnKnown": "Ya conocidos",
   "gnPhoto": "Foto del grupo",
   "gnNameFooter": "Ponle un nombre al grupo y, si quieres, una foto.",
-  "gnDescription": "Descripción (opcional)"
+  "gnDescription": "Descripción (opcional)",
+  "cnRepliedToYou": "respondió a tu mensaje"
 }

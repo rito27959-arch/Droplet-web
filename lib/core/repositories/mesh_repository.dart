@@ -506,6 +506,61 @@ class MeshRepository {
   final Map<String, Set<String>> _lusGroupe = {};
   final Map<String, String?> _groupeParMessage = {};
 
+  // ⚠️ LES ACCUSÉS DE GROUPE SONT CONSERVÉS (avec leur heure), sinon
+  // « Lu par / Remis à » se vidait à chaque redémarrage de l'app. Les 400
+  // derniers messages suffisent : au-delà, personne ne va vérifier.
+  final Map<String, Map<String, int>> _heuresRecu = {};
+  final Map<String, Map<String, int>> _heuresLu = {};
+  bool _accusesCharges = false;
+  Timer? _ecritureAccuses;
+  static const _cleAccuses = 'accuses_groupes';
+
+  void _chargerAccuses() {
+    if (_accusesCharges) return;
+    _accusesCharges = true;
+    try {
+      final brut = StorageService.getString(_cleAccuses);
+      if (brut == null || brut.isEmpty) return;
+      final tout = json.decode(brut) as Map<String, dynamic>;
+      tout.forEach((id, v) {
+        final m = v as Map<String, dynamic>;
+        final r = (m['r'] as Map?)?.map((k, x) => MapEntry(k as String, (x as num).toInt())) ?? {};
+        final l = (m['l'] as Map?)?.map((k, x) => MapEntry(k as String, (x as num).toInt())) ?? {};
+        _heuresRecu[id] = {...r};
+        _heuresLu[id] = {...l};
+        (_recusGroupe[id] ??= {}).addAll(r.keys);
+        (_lusGroupe[id] ??= {}).addAll(l.keys);
+      });
+    } catch (e) {
+      debugPrint('[MeshRepo] accusés de groupe illisibles: $e');
+    }
+  }
+
+  void _retenirAccuse(Map<String, Map<String, int>> ou, String messageId, String deQui) {
+    (ou[messageId] ??= {}).putIfAbsent(deQui, () => DateTime.now().millisecondsSinceEpoch);
+    _ecritureAccuses?.cancel();
+    _ecritureAccuses = Timer(const Duration(seconds: 2), () {
+      final ids = {..._heuresRecu.keys, ..._heuresLu.keys}.toList();
+      final garder = ids.length > 400 ? ids.sublist(ids.length - 400) : ids;
+      unawaited(StorageService.setString(_cleAccuses, json.encode({
+        for (final id in garder) id: {'r': _heuresRecu[id] ?? {}, 'l': _heuresLu[id] ?? {}},
+      })));
+    });
+  }
+
+  /// L'heure à laquelle [peerId] a reçu / lu le message de groupe.
+  DateTime? heureRecu(String messageId, String peerId) {
+    _chargerAccuses();
+    final ms = _heuresRecu[messageId]?[peerId];
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  DateTime? heureLu(String messageId, String peerId) {
+    _chargerAccuses();
+    final ms = _heuresLu[messageId]?[peerId];
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
   String? _groupeDuMessage(String messageId) => _groupeParMessage.putIfAbsent(
         messageId,
         () => StorageService.getMessages().where((m) => m.id == messageId).firstOrNull?.groupId,
@@ -518,6 +573,7 @@ class MeshRepository {
   /// Nombre d'accusés de réception : pour un message de groupe, le nombre de
   /// MEMBRES qui l'ont reçu.
   int getAckCount(String messageId) {
+    _chargerAccuses();
     final recus = _recusGroupe[messageId];
     if (recus != null) return recus.length;
     if (_groupeDuMessage(messageId) != null) return 0;
@@ -530,7 +586,9 @@ class MeshRepository {
       _ackCtrl.add(messageId);
       return;
     }
+    _chargerAccuses();
     if (deQui.isNotEmpty && (_recusGroupe[messageId] ??= {}).add(deQui)) {
+      _retenirAccuse(_heuresRecu, messageId, deQui);
       _ackCtrl.add(messageId);
     }
   }
@@ -541,10 +599,15 @@ class MeshRepository {
       _readCtrl.add(messageId);
       return;
     }
+    _chargerAccuses();
     // Lu implique reçu.
-    if ((_recusGroupe[messageId] ??= {}).add(deQui)) _ackCtrl.add(messageId);
+    if ((_recusGroupe[messageId] ??= {}).add(deQui)) {
+      _retenirAccuse(_heuresRecu, messageId, deQui);
+      _ackCtrl.add(messageId);
+    }
     final lus = _lusGroupe[messageId] ??= {};
     if (!lus.add(deQui)) return;
+    _retenirAccuse(_heuresLu, messageId, deQui);
     // Bleu seulement quand tout le groupe a lu.
     if (lus.length >= _destinatairesGroupe(groupe)) _readCtrl.add(messageId);
   }
@@ -575,8 +638,15 @@ class MeshRepository {
 
   /// Les membres qui ont lu / reçu un de mes messages de groupe (depuis le
   /// lancement de l'application).
-  Set<String> lecteursGroupe(String messageId) => {...?_lusGroupe[messageId]};
-  Set<String> recepteursGroupe(String messageId) => {...?_recusGroupe[messageId]};
+  Set<String> lecteursGroupe(String messageId) {
+    _chargerAccuses();
+    return {...?_lusGroupe[messageId]};
+  }
+
+  Set<String> recepteursGroupe(String messageId) {
+    _chargerAccuses();
+    return {...?_recusGroupe[messageId]};
+  }
 
   /// Accusés de lecture reçus (émet l'ID du message lu).
   final _readCtrl = StreamController<String>.broadcast();
@@ -3805,6 +3875,50 @@ class MeshRepository {
     });
   }
 
+  /// Inscrit le chemin LOCAL de la photo dans la fiche du groupe (sans
+  /// changer sa date : ce n'est pas une modification à rediffuser).
+  Future<void> _poserPhotoGroupeLocale(String groupId) async {
+    final g = StorageService.getGroup(groupId);
+    final chemin = AvatarService.cheminGroupe(groupId);
+    if (g == null || chemin == null) return;
+    await StorageService.upsertGroup(
+      id: g.id, name: g.name, avatarUrl: chemin,
+      createdBy: g.createdBy, createdAt: g.createdAt, updatedAt: g.updatedAt,
+    );
+    _groupsChangedCtrl.add(groupId);
+  }
+
+  /// Change la photo du groupe ET l'envoie à chaque membre — la photo
+  /// voyage comme un fichier (chiffré pour chacun), pas comme un chemin.
+  Future<bool> changerPhotoGroupe(String groupId, Uint8List octets) async {
+    final g = StorageService.getGroup(groupId);
+    if (g == null || !ReglagesGroupes.de(groupId).peutModifierInfos(g, _myId)) return false;
+    final empreinte = await AvatarService.enregistrerGroupe(groupId, octets);
+    if (empreinte == null) return false;
+    await _poserPhotoGroupeLocale(groupId);
+    await envoyerPhotoGroupe(groupId);
+    return true;
+  }
+
+  /// Envoie la photo du groupe à [a] (par défaut, à tous les membres).
+  Future<void> envoyerPhotoGroupe(String groupId, {Iterable<String>? a}) async {
+    final g = StorageService.getGroup(groupId);
+    final octets = AvatarService.octetsGroupe(groupId);
+    final empreinte = AvatarService.empreinteGroupe(groupId);
+    if (g == null || octets == null || empreinte == null) return;
+    final cibles = (a ?? g.activeMembers.map((m) => m.peerId)).where((id) => id != _myId && !StorageService.isContactBlocked(id));
+    for (final id in cibles) {
+      unawaited(sendFile(
+        fileName: 'groupe.jpg',
+        bytes: octets,
+        mimeType: 'image/jpeg',
+        targetId: id,
+        avatarEmpreinte: empreinte,
+        avatarGroupe: groupId,
+      ).then<void>((_) {}, onError: (Object e) => debugPrint('[MeshRepo] photo du groupe non envoyée à $id : $e')));
+    }
+  }
+
   /// Refuse une demande d'adhésion (rien n'est envoyé au demandeur : un
   /// refus ne doit rien lui apprendre).
   void refuserDemandeAdhesion({required String groupId, required String peerId}) {
@@ -3825,6 +3939,8 @@ class MeshRepository {
       createdBy: group.createdBy, createdAt: group.createdAt, updatedAt: now,
     );
     await _syncGroupToMembers(groupId);
+    // Le nouveau venu reçoit aussi la photo du groupe.
+    unawaited(envoyerPhotoGroupe(groupId, a: [peerId]));
     _groupsChangedCtrl.add(groupId);
   }
 
@@ -4002,7 +4118,6 @@ class MeshRepository {
   Future<void> _applyGroupSync(String senderId, Map<String, dynamic> payload) async {
     final groupId = payload['id'] as String;
     final name = payload['name'] as String;
-    final avatarUrl = payload['avatarUrl'] as String?;
     final createdBy = payload['createdBy'] as String;
     final createdAt = DateTime.parse(payload['createdAt'] as String);
     final updatedAt = DateTime.parse(payload['updatedAt'] as String);
@@ -4019,12 +4134,15 @@ class MeshRepository {
       // « Seuls les admins modifient les infos » : un nom ou une photo
       // changés par un simple membre ne sont pas repris.
       final infosRefusees = existingGroup != null &&
-          (name != existingGroup.name || avatarUrl != existingGroup.avatarUrl) &&
+          name != existingGroup.name &&
           !reglagesAvant.peutModifierInfos(existingGroup, senderId);
+      // ⚠️ LA PHOTO N'EST JAMAIS REPRISE DU MANIFESTE : c'est le chemin d'un
+      // fichier sur le téléphone de l'expéditeur, qui ne veut rien dire
+      // ici. Elle arrive à part, comme un fichier (`envoyerPhotoGroupe`).
       await StorageService.upsertGroup(
         id: groupId,
         name: infosRefusees ? existingGroup.name : name,
-        avatarUrl: infosRefusees ? existingGroup.avatarUrl : avatarUrl,
+        avatarUrl: existingGroup?.avatarUrl ?? AvatarService.cheminGroupe(groupId),
         createdBy: createdBy, createdAt: createdAt, updatedAt: updatedAt,
       );
     }
@@ -4528,6 +4646,8 @@ class MeshRepository {
     String? replyToId,
     bool forStatus = false,
     String? avatarEmpreinte,
+    /// Avec [avatarEmpreinte] : c'est la photo de CE groupe, pas la mienne.
+    String? avatarGroupe,
     /// Distingue plusieurs envois du MÊME fichier (statut adressé à
     /// plusieurs personnes) dans la file fiable.
     String suffixeEnvoi = '',
@@ -4576,6 +4696,8 @@ class MeshRepository {
     // `av` = ce fichier est une PHOTO DE PROFIL (son empreinte). Le
     // destinataire la range dans ses avatars, jamais dans une conversation.
     if (avatarEmpreinte != null) meta['av'] = avatarEmpreinte;
+    // `ag` = … et c'est la photo d'un GROUPE (son identifiant).
+    if (avatarGroupe != null) meta['ag'] = avatarGroupe;
 
     // ⚠️ AU-DELÀ DE 256 KIO, LE FICHIER PART EN MORCEAUX. Chaque morceau est
     // un paquet fiable ordinaire — acquitté, relayé et retenté seul — et
@@ -4777,6 +4899,7 @@ class MeshRepository {
     final replyToId = meta['r'] as String?;
     final forStatus = meta['st'] as bool? ?? false;
     final avatarEmpreinte = meta['av'] as String?;
+    final avatarGroupe = meta['ag'] as String?;
 
     Uint8List? plainBytes;
     if (!encrypted) {
@@ -4809,6 +4932,19 @@ class MeshRepository {
     // Une photo de profil n'est PAS un message : elle rejoint les avatars,
     // et seulement si ses octets correspondent à l'empreinte annoncée par
     // l'expéditeur lui-même.
+    // La photo d'un GROUPE : acceptée seulement d'un membre qui a le droit
+    // de modifier les infos du groupe.
+    if (avatarEmpreinte != null && avatarGroupe != null) {
+      final g = StorageService.getGroup(avatarGroupe);
+      if (senderId != null &&
+          g != null &&
+          ReglagesGroupes.de(avatarGroupe).peutModifierInfos(g, senderId) &&
+          await AvatarService.enregistrerGroupe(avatarGroupe, fileBytes, empreinteAnnoncee: avatarEmpreinte) != null) {
+        await _poserPhotoGroupeLocale(avatarGroupe);
+        debugPrint('[MeshRepo] photo du groupe $avatarGroupe reçue de $senderId');
+      }
+      return;
+    }
     if (avatarEmpreinte != null) {
       if (senderId != null &&
           await AvatarService.enregistrerPair(senderId, fileBytes, avatarEmpreinte)) {

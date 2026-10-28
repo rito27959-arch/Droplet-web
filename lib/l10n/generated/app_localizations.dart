@@ -1068,6 +1068,12 @@ abstract class AppLocalizations {
   /// **'Description (facultatif)'**
   String get gnDescription;
 
+  /// No description provided for @cnRepliedToYou.
+  ///
+  /// In fr, this message translates to:
+  /// **'a répondu à votre message'**
+  String get cnRepliedToYou;
+
   /// No description provided for @acReadyTitle.
   ///
   /// In fr, this message translates to:

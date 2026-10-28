@@ -2412,5 +2412,6 @@
   "gnKnown": "Déjà rencontrés",
   "gnPhoto": "Photo du groupe",
   "gnNameFooter": "Donnez un nom au groupe et, si vous voulez, une photo.",
-  "gnDescription": "Description (facultatif)"
+  "gnDescription": "Description (facultatif)",
+  "cnRepliedToYou": "a répondu à votre message"
 }

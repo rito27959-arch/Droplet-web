@@ -40,6 +40,8 @@ enum TypeEntreeNotif {
   annonce,
   reponseStatut,
   jaimeStatut,
+  /// Quelqu'un a répondu à l'un de mes messages (dans un groupe).
+  reponse,
 }
 
 @immutable

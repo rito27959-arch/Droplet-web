@@ -2196,5 +2196,6 @@
   "gnKnown": "Bereits getroffen",
   "gnPhoto": "Gruppenfoto",
   "gnNameFooter": "Gib der Gruppe einen Namen und, wenn du magst, ein Foto.",
-  "gnDescription": "Beschreibung (optional)"
+  "gnDescription": "Beschreibung (optional)",
+  "cnRepliedToYou": "hat auf deine Nachricht geantwortet"
 }

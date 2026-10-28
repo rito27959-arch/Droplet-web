@@ -30,7 +30,11 @@ class TexteMisEnForme extends StatefulWidget {
     required this.style,
     this.surLien,
     this.brut,
+    this.surCouleur = false,
   });
+
+  /// Sur une bulle colorée (les miennes) : les mentions en blanc.
+  final bool surCouleur;
 
   final String texte;
   final TextStyle style;
@@ -191,6 +195,16 @@ class _TexteMisEnFormeState extends State<TexteMisEnForme>
               opacity: 0,
               child: _BlocCode(texte: m.texte, style: styleMorceau),
             ),
+          ));
+          offset += 1;
+        case Formatage.mention:
+          visibles.add(WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: PastilleMention(texte: m.texte, style: base, surCouleur: widget.surCouleur),
+          ));
+          masques.add(WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Opacity(opacity: 0, child: PastilleMention(texte: m.texte, style: base, surCouleur: widget.surCouleur)),
           ));
           offset += 1;
         case Formatage.lien:

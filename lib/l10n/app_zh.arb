@@ -2196,5 +2196,6 @@
   "gnKnown": "曾遇到",
   "gnPhoto": "群头像",
   "gnNameFooter": "为群组取个名字，也可以加张头像。",
-  "gnDescription": "简介（可选）"
+  "gnDescription": "简介（可选）",
+  "cnRepliedToYou": "回复了你的消息"
 }
