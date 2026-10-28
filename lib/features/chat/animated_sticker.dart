@@ -53,6 +53,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
+import 'stickers_droplet.dart';
+
 /// Un sticker animé disponible sur cet appareil.
 @immutable
 class AnimatedSticker {
@@ -274,6 +276,8 @@ class AnimatedStickerCatalog {
   /// Le nom lisible porté par une référence, pour le repli quand
   /// l'animation manque.
   static String nomLisible(String reference) {
+    final droplet = StickersDroplet.resoudre(reference);
+    if (droplet != null) return droplet.nom;
     final ref = reference.trim();
     if (!ref.startsWith(kStickerPrefix)) return ref;
     return ref.substring(kStickerPrefix.length).replaceAll('/', ' · ');
@@ -287,10 +291,19 @@ class AnimatedStickerView extends StatelessWidget {
     required this.reference,
     this.taille = 128,
     this.boucle = true,
+    this.interactif = false,
+    this.cleEffet,
   });
 
   final String reference;
   final double taille;
+
+  /// Dans la conversation : les stickers Droplet réagissent au toucher.
+  final bool interactif;
+
+  /// L'identifiant du message, pour la gerbe des stickers premium (voir
+  /// `VueStickerDroplet.cleEffet`).
+  final String? cleEffet;
 
   /// Dans une conversation, les stickers tournent en boucle comme chez
   /// Telegram. Dans la grille de choix, aussi — c'est ce qui permet de
@@ -299,6 +312,12 @@ class AnimatedStickerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Les stickers de Droplet sont dessinés en direct, pas lus dans un
+    // fichier : voir `stickers_droplet.dart`.
+    final droplet = StickersDroplet.resoudre(reference);
+    if (droplet != null) {
+      return VueStickerDroplet(sticker: droplet, taille: taille, interactif: interactif, cleEffet: cleEffet);
+    }
     final sticker = AnimatedStickerCatalog.resoudre(reference);
     if (sticker == null) return _repli(context);
 

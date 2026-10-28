@@ -71,6 +71,7 @@ import '../../core/services/epingles.dart';
 import '../../shared/widgets/banniere_notif.dart';
 import 'barre_enregistrement.dart';
 import 'video_ronde.dart';
+import 'stickers_droplet.dart';
 import 'camera_rapide.dart';
 import 'relecture_vocale.dart';
 import 'clavier_interactif.dart';
@@ -6829,7 +6830,15 @@ class _MessageBubble extends StatelessWidget {
       // complètement les bulles de texte voisines, au point de
       // déséquilibrer la lecture du fil. C'est la taille que retiennent
       // aussi WhatsApp et Telegram.
-      return AnimatedStickerView(reference: _contenuVisible, taille: 104);
+      // Les stickers Droplet un peu plus grands (120) : ils sont faits pour
+      // être regardés — et touchés.
+      final droplet = StickersDroplet.resoudre(_contenuVisible) != null;
+      return AnimatedStickerView(
+        reference: _contenuVisible,
+        taille: droplet ? 120 : 104,
+        interactif: true,
+        cleEffet: message.id,
+      );
     }
     if (_isSticker) {
       return Text(

@@ -28,7 +28,10 @@
 
 import 'package:flutter/material.dart';
 
+import 'package:go_router/go_router.dart';
+
 import 'animated_sticker.dart';
+import 'stickers_droplet.dart';
 
 import '../../core/services/storage_service.dart';
 import '../../design_system/design_tokens.dart';
@@ -248,6 +251,14 @@ class _PanneauStickersState extends State<PanneauStickers> {
   }
 
   void _choose(String sticker) {
+    // Un sticker premium, sans le pack : on montre ce qu'il faut pour
+    // l'envoyer plutôt que de l'envoyer quand même ou de ne rien faire.
+    final droplet = StickersDroplet.resoudre(sticker);
+    if (droplet != null && !StickersDroplet.envoyable(droplet)) {
+      OuroHaptics.selection();
+      GoRouter.maybeOf(context)?.push('/premium');
+      return;
+    }
     OuroHaptics.light();
     _remember(sticker);
     // ⚠️ ON NE FERME RIEN ICI. En ligne, le panneau RESTE ouvert après un
@@ -274,6 +285,18 @@ class _PanneauStickersState extends State<PanneauStickers> {
     final packs = <StickerPack>[
       if (_recent.isNotEmpty)
         StickerPack(name: 'Récents', icon: '🕐', stickers: _recent),
+      // Les stickers de Droplet, en tête : dessinés en direct, et légers
+      // comme un mot sur le réseau (voir `stickers_droplet.dart`).
+      StickerPack(
+        name: 'Goutte',
+        icon: '💧',
+        stickers: [for (final s in StickersDroplet.gratuits) s.reference],
+      ),
+      StickerPack(
+        name: 'Éclat',
+        icon: '✨',
+        stickers: [for (final s in StickersDroplet.premiums) s.reference],
+      ),
       for (final entree in lotsAnimes.entries)
         StickerPack(
           name: _joliNomDeLot(entree.key),
@@ -283,6 +306,9 @@ class _PanneauStickersState extends State<PanneauStickers> {
       ...kStickerPacks,
     ];
     final current = packs[_pack.clamp(0, packs.length - 1)];
+    // Les lots Droplet en grandes vignettes (quatre par ligne, comme les
+    // lots de WhatsApp) : ce sont des scènes, pas des pictogrammes.
+    final grandes = current.stickers.isNotEmpty && StickersDroplet.resoudre(current.stickers.first) != null;
 
     return Padding(
           padding: const EdgeInsets.symmetric(
@@ -292,16 +318,24 @@ class _PanneauStickersState extends State<PanneauStickers> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: DesignTokens.space2),
-              Text(current.name,
-                  style: OuroTypography.headline
-                      .copyWith(color: OuroColors.label)),
+              Row(
+                children: [
+                  Text(current.name,
+                      style: OuroTypography.headline
+                          .copyWith(color: OuroColors.label)),
+                  if (current.name == 'Éclat') ...[
+                    const SizedBox(width: 8),
+                    const _PastillePremium(),
+                  ],
+                ],
+              ),
               const SizedBox(height: DesignTokens.space3),
               Expanded(
                 child: GridView.builder(
                   padding: EdgeInsets.zero,
                   gridDelegate:
                       const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 68,
+                    maxCrossAxisExtent: grandes ? 96 : 68,
                     childAspectRatio: 1,
                   ),
                   itemCount: current.stickers.length,
@@ -309,6 +343,7 @@ class _PanneauStickersState extends State<PanneauStickers> {
                     final sticker = current.stickers[i];
                     return _StickerTile(
                       sticker: sticker,
+                      taille: grandes ? 84 : 60,
                       onTap: () => _choose(sticker),
                     );
                   },
@@ -352,8 +387,9 @@ class _PanneauStickersState extends State<PanneauStickers> {
 }
 
 class _StickerTile extends StatefulWidget {
-  const _StickerTile({required this.sticker, required this.onTap});
+  const _StickerTile({required this.sticker, required this.onTap, this.taille = 60});
   final String sticker;
+  final double taille;
   final VoidCallback onTap;
 
   @override
@@ -362,6 +398,11 @@ class _StickerTile extends StatefulWidget {
 
 class _StickerTileState extends State<_StickerTile> {
   bool _pressed = false;
+
+  bool get _verrouille {
+    final d = StickersDroplet.resoudre(widget.sticker);
+    return d != null && !StickersDroplet.envoyable(d);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -380,9 +421,49 @@ class _StickerTileState extends State<_StickerTile> {
         // pas besoin de savoir — de quel type il s'agit.
         child: Center(
           child: AnimatedStickerCatalog.estUneReference(widget.sticker)
-              ? AnimatedStickerView(reference: widget.sticker, taille: 56)
+              ? Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    AnimatedStickerView(reference: widget.sticker, taille: widget.taille),
+                    // Le cadenas des premium qu'on ne peut pas encore envoyer.
+                    if (_verrouille)
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(colors: [Color(0xFF6C51FF), Color(0xFFE151B0)]),
+                          ),
+                          child: const Icon(Icons.lock_rounded, size: 12, color: Colors.white),
+                        ),
+                      ),
+                  ],
+                )
               : Text(widget.sticker, style: const TextStyle(fontSize: 34)),
         ),
+      ),
+    );
+  }
+}
+
+/// La petite pastille « Premium » à côté du nom du lot Éclat.
+class _PastillePremium extends StatelessWidget {
+  const _PastillePremium();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        gradient: const LinearGradient(colors: [Color(0xFF6C51FF), Color(0xFFE151B0), Color(0xFFFFA932)]),
+      ),
+      child: const Text(
+        'PREMIUM',
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: Colors.white),
       ),
     );
   }
