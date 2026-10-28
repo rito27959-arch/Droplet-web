@@ -1219,7 +1219,7 @@ class _PeintreSticker extends CustomPainter {
       ..lineTo(-0.32, 0.18)
       ..lineTo(-0.3, -0.05)
       ..close();
-    c.drawPath(contour, Paint()..shader = ui.Gradient.linear(const Offset(-0.3, -0.5), const Offset(0.3, 0.4), [const Color(0xFFE8FBFF), const Color(0xFF6CC8FF), const Color(0xFF2B6BFF)]));
+    c.drawPath(contour, Paint()..shader = ui.Gradient.linear(const Offset(-0.3, -0.5), const Offset(0.3, 0.4), [const Color(0xFFE8FBFF), const Color(0xFF6CC8FF), const Color(0xFF2B6BFF)], const [0.0, 0.5, 1.0]));
     final facettes = [
       [const Offset(0, -0.5), const Offset(0.3, -0.05), const Offset(0, 0.05)],
       [const Offset(0, -0.5), const Offset(-0.3, -0.05), const Offset(0, 0.05)],
