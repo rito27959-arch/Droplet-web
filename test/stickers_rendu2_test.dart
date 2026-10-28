@@ -71,9 +71,11 @@ void main() {
     }
   }
 
-  testWidgets('gerbes premium', (tester) async {
-    tester.view.physicalSize = const Size(4 * 260, 2 * 260) * 2;
-    tester.view.devicePixelRatio = 2;
+  // Chaque scène premium à trois instants, autour de son sticker.
+  testWidgets('scènes premium', (tester) async {
+    const cote = 380.0;
+    tester.view.physicalSize = const Size(3 * cote, 8 * cote) * 1;
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     OuroColors.setBrightness(Brightness.light);
     final cle = GlobalKey();
@@ -82,23 +84,72 @@ void main() {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
-          backgroundColor: Colors.white,
-          body: Wrap(
+          backgroundColor: const Color(0xFFEFEAE2),
+          body: Column(
             children: [
-              for (final g in GenreEffet.values)
-                SizedBox(
-                  width: 260,
-                  height: 260,
-                  child: GerbePremium(genre: g, centre: const Offset(130, 130), taille: 90, surFin: () {}),
+              for (final s in StickersDroplet.premiums)
+                Row(
+                  children: [
+                    for (final t in [0.12, 0.3, 0.55])
+                      SizedBox(
+                        width: cote,
+                        height: cote,
+                        child: ClipRect(
+                          child: Stack(
+                            children: [
+                              Center(child: VueStickerDroplet(sticker: s, taille: 90, tempsFixe: 1.0)),
+                              Positioned.fill(child: GerbePremium(genre: s.effet!, centre: const Offset(cote / 2, cote / 2), taille: 90, surFin: () {}, tempsFixe: t)),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
             ],
           ),
         ),
       ),
     ));
-    await tester.pump(const Duration(milliseconds: 520));
-    await _photo(tester, cle, 'gerbes_520');
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+    await _photo(tester, cle, 'scenes_premium');
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  // Le jeu, image par image, de quelques stickers : on vérifie la tête
+  // qui tourne, les sourcils, l'anticipation.
+  testWidgets('jeu image par image', (tester) async {
+    const ids = ['salut', 'rire', 'ok', 'colere', 'pense'];
+    tester.view.physicalSize = const Size(8 * 130, 6 * 130) * 2;
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    OuroColors.setBrightness(Brightness.light);
+    final cle = GlobalKey();
+    final lignes = [
+      for (final id in ids) StickersDroplet.gratuits.firstWhere((s) => s.id == id),
+      StickersDroplet.premiums.firstWhere((s) => s.id == 'couronne'),
+    ];
+    await tester.pumpWidget(RepaintBoundary(
+      key: cle,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: Column(
+            children: [
+              for (final s in lignes)
+                Row(
+                  children: [
+                    for (var k = 0; k < 8; k++)
+                      SizedBox(width: 130, height: 130, child: VueStickerDroplet(sticker: s, taille: 130, tempsFixe: k * 2.8 / 8)),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    ));
+    await tester.pump();
+    await _photo(tester, cle, 'jeu_images');
     await tester.pumpWidget(const SizedBox());
   });
 }
