@@ -44,8 +44,11 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show Ticker;
+import 'package:flutter/services.dart';
+import 'dart:ui' show FontFeature;
 import 'package:video_player/video_player.dart';
 
+import '../../core/services/lecteur_vocal.dart';
 import '../../design_system/ouro_colors.dart';
 
 /// Le côté de la vidéo ronde, une fois compressée.
@@ -445,16 +448,29 @@ class _PeintreAnneau extends CustomPainter {
 /// ⚠️ ELLE DÉMARRE MUETTE ET SE JOUE TOUTE SEULE. C'est le comportement de
 /// Telegram, et il est juste : ces messages arrivent par dizaines dans un
 /// fil, et des dizaines de voix qui se déclenchent au défilement seraient
-/// insupportables. Un toucher rend le son.
+/// insupportables.
+///
+/// ── UN TOUCHER, ET LE DISQUE PREND LA PAROLE ─────────────────────────
+///
+/// Comme chez Telegram : le disque GRANDIT (on regarde quelqu'un qui
+/// parle, pas une vignette), repart du début AVEC le son, et un anneau
+/// bleu en fait le tour à mesure que le message avance ; le temps restant
+/// s'affiche en bas. Un second toucher met en pause, un troisième reprend.
+/// À la fin, il se rétrécit et recommence sa boucle muette. Un vocal en
+/// cours de lecture se met en pause : deux voix à la fois, personne ne
+/// les écoute.
 class BulleVideoRonde extends StatefulWidget {
   const BulleVideoRonde({
     super.key,
     required this.chemin,
-    this.diametre = 200,
+    this.diametre,
   });
 
   final String chemin;
-  final double diametre;
+
+  /// Le diamètre au repos ; par défaut, 62 % de la largeur de l'écran
+  /// (plafonné), la proportion de Telegram.
+  final double? diametre;
 
   @override
   State<BulleVideoRonde> createState() => _BulleVideoRondeState();
@@ -463,6 +479,8 @@ class BulleVideoRonde extends StatefulWidget {
 class _BulleVideoRondeState extends State<BulleVideoRonde> {
   VideoPlayerController? _lecteur;
   bool _sonActif = false;
+  bool _enPause = false;
+  bool _erreur = false;
 
   @override
   void initState() {
@@ -481,78 +499,223 @@ class _BulleVideoRondeState extends State<BulleVideoRonde> {
       await l.setVolume(0);
       await l.setLooping(true);
       await l.play();
+      l.addListener(_suivre);
       setState(() => _lecteur = l);
     } catch (e) {
       debugPrint('[Vidéo ronde] lecture impossible: $e');
+      if (mounted) setState(() => _erreur = true);
     }
+  }
+
+  /// Suit la lecture : redessine l'anneau, et repère la fin d'une
+  /// écoute avec le son pour revenir à la boucle muette.
+  void _suivre() {
+    final l = _lecteur;
+    if (l == null || !mounted) return;
+    final v = l.value;
+    if (_sonActif && !v.isLooping && !v.isPlaying && !_enPause && v.duration > Duration.zero && v.position >= v.duration - const Duration(milliseconds: 120)) {
+      unawaited(_revenirMuet());
+      return;
+    }
+    if (_sonActif) setState(() {});
+  }
+
+  Future<void> _revenirMuet() async {
+    final l = _lecteur;
+    if (l == null) return;
+    setState(() {
+      _sonActif = false;
+      _enPause = false;
+    });
+    await l.setVolume(0);
+    await l.setLooping(true);
+    await l.seekTo(Duration.zero);
+    await l.play();
   }
 
   @override
   void dispose() {
+    _lecteur?.removeListener(_suivre);
     _lecteur?.dispose();
     super.dispose();
   }
 
-  Future<void> _basculerSon() async {
+  Future<void> _toucher() async {
     final l = _lecteur;
     if (l == null) return;
-    _sonActif = !_sonActif;
-    await l.setVolume(_sonActif ? 1 : 0);
-    if (_sonActif) {
-      // Remettre au début en allumant le son : on veut entendre le
-      // message depuis son début, pas reprendre au milieu d'une phrase.
+    HapticFeedback.selectionClick();
+    if (!_sonActif) {
+      // Une seule voix à la fois.
+      final vocal = LecteurVocal.instance;
+      if (vocal.enLecture) await vocal.basculer();
+      setState(() {
+        _sonActif = true;
+        _enPause = false;
+      });
+      await l.setLooping(false);
       await l.seekTo(Duration.zero);
+      await l.setVolume(1);
       await l.play();
+      return;
     }
-    if (mounted) setState(() {});
+    if (_enPause) {
+      await l.play();
+    } else {
+      await l.pause();
+    }
+    if (mounted) setState(() => _enPause = !_enPause);
+  }
+
+  String _temps(Duration d) {
+    final s = d.inSeconds.clamp(0, 3600);
+    return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     final l = _lecteur;
-    return GestureDetector(
-      onTap: _basculerSon,
-      child: SizedBox.square(
-        dimension: widget.diametre,
-        child: ClipOval(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ColoredBox(color: OuroColors.tertiarySystemFill),
-              if (l != null && l.value.isInitialized)
-                FittedBox(
-                  fit: BoxFit.cover,
-                  child: SizedBox(
-                    width: l.value.size.width,
-                    height: l.value.size.height,
-                    child: VideoPlayer(l),
+    final largeur = MediaQuery.sizeOf(context).width;
+    final repos = widget.diametre ?? math.min(largeur * 0.62, 260.0);
+    // Plafonné par la largeur maximale d'une bulle (78 % de l'écran),
+    // moins l'anneau : au-delà, la conversation le rognerait.
+    final grand = math.min(largeur * 0.78 - 16, 330.0);
+    final d = _sonActif ? math.max(grand, repos) : repos;
+    final pret = l != null && l.value.isInitialized;
+    final v = l?.value;
+    final progression = (_sonActif && v != null && v.duration.inMilliseconds > 0)
+        ? (v.position.inMilliseconds / v.duration.inMilliseconds).clamp(0.0, 1.0)
+        : 0.0;
+    final reste = v == null ? Duration.zero : (_sonActif ? v.duration - v.position : v.duration);
+
+    return Semantics(
+      button: true,
+      label: _sonActif ? (_enPause ? 'Reprendre la vidéo' : 'Mettre la vidéo en pause') : 'Écouter le message vidéo',
+      child: GestureDetector(
+        onTap: _toucher,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+          width: d + 10,
+          height: d + 10,
+          child: CustomPaint(
+            foregroundPainter: _PeintreProgressionRonde(progression: progression, couleur: OuroColors.accent, visible: _sonActif),
+            child: Padding(
+              padding: const EdgeInsets.all(5),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.16), blurRadius: 14, offset: const Offset(0, 4)),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ColoredBox(color: OuroColors.tertiarySystemFill),
+                      if (pret)
+                        FittedBox(
+                          fit: BoxFit.cover,
+                          clipBehavior: Clip.hardEdge,
+                          child: SizedBox(
+                            width: l.value.size.width,
+                            height: l.value.size.height,
+                            child: VideoPlayer(l),
+                          ),
+                        )
+                      else if (_erreur)
+                        Icon(Icons.videocam_off_rounded, color: OuroColors.secondaryLabel, size: 30)
+                      else
+                        const Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))),
+                      // En pause avec le son : un voile et un bouton lecture.
+                      if (_sonActif && _enPause)
+                        ColoredBox(
+                          color: Colors.black.withValues(alpha: 0.28),
+                          child: const Center(child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 54)),
+                        ),
+                      if (pret)
+                        Positioned(
+                          bottom: d * 0.07,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.42),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (!_sonActif) ...[
+                                      const Icon(Icons.volume_off_rounded, size: 13, color: Colors.white),
+                                      const SizedBox(width: 4),
+                                    ],
+                                    Text(
+                                      _temps(reste),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                        fontFeatures: [FontFeature.tabularFigures()],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-              if (l != null && l.value.isInitialized)
-                Positioned(
-                  right: 10,
-                  bottom: 10,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(5),
-                      child: Icon(
-                        _sonActif
-                            ? Icons.volume_up_rounded
-                            : Icons.volume_off_rounded,
-                        size: 15,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// L'anneau d'avancement autour du disque pendant une écoute avec le son.
+class _PeintreProgressionRonde extends CustomPainter {
+  const _PeintreProgressionRonde({required this.progression, required this.couleur, required this.visible});
+
+  final double progression;
+  final Color couleur;
+  final bool visible;
+
+  @override
+  void paint(Canvas toile, Size taille) {
+    if (!visible) return;
+    final rect = (Offset.zero & taille).deflate(1.5);
+    toile.drawArc(
+      rect,
+      0,
+      2 * math.pi,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..color = couleur.withValues(alpha: 0.18),
+    );
+    if (progression <= 0) return;
+    toile.drawArc(
+      rect,
+      -math.pi / 2,
+      2 * math.pi * progression,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..color = couleur,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_PeintreProgressionRonde o) => o.progression != progression || o.visible != visible || o.couleur != couleur;
 }

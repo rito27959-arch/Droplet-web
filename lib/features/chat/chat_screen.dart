@@ -6003,7 +6003,13 @@ class _MessageBubble extends StatelessWidget {
                                   // Réponse à un statut : sa vignette, comme
                                   // WhatsApp.
                                   _CitationStatut(statusId: _idStatutCite!, mine: mine),
-                                if (isVideo)
+                                // ⚠️ `!_estVideoRonde` : une vidéo ronde est
+                                // AUSSI une vidéo (même type MIME). Sans ce
+                                // test, elle tombait ici et s'affichait en
+                                // rectangle, comme une vidéo ordinaire — la
+                                // bulle ronde de `_textBubble` n'était
+                                // jamais atteinte.
+                                if (isVideo && !_estVideoRonde)
                                   _VideoBubble(
                                     fileId: message.fileId ?? '',
                                     fileName: message.fileName ?? '',
@@ -6040,7 +6046,7 @@ class _MessageBubble extends StatelessWidget {
                                 // `_avecReactions` : elles se posent À CHEVAL
                                 // sur le bord de la bulle, comme partout.
                                 // La légende écrite dans l'aperçu, sous la photo.
-                                if ((isImage || isVideo) && _legendeMedia != null)
+                                if ((isImage || (isVideo && !_estVideoRonde)) && _legendeMedia != null)
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(
                                       11,
@@ -6062,9 +6068,9 @@ class _MessageBubble extends StatelessWidget {
                                 // Sans légende, sur une photo ou une vidéo,
                                 // l'heure et les coches sont posées SUR l'image
                                 // (voir `_heureSurMedia`).
-                                if (!(isImage || isVideo) || _legendeMedia != null)
+                                if (!(isImage || (isVideo && !_estVideoRonde)) || _legendeMedia != null)
                                   Padding(
-                                    padding: (isImage || isVideo)
+                                    padding: (isImage || (isVideo && !_estVideoRonde))
                                         ? const EdgeInsets.fromLTRB(0, 0, 11, 6)
                                         : EdgeInsets.zero,
                                     child: _TapCible(
@@ -6795,9 +6801,13 @@ class _MessageBubble extends StatelessWidget {
             // Le fichier n'est pas encore arrivé — il voyage peut-être
             // encore de téléphone en téléphone. Un disque vide, pas un
             // message d'erreur : il finira par se remplir.
+            // Même taille que le disque qui viendra, pour que rien ne
+            // saute à l'arrivée du fichier.
+            final cote = math.min(MediaQuery.sizeOf(context).width * 0.62, 260.0);
             return Container(
-              width: 200,
-              height: 200,
+              width: cote,
+              height: cote,
+              margin: const EdgeInsets.all(5),
               decoration: BoxDecoration(
                 color: OuroColors.tertiarySystemFill,
                 shape: BoxShape.circle,
