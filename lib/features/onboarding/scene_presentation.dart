@@ -261,7 +261,7 @@ class _Pose {
 /// La goutte de la marque, haute de 0,565 marque — soit 1,263 R.
 const double _kGoutteMarque = 0.565 / _kRayonMarque;
 
-const List<_Pose> _poses = [
+final List<_Pose> _poses = [
   // 0 — la marque, exactement.
   _Pose(
     rayon: 1,
