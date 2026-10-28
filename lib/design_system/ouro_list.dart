@@ -237,7 +237,10 @@ class _OuroListRowState extends State<OuroListRow> {
                 Text(
                   widget.title,
                   style: OuroTypography.body.copyWith(color: titleColor),
-                  maxLines: 1,
+                  // Deux lignes, comme iOS : un intitulé long (« Approuver
+                  // les nouveaux membres » à côté d'un interrupteur) se
+                  // replie au lieu d'être coupé par des points.
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (widget.subtitle != null) ...[

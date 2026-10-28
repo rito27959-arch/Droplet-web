@@ -30,6 +30,7 @@ Future<void> _polices() async {
     ('Inter Tight', 'assets/fonts/InterTight_700Bold.ttf'),
     ('Inter', 'assets/fonts/InterTight_600SemiBold.ttf'),
     ('packages/cupertino_icons/CupertinoIcons', 'packages/cupertino_icons/assets/CupertinoIcons.ttf'),
+    ('MaterialIcons', 'fonts/MaterialIcons-Regular.otf'),
   ]) {
     final f = FontLoader(famille)..addFont(rootBundle.load(fichier));
     await f.load();
