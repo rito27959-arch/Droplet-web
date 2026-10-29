@@ -130,8 +130,12 @@ class JeuFeutreOuverture extends FlameGame {
 
   List<_Morceau> _geste = const [];
 
+  // ⚠️ TRANSPARENT : le fond est peint par l'encre (premier composant).
+  // Un fond de jeu opaque se peint dès la toute première image, AVANT le
+  // chargement des composants — l'écran natif était alors remplacé par une
+  // image vide, le temps d'une image.
   @override
-  Color backgroundColor() => fond;
+  Color backgroundColor() => const Color(0x00000000);
 
   @override
   Future<void> onLoad() async {
@@ -350,6 +354,7 @@ class _Encre extends Component with HasGameReference<JeuFeutreOuverture> {
     final t = j.t;
     final c = j.centre;
     final h = j.h;
+    canvas.drawRect(Offset.zero & Size(j.size.x, j.size.y), Paint()..color = j.fond);
 
     // L'esquisse : la bulle native pâlit jusqu'à 12 %, puis s'efface sous
     // l'encre.
