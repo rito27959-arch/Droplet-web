@@ -171,7 +171,10 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
 
   /// Le dessin au feutre, avec Flame. Absent en « Réduire les animations ».
   JeuFeutreOuverture? _jeu;
-  bool get _feutre => !_reduit;
+  // ⚠️ AU PREMIER LANCEMENT SEULEMENT (celui qui mène à l'écran de
+  // bienvenue) : c'est la rencontre, on a le temps d'une signature. Aux
+  // ouvertures suivantes, la goutte qui tombe ouvre l'app en 0,9 s.
+  bool get _feutre => !_reduit && widget.versAccueil;
 
   /// Le feutre est-il prêt à rendre la main ? Ramène d'abord la goutte de
   /// face (elle tourne), puis répond vrai quand elle l'est.
@@ -509,6 +512,28 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       legende = _seg(fin - _debutAttente, _legendeApres, _legendeApres + 300);
     }
 
+    // La goutte TOURNE pendant une attente (ouverture ordinaire ; avec le
+    // feutre, c'est Flame qui la fait tourner). À la sortie, elle finit son
+    // tour en 220 ms et revient de face.
+    var tour = 0.0;
+    if (!_feutre && _debutAttente > 0) {
+      double angle(double instant) {
+        final d = (instant - _debutAttente - 200) / 1000;
+        return d <= 0 ? 0 : 2 * math.pi * 0.55 * (d - 0.35 * (1 - math.exp(-d / 0.35)));
+      }
+
+      if (_phase == _Phase.attente) {
+        tour = angle(t);
+      } else {
+        final a0 = angle(_debutSortie);
+        final cible = (a0 / (2 * math.pi)).ceil() * 2 * math.pi;
+        tour = a0 + (cible - a0) * Curves.easeOutCubic.transform(_seg(t, _debutSortie, _debutSortie + 220));
+        if ((cible - tour).abs() < 1e-6) tour = 0;
+      }
+      // Pas d'écrasement pendant qu'elle tourne.
+      pose = PoseMarque(gonflement: pose.gonflement, opaciteGoutte: pose.opaciteGoutte);
+    }
+
     // Le nom, au premier lancement.
     if (widget.versAccueil) {
       final tNom = _feutre ? _tNomFeutre : _tNom;
@@ -605,6 +630,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       revele: revele,
       legende: legende,
       eclaboussure: _phase == _Phase.revelation ? -1 : eclaboussure,
+      tour: tour,
     );
   }
 }
@@ -807,7 +833,11 @@ class _Etat {
     this.revele = 1,
     this.eclaboussure = -1,
     required this.legende,
+    this.tour = 0,
   });
+
+  /// La goutte qui tourne pendant une attente (radians ; 0 = de face).
+  final double tour;
 
   final Color fond;
   final Color couleur;
@@ -884,7 +914,18 @@ class _PeintreOuverture extends CustomPainter {
       opaciteGoutte: e.pose.opaciteGoutte,
       decalageGoutte: e.pose.decalageGoutte,
     );
-    PeintreMarque.peindre(canvas, e.centre, h, e.couleur, pose);
+    if (e.tour == 0) {
+      PeintreMarque.peindre(canvas, e.centre, h, e.couleur, pose);
+    } else {
+      // La goutte tourne : la bulle seule, puis la goutte de côté.
+      PeintreMarque.peindre(canvas, e.centre, h, e.couleur, PoseMarque(
+        gonflement: pose.gonflement,
+        echelle: pose.echelle,
+        opacite: pose.opacite,
+        opaciteGoutte: 0,
+      ));
+      peindreGoutteTournante(canvas, e.centre, h * pose.echelle, e.couleur, e.tour, (e.couleur.a * pose.opacite * pose.opaciteGoutte).clamp(0.0, 1.0));
+    }
 
     // L'éclaboussure : trois gouttelettes chassées par l'impact, qui
     // montent, retombent sous leur poids et s'évaporent.

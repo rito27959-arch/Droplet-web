@@ -194,7 +194,7 @@ class JeuFeutreOuverture extends FlameGame {
     for (var k = 1; k <= n; k++) {
       final q = k / n;
       final base = Offset.lerp(entree, depart, Curves.easeOutSine.transform(q))!;
-      final ampl = math.pow(1 - q, 0.8) * 34;
+      final ampl = math.pow(1 - q, 0.7) * 44;
       final pointe = base + normale * (ampl * (k.isOdd ? 1 : -1));
       final milieu = Offset.lerp(avant, pointe, 0.5)! + normale * (ampl * 0.35 * (k.isOdd ? 1 : -1));
       zig.quadraticBezierTo(milieu.dx, milieu.dy, pointe.dx, pointe.dy);
@@ -256,7 +256,7 @@ class JeuFeutreOuverture extends FlameGame {
       ..lineTo(finHach.dx, finHach.dy);
 
     return [
-      _Morceau(zig, _tEntree, _tAnneau, largeur: 3.6, fugace: true, courbe: Curves.easeOutQuad),
+      _Morceau(zig, _tEntree, _tAnneau, largeur: 5.2, fugace: true, courbe: Curves.easeOutQuad),
       _Morceau(anneau, _tAnneau, _tQueue, largeur: epaisseurAnneau, courbe: Curves.easeInOutCubic),
       _Morceau(queue, _tQueue, _tLeve, largeur: epaisseurAnneau * 0.9),
       _Morceau(leve, _tLeve, _tGoutte, encre: false),
@@ -381,7 +381,7 @@ class _Encre extends Component with HasGameReference<JeuFeutreOuverture> {
             ..strokeWidth = m.largeur
             ..strokeCap = StrokeCap.round
             ..strokeJoin = StrokeJoin.round
-            ..color = j.couleur.withValues(alpha: j.couleur.a * alpha * (m.fugace ? 0.55 : 1)),
+            ..color = j.couleur.withValues(alpha: j.couleur.a * alpha * (m.fugace ? 0.8 : 1)),
         );
       }
       // La queue se colorie pendant qu'on la trace.
@@ -400,13 +400,18 @@ class _Encre extends Component with HasGameReference<JeuFeutreOuverture> {
         );
         canvas.restore();
       }
-      // La goutte se remplit sous les hachures.
-      final remplie = _seg(t, _tHachures, _tEncre + 60);
+      // La goutte se colorie d'un BALAYAGE, du haut vers le bas, au
+      // rythme de la pointe : l'encre pleine suit le feutre, ses derniers
+      // va-et-vient dépassent un peu du bord coloré — comme au vrai feutre.
+      final remplie = Curves.easeInOutSine.transform(_seg(t, _tHachures - 20, _tEncre + 20));
       if (remplie > 0) {
+        final haut = c.dy - 0.275 * h, bas = c.dy + 0.295 * h;
+        final niveau = haut + (bas - haut) * remplie;
         canvas.save();
+        canvas.clipRect(Rect.fromLTRB(0, 0, j.size.x, niveau));
         canvas.translate(c.dx, c.dy);
         canvas.scale(h);
-        canvas.drawPath(GeometrieMarque.goutte, Paint()..color = j.couleur.withValues(alpha: j.couleur.a * 0.85 * remplie * (1 - exacte)));
+        canvas.drawPath(GeometrieMarque.goutte, Paint()..color = j.couleur.withValues(alpha: j.couleur.a * (1 - exacte)));
         canvas.restore();
       }
     }
@@ -448,37 +453,46 @@ class _GoutteTournante extends Component with HasGameReference<JeuFeutreOuvertur
       canvas.restore();
       return;
     }
-    canvas.save();
-    canvas.translate(c.dx, c.dy);
-    canvas.scale(h);
-    // Elle tourne autour de son axe vertical : sa largeur suit le cosinus,
-    // jamais tout à fait nulle (une goutte a de l'épaisseur).
-    final largeur = math.max(0.2, face.abs());
-    canvas.scale(largeur, 1);
-    // La lumière glisse d'un bord à l'autre au fil du tour.
-    final cote = math.sin(a);
-    final clair = Color.lerp(j.couleur, const Color(0xFFFFFFFF), 0.22)!;
-    final sombreC = Color.lerp(j.couleur, const Color(0xFF000000), 0.18)!;
-    canvas.drawPath(
-      GeometrieMarque.goutte,
-      Paint()
-        ..shader = ui.Gradient.linear(
-          Offset(-0.2 * (cote >= 0 ? 1 : -1), 0),
-          Offset(0.2 * (cote >= 0 ? 1 : -1), 0),
-          [
-            Color.lerp(j.couleur, clair, cote.abs())!.withValues(alpha: exacte),
-            Color.lerp(j.couleur, sombreC, cote.abs())!.withValues(alpha: exacte),
-          ],
-        ),
-    );
-    // Un reflet, qui traverse la goutte.
-    final xReflet = -0.07 * face.sign + 0.08 * cote;
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(xReflet, 0.05), width: 0.05, height: 0.12),
-      Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: 0.28 * exacte * face.abs()),
-    );
-    canvas.restore();
+    peindreGoutteTournante(canvas, c, h, j.couleur, a, exacte);
   }
+}
+
+/// La goutte de la marque, tournée de [angle] autour de son axe vertical,
+/// à la place exacte qu'elle a dans une marque centrée sur [centre] et
+/// haute de [h]. Partagée avec l'ouverture ordinaire, où la goutte tourne
+/// aussi pendant une attente.
+void peindreGoutteTournante(Canvas canvas, Offset centre, double h, Color couleur, double angle, double opacite) {
+  if (opacite <= 0) return;
+  final face = math.cos(angle);
+  canvas.save();
+  canvas.translate(centre.dx, centre.dy);
+  canvas.scale(h);
+  // Elle tourne autour de son axe vertical : sa largeur suit le cosinus,
+  // jamais tout à fait nulle (une goutte a de l'épaisseur).
+  canvas.scale(math.max(0.3, face.abs()), 1);
+  // La lumière glisse d'un bord à l'autre au fil du tour.
+  final cote = math.sin(angle);
+  final clair = Color.lerp(couleur, const Color(0xFFFFFFFF), 0.22)!;
+  final sombreC = Color.lerp(couleur, const Color(0xFF000000), 0.18)!;
+  canvas.drawPath(
+    GeometrieMarque.goutte,
+    Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(-0.2 * (cote >= 0 ? 1 : -1), 0),
+        Offset(0.2 * (cote >= 0 ? 1 : -1), 0),
+        [
+          Color.lerp(couleur, clair, cote.abs())!.withValues(alpha: opacite),
+          Color.lerp(couleur, sombreC, cote.abs())!.withValues(alpha: opacite),
+        ],
+      ),
+  );
+  // Un reflet, qui traverse la goutte.
+  final xReflet = -0.07 * face.sign + 0.08 * cote;
+  canvas.drawOval(
+    Rect.fromCenter(center: Offset(xReflet, 0.05), width: 0.05, height: 0.12),
+    Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: 0.28 * opacite * face.abs()),
+  );
+  canvas.restore();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -499,8 +513,8 @@ class _Feutre extends Component with HasGameReference<JeuFeutreOuverture> {
     if (m != _precedent) {
       // Seulement deux fois : quand la pointe se pose pour l'anneau, et
       // quand elle quitte la goutte coloriée.
-      if (m != null && m.largeur > 6 && m.t0 == _tAnneau) j.eclabousser(m.point(m.t0), nombre: 4, force: 0.6);
-      if (_precedent != null && _precedent!.t1 == _tEncre) j.eclabousser(_precedent!.point(_precedent!.t1), nombre: 5, force: 0.8);
+      if (m != null && m.largeur > 6 && m.t0 == _tAnneau) j.eclabousser(m.point(m.t0), nombre: 3, force: 0.6);
+      if (_precedent != null && _precedent!.t1 == _tEncre) j.eclabousser(_precedent!.point(_precedent!.t1), nombre: 3, force: 0.7);
       _precedent = m;
     }
   }
@@ -560,6 +574,14 @@ class _Feutre extends Component with HasGameReference<JeuFeutreOuverture> {
       RRect.fromRectAndRadius(Rect.fromLTWH(14 + long - 22, -large / 2 - 1, 24, large + 2), const Radius.circular(7)),
       Paint()..color = j.couleur,
     );
+    // L'emblème : la goutte de Droplet, en blanc, sur le corps du feutre,
+    // la pointe tournée vers celle du feutre.
+    canvas.save();
+    canvas.translate(14 + long - 40, 0);
+    canvas.rotate(-math.pi / 2);
+    canvas.scale(large * 1.15);
+    canvas.drawPath(GeometrieMarque.goutte, Paint()..color = (j.sombre ? j.couleur : const Color(0xFFFFFFFF)).withValues(alpha: 0.92));
+    canvas.restore();
     // La pointe, imbibée.
     canvas.drawPath(cone, Paint()..color = Color.lerp(j.couleur, const Color(0xFF000000), 0.15)!);
     canvas.drawCircle(Offset.zero, 2.2, Paint()..color = j.couleur);

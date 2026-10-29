@@ -39,6 +39,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'toile_fine.dart';
+
 import '../../shared/widgets/marque_droplet.dart';
 
 // ─────────────────────────────────────────────────────────────
@@ -611,6 +613,14 @@ void _traits(Canvas c, Offset centre, double r0, double r1, List<double> angles,
 /// Dessine le sticker [cle] (« lot/id ») à l'instant [s] (secondes) sur
 /// une toile de 1 × 1. [boing] (0 → 1) est le rebond d'un toucher.
 void dessinerSticker(Canvas c, String cle, double s, {required bool sombre, double boing = 0}) {
+  // Sur une toile « fine » : voir `toile_fine.dart` (les yeux en losange
+  // d'Impeller).
+  final fine = ToileFine(c);
+  _dessinerSticker(fine, cle, s, sombre: sombre, boing: boing);
+  fine.terminer();
+}
+
+void _dessinerSticker(Canvas c, String cle, double s, {required bool sombre, double boing = 0}) {
   final rebond = boing <= 0 || boing >= 1 ? 0.0 : math.exp(-5.5 * boing) * math.cos(boing * math.pi * 5);
   Pose touche(Pose p) => rebond == 0 ? p : p.c(ecrase: p.ecrase + 0.2 * rebond, oeil: p.oeil * (1 + 0.15 * rebond.abs()));
   final encre = sombre ? Colors.white : kEncre;

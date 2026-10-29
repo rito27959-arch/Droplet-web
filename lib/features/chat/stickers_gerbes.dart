@@ -25,6 +25,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'stickers_personnage.dart';
+import 'toile_fine.dart';
 
 /// Les scènes premium.
 enum GenreEffet { feuArtifice, arcEnCiel, coeurs, or, etincelles, onde, eclaboussure, cristal }
@@ -100,8 +101,16 @@ class _PeintreScene extends CustomPainter {
     if (t <= 0 || t >= 1) return;
     canvas.save();
     canvas.translate(centre.dx, centre.dy);
-    // Tout est dessiné en unités de R : (−1, −1) → (1, 1).
+    // Tout est dessiné en unités de R : (−1, −1) → (1, 1), sur une toile
+    // « fine » (voir `toile_fine.dart`).
     canvas.scale(R);
+    final fine = ToileFine(canvas);
+    _scene(fine, t);
+    fine.terminer();
+    canvas.restore();
+  }
+
+  void _scene(Canvas canvas, double t) {
     // Le fondu de sortie, commun à toutes les scènes.
     final sortie = 1 - Curves.easeIn.transform(seg(t, 0.82, 1.0));
     switch (genre) {
@@ -122,7 +131,6 @@ class _PeintreScene extends CustomPainter {
       case GenreEffet.cristal:
         _cristaux(canvas, t, sortie);
     }
-    canvas.restore();
   }
 
   Paint _plume(double ep, Color couleur) => Paint()
