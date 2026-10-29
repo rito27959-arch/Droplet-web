@@ -1270,7 +1270,7 @@ class Fond extends StatelessWidget {
       child: f.dessins
           ? RepaintBoundary(
               child: CustomPaint(
-                painter: PeintreDessins(OuroColors.isDark ? const Color(0x12FFFFFF) : const Color(0x14000000)),
+                painter: PeintreDessins(OuroColors.isDark ? const Color(0x12FFFFFF) : const Color(0x10000000)),
                 size: Size.infinite,
               ),
             )
