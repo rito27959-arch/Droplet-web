@@ -1239,7 +1239,11 @@ class PeintreDessins extends CustomPainter {
       final b = a + math.pi / 4;
       final pt = Offset(math.cos(a) * 8, math.sin(a) * 8);
       final creux = Offset(math.cos(b) * 2.4, math.sin(b) * 2.4);
-      if (k == 0) chemin.moveTo(pt.dx, pt.dy) else chemin.lineTo(pt.dx, pt.dy);
+      if (k == 0) {
+        chemin.moveTo(pt.dx, pt.dy);
+      } else {
+        chemin.lineTo(pt.dx, pt.dy);
+      }
       chemin.lineTo(creux.dx, creux.dy);
     }
     chemin.close();

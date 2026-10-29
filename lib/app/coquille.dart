@@ -18,6 +18,7 @@
 //
 // Les raccourcis clavier sont ceux de WhatsApp Web (Ctrl+Alt+N…).
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
