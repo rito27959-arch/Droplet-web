@@ -154,6 +154,7 @@ import '../lecteur/lecteur_pdf.dart';
 import '../group/reglages_groupe.dart';
 import '../call/salon_vocal.dart';
 import '../../design_system/flou.dart';
+import '../../core/services/raccourcis_conversation.dart';
 import '../../core/services/device_profile.dart';
 
 /// L'écran de conversation lui-même — juste une coquille qui reçoit soit
@@ -682,6 +683,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Les conversations ouvertes rejoignent les raccourcis d'Android : la
+    // rangée de visages du PARTAGE DIRECT (en tête de la feuille
+    // « Partager » de toutes les apps) et l'appui long sur l'icône. Avant,
+    // seule une notification reçue les y faisait entrer — une personne à
+    // qui l'on écrit sans qu'elle réponde n'y apparaissait jamais.
+    if (!_isBroadcast) {
+      final id = _isGroup ? widget.groupId! : widget.peerId!;
+      final nom = _isGroup
+          ? (StorageService.getGroup(id)?.name ?? '')
+          : nomDuPair(id, [StorageService.getPeerRecord(id)?.pseudo]);
+      unawaited(RaccourcisConversation.publier(
+        id: id,
+        nom: nom,
+        route: _isGroup ? '/group/$id' : '/chat/$id',
+        photo: _isGroup ? AvatarService.cheminGroupe(id) : AvatarService.cheminPair(id),
+      ));
+    }
     LecteurVocal.instance.addListener(_surLecteur);
     LecteurVocal.instance.surErreur = _vocalIlisible;
     final key = _isGroup

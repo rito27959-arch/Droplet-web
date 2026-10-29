@@ -6084,4 +6084,46 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get apEffectsManual => '你的选择立即生效，仅限此手机。';
+
+  @override
+  String get ivOfflineHeader => '无需网络';
+
+  @override
+  String get ivSendApp => '发送 Droplet 应用';
+
+  @override
+  String get ivSendAppBody => '通过快速分享、蓝牙或任何聊天应用：对方当场安装，无需应用商店或网络。对方手机会请求允许安装。';
+
+  @override
+  String get ivSendAppSplit => 'Droplet 由应用商店安装，无法从此手机以文件形式发送：请改为分享链接。';
+
+  @override
+  String get ivSendAppChooser => '发送 Droplet';
+
+  @override
+  String get ivSendAppText => '这是 Droplet，没有网络也能用的聊天应用。打开文件即可安装。';
+
+  @override
+  String get stkAddTo => '添加到…';
+
+  @override
+  String get stkAddWhatsApp => '添加到 WhatsApp';
+
+  @override
+  String get stkInWhatsApp => '已在 WhatsApp 中 — 更新';
+
+  @override
+  String get stkAddTelegram => '添加到 Telegram';
+
+  @override
+  String get stkExportBody => '动态贴纸包，可在其他聊天应用中使用。长按某个贴纸即可单独发送到任何地方。';
+
+  @override
+  String get stkExportNoApp => '未安装 WhatsApp 或 Telegram。长按贴纸即可发送到其他应用。';
+
+  @override
+  String get stkExportUnavailable => '暂时无法打开其他应用。';
+
+  @override
+  String get stkShareChooser => '发送贴纸';
 }

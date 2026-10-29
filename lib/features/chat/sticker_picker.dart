@@ -26,6 +26,7 @@
 // qui lui donne son allure de sticker.
 // ============================================================================
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
@@ -33,7 +34,10 @@ import 'package:go_router/go_router.dart';
 import 'animated_sticker.dart';
 import 'stickers_droplet.dart';
 
+import '../../core/services/partage_droplet.dart';
+import '../../core/services/premium_service.dart';
 import '../../core/services/storage_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../design_system/design_tokens.dart';
 import '../../design_system/glassmorphism.dart';
 import '../../design_system/ouro_colors.dart';
@@ -269,6 +273,25 @@ class _PanneauStickersState extends State<PanneauStickers> {
     widget.onChoisi(sticker);
   }
 
+  /// Appui long sur un sticker Droplet : l'envoyer dans une AUTRE app,
+  /// en WebP animé (WhatsApp, Signal, Messenger, SMS… le reçoivent comme
+  /// un sticker ou une image animée).
+  Future<void> _partagerAilleurs(String reference) async {
+    final s = StickersDroplet.resoudre(reference);
+    if (s == null) return;
+    if (!StickersDroplet.envoyable(s)) {
+      GoRouter.maybeOf(context)?.push('/premium');
+      return;
+    }
+    OuroHaptics.medium();
+    final l10n = AppLocalizations.of(context);
+    await PartageDroplet.debloquer(premium: PremiumService.niveau.donneAccesAuPack);
+    final ok = await PartageDroplet.partagerSticker(s.lot, s.id, titre: l10n.stkShareChooser);
+    if (!ok && mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(l10n.stkExportUnavailable)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Les récents forment un lot supplémentaire, en tête — c'est là
@@ -327,6 +350,12 @@ class _PanneauStickersState extends State<PanneauStickers> {
                     const SizedBox(width: 8),
                     const _PastillePremium(),
                   ],
+                  // Les lots Droplet s'emportent dans WhatsApp, Telegram et
+                  // ailleurs (voir `partage_droplet.dart`).
+                  if (grandes && (current.name == 'Goutte' || current.name == 'Éclat')) ...[
+                    const Spacer(),
+                    _BoutonExporter(lot: current.name == 'Éclat' ? StickersDroplet.lotPremium : StickersDroplet.lotGratuit),
+                  ],
                 ],
               ),
               const SizedBox(height: DesignTokens.space3),
@@ -345,6 +374,7 @@ class _PanneauStickersState extends State<PanneauStickers> {
                       sticker: sticker,
                       taille: grandes ? 84 : 60,
                       onTap: () => _choose(sticker),
+                      onLongPress: StickersDroplet.resoudre(sticker) == null ? null : () => _partagerAilleurs(sticker),
                     );
                   },
                 ),
@@ -387,10 +417,11 @@ class _PanneauStickersState extends State<PanneauStickers> {
 }
 
 class _StickerTile extends StatefulWidget {
-  const _StickerTile({required this.sticker, required this.onTap, this.taille = 60});
+  const _StickerTile({required this.sticker, required this.onTap, this.onLongPress, this.taille = 60});
   final String sticker;
   final double taille;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   State<_StickerTile> createState() => _StickerTileState();
@@ -409,6 +440,7 @@ class _StickerTileState extends State<_StickerTile> {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
@@ -464,6 +496,87 @@ class _PastillePremium extends StatelessWidget {
       child: const Text(
         'PREMIUM',
         style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: Colors.white),
+      ),
+    );
+  }
+}
+
+
+/// « Ajouter à… » : le lot entier dans WhatsApp ou Telegram, comme les
+/// packs qu'on installe depuis une app de stickers.
+class _BoutonExporter extends StatelessWidget {
+  const _BoutonExporter({required this.lot});
+
+  final String lot;
+
+  Future<void> _ouvrir(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final premium = lot == StickersDroplet.lotPremium;
+    if (premium && !PremiumService.niveau.donneAccesAuPack) {
+      GoRouter.maybeOf(context)?.push('/premium');
+      return;
+    }
+    OuroHaptics.selection();
+    await PartageDroplet.debloquer(premium: PremiumService.niveau.donneAccesAuPack);
+    final etat = await PartageDroplet.etat();
+    if (!context.mounted) return;
+    final nom = premium ? 'Droplet · Éclat' : 'Droplet · Goutte';
+    final choix = await showCupertinoModalPopup<String>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(nom),
+        message: Text(etat.whatsapp || etat.telegram ? l10n.stkExportBody : l10n.stkExportNoApp),
+        actions: [
+          if (etat.whatsapp)
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(ctx, 'whatsapp'),
+              child: Text(etat.dansWhatsApp(lot) ? l10n.stkInWhatsApp : l10n.stkAddWhatsApp),
+            ),
+          if (etat.telegram)
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(ctx, 'telegram'),
+              child: Text(l10n.stkAddTelegram),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.actionCancel),
+        ),
+      ),
+    );
+    if (choix == null) return;
+    final ok = choix == 'whatsapp'
+        ? await PartageDroplet.ajouterWhatsApp(lot, nom)
+        : await PartageDroplet.importerTelegram(lot);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(l10n.stkExportUnavailable)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _ouvrir(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: OuroColors.accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.ios_share_rounded, size: 15, color: OuroColors.accent),
+            const SizedBox(width: 5),
+            Text(
+              l10n.stkAddTo,
+              style: OuroTypography.footnote.copyWith(color: OuroColors.accent, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }

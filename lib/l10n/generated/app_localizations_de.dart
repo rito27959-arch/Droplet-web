@@ -6271,4 +6271,46 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get apEffectsManual => 'Ihre Wahl gilt sofort, nur auf diesem Telefon.';
+
+  @override
+  String get ivOfflineHeader => 'Ohne Internet';
+
+  @override
+  String get ivSendApp => 'Droplet-App senden';
+
+  @override
+  String get ivSendAppBody => 'Per Quick Share, Bluetooth oder jeder Messenger-App: Die Person installiert sie direkt, ohne Store und ohne Netz. Ihr Telefon fragt nach der Erlaubnis zur Installation.';
+
+  @override
+  String get ivSendAppSplit => 'Aus einem Store installiert, kann Droplet von diesem Telefon nicht als Datei gesendet werden: Teilen Sie stattdessen den Link.';
+
+  @override
+  String get ivSendAppChooser => 'Droplet senden';
+
+  @override
+  String get ivSendAppText => 'Hier ist Droplet, der Messenger, der sogar ohne Netz funktioniert. Öffne die Datei, um ihn zu installieren.';
+
+  @override
+  String get stkAddTo => 'Hinzufügen zu…';
+
+  @override
+  String get stkAddWhatsApp => 'Zu WhatsApp hinzufügen';
+
+  @override
+  String get stkInWhatsApp => 'Bereits in WhatsApp – aktualisieren';
+
+  @override
+  String get stkAddTelegram => 'Zu Telegram hinzufügen';
+
+  @override
+  String get stkExportBody => 'Das animierte Paket für Ihre anderen Messenger. Lange auf einen Sticker drücken, um nur ihn überallhin zu senden.';
+
+  @override
+  String get stkExportNoApp => 'Weder WhatsApp noch Telegram ist installiert. Lange auf einen Sticker drücken, um ihn an eine andere App zu senden.';
+
+  @override
+  String get stkExportUnavailable => 'Die andere App konnte gerade nicht geöffnet werden.';
+
+  @override
+  String get stkShareChooser => 'Sticker senden';
 }

@@ -66,6 +66,19 @@ class RaccourcisConversation {
     } catch (_) {}
   }
 
+  /// La conversation choisie dans le PARTAGE DIRECT d'Android (la rangée
+  /// de visages en tête de la feuille « Partager »), sous forme de route
+  /// (`/chat/…` ou `/group/…`). Lue une seule fois ; `null` si le partage
+  /// est passé par l'icône de l'app.
+  static Future<String?> cibleDePartage() async {
+    if (!_disponible) return null;
+    try {
+      return await _canal.invokeMethod<String>('cibleDePartage');
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// La conversation à ouvrir quand l'application a été lancée par un
   /// raccourci (ou par une notification). Lue une seule fois.
   static Future<String?> routeDeLancement() async {

@@ -6262,4 +6262,46 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get apEffectsManual => 'Votre choix s\'applique tout de suite, sur ce téléphone seulement.';
+
+  @override
+  String get ivOfflineHeader => 'Sans Internet';
+
+  @override
+  String get ivSendApp => 'Envoyer l\'application Droplet';
+
+  @override
+  String get ivSendAppBody => 'Par Quick Share, Bluetooth ou n\'importe quelle messagerie : la personne l\'installe sur place, sans boutique ni réseau. Son téléphone lui demandera d\'autoriser l\'installation.';
+
+  @override
+  String get ivSendAppSplit => 'Installé depuis une boutique, Droplet ne peut pas s\'envoyer comme fichier sur ce téléphone : partagez plutôt le lien.';
+
+  @override
+  String get ivSendAppChooser => 'Envoyer Droplet';
+
+  @override
+  String get ivSendAppText => 'Voici Droplet, la messagerie qui marche même sans réseau. Ouvre le fichier pour l\'installer.';
+
+  @override
+  String get stkAddTo => 'Ajouter à…';
+
+  @override
+  String get stkAddWhatsApp => 'Ajouter à WhatsApp';
+
+  @override
+  String get stkInWhatsApp => 'Déjà dans WhatsApp — mettre à jour';
+
+  @override
+  String get stkAddTelegram => 'Ajouter à Telegram';
+
+  @override
+  String get stkExportBody => 'Le pack animé, à utiliser dans vos autres messageries. Appui long sur un sticker pour l\'envoyer seul n\'importe où.';
+
+  @override
+  String get stkExportNoApp => 'Ni WhatsApp ni Telegram ne sont installés. Appui long sur un sticker pour l\'envoyer dans une autre app.';
+
+  @override
+  String get stkExportUnavailable => 'Impossible d\'ouvrir l\'autre application pour l\'instant.';
+
+  @override
+  String get stkShareChooser => 'Envoyer le sticker';
 }

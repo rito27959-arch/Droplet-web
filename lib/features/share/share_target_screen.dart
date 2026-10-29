@@ -62,6 +62,7 @@ import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/ios_magnifier_overlay.dart';
 import '../../shared/widgets/peer_avatar.dart';
 import '../../shared/widgets/scene_animee.dart';
+import '../../core/services/raccourcis_conversation.dart';
 
 /// Ce qu'on sait d'un élément partagé, une fois le disque interrogé.
 class _Element {
@@ -107,6 +108,21 @@ class _ShareTargetScreenState extends ConsumerState<ShareTargetScreen> {
   void initState() {
     super.initState();
     unawaited(_inspecter());
+    unawaited(_cibleDirecte());
+  }
+
+  /// Le partage direct : la personne a touché un visage Droplet dans la
+  /// feuille « Partager » d'Android. Sa conversation est cochée d'office —
+  /// il ne reste qu'à envoyer, comme chez WhatsApp.
+  Future<void> _cibleDirecte() async {
+    final route = await RaccourcisConversation.cibleDePartage();
+    if (route == null || !mounted) return;
+    final cle = route.startsWith('/group/')
+        ? 'g:${route.substring(7)}'
+        : route.startsWith('/chat/')
+            ? 'p:${route.substring(6)}'
+            : null;
+    if (cle != null) setState(() => _choisis.add(cle));
   }
 
   /// Va chercher sur le disque ce que l'intention de partage ne dit pas :

@@ -1116,6 +1116,90 @@ abstract class AppLocalizations {
   /// **'Votre choix s'applique tout de suite, sur ce téléphone seulement.'**
   String get apEffectsManual;
 
+  /// No description provided for @ivOfflineHeader.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sans Internet'**
+  String get ivOfflineHeader;
+
+  /// No description provided for @ivSendApp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer l'application Droplet'**
+  String get ivSendApp;
+
+  /// No description provided for @ivSendAppBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par Quick Share, Bluetooth ou n'importe quelle messagerie : la personne l'installe sur place, sans boutique ni réseau. Son téléphone lui demandera d'autoriser l'installation.'**
+  String get ivSendAppBody;
+
+  /// No description provided for @ivSendAppSplit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installé depuis une boutique, Droplet ne peut pas s'envoyer comme fichier sur ce téléphone : partagez plutôt le lien.'**
+  String get ivSendAppSplit;
+
+  /// No description provided for @ivSendAppChooser.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer Droplet'**
+  String get ivSendAppChooser;
+
+  /// No description provided for @ivSendAppText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voici Droplet, la messagerie qui marche même sans réseau. Ouvre le fichier pour l'installer.'**
+  String get ivSendAppText;
+
+  /// No description provided for @stkAddTo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter à…'**
+  String get stkAddTo;
+
+  /// No description provided for @stkAddWhatsApp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter à WhatsApp'**
+  String get stkAddWhatsApp;
+
+  /// No description provided for @stkInWhatsApp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déjà dans WhatsApp — mettre à jour'**
+  String get stkInWhatsApp;
+
+  /// No description provided for @stkAddTelegram.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter à Telegram'**
+  String get stkAddTelegram;
+
+  /// No description provided for @stkExportBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le pack animé, à utiliser dans vos autres messageries. Appui long sur un sticker pour l'envoyer seul n'importe où.'**
+  String get stkExportBody;
+
+  /// No description provided for @stkExportNoApp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ni WhatsApp ni Telegram ne sont installés. Appui long sur un sticker pour l'envoyer dans une autre app.'**
+  String get stkExportNoApp;
+
+  /// No description provided for @stkExportUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d'ouvrir l'autre application pour l'instant.'**
+  String get stkExportUnavailable;
+
+  /// No description provided for @stkShareChooser.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer le sticker'**
+  String get stkShareChooser;
+
   /// No description provided for @acReadyTitle.
   ///
   /// In fr, this message translates to:

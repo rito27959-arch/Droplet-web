@@ -181,11 +181,31 @@ class MainActivity : FlutterFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         siAppelEntrant(intent)
+        retenirCibleDePartage(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         siAppelEntrant(intent)
+        retenirCibleDePartage(intent)
+    }
+
+    /** La conversation choisie dans le partage direct d'Android, s'il y en a une. */
+    private var cibleDePartage: String? = null
+
+    private fun retenirCibleDePartage(intent: Intent?) {
+        val action = intent?.action ?: return
+        if (action != Intent.ACTION_SEND && action != Intent.ACTION_SEND_MULTIPLE) return
+        // "android.intent.extra.shortcut.ID" (Intent.EXTRA_SHORTCUT_ID, API 29).
+        cibleDePartage = intent.getStringExtra("android.intent.extra.shortcut.ID")
+    }
+
+    /** La route (`/chat/…`, `/group/…`) du raccourci [id], lue dans le raccourci lui-même. */
+    private fun routeDuRaccourci(id: String): String? = try {
+        ShortcutManagerCompat.getDynamicShortcuts(this)
+            .firstOrNull { it.id == id }?.intent?.getStringExtra("payload")
+    } catch (e: Exception) {
+        null
     }
 
     private fun siAppelEntrant(intent: Intent?) {
@@ -244,7 +264,10 @@ class MainActivity : FlutterFragmentActivity() {
                     .setPerson(personne)
                     // « Longue vie » : exigé pour les bulles de conversation.
                     .setLongLived(true)
-                    .setCategories(setOf("android.shortcut.conversation"))
+                    // « conversation » : bulles et section Conversations ;
+                    // « PARTAGE » : en tête de la feuille Partager d'Android
+                    // (voir `res/xml/raccourcis_partage.xml`).
+                    .setCategories(setOf("android.shortcut.conversation", "com.droplet.droplet.category.PARTAGE"))
                     .setIntent(intention)
                     .build(),
             )
@@ -300,6 +323,10 @@ class MainActivity : FlutterFragmentActivity() {
         // Ce que ce téléphone peut se permettre : puce, cœurs, fréquence,
         // mémoire (voir `ProfilAppareil.kt` et `device_profile.dart`).
         ProfilAppareil.brancher(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
+
+        // Droplet dans les autres apps : stickers pour WhatsApp et Telegram,
+        // partage de l'application elle-même (voir `PartageDroplet.kt`).
+        PartageDroplet.brancher(this, flutterEngine.dartExecutor.binaryMessenger)
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channel)
             .setMethodCallHandler { call, result ->
@@ -379,6 +406,14 @@ class MainActivity : FlutterFragmentActivity() {
 
                     // La conversation à ouvrir quand l'app a été lancée par un
                     // raccourci : lue une fois, puis oubliée.
+                    // Le partage direct : la route de la conversation choisie
+                    // dans la feuille Partager. Lue une fois, puis oubliée.
+                    "cibleDePartage" -> {
+                        val id = cibleDePartage
+                        cibleDePartage = null
+                        result.success(id?.let { routeDuRaccourci(it) })
+                    }
+
                     "routeDeLancement" -> {
                         result.success(routeLancement)
                         routeLancement = null

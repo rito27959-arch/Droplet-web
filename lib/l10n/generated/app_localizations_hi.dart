@@ -6229,4 +6229,46 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get apEffectsManual => 'आपका चुनाव तुरंत लागू होता है, केवल इस फ़ोन पर।';
+
+  @override
+  String get ivOfflineHeader => 'बिना इंटरनेट';
+
+  @override
+  String get ivSendApp => 'Droplet ऐप भेजें';
+
+  @override
+  String get ivSendAppBody => 'Quick Share, ब्लूटूथ या किसी भी मैसेजिंग ऐप से: व्यक्ति इसे वहीं इंस्टॉल कर लेगा, बिना स्टोर या नेटवर्क के। उसका फ़ोन इंस्टॉल की अनुमति माँगेगा।';
+
+  @override
+  String get ivSendAppSplit => 'स्टोर से इंस्टॉल होने के कारण Droplet इस फ़ोन से फ़ाइल के रूप में नहीं भेजा जा सकता: इसके बजाय लिंक साझा करें।';
+
+  @override
+  String get ivSendAppChooser => 'Droplet भेजें';
+
+  @override
+  String get ivSendAppText => 'यह रहा Droplet, जो बिना नेटवर्क के भी चलता है। इंस्टॉल करने के लिए फ़ाइल खोलें।';
+
+  @override
+  String get stkAddTo => 'इसमें जोड़ें…';
+
+  @override
+  String get stkAddWhatsApp => 'WhatsApp में जोड़ें';
+
+  @override
+  String get stkInWhatsApp => 'WhatsApp में पहले से है — अपडेट करें';
+
+  @override
+  String get stkAddTelegram => 'Telegram में जोड़ें';
+
+  @override
+  String get stkExportBody => 'एनिमेटेड पैक, आपके दूसरे मैसेंजर में इस्तेमाल के लिए। किसी एक स्टिकर को कहीं भी भेजने के लिए उसे देर तक दबाएँ।';
+
+  @override
+  String get stkExportNoApp => 'न WhatsApp इंस्टॉल है, न Telegram। किसी स्टिकर को दूसरे ऐप में भेजने के लिए उसे देर तक दबाएँ।';
+
+  @override
+  String get stkExportUnavailable => 'अभी दूसरा ऐप नहीं खुल सका।';
+
+  @override
+  String get stkShareChooser => 'स्टिकर भेजें';
 }

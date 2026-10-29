@@ -6263,4 +6263,46 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get apEffectsManual => 'Sua escolha vale na hora, só neste telefone.';
+
+  @override
+  String get ivOfflineHeader => 'Sem internet';
+
+  @override
+  String get ivSendApp => 'Enviar o app Droplet';
+
+  @override
+  String get ivSendAppBody => 'Por Quick Share, Bluetooth ou qualquer app de mensagens: a pessoa instala na hora, sem loja nem rede. O telefone dela vai pedir para permitir a instalação.';
+
+  @override
+  String get ivSendAppSplit => 'Instalado por uma loja, o Droplet não pode ser enviado como arquivo deste telefone: compartilhe o link.';
+
+  @override
+  String get ivSendAppChooser => 'Enviar Droplet';
+
+  @override
+  String get ivSendAppText => 'Aqui está o Droplet, o app de mensagens que funciona até sem rede. Abra o arquivo para instalar.';
+
+  @override
+  String get stkAddTo => 'Adicionar a…';
+
+  @override
+  String get stkAddWhatsApp => 'Adicionar ao WhatsApp';
+
+  @override
+  String get stkInWhatsApp => 'Já está no WhatsApp — atualizar';
+
+  @override
+  String get stkAddTelegram => 'Adicionar ao Telegram';
+
+  @override
+  String get stkExportBody => 'O pacote animado, para usar nos seus outros apps de mensagens. Toque e segure um sticker para enviar só ele para qualquer lugar.';
+
+  @override
+  String get stkExportNoApp => 'Nem o WhatsApp nem o Telegram estão instalados. Toque e segure um sticker para enviá-lo a outro app.';
+
+  @override
+  String get stkExportUnavailable => 'Não foi possível abrir o outro app agora.';
+
+  @override
+  String get stkShareChooser => 'Enviar sticker';
 }

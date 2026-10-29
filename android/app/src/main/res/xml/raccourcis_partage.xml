@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LE PARTAGE DIRECT D'ANDROID.
+
+  Chaque conversation publiée comme raccourci (voir `publierRaccourci` dans
+  MainActivity.kt) porte la catégorie ci-dessous : Android la propose alors
+  en tête de la feuille « Partager », pour ces types de contenu. Quand la
+  personne la choisit, l'intention SEND arrive avec l'identifiant du
+  raccourci, et Droplet coche d'office cette conversation.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <share-target android:targetClass="com.droplet.droplet.MainActivity">
+        <data android:mimeType="text/plain" />
+        <data android:mimeType="image/*" />
+        <data android:mimeType="video/*" />
+        <data android:mimeType="audio/*" />
+        <data android:mimeType="application/*" />
+        <category android:name="com.droplet.droplet.category.PARTAGE" />
+    </share-target>
+</shortcuts>

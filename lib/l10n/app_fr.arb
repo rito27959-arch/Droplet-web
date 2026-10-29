@@ -2420,5 +2420,19 @@
   "apEffectsLight": "Allégés (plus fluide)",
   "apEffectsAutoLight": "Ce téléphone est en effets allégés : les flous sont remplacés par des fonds pleins pour que tout défile sans à-coups.",
   "apEffectsAutoFull": "Ce téléphone affiche tous les effets. Droplet les allège de lui-même s'il mesure des saccades.",
-  "apEffectsManual": "Votre choix s'applique tout de suite, sur ce téléphone seulement."
+  "apEffectsManual": "Votre choix s'applique tout de suite, sur ce téléphone seulement.",
+  "ivOfflineHeader": "Sans Internet",
+  "ivSendApp": "Envoyer l'application Droplet",
+  "ivSendAppBody": "Par Quick Share, Bluetooth ou n'importe quelle messagerie : la personne l'installe sur place, sans boutique ni réseau. Son téléphone lui demandera d'autoriser l'installation.",
+  "ivSendAppSplit": "Installé depuis une boutique, Droplet ne peut pas s'envoyer comme fichier sur ce téléphone : partagez plutôt le lien.",
+  "ivSendAppChooser": "Envoyer Droplet",
+  "ivSendAppText": "Voici Droplet, la messagerie qui marche même sans réseau. Ouvre le fichier pour l'installer.",
+  "stkAddTo": "Ajouter à…",
+  "stkAddWhatsApp": "Ajouter à WhatsApp",
+  "stkInWhatsApp": "Déjà dans WhatsApp — mettre à jour",
+  "stkAddTelegram": "Ajouter à Telegram",
+  "stkExportBody": "Le pack animé, à utiliser dans vos autres messageries. Appui long sur un sticker pour l'envoyer seul n'importe où.",
+  "stkExportNoApp": "Ni WhatsApp ni Telegram ne sont installés. Appui long sur un sticker pour l'envoyer dans une autre app.",
+  "stkExportUnavailable": "Impossible d'ouvrir l'autre application pour l'instant.",
+  "stkShareChooser": "Envoyer le sticker"
 }

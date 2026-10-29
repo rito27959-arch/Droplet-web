@@ -37,6 +37,7 @@ import '../../design_system/ouro_typography.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/widgets/droplet_logo.dart';
 import '../../design_system/ouro_icon_button.dart';
+import '../../core/services/partage_droplet.dart';
 
 /// Un numéro prêt pour un lien `sms:` ou `wa.me` : chiffres, et le `+`
 /// initial s'il y en a un.
@@ -151,6 +152,10 @@ class _InviterScreenState extends State<InviterScreen> {
   /// La copie vient d'être faite : la ligne montre une coche, deux secondes.
   bool _copie = false;
 
+  /// L'APK peut-il partir comme fichier ? (Non s'il vient d'une boutique en
+  /// paquets scindés.)
+  late final Future<EtatPartage> _etatPartage = PartageDroplet.etat();
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -196,6 +201,39 @@ class _InviterScreenState extends State<InviterScreen> {
               ),
 
               const SizedBox(height: 22),
+
+              // ── Sans Internet : l'application elle-même ──────────────
+              //
+              // Là où Droplet sert le plus, personne n'a de réseau pour
+              // aller le chercher dans une boutique. On envoie donc
+              // l'application comme un fichier — par Quick Share, Bluetooth
+              // ou n'importe quelle messagerie — et la personne l'installe
+              // sur place.
+              if (Platform.isAndroid)
+                FutureBuilder<EtatPartage>(
+                  future: _etatPartage,
+                  builder: (context, etat) {
+                    final possible = etat.data?.apkPartageable ?? true;
+                    return OuroListSection(
+                      header: l10n.ivOfflineHeader,
+                      footer: possible ? l10n.ivSendAppBody : l10n.ivSendAppSplit,
+                      children: [
+                        OuroListRow(
+                          icon: Icons.install_mobile_rounded,
+                          iconColor: OuroColors.systemGreen,
+                          title: l10n.ivSendApp,
+                          onTap: possible
+                              ? () => PartageDroplet.partagerApp(
+                                    titre: l10n.ivSendAppChooser,
+                                    texte: l10n.ivSendAppText,
+                                  )
+                              : null,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              if (Platform.isAndroid) const SizedBox(height: 22),
 
               // ── Le numéro ────────────────────────────────────────────
               OuroListSection(

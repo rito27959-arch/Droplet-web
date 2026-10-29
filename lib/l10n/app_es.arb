@@ -2204,5 +2204,19 @@
   "apEffectsLight": "Ligeros (más fluido)",
   "apEffectsAutoLight": "Este teléfono usa efectos ligeros: los desenfoques se sustituyen por fondos sólidos para que todo se desplace con fluidez.",
   "apEffectsAutoFull": "Este teléfono muestra todos los efectos. Droplet los aligera por sí solo si detecta tirones.",
-  "apEffectsManual": "Tu elección se aplica de inmediato, solo en este teléfono."
+  "apEffectsManual": "Tu elección se aplica de inmediato, solo en este teléfono.",
+  "ivOfflineHeader": "Sin Internet",
+  "ivSendApp": "Enviar la app Droplet",
+  "ivSendAppBody": "Por Quick Share, Bluetooth o cualquier mensajería: la persona la instala ahí mismo, sin tienda ni red. Su teléfono le pedirá permitir la instalación.",
+  "ivSendAppSplit": "Instalado desde una tienda, Droplet no puede enviarse como archivo desde este teléfono: comparte el enlace.",
+  "ivSendAppChooser": "Enviar Droplet",
+  "ivSendAppText": "Aquí tienes Droplet, la mensajería que funciona incluso sin red. Abre el archivo para instalarla.",
+  "stkAddTo": "Añadir a…",
+  "stkAddWhatsApp": "Añadir a WhatsApp",
+  "stkInWhatsApp": "Ya está en WhatsApp — actualizar",
+  "stkAddTelegram": "Añadir a Telegram",
+  "stkExportBody": "El paquete animado, para usarlo en tus otras mensajerías. Mantén pulsado un sticker para enviarlo solo a cualquier lugar.",
+  "stkExportNoApp": "No está instalado ni WhatsApp ni Telegram. Mantén pulsado un sticker para enviarlo a otra app.",
+  "stkExportUnavailable": "No se pudo abrir la otra app por ahora.",
+  "stkShareChooser": "Enviar sticker"
 }

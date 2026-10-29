@@ -88,6 +88,18 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
+        <!-- DROPLET DANS LES AUTRES APPS (voir `PartageDroplet.kt`).
+             Depuis Android 11, une app ne voit les autres que si elle les
+             nomme ici : sans ce bloc, « WhatsApp est-il installé ? »
+             répond toujours non, et le bouton « Ajouter à WhatsApp »
+             resterait caché chez tout le monde. -->
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
+        <package android:name="org.telegram.messenger" />
+        <package android:name="org.telegram.messenger.web" />
+        <package android:name="org.thunderdog.challegram" />
+        <provider android:authorities="com.whatsapp.provider.sticker_whitelist_check" />
+        <provider android:authorities="com.whatsapp.w4b.provider.sticker_whitelist_check" />
     </queries>
 
     <application
@@ -140,7 +152,27 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="*/*"/>
             </intent-filter>
+            <!-- PARTAGE DIRECT : les conversations récentes de Droplet
+                 apparaissent EN TÊTE de la feuille « Partager » d'Android,
+                 avec la photo de la personne — un toucher, et la photo part
+                 dans la bonne discussion (voir `raccourcis_partage.xml`). -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/raccourcis_partage" />
         </activity>
+
+        <!-- Ce que Droplet donne aux autres apps : packs de stickers pour
+             WhatsApp, fichiers de stickers pour Telegram et les autres, et
+             l'application elle-même (voir `FournisseurPartage.kt`). La
+             permission de lecture est celle de WhatsApp ; les autres apps
+             lisent par l'autorisation temporaire jointe au partage. -->
+        <provider
+            android:name=".FournisseurPartage"
+            android:authorities="${applicationId}.stickercontentprovider"
+            android:enabled="true"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:readPermission="com.whatsapp.sticker.READ" />
 
         <!--
           LES POINTS D'ENTRÉE DE L'APPLICATION, un par icône.

@@ -2204,5 +2204,19 @@
   "apEffectsLight": "Light (smoother)",
   "apEffectsAutoLight": "This phone uses light effects: blurs are replaced by solid backgrounds so everything scrolls smoothly.",
   "apEffectsAutoFull": "This phone shows all effects. Droplet lightens them on its own if it detects stutter.",
-  "apEffectsManual": "Your choice applies right away, on this phone only."
+  "apEffectsManual": "Your choice applies right away, on this phone only.",
+  "ivOfflineHeader": "Without internet",
+  "ivSendApp": "Send the Droplet app",
+  "ivSendAppBody": "Via Quick Share, Bluetooth or any messaging app: they install it on the spot, with no store and no network. Their phone will ask them to allow the installation.",
+  "ivSendAppSplit": "Installed from a store, Droplet can't be sent as a file from this phone: share the link instead.",
+  "ivSendAppChooser": "Send Droplet",
+  "ivSendAppText": "Here's Droplet, the messenger that works even without a network. Open the file to install it.",
+  "stkAddTo": "Add to…",
+  "stkAddWhatsApp": "Add to WhatsApp",
+  "stkInWhatsApp": "Already in WhatsApp — update",
+  "stkAddTelegram": "Add to Telegram",
+  "stkExportBody": "The animated pack, to use in your other messengers. Long-press a sticker to send just that one anywhere.",
+  "stkExportNoApp": "Neither WhatsApp nor Telegram is installed. Long-press a sticker to send it to another app.",
+  "stkExportUnavailable": "Couldn't open the other app right now.",
+  "stkShareChooser": "Send sticker"
 }

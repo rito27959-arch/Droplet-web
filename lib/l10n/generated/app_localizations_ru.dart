@@ -6327,4 +6327,46 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get apEffectsManual => 'Выбор применяется сразу и только на этом телефоне.';
+
+  @override
+  String get ivOfflineHeader => 'Без интернета';
+
+  @override
+  String get ivSendApp => 'Отправить приложение Droplet';
+
+  @override
+  String get ivSendAppBody => 'Через Quick Share, Bluetooth или любой мессенджер: человек установит его на месте, без магазина и сети. Телефон попросит разрешить установку.';
+
+  @override
+  String get ivSendAppSplit => 'Droplet установлен из магазина и не может быть отправлен файлом с этого телефона: поделитесь ссылкой.';
+
+  @override
+  String get ivSendAppChooser => 'Отправить Droplet';
+
+  @override
+  String get ivSendAppText => 'Это Droplet — мессенджер, который работает даже без сети. Открой файл, чтобы установить.';
+
+  @override
+  String get stkAddTo => 'Добавить в…';
+
+  @override
+  String get stkAddWhatsApp => 'Добавить в WhatsApp';
+
+  @override
+  String get stkInWhatsApp => 'Уже в WhatsApp — обновить';
+
+  @override
+  String get stkAddTelegram => 'Добавить в Telegram';
+
+  @override
+  String get stkExportBody => 'Анимированный набор для ваших других мессенджеров. Удерживайте стикер, чтобы отправить только его куда угодно.';
+
+  @override
+  String get stkExportNoApp => 'Не установлены ни WhatsApp, ни Telegram. Удерживайте стикер, чтобы отправить его в другое приложение.';
+
+  @override
+  String get stkExportUnavailable => 'Не удалось открыть другое приложение.';
+
+  @override
+  String get stkShareChooser => 'Отправить стикер';
 }

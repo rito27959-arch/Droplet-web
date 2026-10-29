@@ -6338,4 +6338,46 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get apEffectsManual => 'يُطبَّق اختيارك فورًا، على هذا الهاتف فقط.';
+
+  @override
+  String get ivOfflineHeader => 'بدون إنترنت';
+
+  @override
+  String get ivSendApp => 'إرسال تطبيق Droplet';
+
+  @override
+  String get ivSendAppBody => 'عبر Quick Share أو البلوتوث أو أي تطبيق مراسلة: يثبّته الشخص فورًا، بلا متجر ولا شبكة. سيطلب هاتفه السماح بالتثبيت.';
+
+  @override
+  String get ivSendAppSplit => 'بما أن Droplet مثبّت من متجر، لا يمكن إرساله كملف من هذا الهاتف: شارك الرابط بدلًا من ذلك.';
+
+  @override
+  String get ivSendAppChooser => 'إرسال Droplet';
+
+  @override
+  String get ivSendAppText => 'إليك Droplet، تطبيق المراسلة الذي يعمل حتى بدون شبكة. افتح الملف لتثبيته.';
+
+  @override
+  String get stkAddTo => 'إضافة إلى…';
+
+  @override
+  String get stkAddWhatsApp => 'إضافة إلى واتساب';
+
+  @override
+  String get stkInWhatsApp => 'موجودة في واتساب — تحديث';
+
+  @override
+  String get stkAddTelegram => 'إضافة إلى تيليجرام';
+
+  @override
+  String get stkExportBody => 'الحزمة المتحركة لاستخدامها في تطبيقات المراسلة الأخرى. اضغط مطولًا على ملصق لإرساله وحده إلى أي مكان.';
+
+  @override
+  String get stkExportNoApp => 'لا واتساب ولا تيليجرام مثبتان. اضغط مطولًا على ملصق لإرساله إلى تطبيق آخر.';
+
+  @override
+  String get stkExportUnavailable => 'تعذّر فتح التطبيق الآخر حاليًا.';
+
+  @override
+  String get stkShareChooser => 'إرسال الملصق';
 }
