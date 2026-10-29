@@ -201,6 +201,12 @@ flutter:
     # Tonalités de notification (voir assets/sounds/CREDITS.txt et
     # SoundService). Courtes, sobres, niveau normalisé.
     - assets/sounds/
+    # Les stickers Droplet en fichiers, pour WhatsApp, Telegram et les
+    # autres apps (fabriqués par outils/stickers_export.py, servis par
+    # FournisseurPartage.kt).
+    - assets/stickers_export/
+    - assets/stickers_export/goutte/
+    - assets/stickers_export/eclat/
     # Les neuf variantes d'icône, montrées dans la grille de choix des
     # réglages. Elles sont AUSSI déclinées côté Android (voir
     # `tool/build_icon_variants.py`) : ici c'est l'aperçu, là-bas

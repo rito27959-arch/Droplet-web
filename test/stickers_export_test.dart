@@ -75,12 +75,25 @@ Future<ui.Image> image(String cle, double t) async {
   );
   c2.drawImage(dessin, const Offset(0, 3), Paint());
   c2.restore();
-  // Le liseré blanc.
+  // Le liseré blanc, ARRONDI. Une dilatation seule est carrée (le noyau
+  // de Skia est un rectangle) : une étoile prenait un contour en croix.
+  // On dilate peu, on floute, puis on remonte l'opacité — le bord épouse
+  // alors la forme, comme un vrai découpage au cutter.
   c2.saveLayer(
     null,
     Paint()
-      ..imageFilter = ui.ImageFilter.dilate(radiusX: 8, radiusY: 8)
-      ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+      ..imageFilter = ui.ImageFilter.compose(
+        outer: const ColorFilter.matrix(<double>[
+          0, 0, 0, 0, 255,
+          0, 0, 0, 0, 255,
+          0, 0, 0, 0, 255,
+          0, 0, 0, 3.2, 0,
+        ]),
+        inner: ui.ImageFilter.compose(
+          outer: ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+          inner: ui.ImageFilter.dilate(radiusX: 5, radiusY: 5),
+        ),
+      ),
   );
   c2.drawImage(dessin, Offset.zero, Paint());
   c2.restore();

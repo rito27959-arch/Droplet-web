@@ -250,7 +250,7 @@ class FournisseurPartage : ContentProvider() {
         val f = fichierDe(uri)
         val nom = if (aiguillage.match(uri) == APK) uri.lastPathSegment ?: "Droplet.apk" else f.name
         val colonnes = projection ?: arrayOf(android.provider.OpenableColumns.DISPLAY_NAME, android.provider.OpenableColumns.SIZE)
-        val valeurs = colonnes.map {
+        val valeurs: List<Any?> = colonnes.map<String, Any?> {
             when (it) {
                 android.provider.OpenableColumns.DISPLAY_NAME -> nom
                 android.provider.OpenableColumns.SIZE -> f.length()
