@@ -12,6 +12,9 @@ dependencies:
   flutter_riverpod: ^2.6.1
   go_router: ^14.8.1
   flutter_animate: ^4.5.0
+  # Moteur 2D (composants, particules, boucle de jeu) : l'ouverture au
+  # feutre, l'envoi en avion en papier et la scène des récits.
+  flame: ^1.18.0
 
   # Localisation — voir `l10n.yaml` et `lib/l10n/app_fr.arb`.
   flutter_localizations:

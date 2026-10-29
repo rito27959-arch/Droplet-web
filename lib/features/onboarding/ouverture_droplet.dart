@@ -50,12 +50,14 @@
 
 import 'dart:math' as math;
 
+import 'package:flame/game.dart' show GameWidget;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../design_system/droplet_design.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/widgets/marque_droplet.dart';
+import 'feutre_ouverture.dart';
 
 /// La hauteur de la marque dans l'ouverture — la même que celle de
 /// l'écran de lancement natif (`drawable/marque_lancement.xml`, iOS
@@ -147,6 +149,15 @@ const double _cycleAttente = 1500;
 const double _legendeApres = 1600;
 const double _dFondu = 220; // « Réduire les animations »
 
+// ── LE FEUTRE (voir `feutre_ouverture.dart`) ─────────────────────────
+//
+// Le logo n'apparaît plus d'un coup : un feutre le DESSINE, puis la
+// goutte se met à tourner. L'ouverture attend que le feutre soit sorti
+// de l'écran, puis que la goutte soit revenue de face, avant d'ouvrir.
+const double _tRevelationFeutre = kFeutreFini;
+const double _tPassageFeutre = kFeutreFini + 260;
+const double _tNomFeutre = 1500;
+
 class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerProviderStateMixin {
   late final bool _jouer;
   Ticker? _ticker;
@@ -157,6 +168,19 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
   double _debutAttente = 0;
   double _debutSortie = 0;
   bool _reduit = false;
+
+  /// Le dessin au feutre, avec Flame. Absent en « Réduire les animations ».
+  JeuFeutreOuverture? _jeu;
+  bool get _feutre => !_reduit;
+
+  /// Le feutre est-il prêt à rendre la main ? Ramène d'abord la goutte de
+  /// face (elle tourne), puis répond vrai quand elle l'est.
+  bool _feutrePose() {
+    final j = _jeu;
+    if (!_feutre || j == null) return true;
+    j.poser();
+    return j.posee;
+  }
 
   /// Délai maximal d'attente : au-delà, on ouvre quoi qu'il arrive. Un
   /// écran de démarrage ne doit jamais pouvoir enfermer quelqu'un.
@@ -199,10 +223,12 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
           if ((_pret && t >= minimum) || t > _attenteMax) _sortir(t, _Phase.fondu);
           return;
         }
-        final echeance = widget.versAccueil ? _tPassage : _tRevelation;
+        final echeance = _feutre
+            ? (widget.versAccueil ? _tPassageFeutre : _tRevelationFeutre)
+            : (widget.versAccueil ? _tPassage : _tRevelation);
         if (t >= echeance) {
           if (_pret) {
-            _sortir(t, _sortieNormale());
+            if (_feutrePose()) _sortir(t, _sortieNormale());
           } else {
             _phase = _Phase.attente;
             _debutAttente = t;
@@ -210,7 +236,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
           }
         }
       case _Phase.attente:
-        if (_pret || t - _debutAttente > _attenteMax) _sortir(t, _sortieNormale());
+        if ((_pret || t - _debutAttente > _attenteMax) && _feutrePose()) _sortir(t, _sortieNormale());
       case _Phase.revelation:
         if (t - _debutSortie >= _dRevelation) _finir();
       case _Phase.passage:
@@ -312,17 +338,32 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
           builder: (context, c) {
             final taille = Size(c.maxWidth, c.maxHeight);
             final centre = taille.center(Offset.zero);
+            // Tant que le feutre dessine (et que la goutte tourne), c'est
+            // Flame qui peint ; l'ouverture reprend la main pour l'onde
+            // ou le glissement, sur la même image.
+            final jeu = _feutre
+                ? (_jeu ??= JeuFeutreOuverture(
+                    temps: () => _t.value,
+                    fond: fond,
+                    couleur: marque,
+                    sombre: sombre,
+                    hauteurMarque: kHauteurMarqueOuverture,
+                  ))
+                : null;
             return AnimatedBuilder(
               animation: _t,
               builder: (context, _) {
                 final t = _t.value;
                 final etat = _etat(t, taille, centre, fond, marque);
+                final avecFeutre = jeu != null && (_phase == _Phase.entree || _phase == _Phase.attente);
                 return Stack(
                   textDirection: TextDirection.ltr,
                   children: [
                     Positioned.fill(
                       child: RepaintBoundary(
-                        child: CustomPaint(painter: _PeintreOuverture(etat)),
+                        child: avecFeutre
+                            ? GameWidget<JeuFeutreOuverture>(key: const ValueKey('feutre'), game: jeu)
+                            : CustomPaint(painter: _PeintreOuverture(etat)),
                       ),
                     ),
                     // Le nom, sous la marque — au premier lancement, et
@@ -419,8 +460,10 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       );
     }
 
-    // ── 1 à 3 : la goutte tombe dans la bulle, l'onde, la paroi.
-    final e = _chute(t);
+    // ── 1 à 3 : la goutte tombe dans la bulle, l'onde, la paroi. Avec le
+    // feutre, la marque est déjà dessinée, au repos, quand l'ouverture
+    // reprend la main.
+    final e = _feutre ? const _Chute(0, 0, 0, 1, _Onde.aucune) : _chute(t);
     pose = PoseMarque(
       ecrasement: e.ecrasement,
       gonflement: e.gonflement,
@@ -428,7 +471,7 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
       opaciteGoutte: e.opaciteGoutte,
     );
     onde = e.onde;
-    final eclaboussure = t >= _tPose ? t - _tPose : -1.0;
+    final eclaboussure = !_feutre && t >= _tPose ? t - _tPose : -1.0;
 
     // Une attente prolongée : la goutte respire, une onde toutes les
     // 1,5 s. Chaque cycle S'AJOUTE au mouvement en cours au lieu de le
@@ -439,7 +482,9 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
     if (_debutAttente > 0) {
       final fin = _phase == _Phase.attente ? t : _debutSortie;
       final k = ((fin - _debutAttente) / _cycleAttente).floor();
-      final g = _geste(t - (_debutAttente + k * _cycleAttente), debut: 40, amplitude: 0.05);
+      // Avec le feutre, c'est la goutte qui tourne qui dit « je prépare » :
+      // pas de respiration par-dessus.
+      final g = _feutre ? const _Geste(0, 0, _Onde.aucune) : _geste(t - (_debutAttente + k * _cycleAttente), debut: 40, amplitude: 0.05);
       pose = PoseMarque(
         ecrasement: pose.ecrasement + g.ecrasement,
         gonflement: pose.gonflement + g.gonflement,
@@ -453,7 +498,8 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
 
     // Le nom, au premier lancement.
     if (widget.versAccueil) {
-      revele = math.max(revele, _seg(t, _tNom, _tNom + 420));
+      final tNom = _feutre ? _tNomFeutre : _tNom;
+      revele = math.max(revele, _seg(t, tNom, tNom + 420));
     }
     nom = revele > 0 ? 1 : 0;
 

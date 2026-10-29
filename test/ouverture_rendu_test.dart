@@ -123,11 +123,11 @@ class _Scenario {
 }
 
 const _scenarios = [
-  _Scenario('retour_clair', accueil: false, sombre: false, dureeMs: 1400),
-  _Scenario('retour_sombre', accueil: false, sombre: true, dureeMs: 1400),
-  _Scenario('premier_clair', accueil: true, sombre: false, dureeMs: 2200),
-  _Scenario('premier_sombre', accueil: true, sombre: true, dureeMs: 2200),
-  _Scenario('attente_clair', accueil: false, sombre: false, retenueMs: 3000, dureeMs: 3700),
+  _Scenario('retour_clair', accueil: false, sombre: false, dureeMs: 2700),
+  _Scenario('retour_sombre', accueil: false, sombre: true, dureeMs: 2700),
+  _Scenario('premier_clair', accueil: true, sombre: false, dureeMs: 3300),
+  _Scenario('premier_sombre', accueil: true, sombre: true, dureeMs: 3300),
+  _Scenario('attente_clair', accueil: false, sombre: false, retenueMs: 3000, dureeMs: 4400),
   _Scenario('reduit_clair', accueil: false, sombre: false, reduit: true, dureeMs: 600),
 ];
 
