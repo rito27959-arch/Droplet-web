@@ -377,7 +377,7 @@ class _VueDiscussionState extends State<VueDiscussion> {
         : messages.where((m) => !m.supprime && m.texte.toLowerCase().contains(q)).toList().reversed.toList();
 
     return LayoutBuilder(builder: (context, c) {
-      final largeurMax = (c.maxWidth * 0.68).clamp(220.0, 560.0);
+      final largeurMax = (c.maxWidth * 0.68).clamp(220.0, 520.0);
       final elements = _elements(messages);
 
       return ColoredBox(
@@ -395,11 +395,11 @@ class _VueDiscussionState extends State<VueDiscussion> {
                           child: ListView.builder(
                               controller: _defilement,
                               reverse: true,
-                              // Sur un très grand écran, le fil reste une colonne lisible au
-                              // centre (1 000 px au plus) : l'œil ne traverse pas l'écran
-                              // d'une bulle reçue à une bulle envoyée.
+                              // Sur un grand écran, le fil reste une colonne de lecture au
+                              // centre (820 px au plus, comme Telegram) : l'œil ne traverse
+                              // pas l'écran d'une bulle reçue à une bulle envoyée.
                               padding: EdgeInsets.symmetric(
-                                horizontal: c.maxWidth > 900 ? ((c.maxWidth - 1000) / 2).clamp(56.0, double.infinity) : 14.0,
+                                horizontal: c.maxWidth > 700 ? ((c.maxWidth - 820) / 2).clamp(40.0, double.infinity) : 14.0,
                                 // Le fil passe SOUS l'en-tête et la barre de saisie, en
                                 // verre : on n'en réserve que la hauteur.
                               ).copyWith(top: _hautHaut + 14, bottom: _hautBas + 14),
@@ -849,13 +849,11 @@ class _Entete extends StatelessWidget {
               BoutonIcone(
                 icone: Icons.videocam_outlined,
                 aide: l.chVideoCall,
-                couleur: OuroColors.accent,
                 onTap: () => lancerAppel(context, d, video: true),
               ),
               BoutonIcone(
                 icone: Icons.phone_outlined,
                 aide: l.chVoiceCall,
-                couleur: OuroColors.accent,
                 onTap: () => lancerAppel(context, d, video: false),
               ),
               BoutonIcone(
@@ -948,6 +946,9 @@ void menuEntete(BuildContext context, Discussion d, Offset position) {
 
 // ── Les éléments du fil ────────────────────────────────────────────────
 
+/// Le fond des étiquettes posées sur le fil (jours, avis de chiffrement).
+Color get couleurEtiquette => OuroColors.isDark ? const Color(0xE61C1F26) : const Color(0xEBFFFFFF);
+
 class _Pastille extends StatelessWidget {
   const _Pastille({required this.texte, this.systeme = false});
 
@@ -956,16 +957,18 @@ class _Pastille extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Comme Messages : la date est un simple texte centré, discret,
-    // posé sur le fil — pas une étiquette.
+    // Une petite étiquette posée sur le fond (Telegram, WhatsApp) : sur un
+    // fond dessiné, un texte nu se perdrait dans le motif.
     return Center(
-      child: Padding(
-        padding: EdgeInsets.only(top: systeme ? 8 : 18, bottom: systeme ? 8 : 10, left: 24, right: 24),
+      child: Container(
+        margin: EdgeInsets.only(top: systeme ? 8 : 16, bottom: systeme ? 8 : 10, left: 24, right: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: couleurEtiquette, borderRadius: BorderRadius.circular(9)),
         child: Text(
           texte,
           textAlign: TextAlign.center,
           style: OuroTypography.caption1.copyWith(
-            color: systeme ? OuroColors.tertiaryLabel : OuroColors.secondaryLabel,
+            color: OuroColors.secondaryLabel,
             fontWeight: systeme ? FontWeight.w400 : FontWeight.w600,
             letterSpacing: 0.1,
           ),
@@ -1016,16 +1019,17 @@ class _AvisChiffrement extends StatelessWidget {
       child: Container(
         constraints: const BoxConstraints(maxWidth: 420),
         margin: const EdgeInsets.only(top: 18, bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        decoration: BoxDecoration(color: couleurEtiquette, borderRadius: BorderRadius.circular(12)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.lock_rounded, size: 14, color: OuroColors.tertiaryLabel),
+            Icon(Icons.lock_rounded, size: 14, color: OuroColors.secondaryLabel),
             const SizedBox(height: 5),
             Text(
               l.chE2eNotice,
               textAlign: TextAlign.center,
-              style: OuroTypography.caption1.copyWith(color: OuroColors.tertiaryLabel, height: 1.35),
+              style: OuroTypography.caption1.copyWith(color: OuroColors.secondaryLabel, height: 1.35),
             ),
           ],
         ),

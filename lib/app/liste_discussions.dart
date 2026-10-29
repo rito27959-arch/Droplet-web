@@ -76,14 +76,12 @@ class _ListeDiscussionsState extends State<ListeDiscussions> {
             BoutonIcone(
               icone: Icons.add_comment_outlined,
               aide: l.chatsNew,
-              couleur: OuroColors.accent,
               onTap: () => pousserPanneau(context, const PanneauNouvelleDiscussion()),
             ),
             BoutonIcone(
               key: menu,
               icone: Icons.more_horiz_rounded,
               aide: t.plus,
-              couleur: OuroColors.accent,
               onTap: () {
                 final box = menu.currentContext!.findRenderObject() as RenderBox;
                 montrerMenu(
@@ -306,13 +304,14 @@ class LigneDiscussion extends StatelessWidget {
       onTap: () => ouvrirDiscussion(context, d.id),
       onClicDroit: menu,
       builder: (context, survol) {
-        // La discussion ouverte : la ligne se teinte de l'accent, sans le
-        // crier — la sélection de la barre latérale d'iOS 26 et du Mac.
+        // La discussion ouverte : un gris neutre, comme WhatsApp Web. Teintée
+        // de l'accent, elle faisait une grande tache rose à côté des bulles
+        // déjà roses : l'accent est réservé à ce qui agit.
         // ([encre] reste prévu pour une sélection pleine.)
         const inverse = false;
         const Color? encre = null;
         final fond = selectionnee
-            ? OuroColors.accent.withValues(alpha: OuroColors.isDark ? 0.28 : 0.13)
+            ? (OuroColors.isDark ? const Color(0x24FFFFFF) : const Color(0x12000000))
             : (survol ? OuroColors.quaternarySystemFill : Colors.transparent);
         return AnimatedContainer(
           duration: const Duration(milliseconds: 160),

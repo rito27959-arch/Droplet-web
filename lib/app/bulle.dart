@@ -282,7 +282,11 @@ class CorpsBulle extends StatelessWidget {
     final l = context.l;
     final m = message;
     final moi = m.deMoi;
-    final fond = moi ? OuroColors.bubbleOutgoing : OuroColors.bubbleIncoming;
+    // Sur un fond teinté ou dessiné, en clair : les bulles reçues sont
+    // blanches et posées d'une ombre d'un pixel (WhatsApp, Telegram). Le
+    // gris de Messages n'est fait que pour un fond blanc uni.
+    final blanches = !OuroColors.isDark && fondsDiscussion[depot.reglages.fond % fondsDiscussion.length].bullesBlanches;
+    final fond = moi ? OuroColors.bubbleOutgoing : (blanches ? Colors.white : OuroColors.bubbleIncoming);
     final encre = moi ? OuroColors.bubbleOutgoingText : OuroColors.bubbleIncomingText;
     final discret = moi ? encre.withValues(alpha: 0.72) : OuroColors.secondaryLabel;
     final taille = ReglagesApparence.tailleTexte;
@@ -300,6 +304,7 @@ class CorpsBulle extends StatelessWidget {
     final peinture = ShapeDecoration(
       shape: forme,
       color: moi ? null : fond,
+      shadows: blanches && !moi ? const [BoxShadow(color: Color(0x1F000000), blurRadius: 1, offset: Offset(0, 1))] : null,
       gradient: moi
           ? LinearGradient(
               begin: Alignment.topCenter,

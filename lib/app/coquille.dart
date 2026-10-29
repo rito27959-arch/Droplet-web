@@ -810,8 +810,23 @@ class _Accueil extends StatelessWidget {
       Onglet.appels => (l.tabCalls, t.accueilAppels),
       Onglet.reglages => (l.settingsTitle, t.accueilReglages),
     };
+    // Côté discussions, l'accueil est posé sur le fond des discussions :
+    // ouvrir une conversation ne change alors que le contenu, pas le décor.
+    final surFond = onglet == Onglet.discussions;
     return Container(
-      color: OuroColors.systemGroupedBackground,
+      decoration: surFond ? null : BoxDecoration(color: OuroColors.systemGroupedBackground),
+      child: Stack(
+        children: [
+          if (surFond) Positioned.fill(child: Fond(index: context.depot.reglages.fond)),
+          Positioned.fill(child: _contenu(context, titre, texte, etat)),
+        ],
+      ),
+    );
+  }
+
+  Widget _contenu(BuildContext context, String titre, String texte, ValueListenable<EtatConnexion> etat) {
+    final t = context.t;
+    return Container(
       alignment: Alignment.center,
       padding: const EdgeInsets.all(40),
       child: Column(
