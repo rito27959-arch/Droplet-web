@@ -10,6 +10,7 @@ import '../calls/calls_screen.dart';
 import '../peers/peers_screen.dart';
 import '../tor/tor_status_indicator.dart';
 import '../../core/providers/mesh_provider.dart';
+import '../../design_system/flou.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
@@ -167,7 +168,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                       stops: [0.08, 0.82],
                     ).createShader(rect),
                     child: ClipRect(
-                      child: BackdropFilter(
+                      child: Flou(
                         filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: DecoratedBox(
                           decoration: BoxDecoration(

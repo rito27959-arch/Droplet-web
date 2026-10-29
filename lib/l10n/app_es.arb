@@ -2197,5 +2197,12 @@
   "gnPhoto": "Foto del grupo",
   "gnNameFooter": "Ponle un nombre al grupo y, si quieres, una foto.",
   "gnDescription": "Descripción (opcional)",
-  "cnRepliedToYou": "respondió a tu mensaje"
+  "cnRepliedToYou": "respondió a tu mensaje",
+  "apEffectsHeader": "Efectos visuales",
+  "apEffectsAuto": "Automático",
+  "apEffectsFull": "Completos (desenfoque y transparencias)",
+  "apEffectsLight": "Ligeros (más fluido)",
+  "apEffectsAutoLight": "Este teléfono usa efectos ligeros: los desenfoques se sustituyen por fondos sólidos para que todo se desplace con fluidez.",
+  "apEffectsAutoFull": "Este teléfono muestra todos los efectos. Droplet los aligera por sí solo si detecta tirones.",
+  "apEffectsManual": "Tu elección se aplica de inmediato, solo en este teléfono."
 }

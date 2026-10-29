@@ -180,6 +180,9 @@ Future<void> main() async {
   // les contacts, etc.) — comme ouvrir le classeur avant de pouvoir y lire
   // ou écrire quelque chose.
   await StorageService.init();
+  // Le choix « Effets visuels » de l'utilisateur et la mesure des sessions
+  // précédentes (voir `DeviceProfile.effetsAlleges`).
+  DeviceProfile.appliquerPreferences();
   // Ouvre le dossier de la photo de profil. Rapide (une création de
   // dossier), et il faut le faire AVANT le premier écran : sans lui,
   // `AvatarService.chemin` renvoie `null` et le premier affichage
@@ -258,6 +261,9 @@ Future<void> main() async {
   // des informations (qui je suis, mes messages, mes contacts...) sans
   // avoir à se les passer à la main.
   runApp(const ProviderScope(child: DropletApp()));
+  // Mesure le temps des images pendant l'usage : un téléphone qui saccade
+  // passe de lui-même en effets allégés (voir `DeviceProfile.surveiller`).
+  DeviceProfile.surveiller();
 }
 
 /// Le widget racine de toute l'application — la « coquille » qui contient

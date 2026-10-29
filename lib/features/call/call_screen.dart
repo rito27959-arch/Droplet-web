@@ -49,6 +49,7 @@ import '../../shared/widgets/peer_avatar.dart';
 import '../onboarding/ouverture_droplet.dart';
 import 'ecran_sonnerie.dart';
 import '../../design_system/ouro_spinner.dart';
+import '../../design_system/flou.dart';
 
 class CallScreen extends ConsumerStatefulWidget {
   const CallScreen({
@@ -954,7 +955,7 @@ class _BarreControles extends StatelessWidget {
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(30),
-      child: BackdropFilter(
+      child: Flou(repli: const Color(0x66000000), 
         filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
         child: DecoratedBox(decoration: decor, child: contenu),
       ),

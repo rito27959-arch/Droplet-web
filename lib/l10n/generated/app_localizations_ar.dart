@@ -6317,4 +6317,25 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cnRepliedToYou => 'ردّ على رسالتك';
+
+  @override
+  String get apEffectsHeader => 'المؤثرات المرئية';
+
+  @override
+  String get apEffectsAuto => 'تلقائي';
+
+  @override
+  String get apEffectsFull => 'كاملة (تمويه وشفافية)';
+
+  @override
+  String get apEffectsLight => 'مخففة (أكثر سلاسة)';
+
+  @override
+  String get apEffectsAutoLight => 'يستخدم هذا الهاتف مؤثرات مخففة: استُبدل التمويه بخلفيات مصمتة ليكون التمرير سلسًا.';
+
+  @override
+  String get apEffectsAutoFull => 'يعرض هذا الهاتف جميع المؤثرات. يخففها Droplet تلقائيًا إذا رصد تقطعًا.';
+
+  @override
+  String get apEffectsManual => 'يُطبَّق اختيارك فورًا، على هذا الهاتف فقط.';
 }

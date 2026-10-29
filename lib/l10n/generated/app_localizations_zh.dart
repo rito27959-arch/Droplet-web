@@ -6063,4 +6063,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cnRepliedToYou => '回复了你的消息';
+
+  @override
+  String get apEffectsHeader => '视觉效果';
+
+  @override
+  String get apEffectsAuto => '自动';
+
+  @override
+  String get apEffectsFull => '完整（模糊和透明）';
+
+  @override
+  String get apEffectsLight => '精简（更流畅）';
+
+  @override
+  String get apEffectsAutoLight => '此手机使用精简效果：模糊被纯色背景取代，滚动更流畅。';
+
+  @override
+  String get apEffectsAutoFull => '此手机显示全部效果。若检测到卡顿，Droplet 会自动精简。';
+
+  @override
+  String get apEffectsManual => '你的选择立即生效，仅限此手机。';
 }

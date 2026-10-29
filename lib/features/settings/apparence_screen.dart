@@ -32,6 +32,7 @@ import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/chat_background_provider.dart';
 import '../../core/providers/personnalisation_provider.dart';
 import '../../core/providers/premium_provider.dart';
+import '../../core/services/device_profile.dart';
 import '../../design_system/design_tokens.dart';
 import '../../design_system/ouro_colors.dart';
 import '../../design_system/ouro_haptics.dart';
@@ -105,6 +106,9 @@ class ApparenceScreen extends ConsumerWidget {
             lignes: perso.lignesListe,
             onChoisir: (n) => notifier.modifier(perso.copyWith(lignesListe: n)),
           ),
+          const SizedBox(height: DesignTokens.space5),
+
+          const _SectionEffets(),
           const SizedBox(height: DesignTokens.space5),
 
           OuroListSection(
@@ -686,4 +690,51 @@ class _EmblemePack extends CustomPainter {
   @override
   bool shouldRepaint(_EmblemePack ancien) =>
       ancien.pack != pack || ancien.couleur != couleur;
+}
+
+
+/// « Effets visuels » : Automatique, Complets ou Allégés.
+///
+/// En automatique, Droplet remplace les flous et les fondus par des fonds
+/// pleins sur les téléphones d'entrée de gamme, ou dès qu'il mesure des
+/// saccades (voir `DeviceProfile`). La note du bas dit ce qui est en
+/// vigueur sur CE téléphone, pour que le choix ne soit pas un pari.
+class _SectionEffets extends StatelessWidget {
+  const _SectionEffets();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ValueListenableBuilder<bool>(
+      valueListenable: DeviceProfile.effetsAlleges,
+      builder: (context, alleges, _) {
+        final mode = DeviceProfile.modeEffets;
+        return OuroListSection(
+          header: l10n.apEffectsHeader,
+          footer: mode == 'auto'
+              ? (alleges ? l10n.apEffectsAutoLight : l10n.apEffectsAutoFull)
+              : l10n.apEffectsManual,
+          children: [
+            for (final (cle, titre) in [
+              ('auto', l10n.apEffectsAuto),
+              ('complets', l10n.apEffectsFull),
+              ('alleges', l10n.apEffectsLight),
+            ])
+              OuroListRow(
+                title: titre,
+                showChevron: false,
+                trailing: cle == mode
+                    ? Icon(Icons.check_rounded, size: 20, color: OuroColors.accent)
+                    : const SizedBox(width: 20),
+                onTap: () async {
+                  if (cle == mode) return;
+                  OuroHaptics.selection();
+                  await DeviceProfile.changerModeEffets(cle);
+                },
+              ),
+          ],
+        );
+      },
+    );
+  }
 }

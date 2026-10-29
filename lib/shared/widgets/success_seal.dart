@@ -23,6 +23,7 @@ import 'package:liquid_glass_ui_design/liquid_glass_ui.dart';
 import '../../design_system/ouro_colors.dart';
 import '../../design_system/design_tokens.dart';
 import 'scene_animee.dart';
+import '../../design_system/flou.dart';
 
 /// Sceau de confirmation plein écran pour les moments de confiance de l'app
 /// (vérification de clé, sauvegarde chiffrée réussie…) — un simple toast ne
@@ -74,7 +75,7 @@ class SuccessSeal extends StatefulWidget {
             emoji: emoji,
           ),
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        return BackdropFilter(
+        return Flou(repli: const Color(0x00000000), 
           filter: ui.ImageFilter.blur(sigmaX: 6 * animation.value, sigmaY: 6 * animation.value),
           child: FadeTransition(opacity: animation, child: child),
         );

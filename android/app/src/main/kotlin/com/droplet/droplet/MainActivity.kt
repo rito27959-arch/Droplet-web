@@ -297,6 +297,10 @@ class MainActivity : FlutterFragmentActivity() {
         // Le clavier qui suit le doigt dans une conversation (Android 11+).
         ClavierInteractif.brancher(this, flutterEngine.dartExecutor.binaryMessenger)
 
+        // Ce que ce téléphone peut se permettre : puce, cœurs, fréquence,
+        // mémoire (voir `ProfilAppareil.kt` et `device_profile.dart`).
+        ProfilAppareil.brancher(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channel)
             .setMethodCallHandler { call, result ->
                 when (call.method) {

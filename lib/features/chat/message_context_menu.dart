@@ -39,6 +39,7 @@ import '../../design_system/ouro_haptics.dart';
 import '../../design_system/ouro_typography.dart';
 import '../../design_system/glassmorphism.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../design_system/flou.dart';
 
 /// Une action proposée sous le message.
 class MessageAction {
@@ -263,7 +264,7 @@ class _ContextMenuOverlay extends StatelessWidget {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => Navigator.of(context).maybePop(),
-                child: BackdropFilter(
+                child: Flou(repli: const Color(0x00000000), 
                   filter: ui.ImageFilter.blur(sigmaX: 22 * t, sigmaY: 22 * t),
                   child: ColoredBox(
                     color: Colors.black.withValues(

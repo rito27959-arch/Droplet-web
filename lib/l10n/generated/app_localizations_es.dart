@@ -6246,4 +6246,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cnRepliedToYou => 'respondió a tu mensaje';
+
+  @override
+  String get apEffectsHeader => 'Efectos visuales';
+
+  @override
+  String get apEffectsAuto => 'Automático';
+
+  @override
+  String get apEffectsFull => 'Completos (desenfoque y transparencias)';
+
+  @override
+  String get apEffectsLight => 'Ligeros (más fluido)';
+
+  @override
+  String get apEffectsAutoLight => 'Este teléfono usa efectos ligeros: los desenfoques se sustituyen por fondos sólidos para que todo se desplace con fluidez.';
+
+  @override
+  String get apEffectsAutoFull => 'Este teléfono muestra todos los efectos. Droplet los aligera por sí solo si detecta tirones.';
+
+  @override
+  String get apEffectsManual => 'Tu elección se aplica de inmediato, solo en este teléfono.';
 }

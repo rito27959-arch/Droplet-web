@@ -2197,5 +2197,12 @@
   "gnPhoto": "群头像",
   "gnNameFooter": "为群组取个名字，也可以加张头像。",
   "gnDescription": "简介（可选）",
-  "cnRepliedToYou": "回复了你的消息"
+  "cnRepliedToYou": "回复了你的消息",
+  "apEffectsHeader": "视觉效果",
+  "apEffectsAuto": "自动",
+  "apEffectsFull": "完整（模糊和透明）",
+  "apEffectsLight": "精简（更流畅）",
+  "apEffectsAutoLight": "此手机使用精简效果：模糊被纯色背景取代，滚动更流畅。",
+  "apEffectsAutoFull": "此手机显示全部效果。若检测到卡顿，Droplet 会自动精简。",
+  "apEffectsManual": "你的选择立即生效，仅限此手机。"
 }

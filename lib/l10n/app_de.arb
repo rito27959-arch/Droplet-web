@@ -2197,5 +2197,12 @@
   "gnPhoto": "Gruppenfoto",
   "gnNameFooter": "Gib der Gruppe einen Namen und, wenn du magst, ein Foto.",
   "gnDescription": "Beschreibung (optional)",
-  "cnRepliedToYou": "hat auf deine Nachricht geantwortet"
+  "cnRepliedToYou": "hat auf deine Nachricht geantwortet",
+  "apEffectsHeader": "Visuelle Effekte",
+  "apEffectsAuto": "Automatisch",
+  "apEffectsFull": "Vollständig (Unschärfe und Transparenz)",
+  "apEffectsLight": "Reduziert (flüssiger)",
+  "apEffectsAutoLight": "Dieses Telefon nutzt reduzierte Effekte: Unschärfen werden durch feste Hintergründe ersetzt, damit alles flüssig scrollt.",
+  "apEffectsAutoFull": "Dieses Telefon zeigt alle Effekte. Droplet reduziert sie selbst, wenn es Ruckeln misst.",
+  "apEffectsManual": "Ihre Wahl gilt sofort, nur auf diesem Telefon."
 }

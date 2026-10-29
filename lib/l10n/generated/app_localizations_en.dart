@@ -6232,4 +6232,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cnRepliedToYou => 'replied to your message';
+
+  @override
+  String get apEffectsHeader => 'Visual effects';
+
+  @override
+  String get apEffectsAuto => 'Automatic';
+
+  @override
+  String get apEffectsFull => 'Full (blur and transparency)';
+
+  @override
+  String get apEffectsLight => 'Light (smoother)';
+
+  @override
+  String get apEffectsAutoLight => 'This phone uses light effects: blurs are replaced by solid backgrounds so everything scrolls smoothly.';
+
+  @override
+  String get apEffectsAutoFull => 'This phone shows all effects. Droplet lightens them on its own if it detects stutter.';
+
+  @override
+  String get apEffectsManual => 'Your choice applies right away, on this phone only.';
 }

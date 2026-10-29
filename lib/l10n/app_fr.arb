@@ -2413,5 +2413,12 @@
   "gnPhoto": "Photo du groupe",
   "gnNameFooter": "Donnez un nom au groupe et, si vous voulez, une photo.",
   "gnDescription": "Description (facultatif)",
-  "cnRepliedToYou": "a répondu à votre message"
+  "cnRepliedToYou": "a répondu à votre message",
+  "apEffectsHeader": "Effets visuels",
+  "apEffectsAuto": "Automatique",
+  "apEffectsFull": "Complets (flous et transparences)",
+  "apEffectsLight": "Allégés (plus fluide)",
+  "apEffectsAutoLight": "Ce téléphone est en effets allégés : les flous sont remplacés par des fonds pleins pour que tout défile sans à-coups.",
+  "apEffectsAutoFull": "Ce téléphone affiche tous les effets. Droplet les allège de lui-même s'il mesure des saccades.",
+  "apEffectsManual": "Votre choix s'applique tout de suite, sur ce téléphone seulement."
 }

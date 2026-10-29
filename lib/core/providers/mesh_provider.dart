@@ -192,13 +192,32 @@ class FileProgressNotifier
   FileProgressNotifier(MeshRepository repo) : super(const {}) {
     _sub = repo.fileProgressEvents.listen((e) {
       if (e.progression >= 1) {
+        _derniers.remove(e.fileId);
         if (!state.containsKey(e.fileId)) return;
         state = {...state}..remove(e.fileId);
       } else {
+        // ⚠️ AU PLUS ~6 FOIS PAR SECONDE. Chaque bloc reçu produisait une
+        // nouvelle carte, et l'écran de discussion — qui l'observe — se
+        // reconstruisait EN ENTIER à chaque bloc : des centaines de fois
+        // pendant une photo. Un anneau de progression n'a pas besoin de
+        // plus de six images par seconde pour paraître fluide (il s'anime
+        // entre deux valeurs). Le début et la fin passent toujours.
+        final avant = state[e.fileId];
+        final maintenant = DateTime.now();
+        final dernier = _derniers[e.fileId];
+        if (avant != null &&
+            dernier != null &&
+            maintenant.difference(dernier).inMilliseconds < 160 &&
+            (e.progression - avant.progression).abs() < 0.08) {
+          return;
+        }
+        _derniers[e.fileId] = maintenant;
         state = {...state, e.fileId: (progression: e.progression, envoi: e.envoi)};
       }
     });
   }
+
+  final Map<String, DateTime> _derniers = {};
 
   late final StreamSubscription<({String fileId, double progression, bool envoi})> _sub;
 

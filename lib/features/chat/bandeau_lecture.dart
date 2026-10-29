@@ -34,6 +34,7 @@ import '../../core/services/lecteur_vocal.dart';
 import '../../design_system/ouro_colors.dart';
 import '../../design_system/ouro_haptics.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../design_system/flou.dart';
 
 /// La hauteur du bandeau, SOUS la barre d'état.
 const double kHauteurBandeauLecture = 50;
@@ -114,7 +115,7 @@ class _Barre extends StatelessWidget {
     return Material(
       type: MaterialType.transparency,
       child: ClipRect(
-        child: BackdropFilter(
+        child: Flou(
           filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
             padding: EdgeInsets.only(top: hautSysteme),

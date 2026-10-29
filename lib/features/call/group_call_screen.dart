@@ -63,6 +63,7 @@ import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/peer_avatar.dart';
 import '../../shared/widgets/scene_animee.dart';
 import 'salon_vocal.dart';
+import '../../design_system/flou.dart';
 
 /// Écran d'appel de groupe — voix uniquement, grille de participants.
 /// Expérimental : maillage WebRTC complet sans serveur, plafonné à
@@ -1137,7 +1138,7 @@ class _BarreReactions extends StatelessWidget {
           ? DecoratedBox(decoration: decor, child: contenu)
           : ClipRRect(
               borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
-              child: BackdropFilter(
+              child: Flou(repli: const Color(0x66000000), 
                 filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                 child: DecoratedBox(decoration: decor, child: contenu),
               ),
@@ -1474,7 +1475,7 @@ class _BarreControlesSalon extends StatelessWidget {
           ? DecoratedBox(decoration: decor, child: contenu)
           : ClipRRect(
               borderRadius: BorderRadius.circular(30),
-              child: BackdropFilter(
+              child: Flou(repli: const Color(0x66000000), 
                 filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                 child: DecoratedBox(decoration: decor, child: contenu),
               ),

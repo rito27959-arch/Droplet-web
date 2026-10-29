@@ -2197,5 +2197,12 @@
   "gnPhoto": "Group photo",
   "gnNameFooter": "Give the group a name and, if you like, a photo.",
   "gnDescription": "Description (optional)",
-  "cnRepliedToYou": "replied to your message"
+  "cnRepliedToYou": "replied to your message",
+  "apEffectsHeader": "Visual effects",
+  "apEffectsAuto": "Automatic",
+  "apEffectsFull": "Full (blur and transparency)",
+  "apEffectsLight": "Light (smoother)",
+  "apEffectsAutoLight": "This phone uses light effects: blurs are replaced by solid backgrounds so everything scrolls smoothly.",
+  "apEffectsAutoFull": "This phone shows all effects. Droplet lightens them on its own if it detects stutter.",
+  "apEffectsManual": "Your choice applies right away, on this phone only."
 }

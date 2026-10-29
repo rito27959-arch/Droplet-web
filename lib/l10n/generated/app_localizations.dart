@@ -1074,6 +1074,48 @@ abstract class AppLocalizations {
   /// **'a répondu à votre message'**
   String get cnRepliedToYou;
 
+  /// No description provided for @apEffectsHeader.
+  ///
+  /// In fr, this message translates to:
+  /// **'Effets visuels'**
+  String get apEffectsHeader;
+
+  /// No description provided for @apEffectsAuto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Automatique'**
+  String get apEffectsAuto;
+
+  /// No description provided for @apEffectsFull.
+  ///
+  /// In fr, this message translates to:
+  /// **'Complets (flous et transparences)'**
+  String get apEffectsFull;
+
+  /// No description provided for @apEffectsLight.
+  ///
+  /// In fr, this message translates to:
+  /// **'Allégés (plus fluide)'**
+  String get apEffectsLight;
+
+  /// No description provided for @apEffectsAutoLight.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce téléphone est en effets allégés : les flous sont remplacés par des fonds pleins pour que tout défile sans à-coups.'**
+  String get apEffectsAutoLight;
+
+  /// No description provided for @apEffectsAutoFull.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce téléphone affiche tous les effets. Droplet les allège de lui-même s'il mesure des saccades.'**
+  String get apEffectsAutoFull;
+
+  /// No description provided for @apEffectsManual.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre choix s'applique tout de suite, sur ce téléphone seulement.'**
+  String get apEffectsManual;
+
   /// No description provided for @acReadyTitle.
   ///
   /// In fr, this message translates to:

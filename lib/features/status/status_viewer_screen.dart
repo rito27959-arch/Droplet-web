@@ -72,6 +72,7 @@ import '../../design_system/ouro_motion.dart';
 import '../../design_system/ouro_icon_button.dart';
 import '../../design_system/ouro_retour_ios.dart';
 import '../../core/services/avatar_service.dart';
+import '../../design_system/flou.dart';
 
 class StatusViewerScreen extends ConsumerStatefulWidget {
   /// L'ordre des contacts figé à l'ouverture du lecteur : sans lui, un
@@ -1668,7 +1669,7 @@ class _ReactionsRapides extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
+        child: Flou(repli: const Color(0x66000000), 
           filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),

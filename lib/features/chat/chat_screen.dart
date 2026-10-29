@@ -153,6 +153,8 @@ import '../../core/services/miroir_appareils.dart';
 import '../lecteur/lecteur_pdf.dart';
 import '../group/reglages_groupe.dart';
 import '../call/salon_vocal.dart';
+import '../../design_system/flou.dart';
+import '../../core/services/device_profile.dart';
 
 /// L'écran de conversation lui-même — juste une coquille qui reçoit soit
 /// un [peerId] (chat 1:1 ou diffusion), soit un [groupId] (chat de
@@ -195,7 +197,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 }
 
 class _ChatScreenState extends ConsumerState<ChatScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   /// Le contact est bloqué : ni saisie ni appel, comme chez WhatsApp.
   bool get _contactBloque =>
       !_isGroup &&
@@ -679,6 +681,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     LecteurVocal.instance.addListener(_surLecteur);
     LecteurVocal.instance.surErreur = _vocalIlisible;
     final key = _isGroup
@@ -987,9 +990,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// respirent » — quand on scroll vite, les bulles se compressent
   /// légèrement (scale 0.97), et quand on s'arrête, elles reviennent
   /// à la normale avec un micro-spring.
-  double _scrollVelocity = 0;
-  double _lastScrollOffset = 0;
-  DateTime _lastScrollTime = DateTime.now();
 
   // ── LA DATE QUI RESTE EN HAUT PENDANT LE DÉFILEMENT ─────────────────
   //
@@ -998,11 +998,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   // quel jour on lisait les messages. Comme Telegram et WhatsApp, la date
   // du premier message visible flotte en haut tant qu'on fait défiler,
   // puis s'efface une seconde et demie après l'arrêt.
-  String? _jourFlottant;
-  bool _jourVisible = false;
+  final ValueNotifier<({String? libelle, bool visible})> _jourFlottant =
+      ValueNotifier((libelle: null, visible: false));
   Timer? _minuteurJour;
   DateTime _derniereMajJour = DateTime(0);
   Map<String, MeshMessage> _parIdCourant = const {};
+
+  // Les éléments du fil et l'annuaire des messages, gardés d'une
+  // reconstruction à l'autre tant que la conversation n'a pas changé
+  // (voir `build`).
+  List<Object>? _cacheItems;
+  Map<String, MeshMessage>? _cacheParId;
+  (List<MeshMessage>, Object?, Locale, int)? _cleItems;
+
+  // Même chose pour les pseudos mentionnables et leurs couleurs.
+  List<String> _cachePseudos = const [];
+  Map<String, String> _cacheIdParPseudo = const {};
+  (List<MeshMessage>, Object?)? _cleMentions;
 
   void _majJourFlottant() {
     // Pas plus d'une mesure toutes les 80 ms : on parcourt les bulles
@@ -1026,15 +1038,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     if (premier == null) return;
     final t = premier.timestamp;
     final libelle = _dayLabel(context, DateTime(t.year, t.month, t.day));
-    if (libelle != _jourFlottant || !_jourVisible) {
-      setState(() {
-        _jourFlottant = libelle;
-        _jourVisible = true;
-      });
+    // Une notification locale, pas `setState` : changer l'étiquette ne
+    // redessine que l'étiquette, pas tout le fil (voir `_onScroll`).
+    if (libelle != _jourFlottant.value.libelle || !_jourFlottant.value.visible) {
+      _jourFlottant.value = (libelle: libelle, visible: true);
     }
     _minuteurJour?.cancel();
     _minuteurJour = Timer(const Duration(milliseconds: 1500), () {
-      if (mounted) setState(() => _jourVisible = false);
+      if (mounted) _jourFlottant.value = (libelle: _jourFlottant.value.libelle, visible: false);
     });
   }
 
@@ -1055,19 +1066,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     } else if (!atBottom && !_showJumpButton) {
       setState(() => _showJumpButton = true);
     }
-    // Tracker la vélocité via la différence de position entre deux ticks.
-    final now = DateTime.now();
-    final dt = now.difference(_lastScrollTime).inMilliseconds;
-    final offset = _scrollCtrl.offset;
-    if (dt > 0) {
-      final speed = (offset - _lastScrollOffset).abs() / dt;
-      final normalized = (speed * 16).clamp(0.0, 1.0); // ~1 frame at 60fps
-      if ((normalized - _scrollVelocity).abs() > 0.05) {
-        setState(() => _scrollVelocity = normalized);
-      }
-    }
-    _lastScrollOffset = offset;
-    _lastScrollTime = now;
+    // ⚠️ PLUS DE « VITESSE DE DÉFILEMENT » ICI. On la mesurait à chaque
+    // image et on faisait `setState` dès qu'elle variait : TOUT l'écran de
+    // discussion (des milliers de lignes, toutes les bulles visibles) se
+    // reconstruisait 60 fois par seconde pendant qu'on faisait défiler —
+    // pour une valeur que la bulle ne lisait même pas. Sur un téléphone
+    // modeste, c'était LA saccade du défilement.
   }
 
   @override
@@ -1079,12 +1083,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     // ⚠️ AVANT TOUT LE RESTE. Quitter la conversation pendant un
     // enregistrement vidéo laisserait la caméra allumée : la diode reste
     // au rouge, la batterie se vide, et plus aucune autre application ne
     // peut l'ouvrir.
     _cameraRonde.dispose();
     _minuteurJour?.cancel();
+    _jourFlottant.dispose();
     _envoiVocal?.dispose();
     _recDrag.dispose();
     _champFocus.dispose();
@@ -1546,6 +1552,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// pas iOS ». On retient donc la vraie hauteur dès qu'on la voit, et
   /// 300 ne sert que tant que le clavier ne s'est jamais ouvert.
   double _hauteurClavier = 300;
+
+  /// La vraie hauteur du clavier, retenue dès qu'il se montre — sans
+  /// reconstruire l'écran (voir `build`).
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final vue = View.of(context);
+    final insets = vue.viewInsets.bottom / vue.devicePixelRatio;
+    if (insets > 80 && (insets - _hauteurClavier).abs() > 1) {
+      _hauteurClavier = insets;
+    }
+  }
 
   /// Ouvre le panneau à la place du clavier, ou rend le clavier.
   void _basculerStickers() {
@@ -3487,10 +3505,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     // qui fait qu'une application « ne fait pas iOS ». Le seuil de 80
     // écarte la barre de suggestions, qui pousse les encarts de quelques
     // dizaines de points sans que le clavier soit ouvert.
-    final insets = MediaQuery.viewInsetsOf(context).bottom;
-    if (insets > 80 && (insets - _hauteurClavier).abs() > 1) {
-      _hauteurClavier = insets;
-    }
+    //
+    // ⚠️ LUE DANS `didChangeMetrics`, PLUS ICI. `MediaQuery.viewInsetsOf`
+    // dans `build` abonnait TOUT l'écran au clavier : chaque image de son
+    // ouverture (une quinzaine) reconstruisait la conversation entière.
+    // Sur un téléphone modeste, c'était le clavier qui « rame ».
 
     final messages = _isGroup
         ? ref.watch(groupMessagesProvider(widget.groupId!))
@@ -3529,7 +3548,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         (_) => _marquerLuMaintenant(),
       );
     }
-    final peers = ref.watch(meshPeerListProvider);
+    // ⚠️ SEULEMENT CE PAIR. Regarder toute la liste reconstruisait l'écran
+    // entier à chaque mouvement du mesh (un voisin qui passe, un signal
+    // qui varie) — souvent plusieurs fois par seconde dans une salle
+    // pleine, même pour une discussion de groupe qui n'en lit rien.
+    final cePair = _isBroadcast || _isGroup
+        ? null
+        : ref.watch(meshPeerListProvider.select((liste) {
+            for (final p in liste) {
+              if (p.peerId == widget.peerId) {
+                return (
+                  pseudo: p.pseudo,
+                  reconnecting: p.reconnecting,
+                  sauts: p.hopCount,
+                  cleConnue: p.publicKey != null,
+                  appelable: p.hopCount == 0 &&
+                      (p.transports.contains(TransportKind.localWifi) ||
+                          p.transports.contains(TransportKind.nativeP2P)),
+                );
+              }
+            }
+            return null;
+          }));
     final repo = ref.watch(meshRepositoryProvider);
 
     // Qui peut être mentionné ici : dans un groupe, TOUS ses membres (comme
@@ -3538,27 +3578,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     // pour l'analyse du texte, qui surligne alors les pseudos entiers,
     // espaces compris.
     final groupeMentions = _isGroup ? StorageService.getGroup(widget.groupId!) : null;
-    Mentions.pseudos = _isGroup || _isBroadcast
-        ? <String>{
-            if (groupeMentions != null)
-              for (final m in groupeMentions.activeMembers)
-                if (m.peerId != repo.myId)
-                  nomDuPair(m.peerId, [StorageService.getPeerRecord(m.peerId)?.pseudo]),
-            for (final m in messages)
-              if (m.senderId != repo.myId && m.authorPseudo.trim().isNotEmpty)
-                m.authorPseudo,
-          }.where((p) => p.trim().isNotEmpty).toList()
-        : const [];
-    // La couleur d'une mention = celle du nom de la personne au-dessus de
-    // ses bulles (même calcul, sur son identifiant), et mon pseudo pour
-    // que « @moi » se détache.
-    final idParPseudo = <String, String>{
-      for (final m in messages)
-        if (m.senderId != null && m.authorPseudo.trim().isNotEmpty) m.authorPseudo.toLowerCase(): m.senderId!,
-      if (groupeMentions != null)
-        for (final m in groupeMentions.activeMembers)
-          nomDuPair(m.peerId, [StorageService.getPeerRecord(m.peerId)?.pseudo]).toLowerCase(): m.peerId,
-    };
+    if (_cleMentions == null ||
+        !identical(_cleMentions!.$1, messages) ||
+        _cleMentions!.$2 != groupeMentions?.activeMembers.length) {
+      _cleMentions = (messages, groupeMentions?.activeMembers.length);
+      _cachePseudos = _isGroup || _isBroadcast
+          ? <String>{
+              if (groupeMentions != null)
+                for (final m in groupeMentions.activeMembers)
+                  if (m.peerId != repo.myId)
+                    nomDuPair(m.peerId, [StorageService.getPeerRecord(m.peerId)?.pseudo]),
+              for (final m in messages)
+                if (m.senderId != repo.myId && m.authorPseudo.trim().isNotEmpty)
+                  m.authorPseudo,
+            }.where((p) => p.trim().isNotEmpty).toList()
+          : const [];
+      // La couleur d'une mention = celle du nom de la personne au-dessus de
+      // ses bulles (même calcul, sur son identifiant), et mon pseudo pour
+      // que « @moi » se détache.
+      _cacheIdParPseudo = <String, String>{
+        for (final m in messages)
+          if (m.senderId != null && m.authorPseudo.trim().isNotEmpty) m.authorPseudo.toLowerCase(): m.senderId!,
+        if (groupeMentions != null)
+          for (final m in groupeMentions.activeMembers)
+            nomDuPair(m.peerId, [StorageService.getPeerRecord(m.peerId)?.pseudo]).toLowerCase(): m.peerId,
+      };
+    }
+    Mentions.pseudos = _cachePseudos;
+    final idParPseudo = _cacheIdParPseudo;
     Mentions.monPseudo = repo.myPseudo;
     Mentions.couleurDe = (pseudo) => _MessageBubble._senderColor(idParPseudo[pseudo.toLowerCase()] ?? pseudo);
     final torConnected = ref.watch(torConnectedProvider);
@@ -3669,21 +3716,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     // le genre de mensonge que cette application s'interdit ailleurs sur
     // les accusés de livraison.
     bool reconnecting = false;
-    if (!_isBroadcast && !_isGroup) {
-      for (final p in peers) {
-        if (p.peerId == widget.peerId) {
-          peerPseudo = p.pseudo;
-          reconnecting = p.reconnecting;
-          online = !p.reconnecting;
-          sautsVersPair = p.hopCount;
-          peerKeyKnown = p.publicKey != null;
-          callable =
-              p.hopCount == 0 &&
-              (p.transports.contains(TransportKind.localWifi) ||
-                  p.transports.contains(TransportKind.nativeP2P));
-          break;
-        }
-      }
+    if (cePair != null) {
+      peerPseudo = cePair.pseudo;
+      reconnecting = cePair.reconnecting;
+      online = !cePair.reconnecting;
+      sautsVersPair = cePair.sauts;
+      peerKeyKnown = cePair.cleConnue;
+      callable = cePair.appelable;
     }
     // ⚠️ UN CONTACT TOR NE PASSERA JAMAIS PAR LA BOUCLE CI-DESSUS —
     // IL N'EST PAS DANS `peers` (LE MESH LOCAL). Ce n'est pas pour
@@ -3758,7 +3797,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             sombre: Theme.of(context).brightness == Brightness.dark,
           );
 
-    final items = _buildItems(context, messages);
+    // ⚠️ RECALCULÉS SEULEMENT QUAND LA CONVERSATION CHANGE. L'écran se
+    // reconstruit pour mille raisons (le clavier, un pair qui passe, une
+    // progression de fichier) ; trier toute la conversation, refaire les
+    // séparateurs de jours et l'annuaire à chacune de ces occasions
+    // coûtait, dans un fil de quelques milliers de messages, l'essentiel
+    // de la première image — celle de l'ouverture de la discussion.
+    final cleItems = (
+      messages,
+      group,
+      Localizations.localeOf(context),
+      DateTime.now().day,
+    );
+    if (_cacheItems == null ||
+        !identical(_cleItems?.$1, cleItems.$1) ||
+        !identical(_cleItems?.$2, cleItems.$2) ||
+        _cleItems?.$3 != cleItems.$3 ||
+        _cleItems?.$4 != cleItems.$4) {
+      _cacheItems = _buildItems(context, messages);
+      _cacheParId = {for (final m in messages) m.id: m};
+      _cleItems = cleItems;
+    }
+    final items = _cacheItems!;
 
     // Un annuaire des messages par identifiant, construit UNE fois par
     // image.
@@ -3771,7 +3831,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     // comparaisons soixante fois par seconde — pendant le défilement,
     // c'est-à-dire au pire moment. Ici, une seule construction d'index,
     // puis des recherches instantanées.
-    final parId = {for (final m in messages) m.id: m};
+    final parId = _cacheParId!;
     _parIdCourant = parId;
 
     // Les clés de repérage des bulles ne concernent que les messages
@@ -4298,24 +4358,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               // fond reste visible, les bulles s'y dissolvent
                               // — le « scroll edge » d'iOS, et le fondu de
                               // 12 dp que Telegram applique au même endroit.
-                              child: ShaderMask(
-                                blendMode: BlendMode.dstIn,
-                                shaderCallback: (rect) => LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: const [
-                                    Colors.white,
-                                    Colors.white,
-                                    Colors.transparent,
-                                  ],
-                                  stops: [
-                                    0,
-                                    rect.height <= 14
-                                        ? 0
-                                        : (rect.height - 14) / rect.height,
-                                    1,
-                                  ],
-                                ).createShader(rect),
+                              child: _FonduBas(
                                 child: ListView.builder(
                                 controller: _scrollCtrl,
                                 // Quand le clavier suit le doigt, c'est le
@@ -4515,7 +4558,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                     ),
                                     repliedMessage: replied,
                                     query: _query,
-                                    scrollVelocity: _scrollVelocity,
                                     onOpenReplied: replied == null
                                         ? null
                                         : () => _jumpToMessage(
@@ -4662,7 +4704,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 // tenue.
                 if (_isGroup && _paroleFermee)
                   ClipRect(
-                    child: BackdropFilter(
+                    child: Flou(
                       filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                       child: Container(
                         width: double.infinity,
@@ -5074,27 +5116,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             // La date du premier message visible, pendant le défilement
             // (voir `_majJourFlottant`). Sans toucher : elle ne doit jamais
             // intercepter un geste sur les bulles qu'elle survole.
-            if (_jourFlottant != null)
-              Positioned(
-                top: MediaQuery.paddingOf(context).top +
-                    kToolbarHeight +
-                    hautEpingles +
-                    6,
-                left: 0,
-                right: 0,
-                child: IgnorePointer(
-                  child: AnimatedOpacity(
-                    opacity: _jourVisible ? 1 : 0,
-                    duration: const Duration(milliseconds: 220),
-                    child: AnimatedSlide(
-                      offset: _jourVisible ? Offset.zero : const Offset(0, -0.3),
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutCubic,
-                      child: _daySeparator(_jourFlottant!),
-                    ),
-                  ),
+            Positioned(
+              top: MediaQuery.paddingOf(context).top +
+                  kToolbarHeight +
+                  hautEpingles +
+                  6,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: ValueListenableBuilder<({String? libelle, bool visible})>(
+                  valueListenable: _jourFlottant,
+                  builder: (context, jour, _) => jour.libelle == null
+                      ? const SizedBox.shrink()
+                      : AnimatedOpacity(
+                          opacity: jour.visible ? 1 : 0,
+                          duration: const Duration(milliseconds: 220),
+                          child: AnimatedSlide(
+                            offset: jour.visible ? Offset.zero : const Offset(0, -0.3),
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOutCubic,
+                            child: _daySeparator(jour.libelle!),
+                          ),
+                        ),
                 ),
               ),
+            ),
             // Bouton flottant "aller en bas"
             if (_showJumpButton)
               Positioned(
@@ -5609,7 +5655,6 @@ class _MessageBubble extends StatelessWidget {
     this.repliedMessage,
     this.onOpenReplied,
     this.query = '',
-    this.scrollVelocity = 0,
     this.threadCount = 0,
     this.onOpenThread,
     this.progression,
@@ -5637,9 +5682,6 @@ class _MessageBubble extends StatelessWidget {
 
   /// Le texte recherché, à surligner dans la bulle. Vide hors recherche.
   final String query;
-
-  /// Vélocité du scroll (0.0 à 1.0) pour l'effet de respiration des bulles.
-  final double scrollVelocity;
 
   /// Nombre de réponses dans le fil (0 = pas de fil actif).
   final int threadCount;
@@ -5900,7 +5942,11 @@ class _MessageBubble extends StatelessWidget {
                 // jamais primer sur ce qui est écrit.
                 _avecReactions(ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.78,
+                    // ⚠️ `sizeOf`, PAS `of` : `MediaQuery.of` abonne la bulle à
+                    // TOUT ce que porte MediaQuery, clavier compris. Chaque
+                    // bulle visible se reconstruisait alors à chaque image de
+                    // l'ouverture et de la fermeture du clavier.
+                    maxWidth: MediaQuery.sizeOf(context).width * 0.78,
                   ),
                   child: BaliseEnvoi(
                     role: RoleBalise.fond,
@@ -8353,7 +8399,7 @@ class _JumpButton extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               ClipOval(
-                child: BackdropFilter(
+                child: Flou(
                   filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                   child: Container(
                     width: 42,
@@ -8713,7 +8759,7 @@ class _InputBarState extends State<_InputBar>
         ),
         child: ClipRRect(
         borderRadius: BorderRadius.circular(26),
-        child: BackdropFilter(
+        child: Flou(
           filter: ui.ImageFilter.compose(
             outer: const ui.ColorFilter.matrix(_saturationVerre),
             inner: ui.ImageFilter.blur(sigmaX: 26, sigmaY: 26),
@@ -10948,7 +10994,7 @@ class _BarreEpingles extends StatelessWidget {
     final m = epingles[index];
     final n = epingles.length;
     return ClipRect(
-      child: BackdropFilter(
+      child: Flou(
         filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           height: hauteur,
@@ -11549,7 +11595,7 @@ class _BandeauSalon extends StatelessWidget {
     final dedans = salon.participants.contains(moi);
     final autres = salon.participants.take(4).toList();
     return ClipRect(
-      child: BackdropFilter(
+      child: Flou(
         filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
@@ -11676,4 +11722,39 @@ class _FlottementVerrouState extends State<_FlottementVerrou>
         animation: _c,
         builder: (context, _) => widget.builder(context, _c.value),
       );
+}
+
+
+/// Le fondu de 14 points au bas du fil (voir plus haut, « LE BAS DE LA
+/// LISTE S'EFFACE »).
+///
+/// ⚠️ En effets allégés, pas de fondu : un `ShaderMask` oblige le
+/// processeur graphique à peindre TOUT le fil dans un calque à part, puis
+/// à le recomposer, à chaque image du défilement. Sur un téléphone
+/// d'entrée de gamme, c'est une recomposition plein écran de trop pour un
+/// détail de 14 points.
+class _FonduBas extends StatelessWidget {
+  const _FonduBas({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: DeviceProfile.effetsAlleges,
+      child: child,
+      builder: (context, alleges, enfant) => alleges
+          ? enfant!
+          : ShaderMask(
+              blendMode: BlendMode.dstIn,
+              shaderCallback: (rect) => LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: const [Colors.white, Colors.white, Colors.transparent],
+                stops: [0, rect.height <= 14 ? 0 : (rect.height - 14) / rect.height, 1],
+              ).createShader(rect),
+              child: enfant,
+            ),
+    );
+  }
 }

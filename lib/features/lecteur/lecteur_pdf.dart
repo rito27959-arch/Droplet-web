@@ -22,6 +22,7 @@ import '../../design_system/ouro_icon_button.dart';
 import '../../design_system/ouro_spinner.dart';
 import '../../design_system/ouro_typography.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../design_system/flou.dart';
 
 /// Ouvre un PDF en plein écran.
 Future<void> ouvrirPdf(BuildContext context, String chemin, {String? titre}) {
@@ -128,7 +129,7 @@ class _LecteurPdfState extends State<LecteurPdf> {
             left: 0,
             right: 0,
             child: ClipRect(
-              child: BackdropFilter(
+              child: Flou(repli: const Color(0x66000000), 
                 filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
                 child: Container(
                   color: OuroColors.systemBackground.withValues(alpha: 0.72),
@@ -180,7 +181,7 @@ class _LecteurPdfState extends State<LecteurPdf> {
                   child: Center(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: BackdropFilter(
+                      child: Flou(repli: const Color(0x66000000), 
                         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                         child: Container(
                           padding: const EdgeInsets.symmetric(

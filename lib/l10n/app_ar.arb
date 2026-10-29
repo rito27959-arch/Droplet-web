@@ -2197,5 +2197,12 @@
   "gnPhoto": "صورة المجموعة",
   "gnNameFooter": "امنح المجموعة اسمًا، وصورة إن أردت.",
   "gnDescription": "الوصف (اختياري)",
-  "cnRepliedToYou": "ردّ على رسالتك"
+  "cnRepliedToYou": "ردّ على رسالتك",
+  "apEffectsHeader": "المؤثرات المرئية",
+  "apEffectsAuto": "تلقائي",
+  "apEffectsFull": "كاملة (تمويه وشفافية)",
+  "apEffectsLight": "مخففة (أكثر سلاسة)",
+  "apEffectsAutoLight": "يستخدم هذا الهاتف مؤثرات مخففة: استُبدل التمويه بخلفيات مصمتة ليكون التمرير سلسًا.",
+  "apEffectsAutoFull": "يعرض هذا الهاتف جميع المؤثرات. يخففها Droplet تلقائيًا إذا رصد تقطعًا.",
+  "apEffectsManual": "يُطبَّق اختيارك فورًا، على هذا الهاتف فقط."
 }

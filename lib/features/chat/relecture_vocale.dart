@@ -29,6 +29,7 @@ import '../../design_system/ouro_colors.dart';
 import '../../design_system/ouro_haptics.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'voice_note.dart';
+import '../../design_system/flou.dart';
 
 /// Un enregistrement arrêté, en attente de réécoute.
 class VocalEnAttente {
@@ -156,7 +157,7 @@ class _BarreRelectureVocaleState extends State<BarreRelectureVocale> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(26),
-        child: BackdropFilter(
+        child: Flou(
           filter: ui.ImageFilter.blur(sigmaX: 26, sigmaY: 26),
           child: Container(
             height: 52,

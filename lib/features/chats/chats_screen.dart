@@ -88,6 +88,7 @@ import 'dart:io' show File;
 import '../../core/providers/locale_provider.dart' show kSupportedLocales;
 import '../status/anneau_statuts.dart';
 import '../../core/services/miroir_appareils.dart';
+import '../../design_system/flou.dart';
 
 class ChatsScreen extends ConsumerStatefulWidget {
   const ChatsScreen({super.key});
@@ -3517,7 +3518,7 @@ class _ApercuProfil extends StatelessWidget {
           curve: Curves.easeOutBack,
           reverseCurve: Curves.easeInCubic,
         );
-        return BackdropFilter(
+        return Flou(repli: const Color(0x00000000), 
           filter: ui.ImageFilter.blur(
             sigmaX: 14 * animation.value,
             sigmaY: 14 * animation.value,

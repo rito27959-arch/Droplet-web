@@ -57,6 +57,7 @@ import 'offline_tile_provider.dart';
 import 'offline_tile_store.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../design_system/ouro_retour_ios.dart';
+import '../../design_system/flou.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -921,7 +922,7 @@ class _Frosted extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: border ?? BorderRadius.circular(999),
-      child: BackdropFilter(
+      child: Flou(
         filter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22),
         child: DecoratedBox(
           decoration: BoxDecoration(

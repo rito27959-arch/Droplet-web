@@ -6208,4 +6208,25 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get cnRepliedToYou => 'ने आपके संदेश का जवाब दिया';
+
+  @override
+  String get apEffectsHeader => 'दृश्य प्रभाव';
+
+  @override
+  String get apEffectsAuto => 'स्वचालित';
+
+  @override
+  String get apEffectsFull => 'पूर्ण (धुंधलापन और पारदर्शिता)';
+
+  @override
+  String get apEffectsLight => 'हल्के (अधिक सहज)';
+
+  @override
+  String get apEffectsAutoLight => 'यह फ़ोन हल्के प्रभाव इस्तेमाल करता है: धुंधलेपन की जगह ठोस पृष्ठभूमि है, ताकि सब कुछ सहजता से स्क्रॉल हो।';
+
+  @override
+  String get apEffectsAutoFull => 'यह फ़ोन सभी प्रभाव दिखाता है। अटकन मापने पर Droplet इन्हें खुद हल्का कर देता है।';
+
+  @override
+  String get apEffectsManual => 'आपका चुनाव तुरंत लागू होता है, केवल इस फ़ोन पर।';
 }

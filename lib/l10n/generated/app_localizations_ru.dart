@@ -6306,4 +6306,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get cnRepliedToYou => 'ответил(а) на ваше сообщение';
+
+  @override
+  String get apEffectsHeader => 'Визуальные эффекты';
+
+  @override
+  String get apEffectsAuto => 'Автоматически';
+
+  @override
+  String get apEffectsFull => 'Полные (размытие и прозрачность)';
+
+  @override
+  String get apEffectsLight => 'Облегчённые (плавнее)';
+
+  @override
+  String get apEffectsAutoLight => 'На этом телефоне эффекты облегчены: размытие заменено сплошным фоном, чтобы всё прокручивалось плавно.';
+
+  @override
+  String get apEffectsAutoFull => 'На этом телефоне включены все эффекты. Droplet сам облегчит их, если заметит рывки.';
+
+  @override
+  String get apEffectsManual => 'Выбор применяется сразу и только на этом телефоне.';
 }

@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'ouro_colors.dart';
 import 'design_tokens.dart';
 import 'ouro_pressable.dart';
+import 'flou.dart';
 
 /// Les quatre épaisseurs de matériau translucide d'iOS.
 enum OuroMaterial {
@@ -133,7 +134,8 @@ class OuroBlurSurface extends StatelessWidget {
     final tint = material.tint;
     return ClipRRect(
       borderRadius: radius,
-      child: BackdropFilter(
+      child: Flou(
+        repli: OuroColors.systemBackground.withValues(alpha: 0.55 * t),
         // Le flou monte AVEC le voile. Un fond presque transparent
         // au-dessus d'un flou maximal donnerait une bande laiteuse
         // flottante, sans rapport visible avec ce qui passe dessous.
@@ -192,7 +194,7 @@ class FrostedSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.vertical(top: Radius.circular(topRadius)),
-      child: BackdropFilter(
+      child: Flou(
         filter: ui.ImageFilter.blur(
           sigmaX: material.blur,
           sigmaY: material.blur,

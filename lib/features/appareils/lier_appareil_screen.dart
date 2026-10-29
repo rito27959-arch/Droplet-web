@@ -31,6 +31,7 @@ import '../../design_system/ouro_spinner.dart';
 import '../../design_system/ouro_typography.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'logo_goutte.dart';
+import '../../design_system/flou.dart';
 
 enum _Etape { viser, confirmer, liaison, lie, echec }
 
@@ -139,7 +140,7 @@ class _LierAppareilScreenState extends State<LierAppareilScreen> with TickerProv
               duration: DesignTokens.durationStandard,
               color: Colors.black.withValues(alpha: fige ? 0.55 : 0),
               child: fige
-                  ? BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14), child: const SizedBox.expand())
+                  ? Flou(repli: const Color(0x66000000), filter: ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14), child: const SizedBox.expand())
                   : CustomPaint(painter: _Voile(cote: cote), size: Size.infinite),
             ),
           ),
@@ -409,7 +410,7 @@ class _Carte extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(DesignTokens.radiusSheet),
-      child: BackdropFilter(
+      child: Flou(repli: const Color(0x66000000), 
         filter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
         child: Container(
           padding: const EdgeInsets.all(DesignTokens.space5),
