@@ -81,6 +81,7 @@ import 'feuille_traduction.dart';
 import 'mascotte_envoi.dart';
 import 'mise_en_forme.dart';
 import 'transition_envoi.dart';
+import 'avion_envoi.dart';
 import 'transition_vocale.dart';
 import 'network_sheet.dart';
 import 'transmission_sheet.dart';
@@ -1704,6 +1705,89 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     setState(() => _envoi = etat);
   }
 
+  // ══ L'AVION EN PAPIER ═════════════════════════════════════════════
+  //
+  // Le texte du message en vol, et l'apparition de sa vraie bulle (0 → 1).
+  // La bulle est rangée sous [_cleEntreeAvion] le temps du vol, pour que
+  // l'avion la retrouve à chaque image.
+  String? _texteAvion;
+  ValueNotifier<double>? _revelationAvion;
+  final GlobalKey _cleEntreeAvion = GlobalKey();
+
+  /// Lance l'avion si c'est le moment (une fois sur plusieurs). Renvoie
+  /// faux si c'est la transition habituelle qui doit jouer.
+  bool _lancerAvion(String texte) {
+    if (ref.read(animationEnvoiProvider) == ModeAnimationEnvoi.desactivee) return false;
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return false;
+    final sticker = StickersDroplet.resoudre(texte);
+    // Un sticker premium joue déjà sa propre scène en arrivant.
+    if (sticker != null && sticker.effet != null) return false;
+    if (sticker == null) {
+      if (texte.length > 700 || '\n'.allMatches(texte).length > 9) return false;
+      if (AnimatedStickerCatalog.estUneReference(texte) || isStickerMessage(texte)) return false;
+      if (LocationMessage.tryParse(texte) != null || PollMessage.tryParse(texte) != null) return false;
+      if (_extractUrl(texte) != null) return false;
+    }
+    if (!AvionEnvoi.choisir(conversation: _cleConversation, texte: texte)) return false;
+    final rendu = _champSaisieKey.currentContext?.findRenderObject();
+    if (rendu is! RenderBox || !rendu.hasSize || !rendu.attached) return false;
+    final champ = rendu.localToGlobal(Offset.zero) & rendu.size;
+    final revelation = ValueNotifier<double>(0);
+    final lance = AvionEnvoi.jouer(
+      context: context,
+      conversation: _cleConversation,
+      // Le bouton d'envoi, juste à droite du champ.
+      depart: Offset(champ.right + 26, champ.center.dy),
+      cible: _rectBulleAvion,
+      revelation: revelation,
+      couleur: OuroColors.accent,
+      papier: OuroColors.isDark ? const Color(0xFFF2F2F7) : Colors.white,
+      sombre: OuroColors.isDark,
+      sticker: sticker == null ? null : '${sticker.lot}/${sticker.id}',
+      surFin: () {
+        if (mounted) {
+          setState(() {
+            _texteAvion = null;
+            _revelationAvion = null;
+          });
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) => revelation.dispose());
+      },
+    );
+    if (!lance) {
+      revelation.dispose();
+      return false;
+    }
+    setState(() {
+      _texteAvion = texte;
+      _revelationAvion = revelation;
+    });
+    return true;
+  }
+
+  /// La vraie bulle du message en vol, en coordonnées d'écran : le fond de
+  /// la bulle (sa balise), ou pour un sticker le carré au bord droit.
+  Rect? _rectBulleAvion() {
+    final racine = _cleEntreeAvion.currentContext?.findRenderObject();
+    if (racine is! RenderBox || !racine.attached || !racine.hasSize) return null;
+    RenduBalise? fond;
+    void visiter(RenderObject o) {
+      if (fond != null) return;
+      if (o is RenduBalise && o.role == RoleBalise.fond) {
+        fond = o;
+        return;
+      }
+      o.visitChildren(visiter);
+    }
+
+    visiter(racine);
+    final f = fond;
+    if (f != null && f.attached && f.hasSize) return f.localToGlobal(Offset.zero) & f.size;
+    final e = racine.localToGlobal(Offset.zero) & racine.size;
+    final cote = e.height.clamp(40.0, 180.0);
+    return Rect.fromLTWH(e.right - 14 - cote, e.top, cote, cote);
+  }
+
   /// La transition est finie (ou abandonnée) : la bulle redevient normale.
   ///
   /// ⚠️ Peut être appelée pendant la construction d'une image (bulle
@@ -1786,10 +1870,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     // Elle mesure la boîte de texte à l'instant où on l'appelle. Une fois
     // `clear()` passé, la barre de saisie s'est déjà rétractée à sa hauteur
     // d'une ligne : le texte décollerait alors du mauvais endroit.
-    _lancerTransitionEnvoi(saisi);
-    // Plic salue ce message, que la transition ait eu lieu ou non.
-    _rectDerniereBulle = null;
-    _programmerMascotte();
+    //
+    // De temps en temps, l'envoi devient une scène : le bouton se plie en
+    // avion en papier, le héros apparaît en grand, l'avion se pose et se
+    // déplie en bulle (voir `avion_envoi.dart`). Sinon, la transition de
+    // Telegram et le salut de Plic.
+    if (!_lancerAvion(saisi)) {
+      _lancerTransitionEnvoi(saisi);
+      // Plic salue ce message, que la transition ait eu lieu ou non.
+      _rectDerniereBulle = null;
+      _programmerMascotte();
+    }
 
     _inputCtrl.clear();
     // Envoyé : il n'y a plus de brouillon. Tout de suite, pas seulement à
@@ -4701,6 +4792,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                         ),
                                         axisAlignment: -1,
                                         child: Opacity(opacity: 0, child: entree),
+                                      ),
+                                    );
+                                  }
+                                  // L'avion en papier : la vraie bulle reste
+                                  // invisible jusqu'à ce qu'il s'y pose.
+                                  final avion = _revelationAvion;
+                                  if (avion != null &&
+                                      mine &&
+                                      i == items.length - 1 &&
+                                      m.content == _texteAvion) {
+                                    return KeyedSubtree(
+                                      key: _cleEntreeAvion,
+                                      child: ValueListenableBuilder<double>(
+                                        valueListenable: avion,
+                                        child: entree,
+                                        builder: (context, v, enfant) => Opacity(
+                                          opacity: v,
+                                          child: Transform.scale(
+                                            scale: 0.92 + 0.08 * v,
+                                            alignment: Alignment.centerRight,
+                                            child: enfant,
+                                          ),
+                                        ),
                                       ),
                                     );
                                   }

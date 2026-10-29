@@ -23,7 +23,16 @@
 //                       centre, vos proches autour, l'un d'eux dit « je
 //                       vais bien ».
 //
-// ── Comment c'est fait ────────────────────────────────────────────────
+// ── Comment c'est fait — avec Flame ──────────────────────────────────
+//
+// La scène est un jeu Flame (`JeuPresentation`) : chaque couche est un
+// composant à part (la lueur et la carte, les mouvements de fond, les
+// téléphones, les proches, la marque, le relais, les particules), dans
+// son ordre d'affichage. Les ÉVÉNEMENTS de la scène lâchent de vraies
+// particules : des éclaboussures quand la goutte arrive sur un téléphone,
+// une gerbe d'étincelles quand le cadenas se ferme, des confettis verts
+// quand un proche dit « je vais bien ». Sur la première page, la goutte
+// TOURNE sur elle-même, comme à la fin de l'ouverture au feutre.
 //
 // • Chaque page est une POSE (`_Pose`) : rayon de la bulle, épaisseur,
 //   pointillés, taille et place de la goutte, anse, téléphones, proches…
@@ -44,8 +53,10 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flame/components.dart';
+import 'package:flame/game.dart';
+import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../../design_system/ouro_colors.dart';
@@ -88,13 +99,12 @@ class ScenePresentation extends StatefulWidget {
   State<ScenePresentation> createState() => _ScenePresentationState();
 }
 
-class _ScenePresentationState extends State<ScenePresentation> with SingleTickerProviderStateMixin {
-  late final Ticker _ticker = createTicker(_tic);
-  final ValueNotifier<double> _temps = ValueNotifier(0);
+class _ScenePresentationState extends State<ScenePresentation> {
+  late final JeuPresentation _jeu = JeuPresentation(page: () => _page);
   bool _reduit = false;
 
   /// Vrai quand l'anse du cadenas s'est fermée — pour ne donner le petit
-  /// choc qu'une fois par arrivée sur la page.
+  /// choc (et la gerbe d'étincelles) qu'une fois par arrivée sur la page.
   bool _cadenasFerme = false;
 
   @override
@@ -107,14 +117,6 @@ class _ScenePresentationState extends State<ScenePresentation> with SingleTicker
   void didChangeDependencies() {
     super.didChangeDependencies();
     _reduit = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    if (widget.tempsFixe != null) {
-      _temps.value = widget.tempsFixe!.inMicroseconds / 1e6;
-    } else if (_reduit) {
-      _ticker.stop();
-      _temps.value = 0;
-    } else if (!_ticker.isActive) {
-      _ticker.start();
-    }
   }
 
   @override
@@ -125,8 +127,6 @@ class _ScenePresentationState extends State<ScenePresentation> with SingleTicker
       widget.controleur?.addListener(_suivreCadenas);
     }
   }
-
-  void _tic(Duration d) => _temps.value = d.inMicroseconds / 1e6;
 
   double get _page {
     if (widget.pageFixe != null) return widget.pageFixe!;
@@ -140,6 +140,7 @@ class _ScenePresentationState extends State<ScenePresentation> with SingleTicker
     if (!_cadenasFerme && ecart < 0.015) {
       _cadenasFerme = true;
       HapticFeedback.mediumImpact();
+      _jeu.cadenasFerme();
     } else if (_cadenasFerme && ecart > 0.3) {
       _cadenasFerme = false;
     }
@@ -148,14 +149,35 @@ class _ScenePresentationState extends State<ScenePresentation> with SingleTicker
   @override
   void dispose() {
     widget.controleur?.removeListener(_suivreCadenas);
-    _ticker.dispose();
-    _temps.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final sombre = Theme.of(context).brightness == Brightness.dark;
+    // Les réglages du jeu suivent le thème et les tests à chaque
+    // reconstruction ; le jeu lui-même n'est jamais recréé.
+    _jeu
+      ..sombre = sombre
+      ..tempsFixe = widget.tempsFixe == null ? null : widget.tempsFixe!.inMicroseconds / 1e6
+      ..reduit = _reduit
+      ..couleurs = _Couleurs(
+        accent: OuroColors.accent,
+        neutre: OuroColors.tertiaryLabel,
+        coque: OuroColors.secondaryLabel,
+        ecran: OuroColors.secondarySystemBackground,
+        fond: OuroColors.systemBackground,
+        trait: OuroColors.label,
+        succes: OuroColors.systemGreen,
+        lueurs: [OuroColors.accent, OuroColors.systemTeal, OuroColors.systemIndigo, OuroColors.systemGreen],
+        proches: [
+          OuroColors.systemIndigo,
+          OuroColors.systemGreen,
+          OuroColors.systemOrange,
+          OuroColors.systemPink,
+          OuroColors.systemTeal,
+        ],
+      );
     return LayoutBuilder(builder: (context, contraintes) {
       final taille = contraintes.biggest;
       final cote = math.min(taille.width, taille.height);
@@ -170,32 +192,10 @@ class _ScenePresentationState extends State<ScenePresentation> with SingleTicker
             child: RepaintBoundary(
               child: ValueListenableBuilder<bool>(
                 valueListenable: OuvertureDroplet.active,
-                builder: (context, ouverture, _) => CustomPaint(
-                  painter: _PeintreScene(
-                    page: () => _page,
-                    temps: _temps,
-                    repaint: Listenable.merge([_temps, ?widget.controleur]),
-                    masquerMarque: ouverture,
-                    sombre: sombre,
-                    couleurs: _Couleurs(
-                      accent: OuroColors.accent,
-                      neutre: OuroColors.tertiaryLabel,
-                      coque: OuroColors.secondaryLabel,
-                      ecran: OuroColors.secondarySystemBackground,
-                      fond: OuroColors.systemBackground,
-                      trait: OuroColors.label,
-                      succes: OuroColors.systemGreen,
-                      lueurs: [OuroColors.accent, OuroColors.systemTeal, OuroColors.systemIndigo, OuroColors.systemGreen],
-                      proches: [
-                        OuroColors.systemIndigo,
-                        OuroColors.systemGreen,
-                        OuroColors.systemOrange,
-                        OuroColors.systemPink,
-                        OuroColors.systemTeal,
-                      ],
-                    ),
-                  ),
-                ),
+                builder: (context, ouverture, _) {
+                  _jeu.masquerMarque = ouverture;
+                  return GameWidget<JeuPresentation>(game: _jeu);
+                },
               ),
             ),
           ),
@@ -290,29 +290,339 @@ double _cascade(double f, int k, int n, {double pas = 0.07}) {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  LA PEINTURE
+//  LE JEU
 // ─────────────────────────────────────────────────────────────
 
-class _PeintreScene extends CustomPainter {
-  _PeintreScene({
-    required this.page,
-    required this.temps,
-    required Listenable repaint,
-    required this.masquerMarque,
-    required this.sombre,
-    required this.couleurs,
-  }) : super(repaint: repaint);
+/// Ce que toutes les couches lisent, recalculé une fois par image.
+class _Instant {
+  _Instant(this.p, this.t, Vector2 taille)
+      : cote = math.min(taille.x, taille.y),
+        c = Offset(taille.x / 2, taille.y / 2),
+        i = p.floor().clamp(0, 2) {
+    R = cote * _kRayonSurCote;
+    f = p - i;
+    e = Curves.easeInOutCubic.transform(f);
+  }
+
+  final double p, t, cote;
+  final Offset c;
+  final int i;
+  late final double R, f, e;
+
+  _Pose get a => _poses[i];
+  _Pose get b => _poses[i + 1];
+  double v(double Function(_Pose) champ) => _lerp(champ(a), champ(b), e);
+
+  /// Le poids de chaque page : 1 posée dessus, 0 à une page de distance.
+  double poids(int k) => (1 - (p - k).abs()).clamp(0.0, 1.0);
+}
+
+class JeuPresentation extends FlameGame {
+  JeuPresentation({required this.page});
 
   final double Function() page;
-  final ValueNotifier<double> temps;
-  final bool masquerMarque;
-  final bool sombre;
-  final _Couleurs couleurs;
+  _Couleurs couleurs = const _Couleurs(
+    accent: Color(0xFF0A84FF),
+    neutre: Color(0xFF8E8E93),
+    coque: Color(0xFF8E8E93),
+    ecran: Color(0xFFF2F2F7),
+    fond: Color(0xFFFFFFFF),
+    trait: Color(0xFF000000),
+    succes: Color(0xFF34C759),
+    lueurs: [Color(0xFF0A84FF), Color(0xFF30B0C7), Color(0xFF5856D6), Color(0xFF34C759)],
+    proches: [Color(0xFF5856D6), Color(0xFF34C759), Color(0xFFFF9500), Color(0xFFFF2D55), Color(0xFF30B0C7)],
+  );
+  bool sombre = false;
+  bool masquerMarque = false;
+  bool reduit = false;
+
+  /// Pour les tests : l'instant des mouvements de repos, en secondes.
+  double? tempsFixe;
+
+  double _temps = 0;
+
+  /// Le tour de la goutte de la page 0 (radians).
+  double tourGoutte = 0;
+
+  late _Instant instant;
+  final _Dessin dessin = _Dessin();
+
+  @override
+  Color backgroundColor() => const Color(0x00000000);
+
+  @override
+  Future<void> onLoad() async {
+    instant = _Instant(0, 0, size);
+    addAll([
+      _Fond(priority: 0),
+      _Telephones(priority: 1),
+      _Proches(priority: 2),
+      _Marque(priority: 3),
+      _Relais(priority: 4),
+    ]);
+  }
+
+  double get t => tempsFixe ?? (reduit ? 0 : _temps);
+
+  @override
+  void update(double dt) {
+    if (!reduit && tempsFixe == null) _temps += dt;
+    // La goutte de la page 0 tourne doucement, un demi-tour par seconde,
+    // comme à la fin de l'ouverture — sauf « Réduire les animations ».
+    // Cachée pendant l'ouverture, elle attend de face : elle repart de là
+    // où l'ouverture l'a posée, sans saut.
+    if (masquerMarque) {
+      tourGoutte = 0;
+    } else if (!reduit && tempsFixe == null) {
+      tourGoutte += dt * math.pi * 0.9;
+    }
+    if (tempsFixe != null) tourGoutte = tempsFixe! * math.pi * 0.9;
+    dessin
+      ..couleurs = couleurs
+      ..sombre = sombre;
+    instant = _Instant(page().clamp(0.0, 3.0), t, size);
+    _evenementsRelais();
+    _evenementsProches();
+    super.update(dt);
+  }
+
+  // ── Les événements qui lâchent des particules ─────────────────────
+
+  final math.Random _hasard = math.Random(3);
+  int _dernierRelais = -1;
+  bool _dernierCoche = false;
+
+  void _evenementsRelais() {
+    final n = instant;
+    final w1 = n.poids(1);
+    if (w1 < 0.6 || reduit || tempsFixe != null) return;
+    final cycle = (n.t / 3.8) % 1.0;
+    for (final MapEntry(key: k, value: arrivee) in _Dessin.arriveeRelais.entries) {
+      if (cycle >= arrivee && cycle < arrivee + 0.05 && _dernierRelais != k) {
+        _dernierRelais = k;
+        eclabousser(dessin.placeTel(n.c, n.R, k, 1), couleurs.accent, nombre: 10);
+      }
+    }
+    if (cycle < 0.05) _dernierRelais = -1;
+  }
+
+  void _evenementsProches() {
+    final n = instant;
+    final w3 = n.poids(3);
+    if (w3 < 0.6 || reduit || tempsFixe != null) return;
+    final cycle = (n.t / 4.0) % 1.0;
+    final coche = cycle >= 0.24 && cycle < 0.3;
+    if (coche && !_dernierCoche) {
+      final (ang, dist) = _Dessin.placesProches[1];
+      final pos = n.c + Offset(math.cos(ang), math.sin(ang)) * n.R * dist;
+      confettis(pos, couleurs.succes);
+    }
+    _dernierCoche = coche;
+  }
+
+  /// Le cadenas vient de se fermer : une gerbe d'étincelles autour de lui.
+  void cadenasFerme() {
+    if (reduit || !isLoaded) return;
+    final n = instant;
+    add(ParticleSystemComponent(
+      priority: 6,
+      position: Vector2(n.c.dx, n.c.dy),
+      particle: Particle.generate(
+        count: 22,
+        lifespan: 0.8,
+        generator: (i) {
+          final a = i / 22 * 2 * math.pi;
+          final v = 120 + _hasard.nextDouble() * 90;
+          return AcceleratedParticle(
+            position: Vector2(math.cos(a), math.sin(a)) * (n.R * 1.1),
+            speed: Vector2(math.cos(a), math.sin(a)) * v,
+            acceleration: Vector2(math.cos(a), math.sin(a)) * -160,
+            child: _Etincelle(couleur: couleurs.accent),
+          );
+        },
+      ),
+    ));
+  }
+
+  void eclabousser(Offset ou, Color couleur, {int nombre = 8}) {
+    add(ParticleSystemComponent(
+      priority: 6,
+      position: Vector2(ou.dx, ou.dy),
+      particle: Particle.generate(
+        count: nombre,
+        lifespan: 0.6,
+        generator: (i) {
+          final a = -math.pi * (0.1 + 0.8 * _hasard.nextDouble());
+          final v = 60 + _hasard.nextDouble() * 110;
+          return AcceleratedParticle(
+            speed: Vector2(math.cos(a) * v, math.sin(a) * v),
+            acceleration: Vector2(0, 420),
+            child: _Gouttelette(couleur: couleur, rayon: 1.4 + _hasard.nextDouble() * 2),
+          );
+        },
+      ),
+    ));
+  }
+
+  void confettis(Offset ou, Color couleur) {
+    add(ParticleSystemComponent(
+      priority: 6,
+      position: Vector2(ou.dx, ou.dy),
+      particle: Particle.generate(
+        count: 14,
+        lifespan: 0.9,
+        generator: (i) {
+          final a = -math.pi / 2 + (_hasard.nextDouble() - 0.5) * 1.6;
+          final v = 90 + _hasard.nextDouble() * 120;
+          return AcceleratedParticle(
+            speed: Vector2(math.cos(a) * v, math.sin(a) * v),
+            acceleration: Vector2(0, 300),
+            child: _Confetti(couleur: i.isEven ? couleur : couleurs.accent, angle0: _hasard.nextDouble() * 3),
+          );
+        },
+      ),
+    ));
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  LES COUCHES
+// ─────────────────────────────────────────────────────────────
+
+/// La lueur, la carte, et les mouvements de repos qui passent DERRIÈRE.
+class _Fond extends Component with HasGameReference<JeuPresentation> {
+  _Fond({super.priority});
+
+  @override
+  void render(Canvas canvas) {
+    final j = game;
+    final n = j.instant;
+    final d = j.dessin;
+    final k0 = n.p.floor().clamp(0, 3), k1 = n.p.ceil().clamp(0, 3);
+    final lueur = Color.lerp(j.couleurs.lueurs[k0], j.couleurs.lueurs[k1], n.e)!;
+    canvas.drawCircle(
+      n.c,
+      n.cote * 0.62,
+      Paint()
+        ..shader = ui.Gradient.radial(n.c, n.cote * 0.62, [
+          lueur.withValues(alpha: j.sombre ? 0.22 : 0.12),
+          lueur.withValues(alpha: 0),
+        ]),
+    );
+    final carte = n.v((q) => q.carte);
+    if (carte > 0.01) d._carte(canvas, n.c, n.R, carte);
+    final w0 = n.poids(0), w2 = n.poids(2), w3 = n.poids(3);
+    if (!j.masquerMarque && w0 > 0) d._ronds(canvas, n.c, n.R, n.t, w0);
+    if (w2 > 0) d._donneesChiffrees(canvas, n.c, n.R, n.t, w2);
+    if (w3 > 0) d._radar(canvas, n.c, n.R, n.t, w3);
+  }
+}
+
+/// Les téléphones (page 1), en cascade.
+class _Telephones extends Component with HasGameReference<JeuPresentation> {
+  _Telephones({super.priority});
+
+  @override
+  void render(Canvas canvas) {
+    final n = game.instant;
+    final ftel = n.i == 0 ? n.f : (n.i == 1 ? 1 - n.f : 0.0);
+    if (ftel > 0) game.dessin._telephones(canvas, n.c, n.R, n.t, ftel, n.poids(1));
+  }
+}
+
+/// Les proches (page 3), en cascade.
+class _Proches extends Component with HasGameReference<JeuPresentation> {
+  _Proches({super.priority});
+
+  @override
+  void render(Canvas canvas) {
+    final n = game.instant;
+    final fpro = n.i == 2 ? n.f : 0.0;
+    if (fpro > 0) game.dessin._proches(canvas, n.c, n.R, n.t, fpro, n.poids(3));
+  }
+}
+
+/// L'anneau (bulle, cercle pointillé, corps du cadenas), l'anse, la goutte.
+class _Marque extends Component with HasGameReference<JeuPresentation> {
+  _Marque({super.priority});
+
+  @override
+  void render(Canvas canvas) {
+    final j = game;
+    if (j.masquerMarque) return;
+    final n = j.instant;
+    final d = j.dessin;
+    final c = n.c, R = n.R;
+    final rayon = n.v((q) => q.rayon) * R;
+    final epaisseur = math.max(1.2, n.v((q) => q.epaisseur) * R);
+    final couleurAnneau = Color.lerp(j.couleurs.accent, j.couleurs.neutre, n.v((q) => q.neutre))!;
+    final opaciteAnneau = n.v((q) => q.opaciteAnneau);
+    final remplissage = n.v((q) => q.remplissage);
+    if (remplissage > 0.001) {
+      canvas.drawCircle(c, rayon, Paint()..color = j.couleurs.accent.withValues(alpha: remplissage));
+    }
+    final anse = n.v((q) => q.anse);
+    if (anse > 0.01) {
+      final fermeture = Curves.easeOutBack.transform(_seg(n.poids(2), 0.78, 1.0));
+      d._anse(canvas, c, rayon, epaisseur, R, anse, fermeture);
+    }
+    final h = R / _kRayonMarque;
+    if (n.p < 0.002) {
+      // Posée sur la marque : LA marque, au tracé près — celle que
+      // l'ouverture vient de déposer.
+      canvas.save();
+      canvas.translate(c.dx, c.dy);
+      canvas.scale(h);
+      canvas.translate(-GeometrieMarque.centreBulle.dx, -GeometrieMarque.centreBulle.dy);
+      canvas.drawPath(GeometrieMarque.bulle, Paint()..color = j.couleurs.accent);
+      canvas.restore();
+    } else {
+      d._anneau(canvas, c, rayon, epaisseur, n.v((q) => q.pointilles), couleurAnneau.withValues(alpha: couleurAnneau.a * opaciteAnneau));
+      final queue = n.i == 0 ? 1 - Curves.easeOut.transform(_seg(n.f, 0, 0.3)) : 0.0;
+      if (queue > 0.01) {
+        canvas.save();
+        canvas.translate(c.dx, c.dy);
+        canvas.scale(h);
+        canvas.translate(-GeometrieMarque.centreBulle.dx, -GeometrieMarque.centreBulle.dy);
+        canvas.drawPath(_Dessin.queue, Paint()..color = j.couleurs.accent.withValues(alpha: queue));
+        canvas.restore();
+      }
+    }
+    final hg = n.v((q) => q.goutteH) * R;
+    final centreGoutte = c + Offset(0, n.v((q) => q.goutteY) * R);
+    final souffle = 1 + 0.035 * n.poids(3) * math.sin(n.t * 2.2);
+    // Sur la page 0, la goutte tourne ; elle revient de face à mesure qu'on
+    // glisse vers la page suivante.
+    final w0 = n.poids(0);
+    final tour = w0 <= 0 ? 0.0 : math.acos((1 - w0 + w0 * math.cos(j.tourGoutte)).clamp(-1.0, 1.0)) * (math.sin(j.tourGoutte) >= 0 ? 1 : -1);
+    d._goutte(canvas, centreGoutte, hg * souffle, j.couleurs.accent, tour: tour);
+  }
+}
+
+/// Le relais : la goutte qui saute de téléphone en téléphone (DEVANT).
+class _Relais extends Component with HasGameReference<JeuPresentation> {
+  _Relais({super.priority});
+
+  @override
+  void render(Canvas canvas) {
+    final n = game.instant;
+    final w1 = n.poids(1);
+    if (w1 > 0) game.dessin._relais(canvas, n.c, n.R, n.t, w1);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  LES BRIQUES DU DESSIN
+// ─────────────────────────────────────────────────────────────
+
+class _Dessin {
+  late _Couleurs couleurs;
+  bool sombre = false;
 
   static Path? _queueUnite;
 
   /// La queue de la bulle seule : la bulle de la marque moins son anneau.
-  static Path get _queue => _queueUnite ??= Path.combine(
+  static Path get queue => _queueUnite ??= Path.combine(
         PathOperation.difference,
         GeometrieMarque.bulle,
         Path()..addOval(Rect.fromCircle(center: GeometrieMarque.centreBulle, radius: GeometrieMarque.rayonExterieurBulle + 0.002)),
@@ -320,118 +630,16 @@ class _PeintreScene extends CustomPainter {
 
   // Les cinq téléphones, en pentagone ; les cinq proches, éparpillés.
   static final List<double> _anglesTel = [for (var k = 0; k < 5; k++) -math.pi / 2 + k * 2 * math.pi / 5];
-  static const List<(double, double)> _placesProches = [
+  static const List<(double, double)> placesProches = [
     (-2.45, 1.95), // angle (radians), distance (R)
     (-0.62, 2.15),
     (0.42, 1.55),
     (2.25, 2.2),
     (1.45, 2.45),
   ];
+  static const List<(double, double)> _placesProches = placesProches;
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = page().clamp(0.0, 3.0);
-    final t = temps.value;
-    final cote = math.min(size.width, size.height);
-    final R = cote * _kRayonSurCote;
-    final c = Offset(size.width / 2, size.height / 2);
-
-    final i = p.floor().clamp(0, 2);
-    final f = p - i;
-    final e = Curves.easeInOutCubic.transform(f);
-    final a = _poses[i], b = _poses[i + 1];
-    double v(double Function(_Pose) champ) => _lerp(champ(a), champ(b), e);
-
-    // Le poids de chaque page : 1 posée dessus, 0 à une page de distance.
-    double poids(int k) => (1 - (p - k).abs()).clamp(0.0, 1.0);
-
-    // ── La lueur de fond, dont la teinte suit la page.
-    final k0 = p.floor().clamp(0, 3), k1 = p.ceil().clamp(0, 3);
-    final lueur = Color.lerp(couleurs.lueurs[k0], couleurs.lueurs[k1], e)!;
-    canvas.drawCircle(
-      c,
-      cote * 0.62,
-      Paint()
-        ..shader = ui.Gradient.radial(c, cote * 0.62, [
-          lueur.withValues(alpha: sombre ? 0.22 : 0.12),
-          lueur.withValues(alpha: 0),
-        ]),
-    );
-
-    // ── La carte (page 3) : des rues effacées vers les bords.
-    final carte = v((q) => q.carte);
-    if (carte > 0.01) _carte(canvas, c, R, carte);
-
-    // ── Les mouvements de repos qui passent DERRIÈRE la marque.
-    final w0 = poids(0), w2 = poids(2), w3 = poids(3);
-    if (!masquerMarque && w0 > 0) _ronds(canvas, c, R, t, w0);
-    if (w2 > 0) _donneesChiffrees(canvas, c, R, t, w2);
-    if (w3 > 0) _radar(canvas, c, R, t, w3);
-
-    // ── Les téléphones (page 1), en cascade.
-    final ftel = i == 0 ? f : (i == 1 ? 1 - f : 0.0);
-    if (ftel > 0) _telephones(canvas, c, R, t, ftel, poids(1));
-
-    // ── Les proches (page 3), en cascade.
-    final fpro = i == 2 ? f : 0.0;
-    if (fpro > 0) _proches(canvas, c, R, t, fpro, w3);
-
-    if (masquerMarque) return;
-
-    // ── L'anneau : la bulle, le cercle pointillé, le corps du cadenas…
-    final rayon = v((q) => q.rayon) * R;
-    final epaisseur = math.max(1.2, v((q) => q.epaisseur) * R);
-    final couleurAnneau = Color.lerp(couleurs.accent, couleurs.neutre, v((q) => q.neutre))!;
-    final opaciteAnneau = v((q) => q.opaciteAnneau);
-    final remplissage = v((q) => q.remplissage);
-    if (remplissage > 0.001) {
-      canvas.drawCircle(c, rayon, Paint()..color = couleurs.accent.withValues(alpha: remplissage));
-    }
-
-    // L'anse du cadenas, derrière l'anneau : elle se ferme quand la page
-    // s'arrête.
-    final anse = v((q) => q.anse);
-    if (anse > 0.01) {
-      final fermeture = Curves.easeOutBack.transform(_seg(w2, 0.78, 1.0));
-      _anse(canvas, c, rayon, epaisseur, R, anse, fermeture);
-    }
-
-    final h = R / _kRayonMarque;
-    if (p < 0.002) {
-      // Posée sur la marque : on dessine LA marque, au tracé près — celle
-      // que l'ouverture vient de déposer.
-      canvas.save();
-      canvas.translate(c.dx, c.dy);
-      canvas.scale(h);
-      canvas.translate(-GeometrieMarque.centreBulle.dx, -GeometrieMarque.centreBulle.dy);
-      canvas.drawPath(GeometrieMarque.bulle, Paint()..color = couleurs.accent);
-      canvas.restore();
-    } else {
-      _anneau(canvas, c, rayon, epaisseur, v((q) => q.pointilles), couleurAnneau.withValues(alpha: couleurAnneau.a * opaciteAnneau));
-      // La queue de la bulle s'efface dès les premiers millimètres du
-      // glissement, sans changer de taille : elle ne se transforme pas,
-      // elle se retire.
-      final queue = i == 0 ? 1 - Curves.easeOut.transform(_seg(f, 0, 0.3)) : 0.0;
-      if (queue > 0.01) {
-        canvas.save();
-        canvas.translate(c.dx, c.dy);
-        canvas.scale(h);
-        canvas.translate(-GeometrieMarque.centreBulle.dx, -GeometrieMarque.centreBulle.dy);
-        canvas.drawPath(_queue, Paint()..color = couleurs.accent.withValues(alpha: queue));
-        canvas.restore();
-      }
-    }
-
-    // ── La goutte : le message, la serrure, vous.
-    final hg = v((q) => q.goutteH) * R;
-    final centreGoutte = c + Offset(0, v((q) => q.goutteY) * R);
-    // Sur la page 3, une respiration très lente : « vous êtes ici ».
-    final souffle = 1 + 0.035 * w3 * math.sin(t * 2.2);
-    _goutte(canvas, centreGoutte, hg * souffle, couleurs.accent);
-
-    // ── Les mouvements de repos qui passent DEVANT.
-    if (poids(1) > 0) _relais(canvas, c, R, t, poids(1));
-  }
+  Offset placeTel(Offset c, double R, int k, double sortie) => _placeTel(c, R, k, sortie);
 
   // ── Les briques ────────────────────────────────────────────────
 
@@ -455,23 +663,38 @@ class _PeintreScene extends CustomPainter {
     }
   }
 
-  void _goutte(Canvas canvas, Offset centre, double h, Color couleur, {double alpha = 1, double etirement = 0, double angle = 0}) {
+  void _goutte(Canvas canvas, Offset centre, double h, Color couleur, {double alpha = 1, double etirement = 0, double angle = 0, double tour = 0}) {
     if (h <= 0 || alpha <= 0) return;
     canvas.save();
     canvas.translate(centre.dx, centre.dy);
     if (angle != 0) canvas.rotate(angle);
-    canvas.scale(h / 0.565 * (1 - etirement * 0.4), h / 0.565 * (1 + etirement));
+    // [tour] : la goutte tourne sur son axe vertical (la même que celle de
+    // l'ouverture au feutre). Sa largeur suit le cosinus ; la lumière passe
+    // d'un bord à l'autre.
+    final face = math.cos(tour);
+    final largeur = tour == 0 ? 1.0 : math.max(0.08, face.abs());
+    canvas.scale(h / 0.565 * (1 - etirement * 0.4) * largeur, h / 0.565 * (1 + etirement));
     canvas.translate(0, -0.0095);
     final a = couleur.a * alpha;
+    final cote = math.sin(tour);
     canvas.drawPath(
       GeometrieMarque.goutte,
       Paint()
         ..isAntiAlias = true
-        ..shader = ui.Gradient.linear(
-          const Offset(-0.12, -0.2),
-          const Offset(0.16, 0.29),
-          [couleur.withValues(alpha: a), couleur.withValues(alpha: a * 0.84)],
-        ),
+        ..shader = tour == 0
+            ? ui.Gradient.linear(
+                const Offset(-0.12, -0.2),
+                const Offset(0.16, 0.29),
+                [couleur.withValues(alpha: a), couleur.withValues(alpha: a * 0.84)],
+              )
+            : ui.Gradient.linear(
+                Offset(cote >= 0 ? -0.2 : 0.2, 0),
+                Offset(cote >= 0 ? 0.2 : -0.2, 0),
+                [
+                  Color.lerp(couleur, Colors.white, 0.22 * cote.abs())!.withValues(alpha: a),
+                  Color.lerp(couleur, Colors.black, 0.18 * cote.abs())!.withValues(alpha: a),
+                ],
+              ),
     );
     canvas.restore();
   }
@@ -535,7 +758,8 @@ class _PeintreScene extends CustomPainter {
   }
 
   // Le trajet de la goutte : du centre au téléphone 0, puis 1, puis 2.
-  static const Map<int, double> _arriveeRelais = {0: 0.22, 1: 0.48, 2: 0.74};
+  static const Map<int, double> arriveeRelais = {0: 0.22, 1: 0.48, 2: 0.74};
+  static const Map<int, double> _arriveeRelais = arriveeRelais;
 
   void _relais(Canvas canvas, Offset c, double R, double t, double w) {
     final cycle = (t / 3.8) % 1.0;
@@ -721,6 +945,57 @@ class _PeintreScene extends CustomPainter {
     );
   }
 
+}
+
+// ─────────────────────────────────────────────────────────────
+//  LES PARTICULES
+// ─────────────────────────────────────────────────────────────
+
+class _Gouttelette extends Particle {
+  _Gouttelette({required this.couleur, required this.rayon}) : super(lifespan: 0.6);
+  final Color couleur;
+  final double rayon;
+
   @override
-  bool shouldRepaint(_PeintreScene o) => o.masquerMarque != masquerMarque || o.sombre != sombre || o.couleurs.accent != couleurs.accent;
+  void render(Canvas canvas) {
+    canvas.drawCircle(Offset.zero, rayon * (1 - 0.4 * progress), Paint()..color = couleur.withValues(alpha: couleur.a * (1 - progress)));
+  }
+}
+
+class _Confetti extends Particle {
+  _Confetti({required this.couleur, required this.angle0}) : super(lifespan: 0.9);
+  final Color couleur;
+  final double angle0;
+
+  @override
+  void render(Canvas canvas) {
+    canvas.save();
+    canvas.rotate(angle0 + progress * 8);
+    final w = 6 * math.cos(progress * 12).abs() + 1;
+    canvas.drawRect(Rect.fromCenter(center: Offset.zero, width: w, height: 3.5), Paint()..color = couleur.withValues(alpha: couleur.a * (1 - progress)));
+    canvas.restore();
+  }
+}
+
+class _Etincelle extends Particle {
+  _Etincelle({required this.couleur}) : super(lifespan: 0.8);
+  final Color couleur;
+
+  @override
+  void render(Canvas canvas) {
+    final r = 3.4 * (1 - progress);
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, -r * 1.6)
+        ..lineTo(r * 0.35, -r * 0.35)
+        ..lineTo(r * 1.6, 0)
+        ..lineTo(r * 0.35, r * 0.35)
+        ..lineTo(0, r * 1.6)
+        ..lineTo(-r * 0.35, r * 0.35)
+        ..lineTo(-r * 1.6, 0)
+        ..lineTo(-r * 0.35, -r * 0.35)
+        ..close(),
+      Paint()..color = couleur.withValues(alpha: couleur.a * (1 - progress)),
+    );
+  }
 }

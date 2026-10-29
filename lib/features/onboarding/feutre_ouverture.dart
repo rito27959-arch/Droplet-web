@@ -152,7 +152,7 @@ class JeuFeutreOuverture extends FlameGame {
     final maintenant = t;
     // La goutte : immobile, puis elle prend sa vitesse en 400 ms.
     if (_cibleAngle != null) {
-      final p = Curves.easeInOutCubic.transform(_seg(maintenant, _departPose, _departPose + 520));
+      final p = Curves.easeOutCubic.transform(_seg(maintenant, _departPose, _departPose + 320));
       angleGoutte = p >= 1 ? _cibleAngle! : _angleDepart + (_cibleAngle! - _angleDepart) * p;
     } else if (maintenant >= _tTourne) {
       final cible = 2 * math.pi * _toursParSeconde;
@@ -178,17 +178,23 @@ class JeuFeutreOuverture extends FlameGame {
     if (s.x <= 0 || s.y <= 0) return const [];
     final depart = _surAnneau(_angleDepartAnneau);
 
-    // A — l'entrée par le bord gauche, en zigzags qui se resserrent.
+    // A — l'entrée par le bord gauche, en zigzags qui se resserrent :
+    // la main qui essaie le feutre avant de signer. Des pointes arrondies
+    // (une courbe par aller), de plus en plus courtes à l'approche.
     final entree = Offset(-40, s.y * 0.2);
     final zig = Path()..moveTo(entree.dx, entree.dy);
-    const n = 7;
+    const n = 11;
+    final dir = (depart - entree);
+    final normale = Offset(-dir.dy, dir.dx) / dir.distance;
+    var avant = entree;
     for (var k = 1; k <= n; k++) {
       final q = k / n;
-      final base = Offset.lerp(entree, depart, q)!;
-      final ampl = (1 - q) * 46;
-      final dir = (depart - entree);
-      final normale = Offset(-dir.dy, dir.dx) / dir.distance;
-      zig.lineTo(base.dx + normale.dx * ampl * (k.isOdd ? 1 : -1), base.dy + normale.dy * ampl * (k.isOdd ? 1 : -1));
+      final base = Offset.lerp(entree, depart, Curves.easeOutSine.transform(q))!;
+      final ampl = math.pow(1 - q, 0.8) * 34;
+      final pointe = base + normale * (ampl * (k.isOdd ? 1 : -1));
+      final milieu = Offset.lerp(avant, pointe, 0.5)! + normale * (ampl * 0.35 * (k.isOdd ? 1 : -1));
+      zig.quadraticBezierTo(milieu.dx, milieu.dy, pointe.dx, pointe.dy);
+      avant = pointe;
     }
     zig.lineTo(depart.dx, depart.dy);
 
@@ -246,7 +252,7 @@ class JeuFeutreOuverture extends FlameGame {
       ..lineTo(finHach.dx, finHach.dy);
 
     return [
-      _Morceau(zig, _tEntree, _tAnneau, largeur: 4.2, fugace: true, courbe: Curves.easeOutQuad),
+      _Morceau(zig, _tEntree, _tAnneau, largeur: 3.6, fugace: true, courbe: Curves.easeOutQuad),
       _Morceau(anneau, _tAnneau, _tQueue, largeur: epaisseurAnneau, courbe: Curves.easeInOutCubic),
       _Morceau(queue, _tQueue, _tLeve, largeur: epaisseurAnneau * 0.9),
       _Morceau(leve, _tLeve, _tGoutte, encre: false),
@@ -303,14 +309,14 @@ class JeuFeutreOuverture extends FlameGame {
       position: Vector2(ou.dx, ou.dy),
       particle: Particle.generate(
         count: nombre,
-        lifespan: 0.55,
+        lifespan: 0.42,
         generator: (i) {
           final a = _hasard.nextDouble() * 2 * math.pi;
           final v = (40 + _hasard.nextDouble() * 120) * force;
           return AcceleratedParticle(
             speed: Vector2(math.cos(a) * v, math.sin(a) * v - 60 * force),
             acceleration: Vector2(0, 520),
-            child: _GouttelettEncre(rayon: 1.2 + _hasard.nextDouble() * 2.2 * force, couleur: couleur),
+            child: _GouttelettEncre(rayon: 1.0 + _hasard.nextDouble() * 1.6 * force, couleur: couleur),
           );
         },
       ),
@@ -320,7 +326,7 @@ class JeuFeutreOuverture extends FlameGame {
 
 /// Une gouttelette d'encre qui sèche (rétrécit et pâlit) en vol.
 class _GouttelettEncre extends Particle {
-  _GouttelettEncre({required this.rayon, required this.couleur}) : super(lifespan: 0.55);
+  _GouttelettEncre({required this.rayon, required this.couleur}) : super(lifespan: 0.42);
   final double rayon;
   final Color couleur;
 
@@ -359,7 +365,8 @@ class _Encre extends Component with HasGameReference<JeuFeutreOuverture> {
         if (!m.encre || t < m.t0) continue;
         final p = m.avance(t);
         var alpha = 1.0 - exacte;
-        if (m.fugace) alpha *= 1 - Curves.easeIn.transform(_seg(t, _tAnneau + 120, _tQueue + 80));
+        // Les zigzags d'essai sèchent pendant que l'anneau se trace.
+        if (m.fugace) alpha *= 1 - Curves.easeInOut.transform(_seg(t, _tAnneau + 40, _tAnneau + 300));
         if (alpha <= 0.01) continue;
         final trait = m.metrique.extractPath(0, m.metrique.length * p);
         canvas.drawPath(
@@ -441,7 +448,7 @@ class _GoutteTournante extends Component with HasGameReference<JeuFeutreOuvertur
     canvas.scale(h);
     // Elle tourne autour de son axe vertical : sa largeur suit le cosinus,
     // jamais tout à fait nulle (une goutte a de l'épaisseur).
-    final largeur = math.max(0.08, face.abs());
+    final largeur = math.max(0.2, face.abs());
     canvas.scale(largeur, 1);
     // La lumière glisse d'un bord à l'autre au fil du tour.
     final cote = math.sin(a);
@@ -485,8 +492,10 @@ class _Feutre extends Component with HasGameReference<JeuFeutreOuverture> {
     // Le feutre se pose : une petite éclaboussure à chaque attaque d'un
     // trait, une plus forte au lever final.
     if (m != _precedent) {
-      if (m != null && m.encre && !m.fugace) j.eclabousser(m.point(m.t0), nombre: 5, force: 0.7);
-      if (_precedent != null && _precedent!.fugace) j.eclabousser(_precedent!.point(_precedent!.t1), nombre: 9);
+      // Seulement deux fois : quand la pointe se pose pour l'anneau, et
+      // quand elle quitte la goutte coloriée.
+      if (m != null && m.largeur > 6 && m.t0 == _tAnneau) j.eclabousser(m.point(m.t0), nombre: 4, force: 0.6);
+      if (_precedent != null && _precedent!.t1 == _tEncre) j.eclabousser(_precedent!.point(_precedent!.t1), nombre: 5, force: 0.8);
       _precedent = m;
     }
   }

@@ -361,8 +361,17 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
                   children: [
                     Positioned.fill(
                       child: RepaintBoundary(
+                        // Le peintre reste DESSOUS : tant que le jeu n'a
+                        // pas fini de charger, c'est lui qu'on voit (la
+                        // bulle de l'écran natif) — jamais une image vide.
                         child: avecFeutre
-                            ? GameWidget<JeuFeutreOuverture>(key: const ValueKey('feutre'), game: jeu)
+                            ? Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  CustomPaint(painter: _PeintreOuverture(etat)),
+                                  GameWidget<JeuFeutreOuverture>(key: const ValueKey('feutre'), game: jeu),
+                                ],
+                              )
                             : CustomPaint(painter: _PeintreOuverture(etat)),
                       ),
                     ),
@@ -463,7 +472,11 @@ class _OuvertureDropletState extends State<OuvertureDroplet> with SingleTickerPr
     // ── 1 à 3 : la goutte tombe dans la bulle, l'onde, la paroi. Avec le
     // feutre, la marque est déjà dessinée, au repos, quand l'ouverture
     // reprend la main.
-    final e = _feutre ? const _Chute(0, 0, 0, 1, _Onde.aucune) : _chute(t);
+    // ⚠️ Avant que Flame ait chargé (la ou les premières images), c'est ce
+    // peintre qui reste dessous : la bulle seule, comme l'écran natif.
+    final e = _feutre
+        ? _Chute(0, 0, 0, (_phase == _Phase.entree || _phase == _Phase.attente) ? 0 : 1, _Onde.aucune)
+        : _chute(t);
     pose = PoseMarque(
       ecrasement: e.ecrasement,
       gonflement: e.gonflement,
