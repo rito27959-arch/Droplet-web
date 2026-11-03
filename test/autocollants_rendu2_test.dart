@@ -74,7 +74,10 @@ void main() {
           ),
         ),
       ));
-      await tester.pump();
+      // Les scènes Flame se chargent, puis jouent quelques images.
+      for (var k = 0; k < 3; k++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
       await tester.runAsync(() async {
         final boite = cle.currentContext!.findRenderObject()! as RenderRepaintBoundary;
         final image = await boite.toImage(pixelRatio: 2);
