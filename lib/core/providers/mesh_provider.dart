@@ -44,6 +44,7 @@ import '../services/appareils_lies.dart';
 import '../services/mailbox_client.dart' show MailboxMessage;
 import '../services/miroir_appareils.dart';
 import '../services/presence_internet.dart';
+import '../services/avatar_service.dart';
 import '../services/storage_service.dart';
 import '../services/mesh_transport_service.dart';
 import '../services/ble_mesh_protocol.dart';
@@ -603,6 +604,8 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         'c': cipherText,
         'n': nonce,
         'k': await CryptoService.ensureIdentityKeyPair(),
+          // L'empreinte de ma photo ('' = aucune) : voir `apprendreCleMailbox`.
+          'av': AvatarService.monEmpreinte() ?? '',
         'pk': 1,
         // Lu par la boîte (enveloppe en clair) : réveiller ou non le
         // destinataire par « Nouveau message ».
@@ -680,7 +683,8 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
         // `MeshRepository.apprendreCleMailbox` pour les garde-fous.
         final cleExpediteur = parsed?['k'] as String?;
         if (cleExpediteur != null && cleExpediteur.isNotEmpty) {
-          _repo.apprendreCleMailbox(mbMsg.fromPeerId, cleExpediteur);
+          _repo.apprendreCleMailbox(mbMsg.fromPeerId, cleExpediteur,
+              avatarHash: parsed?['av'] as String?);
         }
 
         // ── Un ACCUSÉ (« distribué » ou « lu »), pas un message ────────────
@@ -1102,6 +1106,8 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
           'c': cipherText,
           'n': nonce,
           'k': await CryptoService.ensureIdentityKeyPair(),
+          // L'empreinte de ma photo ('' = aucune) : voir `apprendreCleMailbox`.
+          'av': AvatarService.monEmpreinte() ?? '',
           // Mon identifiant du message : le destinataire le reprend, et ses
           // accusés « distribué » / « lu » pourront le désigner.
           'm': messageId,
@@ -1153,6 +1159,8 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
           'm': fileId,
           // Ma clé X25519 — même raison que pour un message texte.
           'k': await CryptoService.ensureIdentityKeyPair(),
+          // L'empreinte de ma photo ('' = aucune) : voir `apprendreCleMailbox`.
+          'av': AvatarService.monEmpreinte() ?? '',
         }),
       );
       return result != null;
@@ -1330,6 +1338,8 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
           'c': cipherText,
           'n': nonce,
           'k': await CryptoService.ensureIdentityKeyPair(),
+          // L'empreinte de ma photo ('' = aucune) : voir `apprendreCleMailbox`.
+          'av': AvatarService.monEmpreinte() ?? '',
           'rc': 1,
         }),
       );

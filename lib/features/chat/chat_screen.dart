@@ -105,6 +105,7 @@ import '../../design_system/ouro_scaffold.dart';
 import '../../design_system/ouro_liquid.dart';
 import '../../design_system/ouro_haptics.dart';
 import '../../design_system/design_tokens.dart';
+import '../../shared/widgets/avatar_groupe.dart';
 import '../../shared/widgets/peer_avatar.dart';
 import '../../shared/widgets/typing_indicator.dart';
 import '../../shared/widgets/heart_burst_overlay.dart';
@@ -4115,7 +4116,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                         children: [
                           // Hero uniquement en 1:1 (seul cas où on peut naviguer vers un
                           // appel) — un tag basé sur peerId, jamais dupliqué ailleurs.
-                          (_isGroup || _isBroadcast)
+                          // ⚠️ LE GROUPE A SON VISAGE : sa photo quand il en a
+                          // une, sinon deux de ses membres. Avant, l'en-tête
+                          // d'un groupe montrait une simple initiale — la photo
+                          // choisie pour le groupe n'apparaissait jamais dans
+                          // sa propre discussion.
+                          _isGroup
+                              ? AvatarGroupe(groupe: group, monId: myId, rayon: 17)
+                              : _isBroadcast
                               ? PeerAvatar(
                                   pseudo: peerPseudo,
                                   radius: 17,
@@ -4494,6 +4502,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       ? _EmptyChat(
                           isBroadcast: _isBroadcast,
                           peerPseudo: peerPseudo,
+                          avatar: _isGroup
+                              ? AvatarGroupe(groupe: group, monId: myId, rayon: 34)
+                              : _isBroadcast
+                              ? null
+                              : PeerAvatar(
+                                  pseudo: peerPseudo,
+                                  radius: 34,
+                                  online: true,
+                                  imagePath: AvatarService.cheminPair(widget.peerId),
+                                ),
                         )
                       : Stack(
                           children: [
@@ -5689,9 +5707,12 @@ class _DaySeparator {
 /// Ce qui s'affiche quand la conversation n'a encore aucun message —
 /// un avatar et un petit texte d'accueil (« Dites bonjour 👋 »).
 class _EmptyChat extends StatelessWidget {
-  const _EmptyChat({required this.isBroadcast, required this.peerPseudo});
+  const _EmptyChat({required this.isBroadcast, required this.peerPseudo, this.avatar});
   final bool isBroadcast;
   final String peerPseudo;
+
+  /// La photo du contact ou du groupe ; à défaut, l'initiale.
+  final Widget? avatar;
 
   @override
   Widget build(BuildContext context) {
@@ -5699,7 +5720,7 @@ class _EmptyChat extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PeerAvatar(pseudo: peerPseudo, radius: 34, online: !isBroadcast),
+          avatar ?? PeerAvatar(pseudo: peerPseudo, radius: 34, online: !isBroadcast),
           const SizedBox(height: 12),
           // La petite main qui salue sous l'avatar : c'est le premier
           // écran d'une conversation neuve, le moment où l'on hésite à

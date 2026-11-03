@@ -2384,6 +2384,17 @@ class MeshRepository {
       return; // pas du base64 : charge douteuse, on n'apprend rien
     }
 
+    // ⚠️ LA PHOTO SE SYNCHRONISE À CHAQUE DÉPÔT, PAS SEULEMENT AU PREMIER.
+    // Les dépôts récents portent `av` : l'empreinte de la photo de
+    // l'expéditeur, ou une chaîne vide s'il n'en a pas. Avant, la photo
+    // n'était examinée qu'au moment où l'on apprenait la CLÉ : un contact
+    // joint par Internet qui changeait de photo gardait l'ancienne chez
+    // nous pour toujours. Un dépôt sans `av` (ancienne version) ne dit
+    // rien de la photo et n'efface rien.
+    if (avatarHash != null) {
+      _synchroniserAvatar(senderId, avatarHash.isEmpty ? null : avatarHash);
+    }
+
     final connue = _peerPublicKeyFromCaches(senderId);
     if (connue == cleB64) return;
 
@@ -2400,10 +2411,10 @@ class MeshRepository {
       senderId,
       cleB64,
       transportsSiNouveau: const ['tor'],
-      avatarHash: avatarHash,
-      // La mailbox ne transporte pas l'empreinte : son silence ne veut pas
-      // dire « ce pair a retiré sa photo ».
-      annonceAvatarComplete: avatarHash != null,
+      // La photo vient d'être examinée plus haut quand le dépôt en parlait ;
+      // sinon, ce silence ne veut pas dire « ce pair a retiré sa photo ».
+      avatarHash: avatarHash == null || avatarHash.isEmpty ? null : avatarHash,
+      annonceAvatarComplete: false,
     );
   }
 
@@ -4708,11 +4719,23 @@ class MeshRepository {
     // qui manquait — les destinataires d'un média de STATUT. Seule l'annonce
     // d'un statut partait en ligne : les contacts éloignés voyaient un statut
     // photo… sans sa photo.
+    //
+    // ⚠️ ET LES PHOTOS DE PROFIL (la mienne comme celle d'un groupe). Elles
+    // partent vers UN destinataire (`targetId`), sans groupe ni statut :
+    // elles tombaient donc dans le cas « mesh seulement ». Un contact joint
+    // par Internet demandait bien la photo (`avreq` franchit Internet)… et
+    // la réponse ne quittait jamais le téléphone. C'était le bug « les
+    // photos de profil ne partent pas par Internet ».
     final List<String> parInternet = groupId != null
         ? _destinatairesDe(groupId).toList()
         : forStatus
             ? (targetId != null ? [targetId] : _contactsPourStatut().toList())
-            : const [];
+            : (avatarEmpreinte != null && targetId != null)
+                ? [targetId]
+                : const [];
+    // Une photo de profil n'est pas un message : elle ne réveille personne
+    // avec « Nouveau message ».
+    final notifierEnLigne = avatarEmpreinte == null;
 
     if (FichierMorcele.doitMorceler(payload.length)) {
       final morceaux = FichierMorcele.decouper(payload);
@@ -4777,7 +4800,7 @@ class MeshRepository {
 
     _fileProgressCtrl.add((fileId: id, progression: 0, envoi: true));
     if (parInternet.isNotEmpty) {
-      await _doublerParInternet(parInternet, packet, notifier: true);
+      await _doublerParInternet(parInternet, packet, notifier: notifierEnLigne);
       if (_transport.connectedPeerCount == 0) {
         _fileProgressCtrl.add((fileId: id, progression: 1, envoi: true));
         return;
