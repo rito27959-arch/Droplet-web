@@ -1114,6 +1114,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     // peut l'ouvrir.
     _cameraRonde.dispose();
     _minuteurJour?.cancel();
+    _clavierStable?.cancel();
     _jourFlottant.dispose();
     _envoiVocal?.dispose();
     _recDrag.dispose();
@@ -1575,18 +1576,40 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// la bascule, et c'est ce bond qui fait qu'une application « ne fait
   /// pas iOS ». On retient donc la vraie hauteur dès qu'on la voit, et
   /// 300 ne sert que tant que le clavier ne s'est jamais ouvert.
-  double _hauteurClavier = 300;
+  double _hauteurClavier = _hauteurClavierRetenue();
 
-  /// La vraie hauteur du clavier, retenue dès qu'il se montre — sans
-  /// reconstruire l'écran (voir `build`).
+  static const String _cleHauteurClavier = 'hauteur_clavier';
+
+  /// La hauteur retenue lors d'une session précédente (comme Telegram) :
+  /// le panneau a la bonne taille même avant le premier clavier.
+  static double _hauteurClavierRetenue() =>
+      (double.tryParse(StorageService.getString(_cleHauteurClavier) ?? '') ?? 300).clamp(240.0, 460.0);
+
+  Timer? _clavierStable;
+
+  /// La vraie hauteur du clavier, retenue quand il a FINI de s'ouvrir —
+  /// sans reconstruire l'écran (voir `build`).
+  ///
+  /// ⚠️ PAS À CHAQUE IMAGE DE SON ANIMATION. Le clavier qui se ferme passe
+  /// par toutes les hauteurs, de la sienne à zéro : retenir chacune, c'était
+  /// garder la DERNIÈRE au-dessus du seuil — une poignée de points. Le
+  /// panneau de stickers, ouvert justement pendant que le clavier se ferme,
+  /// prenait alors cette hauteur-là : un bandeau « Récents » de deux
+  /// centimètres, sans aucun sticker (capture du 3 novembre). On attend
+  /// donc que la hauteur ne bouge plus (150 ms), et on ne retient qu'un
+  /// clavier vraiment ouvert.
   @override
   void didChangeMetrics() {
     if (!mounted) return;
-    final vue = View.of(context);
-    final insets = vue.viewInsets.bottom / vue.devicePixelRatio;
-    if (insets > 80 && (insets - _hauteurClavier).abs() > 1) {
-      _hauteurClavier = insets;
-    }
+    _clavierStable?.cancel();
+    _clavierStable = Timer(const Duration(milliseconds: 150), () {
+      if (!mounted || _stickersOuverts) return;
+      final vue = View.of(context);
+      final insets = vue.viewInsets.bottom / vue.devicePixelRatio;
+      if (insets < 200 || (insets - _hauteurClavier).abs() <= 1) return;
+      _hauteurClavier = insets.clamp(240.0, 460.0);
+      unawaited(StorageService.setString(_cleHauteurClavier, _hauteurClavier.toStringAsFixed(1)));
+    });
   }
 
   /// Ouvre le panneau à la place du clavier, ou rend le clavier.

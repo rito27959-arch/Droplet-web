@@ -160,8 +160,12 @@ class VueStickerDroplet extends StatefulWidget {
 class _VueStickerDropletState extends State<VueStickerDroplet> with TickerProviderStateMixin {
   static final Set<String> _scenesJouees = {};
 
-  late final Ticker _ticker = createTicker((d) => _temps.value = d.inMicroseconds / 1e6);
-  final ValueNotifier<double> _temps = ValueNotifier(0);
+  // ⚠️ DÉMARRÉ À 1 s, PAS À 0. Plusieurs boucles commencent par une
+  // anticipation presque vide (le feu d'artifice avant le départ, la nova
+  // avant l'éclat) : dans le panneau, ces vignettes apparaissaient blanches
+  // le temps d'un tour. À 1 s, chacune montre d'emblée son geste.
+  late final Ticker _ticker = createTicker((d) => _temps.value = 1.0 + d.inMicroseconds / 1e6);
+  final ValueNotifier<double> _temps = ValueNotifier(1.0);
 
   /// Le « boing » du toucher : un ressort amorti, 0 → 1.
   late final AnimationController _boing = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
