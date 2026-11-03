@@ -74,6 +74,7 @@ import '../../features/call/salon_vocal.dart';
 import '../config/server_config.dart';
 import '../models/apercu_systeme.dart';
 import '../../features/chat/messages_ephemeres.dart';
+import '../config/compte_droplet.dart';
 
 /// Description lisible d'un contenu de message pour les previews.
 ///
@@ -2038,6 +2039,12 @@ class MeshNotifier extends StateNotifier<List<MeshMessage>> {
       final other = m.senderId == _repo.myId ? m.targetId : m.senderId;
       final inConv = peerId == null ? m.targetId == null : other == peerId;
       if (!inConv || m.senderId == _repo.myId || m.readAt != null) return m;
+      // Le compte officiel n'est pas un pair : lu sur place, aucun accusé
+      // à lui envoyer (il partirait vers personne).
+      if (m.senderId == CompteDroplet.id) {
+        changed = true;
+        return m.copyWith(readAt: now);
+      }
       changed = true;
       final sender = m.senderId;
       if (sender != null) pending.add((senderId: sender, messageId: m.id));
@@ -4168,8 +4175,10 @@ final conversationMessagesProvider = Provider.family<List<MeshMessage>, String?>
   final filtered = messages.where((m) {
     if (m.groupId != null) return false;
     if (peerId == null) {
-      // Canal diffusion : aucun ciblage.
-      return m.targetId == null;
+      // Canal diffusion : aucun ciblage. Les annonces du compte officiel
+      // n'ont pas de destinataire non plus, mais elles ont leur propre
+      // conversation : pas dans le canal public.
+      return m.targetId == null && m.senderId != CompteDroplet.id;
     }
     final other = m.senderId == myId ? m.targetId : m.senderId;
     return other == peerId;

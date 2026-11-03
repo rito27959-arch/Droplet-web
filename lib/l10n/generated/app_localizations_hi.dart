@@ -6271,4 +6271,10 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get stkShareChooser => 'स्टिकर भेजें';
+
+  @override
+  String get offSubtitle => 'आधिकारिक खाता';
+
+  @override
+  String get offReadOnly => 'यहाँ केवल Droplet पोस्ट करता है: ऐप की नई बातें, हस्ताक्षरित और आपके फ़ोन द्वारा सत्यापित।';
 }

@@ -89,6 +89,8 @@ import '../../core/providers/locale_provider.dart' show kSupportedLocales;
 import '../status/anneau_statuts.dart';
 import '../../core/services/miroir_appareils.dart';
 import '../../design_system/flou.dart';
+import '../../core/config/compte_droplet.dart';
+import '../../shared/widgets/avatar_officiel.dart';
 
 class ChatsScreen extends ConsumerStatefulWidget {
   const ChatsScreen({super.key});
@@ -1200,7 +1202,11 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
               // On montre à la place les deux premiers membres, moi exclu
               // — voir `avatar_groupe.dart` pour pourquoi ces deux-là et
               // pas d'autres.
-              child: c.isGroup
+              // Le compte officiel : son visage, posé par le code (jamais
+              // une photo reçue — voir `avatar_officiel.dart`).
+              child: c.peerId == CompteDroplet.id
+                  ? AvatarOfficiel(rayon: _avatarSize / 2)
+                  : c.isGroup
                   ? AvatarGroupe(
                       groupe: StorageService.getGroup(c.groupId ?? ''),
                       monId: ref.read(meshRepositoryProvider).myId,
@@ -1244,14 +1250,16 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
                     ],
                     // `Expanded` : le nom prend toute la place et POUSSE
                     // l'heure au bord droit.
-                    Expanded(
+                    Flexible(
                       child: Text(
-                        titreLisible(
-                          ApercuSysteme.localiser(
-                            c.pseudo,
-                            AppLocalizations.of(context),
-                          ),
-                        ),
+                        c.peerId == CompteDroplet.id
+                            ? CompteDroplet.pseudo
+                            : titreLisible(
+                                ApercuSysteme.localiser(
+                                  c.pseudo,
+                                  AppLocalizations.of(context),
+                                ),
+                              ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: OuroTypography.headline.copyWith(
@@ -1262,6 +1270,14 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
                         ),
                       ),
                     ),
+                    // La coche officielle, posée par le code pour cet
+                    // identifiant seul : un pair qui se renommerait
+                    // « Droplet » ne l'aura jamais.
+                    if (c.peerId == CompteDroplet.id) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.verified_rounded, size: 16, color: OuroColors.accent),
+                    ],
+                    const Spacer(),
                     const SizedBox(width: 8),
                     Text(
                       formatMessageTime(

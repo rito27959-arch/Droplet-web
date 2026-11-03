@@ -29,10 +29,11 @@
 // annonce manquée n'est pas une annonce fausse. Le second est neutralisé
 // par l'identifiant : une annonce déjà vue n'est jamais réaffichée.
 //
-// ── ⚠️ LA CLÉ CI-DESSOUS EST UNE CLÉ DE DÉMONSTRATION ─────────────────
+// ── LA CLÉ CI-DESSOUS EST LA VRAIE ───────────────────────────────────
 //
-// Elle est publique, elle est dans ce dépôt, et sa clé privée a servi à
-// un essai. Elle DOIT être remplacée avant toute publication :
+// Celle de l'annuaire, qui signe les annonces écrites sur sa page
+// `/admin/annonces`. (Avant, une clé de démonstration ; pour en refaire
+// une hors serveur :)
 //
 //     python3 outils/annonce_droplet.py cles
 //
@@ -64,9 +65,12 @@ class CompteDroplet {
 
   /// La clé publique Ed25519, en base64 (32 octets).
   ///
-  /// ⚠️ CLÉ DE DÉMONSTRATION — voir l'en-tête du fichier.
+  /// La clé de l'annuaire (`droplet_directory/lib/annonces.dart`), créée
+  /// le 3 novembre 2026 sur le volume du serveur. Les annonces publiées
+  /// depuis `/admin/annonces` sont signées par sa moitié privée, qui ne
+  /// quitte jamais le serveur. ⚠️ NE PLUS JAMAIS LA CHANGER : voir l'en-tête.
   static const String clePubliqueBase64 =
-      'fEFkzuKRiEffd7+wDAopuLLPu78bVkUC7bAzh4SBK58=';
+      'Apx1RoGhLwqfFI75upW3WRTe9KDDgj5PEdXb/74Nje8=';
 
   /// Où l'application va chercher le lot d'annonces quand elle a Internet.
   ///

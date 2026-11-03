@@ -6295,4 +6295,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stkShareChooser => 'Send sticker';
+
+  @override
+  String get offSubtitle => 'Official account';
+
+  @override
+  String get offReadOnly => 'Only Droplet posts here: app news, signed and verified by your phone.';
 }

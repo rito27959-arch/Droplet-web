@@ -6369,4 +6369,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get stkShareChooser => 'Отправить стикер';
+
+  @override
+  String get offSubtitle => 'Официальный аккаунт';
+
+  @override
+  String get offReadOnly => 'Здесь пишет только Droplet: новости приложения, подписанные и проверенные вашим телефоном.';
 }

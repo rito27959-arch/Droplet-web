@@ -155,6 +155,8 @@ import '../lecteur/lecteur_pdf.dart';
 import '../group/reglages_groupe.dart';
 import '../call/salon_vocal.dart';
 import '../../design_system/flou.dart';
+import '../../core/config/compte_droplet.dart';
+import '../../shared/widgets/avatar_officiel.dart';
 import '../../core/services/raccourcis_conversation.dart';
 import '../../core/services/device_profile.dart';
 
@@ -201,6 +203,9 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   /// Le contact est bloqué : ni saisie ni appel, comme chez WhatsApp.
+  /// La conversation du compte officiel Droplet (voir `compte_droplet.dart`).
+  bool get _officiel => !_isGroup && widget.peerId == CompteDroplet.id;
+
   bool get _contactBloque =>
       !_isGroup &&
       !_isBroadcast &&
@@ -3511,6 +3516,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// Dans ce groupe, seuls les administrateurs peuvent écrire, et je n'en
   /// suis pas un.
   bool get _paroleFermee {
+    // La conversation du compte officiel : on y lit, on n'y écrit pas
+    // (comme le compte « WhatsApp » ou « Telegram »).
+    if (_officiel) return true;
     final id = widget.groupId;
     if (id == null) return false;
     if (!ReglagesGroupes.de(id).envoiAdminsSeuls) return false;
@@ -4039,6 +4047,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               centerTitle: false,
               title: _searching
                   ? _searchField(messages)
+                  : _officiel
+                  ? Row(
+                      children: [
+                        const AvatarOfficiel(rayon: 17, avecBadge: false),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(CompteDroplet.pseudo, style: OuroTypography.headline.copyWith(color: OuroColors.label)),
+                                  const SizedBox(width: 4),
+                                  Icon(Icons.verified_rounded, size: 16, color: OuroColors.accent),
+                                ],
+                              ),
+                              Text(
+                                l10n.offSubtitle,
+                                style: OuroTypography.caption1.copyWith(color: OuroColors.secondaryLabel),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
                   : GestureDetector(
                       // Taper l'en-tête ouvre la fiche du contact ou du groupe —
                       // convention universelle des messageries, et le seul endroit
@@ -4274,7 +4308,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       // désormais à leur place, au trait comme dans Messages,
                       // et grisés quand l'appel est impossible — le toucher
                       // explique alors pourquoi (voir le téléphone).
-                      if (!_isGroup && !_isBroadcast)
+                      if (!_isGroup && !_isBroadcast && !_officiel)
                         OuroIconButton(
                           tooltip: l10n.chVideoCall,
                           icon: Icon(
@@ -4309,7 +4343,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                       );
                                 },
                         ),
-                      if (!_isGroup && !_isBroadcast)
+                      if (!_isGroup && !_isBroadcast && !_officiel)
                         OuroIconButton(
                           tooltip: callable
                               ? l10n.chVoiceCall
@@ -4834,7 +4868,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 // qu'un champ mort, la barre devient une note en verre
                 // dépoli : on comprend en une seconde, et l'écran garde sa
                 // tenue.
-                if (_isGroup && _paroleFermee)
+                if (_paroleFermee)
                   ClipRect(
                     child: Flou(
                       filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
@@ -4864,15 +4898,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                 color: OuroColors.systemFill,
                               ),
                               child: Icon(
-                                Icons.campaign_rounded,
+                                _officiel ? Icons.verified_rounded : Icons.campaign_rounded,
                                 size: 15,
-                                color: OuroColors.secondaryLabel,
+                                color: _officiel ? OuroColors.accent : OuroColors.secondaryLabel,
                               ),
                             ),
                             const SizedBox(width: 10),
                             Flexible(
                               child: Text(
-                                l10n.chOnlyAdminsCanWrite,
+                                _officiel ? l10n.offReadOnly : l10n.chOnlyAdminsCanWrite,
                                 style: OuroTypography.footnote.copyWith(
                                   color: OuroColors.secondaryLabel,
                                   height: 1.3,
@@ -4905,7 +4939,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                     requete: _requeteMention!,
                     onChoisir: _insererMention,
                   ),
-                if (!(_isGroup && _paroleFermee))
+                if (!_paroleFermee)
                 ValueListenableBuilder<int>(
                   valueListenable: StorageService.revisionBlocage,
                   builder: (context, _, _) => _contactBloque

@@ -2218,5 +2218,7 @@
   "stkExportBody": "O pacote animado, para usar nos seus outros apps de mensagens. Toque e segure um sticker para enviar só ele para qualquer lugar.",
   "stkExportNoApp": "Nem o WhatsApp nem o Telegram estão instalados. Toque e segure um sticker para enviá-lo a outro app.",
   "stkExportUnavailable": "Não foi possível abrir o outro app agora.",
-  "stkShareChooser": "Enviar sticker"
+  "stkShareChooser": "Enviar sticker",
+  "offSubtitle": "Conta oficial",
+  "offReadOnly": "Só o Droplet publica aqui: novidades do app, assinadas e verificadas pelo seu telefone."
 }

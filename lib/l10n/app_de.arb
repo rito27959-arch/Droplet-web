@@ -2218,5 +2218,7 @@
   "stkExportBody": "Das animierte Paket für Ihre anderen Messenger. Lange auf einen Sticker drücken, um nur ihn überallhin zu senden.",
   "stkExportNoApp": "Weder WhatsApp noch Telegram ist installiert. Lange auf einen Sticker drücken, um ihn an eine andere App zu senden.",
   "stkExportUnavailable": "Die andere App konnte gerade nicht geöffnet werden.",
-  "stkShareChooser": "Sticker senden"
+  "stkShareChooser": "Sticker senden",
+  "offSubtitle": "Offizielles Konto",
+  "offReadOnly": "Nur Droplet postet hier: Neuigkeiten der App, signiert und von deinem Telefon geprüft."
 }

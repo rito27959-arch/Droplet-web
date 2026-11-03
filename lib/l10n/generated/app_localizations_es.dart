@@ -6309,4 +6309,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get stkShareChooser => 'Enviar sticker';
+
+  @override
+  String get offSubtitle => 'Cuenta oficial';
+
+  @override
+  String get offReadOnly => 'Solo Droplet publica aquí: novedades de la app, firmadas y verificadas por tu teléfono.';
 }

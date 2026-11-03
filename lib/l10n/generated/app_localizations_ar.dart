@@ -6380,4 +6380,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get stkShareChooser => 'إرسال الملصق';
+
+  @override
+  String get offSubtitle => 'الحساب الرسمي';
+
+  @override
+  String get offReadOnly => 'وحده Droplet ينشر هنا: مستجدات التطبيق، موقّعة ويتحقق منها هاتفك.';
 }

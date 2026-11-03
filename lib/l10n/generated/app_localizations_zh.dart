@@ -6126,4 +6126,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get stkShareChooser => '发送贴纸';
+
+  @override
+  String get offSubtitle => '官方账号';
+
+  @override
+  String get offReadOnly => '只有 Droplet 在此发布：应用新功能，已签名并由你的手机验证。';
 }

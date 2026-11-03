@@ -2218,5 +2218,7 @@
   "stkExportBody": "动态贴纸包，可在其他聊天应用中使用。长按某个贴纸即可单独发送到任何地方。",
   "stkExportNoApp": "未安装 WhatsApp 或 Telegram。长按贴纸即可发送到其他应用。",
   "stkExportUnavailable": "暂时无法打开其他应用。",
-  "stkShareChooser": "发送贴纸"
+  "stkShareChooser": "发送贴纸",
+  "offSubtitle": "官方账号",
+  "offReadOnly": "只有 Droplet 在此发布：应用新功能，已签名并由你的手机验证。"
 }

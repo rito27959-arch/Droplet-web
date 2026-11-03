@@ -1200,6 +1200,18 @@ abstract class AppLocalizations {
   /// **'Envoyer le sticker'**
   String get stkShareChooser;
 
+  /// No description provided for @offSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte officiel'**
+  String get offSubtitle;
+
+  /// No description provided for @offReadOnly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seul Droplet publie ici : les nouveautés de l'application, signées et vérifiées par votre téléphone.'**
+  String get offReadOnly;
+
   /// No description provided for @acReadyTitle.
   ///
   /// In fr, this message translates to:
