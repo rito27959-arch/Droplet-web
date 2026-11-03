@@ -27,6 +27,7 @@ import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/scene_animee.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/services/avatar_service.dart';
+import '../../shared/widgets/autocollants_vides.dart';
 
 /// Vue plein écran du réseau mesh — le visualiseur (orbites, ondes) qui
 /// n'était jusqu'ici qu'un composant décoratif dans l'en-tête de
@@ -97,6 +98,7 @@ class MeshNetworkScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(top: 24),
               child: EmptyState(
                 emoji: Scenes.rechercheDePairs,
+                autocollant: SceneVide.pairs,
                 icon: Icons.wifi_tethering_rounded,
                 title: l10n.mnNoPeersYet,
                 subtitle: l10n.mnGetCloserHint,

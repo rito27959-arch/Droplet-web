@@ -41,6 +41,7 @@ import 'package:animated_emoji/animated_emoji.dart';
 import 'package:flutter/material.dart';
 
 import '../../design_system/ouro_colors.dart';
+import 'autocollants_vides.dart';
 
 /// Une animation Noto, désignée par son nom de fichier.
 ///
@@ -54,7 +55,29 @@ class SceneAnimee extends StatelessWidget {
     required this.iconeDeSecours,
     this.taille = 88,
     this.repete = true,
+    this.autocollant,
   });
+
+  /// La grappe d'autocollants à montrer à la place de l'emoji (voir
+  /// `autocollants_vides.dart`). Par défaut, déduite de [emoji] pour les
+  /// états vides ; une réussite jouée une fois (`repete: false`) garde
+  /// son emoji animé.
+  final SceneVide? autocollant;
+
+  /// Les états vides de `Scenes`, et leur grappe.
+  static SceneVide? grappePour(AnimatedEmojiData e) {
+    if (identical(e, Scenes.aucuneConversation) || identical(e, Scenes.conversationVide)) return SceneVide.discussions;
+    if (identical(e, Scenes.aucunResultat)) return SceneVide.recherche;
+    if (identical(e, Scenes.diffusionVide)) return SceneVide.diffusion;
+    if (identical(e, Scenes.aucunPair)) return SceneVide.pairs;
+    if (identical(e, Scenes.aucunAppel) || identical(e, Scenes.appelManque)) return SceneVide.appels;
+    if (identical(e, Scenes.aucunStatut) || identical(e, Scenes.aucuneActualite)) return SceneVide.statuts;
+    if (identical(e, Scenes.aucunGroupe)) return SceneVide.groupe;
+    if (identical(e, Scenes.aucuneCarte)) return SceneVide.carte;
+    if (identical(e, Scenes.toutVaBien)) return SceneVide.securite;
+    if (identical(e, Scenes.partage)) return SceneVide.partage;
+    return null;
+  }
 
   /// L'animation à jouer.
   final AnimatedEmojiData emoji;
@@ -70,6 +93,10 @@ class SceneAnimee extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Les états vides : une grappe d'autocollants, comme WhatsApp — plus
+    // large que haute, d'où une largeur de 2,2 fois la taille demandée.
+    final grappe = autocollant ?? (repete ? grappePour(emoji) : null);
+    if (grappe != null) return AutocollantsVides(scene: grappe, largeur: taille * 2.2);
     return SizedBox(
       height: taille,
       width: taille,

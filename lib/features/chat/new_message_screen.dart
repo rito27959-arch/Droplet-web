@@ -38,6 +38,7 @@ import '../../shared/widgets/ios_magnifier_overlay.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/services/avatar_service.dart';
 import '../group/traitement_invitation.dart';
+import '../../shared/widgets/autocollants_vides.dart';
 
 class NewMessageScreen extends ConsumerStatefulWidget {
   const NewMessageScreen({super.key});
@@ -238,6 +239,7 @@ class _NewMessageScreenState extends ConsumerState<NewMessageScreen> {
                 emoji: _query.isEmpty
                     ? Scenes.rechercheDePairs
                     : Scenes.aucunResultat,
+                autocollant: _query.isEmpty ? SceneVide.pairs : SceneVide.recherche,
                 icon: _query.isEmpty
                     ? Icons.wifi_tethering_rounded
                     : Icons.person_search_rounded,

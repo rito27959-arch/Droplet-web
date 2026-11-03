@@ -44,6 +44,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../shared/widgets/avatar_officiel.dart';
 import '../../shared/widgets/peer_avatar.dart';
 import '../../shared/widgets/scene_animee.dart';
+import '../../shared/widgets/autocollants_vides.dart';
 
 class CentreNotifsScreen extends StatefulWidget {
   const CentreNotifsScreen({super.key});
@@ -211,7 +212,8 @@ class _Vide extends StatelessWidget {
           SceneAnimee(
             emoji: Scenes.toutVaBien,
             iconeDeSecours: Icons.notifications_none_rounded,
-            taille: 72,
+            taille: 80,
+            autocollant: SceneVide.notifications,
           ),
           const SizedBox(height: DesignTokens.space4),
           Text(

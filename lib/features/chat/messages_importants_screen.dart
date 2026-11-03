@@ -744,20 +744,9 @@ class _EtatVide extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 92,
-            height: 92,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: OuroColors.accent.withValues(alpha: 0.12),
-              border: Border.all(
-                color: OuroColors.accent.withValues(alpha: 0.5),
-                width: 1.5,
-              ),
-            ),
-            child: Icon(Icons.star_rounded, size: 42, color: OuroColors.accent),
-          ),
+          // La grappe d'autocollants « importants » (voir
+          // `autocollants_vides.dart`), comme les états vides de WhatsApp.
+          const AutocollantsVides(scene: SceneVide.importants, largeur: 190),
           const SizedBox(height: DesignTokens.space5),
           Text(
             l10n.imEmptyBody,

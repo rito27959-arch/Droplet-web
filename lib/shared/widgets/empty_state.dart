@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import '../../design_system/ouro_colors.dart';
 import '../../design_system/ouro_typography.dart';
 import '../../design_system/design_tokens.dart';
+import 'autocollants_vides.dart';
 import 'scene_animee.dart';
 
 /// État vide façon iOS : icône grise fine, titre, explication.
@@ -34,7 +35,11 @@ class EmptyState extends StatelessWidget {
     this.iconColor,
     this.action,
     this.emoji,
+    this.autocollant,
   });
+
+  /// La grappe d'autocollants, si elle ne se déduit pas de [emoji].
+  final SceneVide? autocollant;
 
   /// L'animation à jouer à la place de l'icône, quand il y en a une.
   ///
@@ -74,6 +79,7 @@ class EmptyState extends StatelessWidget {
                 emoji: emoji!,
                 iconeDeSecours: icon,
                 taille: 88,
+                autocollant: autocollant,
               )
             else
               Icon(
@@ -83,10 +89,12 @@ class EmptyState extends StatelessWidget {
                 color: OuroColors.systemGray3,
               ),
             const SizedBox(height: DesignTokens.space4),
+            // Le titre comme chez WhatsApp : grand, gras, qui dit tout seul
+            // ce qu'on peut faire ici.
             Text(
               title,
               textAlign: TextAlign.center,
-              style: OuroTypography.title3.copyWith(color: OuroColors.label),
+              style: OuroTypography.title2.copyWith(color: OuroColors.label, fontWeight: FontWeight.w700, height: 1.2),
             ),
             if (subtitle != null) ...[
               const SizedBox(height: DesignTokens.space2),
