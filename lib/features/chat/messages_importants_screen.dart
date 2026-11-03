@@ -49,6 +49,7 @@ import '../../shared/widgets/peer_avatar.dart';
 import 'media_kind.dart';
 import 'messages_importants.dart';
 import 'voice_note.dart';
+import '../../shared/widgets/autocollants_vides.dart';
 
 class MessagesImportantsScreen extends ConsumerStatefulWidget {
   const MessagesImportantsScreen({super.key});

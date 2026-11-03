@@ -271,8 +271,12 @@ class _PeintreGrappe extends CustomPainter {
       case _Jeu.aucun:
         break;
     }
-    final centre = Offset(p.centre.dx * u, (p.centre.dy + dy) * u);
-    final r = p.taille * u;
+    // Une grappe SERRÉE, comme chez WhatsApp : les pièces se chevauchent,
+    // un peu plus grandes et rapprochées du centre que leur place nominale.
+    const milieu = Offset(0.5, 0.34);
+    final place = milieu + (p.centre - milieu) * 0.9;
+    final centre = Offset(place.dx * u, (place.dy + dy) * u);
+    final r = p.taille * u * 1.14;
     canvas.save();
     canvas.translate(centre.dx, centre.dy);
     canvas.scale(echelle);
