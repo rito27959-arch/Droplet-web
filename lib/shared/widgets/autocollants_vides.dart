@@ -295,7 +295,13 @@ class _PeintreGrappe extends CustomPainter {
     );
     // Le picto, qui seul tourne ou salue (la pastille reste posée).
     canvas.rotate(angle);
-    final decale = p.forme == _Forme.rond ? Offset.zero : Offset(0, -r * 0.08);
+    // Dans une bulle, le picto se tient du côté LIBRE (celui de la queue) :
+    // l'autre côté passe sous la pastille centrale.
+    final decale = switch (p.forme) {
+      _Forme.rond => Offset.zero,
+      _Forme.bulleGauche => Offset(-r * 0.3, -r * 0.08),
+      _Forme.bulleDroite => Offset(r * 0.3, -r * 0.08),
+    };
     if (p.goutte) {
       _goutte(canvas, r * 1.15, decale);
     } else if (p.icone != null) {
