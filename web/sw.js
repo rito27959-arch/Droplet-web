@@ -1,0 +1,76 @@
+// ============================================================================
+// LE SERVICE WORKER DE DROPLET WEB.
+// ----------------------------------------------------------------------------
+// Deux rôles :
+//   • OUVRIR SANS RÉSEAU. Chaque fichier de l'app passe par le réseau
+//     d'abord (on a toujours la dernière version), et sa copie est gardée :
+//     sans réseau, la copie sert. L'interface s'ouvre donc hors ligne, avec
+//     les discussions enregistrées dans le navigateur.
+//   • LES POLICES ET IMAGES (`assets/`, `canvaskit/`) : servies depuis la
+//     copie dès qu'elle existe, ce qui accélère chaque réouverture.
+//
+// ⚠️ JAMAIS UNE ANCIENNE VERSION À LA PLACE DE LA NOUVELLE. C'était la
+// raison pour laquelle les service workers étaient retirés. Ici, `VERSION`
+// est remplacée à chaque construction (`vercel-build.sh`) : une nouvelle
+// version installe un nouveau cache et efface l'ancien, et le code de
+// l'app (`main.dart.js`, `index.html`) vient toujours du réseau d'abord.
+// ============================================================================
+
+const VERSION = '__VERSION__';
+const CACHE = 'droplet-web-' + VERSION;
+const FIGES = ['/assets/', '/canvaskit/', '/icons/'];
+
+self.addEventListener('install', () => self.skipWaiting());
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil((async () => {
+    for (const nom of await caches.keys()) {
+      if (nom !== CACHE) await caches.delete(nom);
+    }
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  // Seulement nos propres fichiers : jamais l'annuaire, la boîte aux
+  // lettres ni les appels (des requêtes vers d'autres domaines).
+  if (url.origin !== self.location.origin) return;
+
+  if (FIGES.some((p) => url.pathname.startsWith(p))) {
+    e.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      const copie = await cache.match(req);
+      if (copie) return copie;
+      const rep = await fetch(req);
+      if (rep.ok) cache.put(req, rep.clone());
+      return rep;
+    })());
+    return;
+  }
+
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    try {
+      const rep = await fetch(req);
+      if (rep.ok) cache.put(req, rep.clone());
+      return rep;
+    } catch (err) {
+      const copie = await cache.match(req, { ignoreSearch: url.pathname === '/' || url.pathname.endsWith('.html') });
+      if (copie) return copie;
+      throw err;
+    }
+  })());
+});
+
+// Un clic sur une notification affichée par la page ramène à Droplet Web.
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const fenetres = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (fenetres.length) return fenetres[0].focus();
+    return self.clients.openWindow('/');
+  })());
+});

@@ -34,6 +34,7 @@ import 'liaison/compte_lie.dart';
 import 'liaison/ecran_liaison.dart';
 import 'textes.dart';
 import 'web/navigateur.dart';
+import 'web/onglet_unique.dart';
 
 Future<void> main() async {
   await initializeDateFormatting();
@@ -126,6 +127,10 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
     depot.reseau = appels;
     appels.demarrer();
     depot.demarrer();
+    // Ce navigateur devient l'onglet actif ; un autre onglet plus récent
+    // le mettra en veille (voir `onglet_unique.dart`).
+    OngletUnique.annoncer(compte.peerId);
+    OngletUnique.ailleurs.addListener(_enVeille);
     if (depot.profil.pseudo.isEmpty) depot.majProfil(pseudo: compte.pseudo);
     setState(() {
       _compte = compte;
@@ -158,6 +163,16 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
     if (!Uri.base.queryParameters.containsKey('apercu')) {
       web.window.history.replaceState(null, '', '?apercu');
     }
+  }
+
+  /// Un autre onglet a pris la main : plus de réception ni d'écriture ici.
+  void _enVeille() {
+    if (!OngletUnique.ailleurs.value) return;
+    final t = _depot?.transport;
+    if (t is TransportDroplet) t.arreter();
+    _depot?.reseau?.arreter();
+    _depot?.suspendre();
+    if (mounted) setState(() {});
   }
 
   void _quitter() {
@@ -260,13 +275,61 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
       builder: (context, enfant) => depot == null
           ? enfant!
           : Portee(depot: depot, ui: _ui, textes: _textes, child: enfant!),
-      home: depot == null
+      home: OngletUnique.ailleurs.value && depot != null
+          ? _EcranVeille(textes: _textes)
+          : depot == null
           ? EcranLiaison(
               textes: _textes,
               onDemo: _entrerDemo,
               onLie: (compte, rester) => _entrerCompte(compte, rester: rester),
             )
           : Coquille(onDeconnexion: _quitter),
+    );
+  }
+}
+
+/// L'écran d'un onglet mis en veille par un autre (voir `onglet_unique.dart`).
+class _EcranVeille extends StatelessWidget {
+  const _EcranVeille({required this.textes});
+  final Textes textes;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: OuroColors.systemGroupedBackground,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(color: OuroColors.accent.withValues(alpha: 0.12), shape: BoxShape.circle),
+                  child: Icon(Icons.tab_rounded, size: 34, color: OuroColors.accent),
+                ),
+                const SizedBox(height: 20),
+                Text(textes.ongletAilleursTitre, textAlign: TextAlign.center, style: OuroTypography.title2.copyWith(color: OuroColors.label)),
+                const SizedBox(height: 10),
+                Text(textes.ongletAilleursTexte, textAlign: TextAlign.center, style: OuroTypography.body.copyWith(color: OuroColors.secondaryLabel, height: 1.4)),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: OngletUnique.reprendre,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: OuroColors.accent,
+                    padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
+                    shape: const StadiumBorder(),
+                  ),
+                  child: Text(textes.ongletUtiliserIci, style: OuroTypography.headline.copyWith(color: Colors.white)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

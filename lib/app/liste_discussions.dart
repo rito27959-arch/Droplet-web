@@ -289,6 +289,26 @@ class LigneDiscussion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Pour un lecteur d'écran : une seule annonce par ligne — « Amina,
+    // 2 messages non lus, Tu viens ce soir ? » — plutôt qu'une suite de
+    // morceaux (avatar, heure, pastille…) sans lien entre eux.
+    final depot = context.depot;
+    final d = discussion;
+    final dernier = depot.dernierMessage(d.id);
+    final morceaux = [
+      d.titre,
+      if (d.nonLus > 0) context.t.nonLus(d.nonLus),
+      if (dernier != null && dernier.texte.isNotEmpty) dernier.texte,
+    ];
+    return Semantics(
+      button: true,
+      selected: depot.discussionOuverte == d.id,
+      label: morceaux.join(', '),
+      child: ExcludeSemantics(child: _construire(context)),
+    );
+  }
+
+  Widget _construire(BuildContext context) {
     final depot = context.depot;
     final d = discussion;
     final selectionnee = depot.discussionOuverte == d.id;

@@ -1002,6 +1002,12 @@ class _Raccourcis extends StatelessWidget {
       ouvrirDiscussion(context, liste[j].id);
     }
 
+    void chercher() {
+      ui.changerOnglet(Onglet.discussions);
+      ui.cleGauche.currentState?.popUntil((r) => r.isFirst);
+      ui.focusRecherche.requestFocus();
+    }
+
     SingleActivator ca(LogicalKeyboardKey k, {bool maj = false}) =>
         SingleActivator(k, control: true, alt: true, shift: maj);
 
@@ -1015,11 +1021,7 @@ class _Raccourcis extends StatelessWidget {
           ui.changerOnglet(Onglet.discussions);
           pousserPanneau(context, const PanneauNouveauGroupe());
         },
-        ca(LogicalKeyboardKey.slash): () {
-          ui.changerOnglet(Onglet.discussions);
-          ui.cleGauche.currentState?.popUntil((r) => r.isFirst);
-          ui.focusRecherche.requestFocus();
-        },
+        ca(LogicalKeyboardKey.slash): chercher,
         ca(LogicalKeyboardKey.comma): () => ui.changerOnglet(Onglet.reglages),
         ca(LogicalKeyboardKey.keyP): () {
           ui.changerOnglet(Onglet.reglages);
@@ -1053,6 +1055,14 @@ class _Raccourcis extends StatelessWidget {
         ca(LogicalKeyboardKey.bracketLeft, maj: true): () => allerA(-1),
         ca(LogicalKeyboardKey.arrowDown): () => allerA(1),
         ca(LogicalKeyboardKey.arrowUp): () => allerA(-1),
+        // Les raccourcis COURTS que l'on attend d'une messagerie de bureau
+        // (et de la plupart des apps web) : Ctrl+K (⌘K) pour chercher,
+        // Alt+↑ / Alt+↓ pour passer d'une discussion à l'autre. Les
+        // combinaisons Ctrl+Alt de WhatsApp Web restent valables.
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true): chercher,
+        const SingleActivator(LogicalKeyboardKey.keyK, meta: true): chercher,
+        const SingleActivator(LogicalKeyboardKey.arrowDown, alt: true): () => allerA(1),
+        const SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): () => allerA(-1),
         const SingleActivator(LogicalKeyboardKey.escape): () {
           if (ui.rechercheDiscussion) {
             ui.basculerRecherche(false);
@@ -1079,15 +1089,15 @@ List<(String, String)> listeRaccourcis(BuildContext context) {
   return [
     (l.chatsNew, k('Ctrl+Alt+N')),
     (l.chatsNewGroup, k('Ctrl+Alt+Maj+N')),
-    (l.actionSearch, k('Ctrl+Alt+/')),
+    (l.actionSearch, k('Ctrl+K')),
     (t.rechercherDansDiscussion, k('Ctrl+Alt+Maj+F')),
     (t.infosDiscussion, k('Ctrl+Alt+Maj+I')),
     (l.chatsArchive, k('Ctrl+Alt+E')),
     (l.chatsPin, k('Ctrl+Alt+Maj+P')),
     (l.chatsMute, k('Ctrl+Alt+Maj+M')),
     (t.marquerNonLue, k('Ctrl+Alt+Maj+U')),
-    (t.discussionSuivante, k('Ctrl+Alt+↓')),
-    (t.discussionPrecedente, k('Ctrl+Alt+↑')),
+    (t.discussionSuivante, k('Alt+↓')),
+    (t.discussionPrecedente, k('Alt+↑')),
     (t.profil, k('Ctrl+Alt+P')),
     (l.settingsTitle, k('Ctrl+Alt+,')),
     (t.fermer, 'Esc'),

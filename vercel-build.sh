@@ -13,3 +13,7 @@ flutter --version
 flutter config --enable-web --no-analytics
 flutter pub get
 flutter build web --release
+
+# Le service worker reçoit le numéro de cette construction : une nouvelle
+# version installe un nouveau cache et efface l'ancien (voir web/sw.js).
+sed -i "s/__VERSION__/${VERCEL_GIT_COMMIT_SHA:-$(date +%s)}/" build/web/sw.js

@@ -190,11 +190,23 @@ class _BoutonIconeState extends State<BoutonIcone> {
         ),
       ),
     );
-    if (widget.aide == null) return bouton;
+    // Un lecteur d'écran annonce « Rechercher, bouton » plutôt que rien :
+    // l'icône seule n'a pas de nom.
+    final annonce = Semantics(
+      button: true,
+      enabled: widget.onTap != null,
+      selected: widget.actif,
+      label: widget.aide,
+      onTap: widget.onTap,
+      excludeSemantics: true,
+      child: bouton,
+    );
+    if (widget.aide == null) return annonce;
     return Tooltip(
       message: widget.aide!,
       waitDuration: const Duration(milliseconds: 450),
-      child: bouton,
+      excludeFromSemantics: true,
+      child: annonce,
     );
   }
 }

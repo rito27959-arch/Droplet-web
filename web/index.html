@@ -43,11 +43,18 @@
     });
   </script>
   <script>
-    // Une ancienne version mise en cache par un service worker ne doit
-    // jamais masquer la nouvelle : on les retire tous au chargement.
+    // Le service worker de Droplet Web (`sw.js`) : ouverture hors ligne et
+    // réouvertures plus rapides. Celui que Flutter installait autrefois est
+    // retiré : il pouvait masquer une nouvelle version derrière l'ancienne.
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function (rs) {
-        rs.forEach(function (r) { r.unregister(); });
+        rs.forEach(function (r) {
+          var actif = r.active || r.waiting || r.installing;
+          if (actif && !/\/sw\.js$/.test(actif.scriptURL)) r.unregister();
+        });
+      });
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function () {});
       });
     }
   </script>

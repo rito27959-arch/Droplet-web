@@ -1258,7 +1258,18 @@ class Depot extends ChangeNotifier {
     _planifierSauvegarde();
   }
 
+  /// Vrai quand un autre onglet a pris la main : celui-ci n'écrit plus
+  /// rien (voir `onglet_unique.dart`).
+  bool _suspendu = false;
+
+  void suspendre() {
+    _suspendu = true;
+    _sauvegarde?.cancel();
+    _abonnement?.cancel();
+  }
+
   void _planifierSauvegarde() {
+    if (_suspendu) return;
     _sauvegarde?.cancel();
     _sauvegarde = Timer(const Duration(milliseconds: 400), _enregistrer);
   }

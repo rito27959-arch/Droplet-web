@@ -3,6 +3,9 @@
 // comme l'app. Les paramètres s'écrivent entre accolades : {nom}.
 const Map<String, Map<String, String>> textesWeb = {
   'fr': {
+    'ongletAilleursTitre': 'Droplet Web est ouvert ailleurs',
+    'ongletAilleursTexte': 'Droplet Web est ouvert dans une autre fenêtre ou un autre onglet. Un seul à la fois reçoit vos messages : cliquez sur « Utiliser ici » pour continuer dans celui-ci.',
+    'ongletUtiliserIci': 'Utiliser ici',
     'appelGroupeTelephone': 'Les appels de groupe se passent sur votre téléphone pour l’instant.',
     'statutVideo': 'Vidéo',
     'statutVocal': 'Vocal',
@@ -116,6 +119,9 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} groupe(s) en commun',
   },
   'en': {
+    'ongletAilleursTitre': 'Droplet Web is open elsewhere',
+    'ongletAilleursTexte': 'Droplet Web is open in another window or tab. Only one at a time receives your messages: click “Use here” to continue in this one.',
+    'ongletUtiliserIci': 'Use here',
     'appelGroupeTelephone': 'Group calls happen on your phone for now.',
     'statutVideo': 'Video',
     'statutVocal': 'Voice',
@@ -229,6 +235,9 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} group(s) in common',
   },
   'de': {
+    'ongletAilleursTitre': 'Droplet Web ist woanders geöffnet',
+    'ongletAilleursTexte': 'Droplet Web ist in einem anderen Fenster oder Tab geöffnet. Nur eines empfängt Ihre Nachrichten: Klicken Sie auf „Hier verwenden“, um hier fortzufahren.',
+    'ongletUtiliserIci': 'Hier verwenden',
     'appelGroupeTelephone': 'Gruppenanrufe laufen vorerst über dein Telefon.',
     'statutVideo': 'Video',
     'statutVocal': 'Sprachnachricht',
@@ -342,6 +351,9 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} gemeinsame Gruppe(n)',
   },
   'es': {
+    'ongletAilleursTitre': 'Droplet Web está abierto en otro lugar',
+    'ongletAilleursTexte': 'Droplet Web está abierto en otra ventana o pestaña. Solo una a la vez recibe tus mensajes: haz clic en «Usar aquí» para continuar en esta.',
+    'ongletUtiliserIci': 'Usar aquí',
     'appelGroupeTelephone': 'Por ahora, las llamadas de grupo se hacen desde tu teléfono.',
     'statutVideo': 'Vídeo',
     'statutVocal': 'Nota de voz',
@@ -455,6 +467,9 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} grupo(s) en común',
   },
   'it': {
+    'ongletAilleursTitre': 'Droplet Web è aperto altrove',
+    'ongletAilleursTexte': 'Droplet Web è aperto in un\'altra finestra o scheda. Solo una alla volta riceve i messaggi: fai clic su «Usa qui» per continuare in questa.',
+    'ongletUtiliserIci': 'Usa qui',
     'appelGroupeTelephone': 'Per ora le chiamate di gruppo si fanno dal telefono.',
     'statutVideo': 'Video',
     'statutVocal': 'Vocale',
@@ -568,6 +583,9 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} gruppo/i in comune',
   },
   'pt': {
+    'ongletAilleursTitre': 'O Droplet Web está aberto noutro lugar',
+    'ongletAilleursTexte': 'O Droplet Web está aberto noutra janela ou separador. Só um de cada vez recebe as suas mensagens: clique em «Usar aqui» para continuar neste.',
+    'ongletUtiliserIci': 'Usar aqui',
     'appelGroupeTelephone': 'Por enquanto, as chamadas em grupo são feitas no seu telefone.',
     'statutVideo': 'Vídeo',
     'statutVocal': 'Áudio',
@@ -681,6 +699,9 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} grupo(s) em comum',
   },
   'ru': {
+    'ongletAilleursTitre': 'Droplet Web открыт в другом месте',
+    'ongletAilleursTexte': 'Droplet Web открыт в другом окне или вкладке. Сообщения получает только одна: нажмите «Использовать здесь», чтобы продолжить в этой.',
+    'ongletUtiliserIci': 'Использовать здесь',
     'appelGroupeTelephone': 'Групповые звонки пока доступны только на телефоне.',
     'statutVideo': 'Видео',
     'statutVocal': 'Голосовое',
@@ -794,6 +815,9 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': 'Общих групп: {n}',
   },
   'zh': {
+    'ongletAilleursTitre': 'Droplet Web 已在其他位置打开',
+    'ongletAilleursTexte': 'Droplet Web 已在另一个窗口或标签页中打开。同一时间只有一个能接收消息：点击“在此使用”以在这里继续。',
+    'ongletUtiliserIci': '在此使用',
     'appelGroupeTelephone': '群组通话目前请在手机上进行。',
     'statutVideo': '视频',
     'statutVocal': '语音',
@@ -907,6 +931,9 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': '{n} 个共同群组',
   },
   'ar': {
+    'ongletAilleursTitre': 'Droplet Web مفتوح في مكان آخر',
+    'ongletAilleursTexte': 'Droplet Web مفتوح في نافذة أو علامة تبويب أخرى. واحدة فقط تستقبل رسائلك في كل مرة: انقر على «استخدام هنا» للمتابعة في هذه.',
+    'ongletUtiliserIci': 'استخدام هنا',
     'appelGroupeTelephone': 'المكالمات الجماعية تتم على هاتفك في الوقت الحالي.',
     'statutVideo': 'فيديو',
     'statutVocal': 'رسالة صوتية',
@@ -1020,6 +1047,9 @@ const Map<String, Map<String, String>> textesWeb = {
     'groupesCommun': 'المجموعات المشتركة: {n}',
   },
   'hi': {
+    'ongletAilleursTitre': 'Droplet Web कहीं और खुला है',
+    'ongletAilleursTexte': 'Droplet Web किसी दूसरी विंडो या टैब में खुला है। एक समय में केवल एक ही आपके संदेश पाता है: यहीं जारी रखने के लिए “यहाँ उपयोग करें” पर क्लिक करें।',
+    'ongletUtiliserIci': 'यहाँ उपयोग करें',
     'appelGroupeTelephone': 'अभी समूह कॉल आपके फ़ोन पर ही होती हैं।',
     'statutVideo': 'वीडियो',
     'statutVocal': 'वॉइस',

@@ -32,9 +32,13 @@ jobs:
             echo "== analyse"
             flutter analyze --no-fatal-infos --no-fatal-warnings
             echo "analyse: $?"
+            echo "== tests (Chrome)"
+            flutter test --platform chrome
+            echo "tests: $?"
             echo "== construction"
             flutter build web --release --no-web-resources-cdn
             echo "construction: $?"
+            sed -i "s/__VERSION__/$GITHUB_SHA/" build/web/sw.js
           } > journal.txt 2>&1
           cat journal.txt
           grep -q "construction: 0" journal.txt && grep -q "analyse: 0" journal.txt
