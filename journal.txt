@@ -1,0 +1,34 @@
+== commit 5644fa896a6948ef149f2197776eed6a4e19bf56
+Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision c197ca5199 (6 days ago) • 2026-10-29 10:10:20 -0400
+Engine • hash 9e025265bef30b838c0c1b68cad19decf97048f2 (revision 89c39edfdf) (7 days ago) • 2026-10-27 19:51:20.000Z
+Tools • Dart 3.13.7 • DevTools 2.60.0
+== analyse
+Analyzing Droplet-web...                                        
+
+   info • Invalid regular expression syntax. Try correcting the regular expression • lib/app/texte_riche.dart:21:7 • valid_regexps
+   info • The import of 'package:qr/qr.dart' is unnecessary because all of the used elements are also provided by the import of 'package:qr_flutter/qr_flutter.dart'. Try removing the import directive • lib/liaison/ecran_liaison.dart:18:8 • unnecessary_import
+   info • The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/foundation.dart'. Try removing the import directive • lib/web/notifications_push.dart:19:8 • unnecessary_import
+
+3 issues found. (ran in 13.5s)
+analyse: 0
+== tests (Chrome)
+
+::group::✅ Passing tests
+✅ IndexedDB : écrit, relit, ne réécrit que ce qui change, retire
+✅ Un message survit à l’aller-retour JSON
+::endgroup::
+
+🎉 2 tests passed.
+tests: 0
+== construction
+The --pwa-strategy option is deprecated and will be removed in a future Flutter release.
+For more information, see: https://github.com/flutter/flutter/issues/156910
+Compiling lib/main.dart for the Web...                          
+Wasm dry run succeeded. Consider building and testing your application with the `--wasm` flag. See docs for more info: https://docs.flutter.dev/platform-integration/web/wasm
+Use --no-wasm-dry-run to disable these warnings.
+Font asset "CupertinoIcons.ttf" was tree-shaken, reducing it from 257628 to 1472 bytes (99.4% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 27216 bytes (98.3% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+Compiling lib/main.dart for the Web...                             46.2s
+✓ Built build/web
+construction: 0
