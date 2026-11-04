@@ -21,6 +21,7 @@ import '../web/navigateur.dart' show urlBlob, tailleImageDe, vignetteDe;
 import 'appels_reseau.dart';
 import 'modeles.dart';
 import 'photos_contacts.dart';
+import 'stockage_idb.dart';
 import 'transport.dart';
 
 class Depot extends ChangeNotifier {
@@ -70,8 +71,11 @@ class Depot extends ChangeNotifier {
 
   // ══ DÉMARRAGE ════════════════════════════════════════════════════════
 
+  /// Le stockage du navigateur (voir `stockage_idb.dart`).
+  late final StockageIdb _stockage = StockageIdb(demo ? 'droplet-web-demo' : 'droplet-web');
+
   Future<void> demarrer() async {
-    _charger();
+    await _charger();
     if (demo && discussions.isEmpty) _semerDemo();
     _abonnement = transport.recus.listen(_recevoir);
     unawaited(transport.connecter());
@@ -933,6 +937,7 @@ class Depot extends ChangeNotifier {
     try {
       web.window.localStorage.removeItem(_cle);
     } catch (_) {}
+    unawaited(_stockage.effacer());
     contacts.clear();
     discussions.clear();
     _messages.clear();
@@ -1258,20 +1263,61 @@ class Depot extends ChangeNotifier {
     _sauvegarde = Timer(const Duration(milliseconds: 400), _enregistrer);
   }
 
+  /// L'état découpé en entrées : `meta`, puis une entrée `m:<discussion>`
+  /// par discussion (voir `stockage_idb.dart`).
+  Map<String, String> _entrees() => {
+        'meta': jsonEncode({
+          'profil': profil.toJson(),
+          'reglages': reglages.toJson(),
+          'contacts': contacts.values.map((c) => c.toJson()).toList(),
+          'discussions': discussions.values.map((d) => d.toJson()).toList(),
+          'statuts': statuts.where((s) => !s.distant).map((s) => s.toJson()).toList(),
+          'appels': appels.map((a) => a.toJson()).toList(),
+          'invitation': invitation,
+          'telephoneVu': telephoneVu,
+        }),
+        for (final e in _messages.entries)
+          if (e.value.isNotEmpty) 'm:${e.key}': jsonEncode(e.value.map((m) => m.toJson()).toList()),
+      };
+
+  bool _enCours = false;
+  bool _encore = false;
+
+  /// Enregistre ce qui a changé. Un seul enregistrement à la fois ; un
+  /// changement survenu pendant l'écriture en relance un juste après.
   void _enregistrer() {
-    final etat = {
-      'profil': profil.toJson(),
-      'reglages': reglages.toJson(),
-      'contacts': contacts.values.map((c) => c.toJson()).toList(),
-      'discussions': discussions.values.map((d) => d.toJson()).toList(),
-      'messages': {
-        for (final e in _messages.entries) e.key: e.value.map((m) => m.toJson()).toList(),
-      },
-      'statuts': statuts.where((s) => !s.distant).map((s) => s.toJson()).toList(),
-      'appels': appels.map((a) => a.toJson()).toList(),
-      'invitation': invitation,
-      'telephoneVu': telephoneVu,
-    };
+    if (_enCours) {
+      _encore = true;
+      return;
+    }
+    if (!_stockage.disponible) {
+      _enregistrerAncien();
+      return;
+    }
+    _enCours = true;
+    unawaited(() async {
+      try {
+        await _stockage.synchroniser(_entrees());
+      } catch (e) {
+        debugPrint('Droplet Web : enregistrement impossible ($e)');
+      } finally {
+        _enCours = false;
+        if (_encore) {
+          _encore = false;
+          _enregistrer();
+        }
+      }
+    }());
+  }
+
+  /// Repli sans IndexedDB : l'ancien bloc unique dans `localStorage`.
+  void _enregistrerAncien() {
+    final e = _entrees();
+    final etat = (jsonDecode(e['meta']!) as Map<String, dynamic>)
+      ..['messages'] = {
+        for (final x in e.entries)
+          if (x.key.startsWith('m:')) x.key.substring(2): jsonDecode(x.value),
+      };
     try {
       web.window.localStorage.setItem(_cle, jsonEncode(etat));
     } catch (e) {
@@ -1279,31 +1325,57 @@ class Depot extends ChangeNotifier {
     }
   }
 
-  void _charger() {
+  Future<void> _charger() async {
+    final ouvert = await _stockage.ouvrir();
+    if (ouvert) {
+      final entrees = await _stockage.toutLire();
+      if (entrees.containsKey('meta')) {
+        try {
+          _appliquer(jsonDecode(entrees['meta']!) as Map<String, dynamic>);
+          for (final e in entrees.entries) {
+            if (!e.key.startsWith('m:')) continue;
+            _messages[e.key.substring(2)] =
+                (jsonDecode(e.value) as List).map((m) => Message.fromJson((m as Map).cast<String, dynamic>())).toList();
+          }
+        } catch (e) {
+          debugPrint('Droplet Web : lecture impossible ($e)');
+        }
+        return;
+      }
+    }
+    // Première ouverture avec IndexedDB : on reprend l'ancien bloc
+    // `localStorage`, on l'écrit dans la base, puis on l'efface.
     try {
       final brut = web.window.localStorage.getItem(_cle);
       if (brut == null) return;
       final j = jsonDecode(brut) as Map<String, dynamic>;
-      profil = Profil.fromJson((j['profil'] as Map).cast<String, dynamic>());
-      reglages = ReglagesWeb.fromJson((j['reglages'] as Map).cast<String, dynamic>());
-      for (final c in (j['contacts'] as List)) {
-        final x = Contact.fromJson((c as Map).cast<String, dynamic>());
-        contacts[x.id] = x;
-      }
-      for (final d in (j['discussions'] as List)) {
-        final x = Discussion.fromJson((d as Map).cast<String, dynamic>());
-        discussions[x.id] = x;
-      }
+      _appliquer(j);
       (j['messages'] as Map).forEach((k, v) {
         _messages[k as String] = (v as List).map((m) => Message.fromJson((m as Map).cast<String, dynamic>())).toList();
       });
-      statuts.addAll((j['statuts'] as List).map((s) => Statut.fromJson((s as Map).cast<String, dynamic>())));
-      appels.addAll((j['appels'] as List).map((a) => Appel.fromJson((a as Map).cast<String, dynamic>())));
-      invitation = j['invitation'] as String?;
-      telephoneVu = j['telephoneVu'] as bool? ?? false;
+      if (ouvert && await _stockage.synchroniser(_entrees()) > 0) {
+        web.window.localStorage.removeItem(_cle);
+      }
     } catch (e) {
       debugPrint('Droplet Web : lecture impossible ($e)');
     }
+  }
+
+  void _appliquer(Map<String, dynamic> j) {
+    profil = Profil.fromJson((j['profil'] as Map).cast<String, dynamic>());
+    reglages = ReglagesWeb.fromJson((j['reglages'] as Map).cast<String, dynamic>());
+    for (final c in (j['contacts'] as List)) {
+      final x = Contact.fromJson((c as Map).cast<String, dynamic>());
+      contacts[x.id] = x;
+    }
+    for (final d in (j['discussions'] as List)) {
+      final x = Discussion.fromJson((d as Map).cast<String, dynamic>());
+      discussions[x.id] = x;
+    }
+    statuts.addAll((j['statuts'] as List).map((s) => Statut.fromJson((s as Map).cast<String, dynamic>())));
+    appels.addAll((j['appels'] as List).map((a) => Appel.fromJson((a as Map).cast<String, dynamic>())));
+    invitation = j['invitation'] as String?;
+    telephoneVu = j['telephoneVu'] as bool? ?? false;
   }
 
   // ══ LA DÉMONSTRATION ═════════════════════════════════════════════════

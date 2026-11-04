@@ -392,7 +392,12 @@ class _VueDiscussionState extends State<VueDiscussion> {
               child: Stack(
                 children: [
                         Positioned.fill(
-                          child: ListView.builder(
+                          // ⚠️ LE TEXTE DES MESSAGES SE SÉLECTIONNE À LA SOURIS, comme
+                          // sur toute page web (copier une adresse, un code, une
+                          // phrase). Flutter dessine sur un canvas : sans cette zone,
+                          // aucun mot du fil ne pouvait être sélectionné.
+                          child: SelectionArea(
+                            child: ListView.builder(
                               controller: _defilement,
                               reverse: true,
                               // Sur un grand écran, le fil reste une colonne de lecture au
@@ -432,7 +437,7 @@ class _VueDiscussionState extends State<VueDiscussion> {
                                 final e = elements[elements.length - i];
                                 return _construire(context, e, d, largeurMax, q);
                               },
-                            ),
+                            )),
                         ),
                   Positioned(
                     top: 0,
