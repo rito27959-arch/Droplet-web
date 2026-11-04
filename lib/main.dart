@@ -14,6 +14,8 @@
 //
 // Lancer : flutter run -d chrome
 // Construire : flutter build web --release   (sortie dans build/web)
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -34,6 +36,7 @@ import 'liaison/compte_lie.dart';
 import 'liaison/ecran_liaison.dart';
 import 'textes.dart';
 import 'web/navigateur.dart';
+import 'web/notifications_push.dart';
 import 'web/onglet_unique.dart';
 
 Future<void> main() async {
@@ -130,6 +133,8 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
     // Ce navigateur devient l'onglet actif ; un autre onglet plus récent
     // le mettra en veille (voir `onglet_unique.dart`).
     OngletUnique.annoncer(compte.peerId);
+    // Les notifications onglet fermé, si elles sont permises et allumées.
+    if (depot.reglages.notifications) unawaited(NotificationsPush.activer(transport.canal));
     OngletUnique.ailleurs.addListener(_enVeille);
     if (depot.profil.pseudo.isEmpty) depot.majProfil(pseudo: compte.pseudo);
     setState(() {
@@ -177,6 +182,7 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
 
   void _quitter() {
     final t = _depot?.transport;
+    if (t is TransportDroplet && _compte != null) unawaited(NotificationsPush.desactiver(t.canal));
     if (t is TransportDroplet) t.arreter();
     _depot?.reseau?.arreter();
     _depot?.reseau = null;
@@ -204,9 +210,16 @@ class _DropletWebState extends State<DropletWeb> with WidgetsBindingObserver {
       setState(() => _theme = r.theme);
     }
     Navigateur.titre(_depot!.totalNonLus);
+    // Le réglage « Notifications » commande aussi celles onglet fermé.
+    final t = _depot!.transport;
+    if (t is TransportDroplet && r.notifications != _notifsAllumees) {
+      _notifsAllumees = r.notifications;
+      unawaited(r.notifications ? NotificationsPush.activer(t.canal) : NotificationsPush.desactiver(t.canal));
+    }
   }
 
   ThemeChoisi _theme = ThemeChoisi.systeme;
+  bool? _notifsAllumees;
 
   @override
   void dispose() {

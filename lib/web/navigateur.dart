@@ -283,7 +283,7 @@ class Navigateur {
     try {
       final n = web.Notification(
         titre,
-        web.NotificationOptions(body: corps, icon: 'favicon.svg', silent: true),
+        web.NotificationOptions(body: corps, icon: 'icons/icone-192.png', silent: true),
       );
       n.addEventListener(
         'click',

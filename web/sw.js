@@ -81,6 +81,33 @@ self.addEventListener('fetch', (e) => {
   })());
 });
 
+// ── LES NOTIFICATIONS ONGLET FERMÉ ─────────────────────────────────────
+// La boîte aux lettres ne nous envoie RIEN d'autre qu'un réveil (voir
+// `droplet_mailbox/lib/push_web.dart`) : ni expéditeur, ni texte. On
+// écrit donc « Nouveau message », dans la langue du navigateur. Si Droplet
+// Web est déjà ouvert et visible, la page s'en charge elle-même : pas de
+// doublon.
+const NOUVEAU = {
+  fr: 'Nouveau message', en: 'New message', de: 'Neue Nachricht', es: 'Nuevo mensaje',
+  it: 'Nuovo messaggio', pt: 'Nova mensagem', ru: 'Новое сообщение', zh: '新消息',
+  ar: 'رسالة جديدة', hi: 'नया संदेश',
+};
+
+self.addEventListener('push', (e) => {
+  e.waitUntil((async () => {
+    const fenetres = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (fenetres.some((f) => f.visibilityState === 'visible' && f.focused)) return;
+    const langue = (self.navigator.language || 'en').slice(0, 2);
+    await self.registration.showNotification('Droplet', {
+      body: NOUVEAU[langue] || NOUVEAU.en,
+      icon: 'icons/icone-192.png',
+      badge: 'icons/badge-96.png',
+      tag: 'droplet-nouveau',
+      renotify: true,
+    });
+  })());
+});
+
 // Un clic sur une notification affichée par la page ramène à Droplet Web.
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();

@@ -180,6 +180,18 @@ class CanalTelephone {
   /// branché par [MultiAppareils].
   Future<Map<String, dynamic>?> Function(String de, Map<String, dynamic> p, DateTime quand)? autres;
 
+  /// Confie à la boîte l'adresse de notification de ce navigateur (Web
+  /// Push) : elle le réveillera quand un message arrive, onglet fermé.
+  Future<bool> inscrireNotifications(String endpoint) async {
+    final r = await _signee('POST', '/push/${Uri.encodeComponent(appareil)}', corps: jsonEncode({'endpoint': endpoint}));
+    return r.ok;
+  }
+
+  /// Plus de notifications onglet fermé pour ce navigateur.
+  Future<void> retirerNotifications() async {
+    await _signee('DELETE', '/push/${Uri.encodeComponent(appareil)}');
+  }
+
   /// Dépose [enveloppe] (déjà chiffrée) dans la boîte de [destinataire], au
   /// nom de ce navigateur — signé avec sa clé.
   Future<void> deposer(String destinataire, Map<String, dynamic> enveloppe) async {
