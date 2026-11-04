@@ -20,7 +20,18 @@ const VERSION = '__VERSION__';
 const CACHE = 'droplet-web-' + VERSION;
 const FIGES = ['/assets/', '/canvaskit/', '/icons/'];
 
-self.addEventListener('install', () => self.skipWaiting());
+// La coquille de l'app, gardée dès l'installation : sans elle, la toute
+// première visite (faite avant que ce service worker ne soit actif) ne
+// laissait rien à servir hors ligne.
+const COQUILLE = ['./', 'index.html', 'flutter_bootstrap.js', 'flutter.js', 'main.dart.js', 'manifest.json', 'favicon.svg'];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await Promise.all(COQUILLE.map((u) => cache.add(new Request(u, { cache: 'reload' })).catch(() => {})));
+    await self.skipWaiting();
+  })());
+});
 
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
@@ -58,8 +69,13 @@ self.addEventListener('fetch', (e) => {
       if (rep.ok) cache.put(req, rep.clone());
       return rep;
     } catch (err) {
-      const copie = await cache.match(req, { ignoreSearch: url.pathname === '/' || url.pathname.endsWith('.html') });
+      const copie = await cache.match(req, { ignoreSearch: true });
       if (copie) return copie;
+      // Une page (`/`, `/?apercu`…) : la coquille gardée.
+      if (req.mode === 'navigate') {
+        const coquille = (await cache.match('index.html')) || (await cache.match('./'));
+        if (coquille) return coquille;
+      }
       throw err;
     }
   })());
