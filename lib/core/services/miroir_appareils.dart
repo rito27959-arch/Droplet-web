@@ -441,9 +441,14 @@ class MiroirAppareils {
     final appareils = _appareils();
     if (appareils.isEmpty) return;
     final changes = <MeshMessage>[];
+    // Un message reçu que le web n'a jamais vu : il mérite une notification
+    // (une simple mise à jour — lu, réaction, modification — non).
+    var nouveauRecu = false;
+    final moi = _repo.myId;
     for (final m in _dernier) {
       final e = _empreinte(m);
       if (_empreintes[m.id] != e) {
+        if (_empreintes[m.id] == null && m.senderId != null && m.senderId != moi) nouveauRecu = true;
         _empreintes[m.id] = e;
         changes.add(m);
       }
@@ -452,7 +457,7 @@ class MiroirAppareils {
     final lot = _lot(changes);
     if (lot == null) return;
     for (final a in appareils) {
-      await _deposer(a, lot);
+      await _deposer(a, lot, notifier: nouveauRecu);
     }
   }
 
@@ -1089,7 +1094,10 @@ class MiroirAppareils {
     }
   }
 
-  Future<void> _deposer(AppareilLie a, Map<String, dynamic> lot) async {
+  /// [notifier] : ce lot contient un message reçu — la boîte réveille
+  /// alors le navigateur par une notification, même onglet fermé (`nt: 1`,
+  /// lu en clair par la boîte ; le contenu, lui, reste chiffré).
+  Future<void> _deposer(AppareilLie a, Map<String, dynamic> lot, {bool notifier = false}) async {
     // Chaque contact envoyé au web porte l'EMPREINTE de sa photo de
     // profil (16 caractères, ou rien) : le web demande la photo elle-même
     // (`avatars`) quand il ne l'a pas, ou quand elle a changé.
@@ -1110,6 +1118,7 @@ class MiroirAppareils {
         toPeerId: a.id,
         encryptedPayload: jsonEncode({
           'w': 1,
+          if (notifier) 'nt': 1,
           'c': base64Encode([...boite.cipherText, ...boite.mac.bytes]),
           'n': base64Encode(boite.nonce),
         }),
