@@ -12,4 +12,4 @@ export PATH="$PWD/flutter/bin:$PATH"
 flutter --version
 flutter config --enable-web --no-analytics
 flutter pub get
-flutter build web --release --no-tree-shake-icons
+flutter build web --release

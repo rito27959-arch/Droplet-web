@@ -33,7 +33,7 @@ jobs:
             flutter analyze --no-fatal-infos --no-fatal-warnings
             echo "analyse: $?"
             echo "== construction"
-            flutter build web --release --no-tree-shake-icons --no-web-resources-cdn
+            flutter build web --release --no-web-resources-cdn
             echo "construction: $?"
           } > journal.txt 2>&1
           cat journal.txt
