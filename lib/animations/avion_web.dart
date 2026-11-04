@@ -53,8 +53,8 @@ class JeuAvionWeb extends FlameGame {
   /// d'abord, puis redescend se poser.
   Offset pos(double q) {
     final haut = math.min(depart.dy, arrivee.dy) - 120;
-    final c1 = Offset(depart.dx + 30, haut);
-    final c2 = Offset(arrivee.dx + 90, haut - 20);
+    final c1 = Offset(depart.dx - 40, haut);
+    final c2 = Offset(arrivee.dx + 30, haut - 30);
     final v = 1 - q;
     return depart * (v * v * v) + c1 * (3 * v * v * q) + c2 * (3 * v * q * q) + arrivee * (q * q * q);
   }
@@ -139,7 +139,7 @@ class _Avion extends Component with HasGameReference<JeuAvionWeb> {
     // Déplié au départ (0 → 1 en 0,15 s), replié à l'arrivée.
     final ouverture = Curves.easeOutBack.transform((j.t / 0.15).clamp(0.0, 1.0)) *
         (1 - Curves.easeIn.transform(((q - 0.85) / 0.15).clamp(0.0, 1.0)) * 0.6);
-    final e = 15.0 * ouverture;
+    final e = 21.0 * ouverture;
     if (e <= 0) return;
 
     canvas.save();
