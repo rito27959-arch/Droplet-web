@@ -6386,4 +6386,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get offReadOnly => 'وحده Droplet ينشر هنا: مستجدات التطبيق، موقّعة ويتحقق منها هاتفك.';
+
+  @override
+  String get autTitle => 'تسجيل الدخول إلى تطبيق';
+
+  @override
+  String get autDemande => 'يريد تسجيل الدخول باستخدام حسابك في Droplet.';
+
+  @override
+  String get autRecoit => 'سيتلقى التطبيق اسم المستخدم الخاص بك ومعرّفًا خاصًا به، لاستعادة تقدمك على هاتف آخر.';
+
+  @override
+  String get autPasVu => 'لن يرى رسائلك ولا جهات اتصالك ولا معرّفك في Droplet.';
+
+  @override
+  String get autAutoriser => 'سماح';
+
+  @override
+  String get autRefuser => 'رفض';
+
+  @override
+  String get autInvalide => 'طلب تسجيل الدخول هذا غير صالح.';
+
+  @override
+  String get autSansCompte => 'أنشئ حسابك في Droplet أولًا، ثم أعد المحاولة من التطبيق.';
 }

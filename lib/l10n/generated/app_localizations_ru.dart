@@ -6375,4 +6375,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get offReadOnly => 'Здесь пишет только Droplet: новости приложения, подписанные и проверенные вашим телефоном.';
+
+  @override
+  String get autTitle => 'Вход в приложение';
+
+  @override
+  String get autDemande => 'хочет войти с вашей учётной записью Droplet.';
+
+  @override
+  String get autRecoit => 'Приложение получит ваше имя пользователя и собственный идентификатор, чтобы вы могли восстановить прогресс на другом телефоне.';
+
+  @override
+  String get autPasVu => 'Оно не увидит ваши сообщения, контакты и идентификатор Droplet.';
+
+  @override
+  String get autAutoriser => 'Разрешить';
+
+  @override
+  String get autRefuser => 'Отклонить';
+
+  @override
+  String get autInvalide => 'Этот запрос на вход недействителен.';
+
+  @override
+  String get autSansCompte => 'Сначала создайте учётную запись Droplet, затем повторите попытку из приложения.';
 }

@@ -47,6 +47,7 @@ import 'core/services/reponses_differees.dart';
 import 'features/premium/premium_screen.dart';
 import 'core/services/raccourcis_conversation.dart';
 import 'features/settings/stockage_screen.dart';
+import 'features/autoriser/autoriser_app.dart';
 import 'features/invitation/inviter_screen.dart';
 import 'core/services/storage_service.dart';
 import 'features/chat/media_kind.dart';
@@ -793,6 +794,14 @@ final _router = GoRouter(
       pageBuilder: (context, state) => _estLarge(context)
           ? const NoTransitionPage<void>(child: _DeuxVolets())
           : _fadePage(const HomeShell()),
+    ),
+    // « Se connecter avec Droplet » depuis une autre app (Kunfox) :
+    // `droplet://droplet/autoriser?app=…&cle=…&etat=…` (voir `autoriser_app.dart`).
+    GoRoute(
+      path: '/autoriser',
+      pageBuilder: (context, state) => _pushPage(
+        AutoriserAppScreen(parametres: state.uri.queryParameters),
+      ),
     ),
     // Lien d'invitation : `droplet://droplet/invite?d=…` (voir `invitation.dart`).
     GoRoute(

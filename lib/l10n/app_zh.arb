@@ -2220,5 +2220,13 @@
   "stkExportUnavailable": "暂时无法打开其他应用。",
   "stkShareChooser": "发送贴纸",
   "offSubtitle": "官方账号",
-  "offReadOnly": "只有 Droplet 在此发布：应用新功能，已签名并由你的手机验证。"
+  "offReadOnly": "只有 Droplet 在此发布：应用新功能，已签名并由你的手机验证。",
+  "autTitle": "登录应用",
+  "autDemande": "想使用你的 Droplet 帐户登录。",
+  "autRecoit": "该应用将收到你的用户名和一个专属标识符，以便在另一部手机上恢复你的进度。",
+  "autPasVu": "它看不到你的消息、联系人或 Droplet 标识符。",
+  "autAutoriser": "允许",
+  "autRefuser": "拒绝",
+  "autInvalide": "此登录请求无效。",
+  "autSansCompte": "请先创建你的 Droplet 帐户，然后从该应用重试。"
 }

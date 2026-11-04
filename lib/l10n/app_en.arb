@@ -2220,5 +2220,13 @@
   "stkExportUnavailable": "Couldn't open the other app right now.",
   "stkShareChooser": "Send sticker",
   "offSubtitle": "Official account",
-  "offReadOnly": "Only Droplet posts here: app news, signed and verified by your phone."
+  "offReadOnly": "Only Droplet posts here: app news, signed and verified by your phone.",
+  "autTitle": "Sign in to an app",
+  "autDemande": "wants to sign in with your Droplet account.",
+  "autRecoit": "The app will receive your username and an identifier of its own, so you can recover your progress on another phone.",
+  "autPasVu": "It won't see your messages, your contacts or your Droplet ID.",
+  "autAutoriser": "Allow",
+  "autRefuser": "Decline",
+  "autInvalide": "This sign-in request isn't valid.",
+  "autSansCompte": "Create your Droplet account first, then try again from the app."
 }

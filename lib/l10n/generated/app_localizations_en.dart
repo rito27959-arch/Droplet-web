@@ -6301,4 +6301,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get offReadOnly => 'Only Droplet posts here: app news, signed and verified by your phone.';
+
+  @override
+  String get autTitle => 'Sign in to an app';
+
+  @override
+  String get autDemande => 'wants to sign in with your Droplet account.';
+
+  @override
+  String get autRecoit => 'The app will receive your username and an identifier of its own, so you can recover your progress on another phone.';
+
+  @override
+  String get autPasVu => 'It won\'t see your messages, your contacts or your Droplet ID.';
+
+  @override
+  String get autAutoriser => 'Allow';
+
+  @override
+  String get autRefuser => 'Decline';
+
+  @override
+  String get autInvalide => 'This sign-in request isn\'t valid.';
+
+  @override
+  String get autSansCompte => 'Create your Droplet account first, then try again from the app.';
 }

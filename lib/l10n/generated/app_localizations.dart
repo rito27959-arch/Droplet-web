@@ -11160,6 +11160,54 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Lampe'**
   String get adTorch;
+
+  /// No description provided for @autTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion à une app'**
+  String get autTitle;
+
+  /// No description provided for @autDemande.
+  ///
+  /// In fr, this message translates to:
+  /// **'veut se connecter avec ton compte Droplet.'**
+  String get autDemande;
+
+  /// No description provided for @autRecoit.
+  ///
+  /// In fr, this message translates to:
+  /// **'L'app recevra ton pseudo et un identifiant qui lui est propre, pour retrouver ta progression sur un autre téléphone.'**
+  String get autRecoit;
+
+  /// No description provided for @autPasVu.
+  ///
+  /// In fr, this message translates to:
+  /// **'Elle ne verra ni tes messages, ni tes contacts, ni ton identifiant Droplet.'**
+  String get autPasVu;
+
+  /// No description provided for @autAutoriser.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autoriser'**
+  String get autAutoriser;
+
+  /// No description provided for @autRefuser.
+  ///
+  /// In fr, this message translates to:
+  /// **'Refuser'**
+  String get autRefuser;
+
+  /// No description provided for @autInvalide.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette demande de connexion n'est pas valide.'**
+  String get autInvalide;
+
+  /// No description provided for @autSansCompte.
+  ///
+  /// In fr, this message translates to:
+  /// **'Crée d'abord ton compte Droplet, puis réessaie depuis l'app.'**
+  String get autSansCompte;
 }
 
 class _AppLocalizationsDelegate

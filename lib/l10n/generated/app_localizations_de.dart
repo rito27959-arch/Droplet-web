@@ -6319,4 +6319,28 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get offReadOnly => 'Nur Droplet postet hier: Neuigkeiten der App, signiert und von deinem Telefon geprüft.';
+
+  @override
+  String get autTitle => 'Anmeldung bei einer App';
+
+  @override
+  String get autDemande => 'möchte sich mit deinem Droplet-Konto anmelden.';
+
+  @override
+  String get autRecoit => 'Die App erhält deinen Benutzernamen und eine eigene Kennung, damit du deinen Fortschritt auf einem anderen Telefon wiederfindest.';
+
+  @override
+  String get autPasVu => 'Sie sieht weder deine Nachrichten noch deine Kontakte noch deine Droplet-ID.';
+
+  @override
+  String get autAutoriser => 'Erlauben';
+
+  @override
+  String get autRefuser => 'Ablehnen';
+
+  @override
+  String get autInvalide => 'Diese Anmeldeanfrage ist ungültig.';
+
+  @override
+  String get autSansCompte => 'Erstelle zuerst dein Droplet-Konto und versuche es dann erneut aus der App.';
 }

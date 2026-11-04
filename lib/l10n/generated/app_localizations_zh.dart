@@ -6132,4 +6132,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get offReadOnly => '只有 Droplet 在此发布：应用新功能，已签名并由你的手机验证。';
+
+  @override
+  String get autTitle => '登录应用';
+
+  @override
+  String get autDemande => '想使用你的 Droplet 帐户登录。';
+
+  @override
+  String get autRecoit => '该应用将收到你的用户名和一个专属标识符，以便在另一部手机上恢复你的进度。';
+
+  @override
+  String get autPasVu => '它看不到你的消息、联系人或 Droplet 标识符。';
+
+  @override
+  String get autAutoriser => '允许';
+
+  @override
+  String get autRefuser => '拒绝';
+
+  @override
+  String get autInvalide => '此登录请求无效。';
+
+  @override
+  String get autSansCompte => '请先创建你的 Droplet 帐户，然后从该应用重试。';
 }

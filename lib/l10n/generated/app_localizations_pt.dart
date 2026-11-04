@@ -6311,4 +6311,28 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get offReadOnly => 'Só o Droplet publica aqui: novidades do app, assinadas e verificadas pelo seu telefone.';
+
+  @override
+  String get autTitle => 'Entrar num app';
+
+  @override
+  String get autDemande => 'quer entrar com a sua conta Droplet.';
+
+  @override
+  String get autRecoit => 'O app vai receber o seu nome de utilizador e um identificador próprio, para recuperar o seu progresso noutro telemóvel.';
+
+  @override
+  String get autPasVu => 'Não verá as suas mensagens, os seus contactos nem o seu identificador Droplet.';
+
+  @override
+  String get autAutoriser => 'Permitir';
+
+  @override
+  String get autRefuser => 'Recusar';
+
+  @override
+  String get autInvalide => 'Este pedido de início de sessão não é válido.';
+
+  @override
+  String get autSansCompte => 'Crie primeiro a sua conta Droplet e tente de novo a partir do app.';
 }

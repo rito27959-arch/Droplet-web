@@ -2220,5 +2220,13 @@
   "stkExportUnavailable": "Não foi possível abrir o outro app agora.",
   "stkShareChooser": "Enviar sticker",
   "offSubtitle": "Conta oficial",
-  "offReadOnly": "Só o Droplet publica aqui: novidades do app, assinadas e verificadas pelo seu telefone."
+  "offReadOnly": "Só o Droplet publica aqui: novidades do app, assinadas e verificadas pelo seu telefone.",
+  "autTitle": "Entrar num app",
+  "autDemande": "quer entrar com a sua conta Droplet.",
+  "autRecoit": "O app vai receber o seu nome de utilizador e um identificador próprio, para recuperar o seu progresso noutro telemóvel.",
+  "autPasVu": "Não verá as suas mensagens, os seus contactos nem o seu identificador Droplet.",
+  "autAutoriser": "Permitir",
+  "autRefuser": "Recusar",
+  "autInvalide": "Este pedido de início de sessão não é válido.",
+  "autSansCompte": "Crie primeiro a sua conta Droplet e tente de novo a partir do app."
 }

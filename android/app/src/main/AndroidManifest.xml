@@ -85,6 +85,11 @@
          sans ce bloc, il lui est tout simplement invisible et « Lire »
          ne produit aucun son, sans la moindre erreur. -->
     <queries>
+        <!-- Kunfox : Droplet lui rend la main après « Se connecter avec Droplet ». -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="kunfox" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
