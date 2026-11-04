@@ -1248,10 +1248,16 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
                       Icon(Icons.group_rounded, size: 14, color: OuroColors.secondaryLabel),
                       const SizedBox(width: 4),
                     ],
-                    // `Expanded` : le nom prend toute la place et POUSSE
-                    // l'heure au bord droit.
-                    Flexible(
-                      child: Text(
+                    // ⚠️ `Expanded` AUTOUR DU NOM ET DE LA COCHE, puis `Flexible`
+                    // pour le nom seul. Avant, un `Flexible` suivi d'un
+                    // `Spacer` se partageaient la place à parts égales :
+                    // l'heure flottait au milieu de la ligne, à une position
+                    // différente pour chaque discussion.
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
                         c.peerId == CompteDroplet.id
                             ? CompteDroplet.pseudo
                             : titreLisible(
@@ -1269,15 +1275,17 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
                           fontWeight: unread ? FontWeight.w700 : null,
                         ),
                       ),
+                          ),
+                          // La coche officielle, posée par le code pour cet
+                          // identifiant seul : un pair qui se renommerait
+                          // « Droplet » ne l'aura jamais.
+                          if (c.peerId == CompteDroplet.id) ...[
+                            const SizedBox(width: 4),
+                            Icon(Icons.verified_rounded, size: 16, color: OuroColors.accent),
+                          ],
+                        ],
+                      ),
                     ),
-                    // La coche officielle, posée par le code pour cet
-                    // identifiant seul : un pair qui se renommerait
-                    // « Droplet » ne l'aura jamais.
-                    if (c.peerId == CompteDroplet.id) ...[
-                      const SizedBox(width: 4),
-                      Icon(Icons.verified_rounded, size: 16, color: OuroColors.accent),
-                    ],
-                    const Spacer(),
                     const SizedBox(width: 8),
                     Text(
                       formatMessageTime(
