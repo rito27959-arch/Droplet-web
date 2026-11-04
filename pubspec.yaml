@@ -28,6 +28,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   # L'accès au navigateur (nom du navigateur pour « Chrome sur macOS »).
   web: ^1.1.0
+  # Les animations « jeu » (l'avion en papier), chargées à la demande.
+  flame: ^1.18.0
 
 dev_dependencies:
   flutter_test:

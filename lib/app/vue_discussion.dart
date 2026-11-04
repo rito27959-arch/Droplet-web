@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import '../animations/lanceur_avion.dart';
 import '../design_system/ouro_colors.dart';
 import '../design_system/ouro_typography.dart';
 import '../donnees/depot.dart';
@@ -156,9 +157,30 @@ class _VueDiscussionState extends State<VueDiscussion> {
     } else {
       depot.envoyerTexte(d, texte, reponseA: _reponse?.id);
       if (depot.reglages.sons) Navigateur.ploc(envoi: true);
+      _avion(texte);
     }
     _vider();
     _enBas();
+  }
+
+  /// L'avion en papier (Flame), une fois sur plusieurs : il part du bouton
+  /// d'envoi, à droite de la barre de saisie, et se pose là où la nouvelle
+  /// bulle apparaît, au bas de la colonne de lecture.
+  void _avion(String texte) {
+    final boite = context.findRenderObject();
+    if (boite is! RenderBox || !boite.hasSize) return;
+    final w = boite.size.width, h = boite.size.height;
+    final marge = w > 700 ? ((w - 820) / 2).clamp(40.0, double.infinity) : 14.0;
+    final origine = boite.localToGlobal(Offset.zero);
+    unawaited(LanceurAvion.peutEtre(
+      context,
+      discussionId: widget.discussion.id,
+      texte: texte,
+      depart: origine + Offset(w - 34, h - 30),
+      arrivee: origine + Offset(w - marge - 60, h - _hautBas - 34),
+      accent: OuroColors.accent,
+      sombre: OuroColors.isDark,
+    ));
   }
 
   void _vider() {

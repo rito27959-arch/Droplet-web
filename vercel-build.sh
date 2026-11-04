@@ -12,7 +12,7 @@ export PATH="$PWD/flutter/bin:$PATH"
 flutter --version
 flutter config --enable-web --no-analytics
 flutter pub get
-flutter build web --release --pwa-strategy=none
+flutter build web --release --pwa-strategy=none --no-web-resources-cdn
 
 # Le service worker reçoit le numéro de cette construction : une nouvelle
 # version installe un nouveau cache et efface l'ancien (voir web/sw.js).
