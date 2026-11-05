@@ -58,7 +58,7 @@ void main() {
             final l10n = AppLocalizations.of(context);
             final haut = MediaQuery.paddingOf(context).top;
             return Scaffold(
-              backgroundColor: OuroColors.systemBackground,
+              backgroundColor: fondVitrine,
               body: Stack(children: [
                 const Positioned.fill(child: FondPremium()),
                 ListView(

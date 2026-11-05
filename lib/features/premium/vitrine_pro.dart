@@ -112,7 +112,7 @@ class _FondPremiumState extends State<FondPremium> with SingleTickerProviderStat
             t: _temps.value,
             etincelles: _etincelles,
             sombre: OuroColors.isDark,
-            fond: OuroColors.systemBackground,
+            fond: fondVitrine,
             // Le centre de l'emblème (voir la mise en page de l'écran).
             centreY: haut + 34 + 88,
           ),
@@ -229,14 +229,11 @@ class EmblemePro extends StatelessWidget {
   Widget build(BuildContext context) {
     final reduit = OuroMotion.of(context).reduceMotion;
     final cote = taille * 1.7;
-    Widget goutte(double alphaReflet) => ShaderMask(
-          blendMode: BlendMode.srcIn,
-          shaderCallback: (r) => const LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: degrade,
-          ).createShader(r),
-          child: Icon(Icons.water_drop_rounded, size: cote * 0.92),
+    // Une goutte DESSINÉE, pas l'icône « goutte » : celle-ci porte un trait
+    // intérieur qui, en grand, ressemblait à un sourire.
+    Widget goutte(bool reflet) => CustomPaint(
+          size: Size(cote * 0.62, cote * 0.8),
+          painter: _Goutte(reflet: reflet),
         );
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: reduit ? 1 : 0, end: 1),
@@ -257,33 +254,13 @@ class EmblemePro extends StatelessWidget {
               offset: Offset(0, taille * 0.06),
               child: ImageFiltered(
                 imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: Opacity(opacity: 0.55, child: goutte(0)),
+                child: Opacity(opacity: 0.55, child: goutte(false)),
               ),
             ),
-            goutte(1),
-            // Le reflet : un éclat clair en haut à gauche de la goutte.
+            goutte(true),
             Positioned(
-              left: cote * 0.33,
-              top: cote * 0.42,
-              child: Transform.rotate(
-                angle: -0.5,
-                child: Container(
-                  width: cote * 0.1,
-                  height: cote * 0.2,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(cote),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.white.withValues(alpha: 0.55), Colors.white.withValues(alpha: 0)],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              right: cote * 0.27,
-              top: cote * 0.16,
+              right: cote * 0.2,
+              top: cote * 0.12,
               child: Icon(Icons.auto_awesome_rounded, color: Colors.white.withValues(alpha: 0.95), size: taille * 0.26),
             ),
           ],
@@ -291,6 +268,74 @@ class EmblemePro extends StatelessWidget {
       ),
     );
   }
+}
+
+/// La goutte de l'emblème : pointe en haut, ventre rond en bas, le
+/// dégradé de l'emblème, et un reflet doux en haut à gauche du ventre.
+class _Goutte extends CustomPainter {
+  _Goutte({required this.reflet});
+
+  final bool reflet;
+
+  @override
+  void paint(Canvas canvas, Size t) {
+    final w = t.width, h = t.height;
+    final r = w * 0.5;
+    final c = Offset(w / 2, h - r);
+    const pointe = 0.0;
+    final chemin = Path()
+      ..moveTo(w / 2, pointe)
+      ..cubicTo(w / 2 + r * 0.18, h * 0.16, c.dx + r, c.dy - r * 0.9, c.dx + r, c.dy)
+      ..arcToPoint(Offset(c.dx - r, c.dy), radius: Radius.circular(r), clockwise: true)
+      ..cubicTo(c.dx - r, c.dy - r * 0.9, w / 2 - r * 0.18, h * 0.16, w / 2, pointe)
+      ..close();
+    canvas.drawPath(
+      chemin,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: EmblemePro.degrade,
+        ).createShader(Offset.zero & t),
+    );
+    if (!reflet) return;
+    // Un éclat clair, allongé, sur le haut gauche du ventre.
+    canvas.save();
+    canvas.clipPath(chemin);
+    final eclat = Rect.fromCenter(
+      center: Offset(c.dx - r * 0.42, c.dy - r * 0.25),
+      width: r * 0.32,
+      height: r * 0.75,
+    );
+    canvas.translate(eclat.center.dx, eclat.center.dy);
+    canvas.rotate(0.45);
+    canvas.translate(-eclat.center.dx, -eclat.center.dy);
+    canvas.drawOval(
+      eclat,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.white.withValues(alpha: 0.5), Colors.white.withValues(alpha: 0)],
+        ).createShader(eclat),
+    );
+    canvas.restore();
+    // Une lumière douce en bas à droite : le volume.
+    canvas.save();
+    canvas.clipPath(chemin);
+    canvas.drawCircle(
+      Offset(c.dx + r * 0.5, c.dy + r * 0.55),
+      r * 0.9,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [Colors.white.withValues(alpha: 0.16), Colors.white.withValues(alpha: 0)],
+        ).createShader(Rect.fromCircle(center: Offset(c.dx + r * 0.5, c.dy + r * 0.55), radius: r * 0.9)),
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_Goutte ancien) => ancien.reflet != reflet;
 }
 
 /// « Droplet Pro » en dégradé, comme un nom de produit, pas un titre de
@@ -427,6 +472,11 @@ class CartesOffresPro extends StatelessWidget {
     );
   }
 }
+
+/// Le fond de la page : noir en sombre ; en clair, le gris des listes
+/// iOS, pour que les cartes blanches s'en détachent.
+Color get fondVitrine =>
+    OuroColors.isDark ? OuroColors.systemBackground : const Color(0xFFF2F2F7);
 
 /// Le fond des cartes de la vitrine : un gris bleuté en sombre (comme les
 /// cartes de Telegram sur son fond), blanc en clair.
@@ -744,7 +794,7 @@ class BarreAchatPro extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.fromLTRB(16, 12, 16, math.max(bas, 12)),
           decoration: BoxDecoration(
-            color: OuroColors.systemBackground.withValues(alpha: sombre ? 0.72 : 0.78),
+            color: fondVitrine.withValues(alpha: sombre ? 0.72 : 0.8),
             border: Border(
               top: BorderSide(
                 color: sombre ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),

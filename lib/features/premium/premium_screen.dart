@@ -504,7 +504,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
     return IosMagnifierOverlay(
       child: Scaffold(
-        backgroundColor: OuroColors.systemBackground,
+        backgroundColor: fondVitrine,
         body: Stack(
           children: [
             const Positioned.fill(child: FondPremium()),
