@@ -1383,6 +1383,29 @@ class AppLocalizationsHi extends AppLocalizations {
   String get pmTitle => 'Droplet Pro';
 
   @override
+  String get pmHeroTagline => 'वॉइस नोट टेक्स्ट में, अनुवाद, एनिमेटेड स्टिकर, पूरी गैलरी। एक बार भुगतान, हमेशा के लिए आपका।';
+
+  @override
+  String get pmTrustOnce => 'एकमुश्त भुगतान';
+
+  @override
+  String get pmTrustNoSub => 'कोई सब्सक्रिप्शन नहीं';
+
+  @override
+  String get pmTrustOffline => 'ऑफ़लाइन चलता है';
+
+  @override
+  String get pmBestValue => 'सबसे पूर्ण';
+
+  @override
+  String get pmCtaFootnote => 'Mobile Money से एक बार भुगतान · बाद में कोई कटौती नहीं';
+
+  @override
+  String pmCtaUnlock(String prix) {
+    return '$prix में अनलॉक करें';
+  }
+
+  @override
   String get pmNeverAskTitle => 'जो Droplet\nकभी नहीं माँगेगा';
 
   @override

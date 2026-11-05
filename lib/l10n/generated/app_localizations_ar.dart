@@ -1409,6 +1409,29 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pmTitle => 'Droplet Pro';
 
   @override
+  String get pmHeroTagline => 'الرسائل الصوتية نصًا، الترجمة، الملصقات المتحركة، والمعرض كاملًا. ادفع مرة واحدة، ويبقى لك للأبد.';
+
+  @override
+  String get pmTrustOnce => 'دفعة واحدة';
+
+  @override
+  String get pmTrustNoSub => 'بلا اشتراك';
+
+  @override
+  String get pmTrustOffline => 'يعمل دون اتصال';
+
+  @override
+  String get pmBestValue => 'الأكثر اكتمالًا';
+
+  @override
+  String get pmCtaFootnote => 'دفعة واحدة عبر Mobile Money · لا خصومات بعدها';
+
+  @override
+  String pmCtaUnlock(String prix) {
+    return 'افتح مقابل $prix';
+  }
+
+  @override
   String get pmNeverAskTitle => 'ما لن يطلبه\nDroplet أبدًا';
 
   @override

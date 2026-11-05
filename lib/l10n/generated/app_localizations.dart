@@ -3030,6 +3030,48 @@ abstract class AppLocalizations {
   /// **'Droplet Pro'**
   String get pmTitle;
 
+  /// No description provided for @pmHeroTagline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos vocaux en texte, la traduction, les autocollants animés, toute la galerie. Payé une fois, à vous pour toujours.'**
+  String get pmHeroTagline;
+
+  /// No description provided for @pmTrustOnce.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paiement unique'**
+  String get pmTrustOnce;
+
+  /// No description provided for @pmTrustNoSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sans abonnement'**
+  String get pmTrustNoSub;
+
+  /// No description provided for @pmTrustOffline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Marche hors ligne'**
+  String get pmTrustOffline;
+
+  /// No description provided for @pmBestValue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le plus complet'**
+  String get pmBestValue;
+
+  /// No description provided for @pmCtaFootnote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Payé une fois par Mobile Money · aucun prélèvement ensuite'**
+  String get pmCtaFootnote;
+
+  /// No description provided for @pmCtaUnlock.
+  ///
+  /// In fr, this message translates to:
+  /// **'Débloquer pour {prix}'**
+  String pmCtaUnlock(String prix);
+
   /// No description provided for @pmNeverAskTitle.
   ///
   /// In fr, this message translates to:

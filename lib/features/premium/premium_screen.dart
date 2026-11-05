@@ -42,10 +42,8 @@ import '../../core/services/premium_service.dart';
 import '../../design_system/design_tokens.dart';
 import '../../design_system/ouro_colors.dart';
 import '../../design_system/ouro_haptics.dart';
-import '../../design_system/ouro_scaffold.dart';
 import '../../design_system/ouro_typography.dart';
 import '../../design_system/liquid_bridge.dart';
-import '../../shared/widgets/premium_badge.dart';
 import '../../shared/widgets/success_seal.dart';
 import '../../shared/widgets/ios_magnifier_overlay.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -53,9 +51,8 @@ import '../../design_system/ouro_motion.dart';
 import '../../design_system/ouro_spinner.dart';
 import '../../shared/widgets/afficher_toast.dart';
 import '../../design_system/ouro_retour_ios.dart';
-import 'avantages_pro.dart';
 import 'avantages_screen.dart';
-import '../../design_system/ouro_list.dart';
+import 'vitrine_pro.dart';
 
 /// Les deux numéros où arrive l'argent.
 ///
@@ -205,11 +202,32 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   /// liste d'avantages.
   bool _proChoisi = true;
 
+  /// Change à chaque `setState` : les feuilles (paiement, code), qui ne
+  /// font pas partie de l'arbre de l'écran, se redessinent avec lui.
+  final ValueNotifier<int> _rev = ValueNotifier<int>(0);
+
+  /// La feuille ouverte (paiement ou code), pour la refermer au succès.
+  BuildContext? _feuille;
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    _rev.value++;
+  }
+
   @override
   void dispose() {
     _codeCtrl.dispose();
     _telCtrl.dispose();
+    _rev.dispose();
     super.dispose();
+  }
+
+  /// Referme la feuille de paiement ou de code avant de fêter l'achat.
+  void _fermerFeuille() {
+    final f = _feuille;
+    _feuille = null;
+    if (f != null && f.mounted) Navigator.of(f).pop();
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -279,6 +297,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
       _messagePaiement = null;
     });
 
+    if (niveau != null) _fermerFeuille();
     if (niveau == null) {
       // Le serveur a bien renvoyé quelque chose, mais la signature ne
       // passe pas. C'est anormal — et on ne débloque surtout pas « quand
@@ -304,27 +323,13 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   final GlobalKey _clePaiement = GlobalKey();
 
   Future<void> _allerAuPaiement() async {
-    // Le cadre a besoin d'une image pour que la liste soit posée avant
-    // qu'on lui demande de faire défiler.
+    // Depuis l'écran d'explications : il vient de se refermer ; la feuille
+    // de paiement s'ouvre à sa place.
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
-    final cible = _clePaiement.currentContext;
-    if (cible == null) return;
-    await Scrollable.ensureVisible(
-      cible,
-      duration: const Duration(milliseconds: 420),
-      curve: Curves.easeOutCubic,
-      alignment: 0.18,
-    );
-    if (!mounted) return;
-    OuroHaptics.light();
-    setState(() => _souligneCible = true);
-    await Future<void>.delayed(const Duration(milliseconds: 1400));
-    if (mounted) setState(() => _souligneCible = false);
+    await _ouvrirPaiement();
   }
 
-  /// Le halo qui dit « c'est ici » après un saut, puis s'éteint.
-  bool _souligneCible = false;
 
   Future<void> _coller() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
@@ -355,6 +360,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
     _codeCtrl.clear();
     if (!mounted) return;
+    _fermerFeuille();
     await SuccessSeal.show(
       context,
       icon: Icons.auto_awesome_rounded,
@@ -365,317 +371,235 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     );
   }
 
+  // ─────────────────────────────────────────────────────────────
+  //  LES FEUILLES : payer, ou entrer un code
+  // ─────────────────────────────────────────────────────────────
+
+  /// Une feuille de verre qui monte du bas : la poignée, un titre, puis
+  /// le contenu — redessiné à chaque changement d'état de l'écran.
+  Future<void> _feuilleVerre({
+    required String titre,
+    required List<Widget> Function(BuildContext) contenu,
+  }) async {
+    OuroHaptics.light();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (feuille) {
+        _feuille = feuille;
+        return ValueListenableBuilder<int>(
+          valueListenable: _rev,
+          builder: (feuille, _, _) => Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(feuille).bottom),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(feuille).height * 0.9),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: OuroColors.secondarySystemBackground,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 38,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: OuroColors.tertiaryLabel.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          titre,
+                          textAlign: TextAlign.center,
+                          style: OuroTypography.title3.copyWith(
+                            color: OuroColors.label,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        ...contenu(feuille),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    _feuille = null;
+    if (mounted) setState(() => _erreur = null);
+  }
+
+  Future<void> _ouvrirPaiement() {
+    final l10n = AppLocalizations.of(context);
+    final code = ref.read(premiumProvider.notifier).codeAppareil;
+    final montant = _proChoisi ? kPrixPro : kPrixPack;
+    return _feuilleVerre(
+      titre: '${_proChoisi ? l10n.pmTitle : l10n.pmPackTitle} · ${prixLisible(montant)}',
+      contenu: (_) => [
+        if (PaiementService.disponible) ...[
+          _PayerMaintenant(
+            key: _clePaiement,
+            controller: _telCtrl,
+            montant: montant,
+            occupe: _paiementEnCours,
+            message: _messagePaiement,
+            erreur: _erreur,
+            onPayer: _payer,
+          ),
+          const SizedBox(height: DesignTokens.space6),
+        ],
+        _CommentFaire(code: code, pro: _proChoisi, secours: PaiementService.disponible),
+        const SizedBox(height: DesignTokens.space5),
+        _SaisieCode(
+          controller: _codeCtrl,
+          occupe: _verification,
+          erreur: _erreur,
+          onColler: _coller,
+          onValider: _valider,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _ouvrirCode() {
+    final l10n = AppLocalizations.of(context);
+    final code = ref.read(premiumProvider.notifier).codeAppareil;
+    return _feuilleVerre(
+      titre: l10n.pmAlreadyPaidRestore,
+      contenu: (_) => [
+        _SaisieCode(
+          controller: _codeCtrl,
+          occupe: _verification,
+          erreur: _erreur,
+          onColler: _coller,
+          onValider: _valider,
+        ),
+        const SizedBox(height: DesignTokens.space5),
+        _CommentFaire(code: code, pro: _proChoisi, secours: true),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final niveau = ref.watch(premiumProvider);
-    final code = ref.watch(premiumProvider.notifier).codeAppareil;
+    final l10n = AppLocalizations.of(context);
+    final haut = MediaQuery.paddingOf(context).top;
+    final actif = niveau != NiveauPremium.aucun;
+    final montant = _proChoisi ? kPrixPro : kPrixPack;
 
     return IosMagnifierOverlay(
-      child: OuroLargeTitleScaffold(
-      title: AppLocalizations.of(context).pmTitle,
-      backgroundColor: OuroColors.systemBackground,
-      leading: const OuroBackButton(),
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DesignTokens.screenMargin,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (niveau != NiveauPremium.aucun)
-                  _Actif(niveau: niveau)
-                else ...[
-                  const _Etoile(),
-                  const SizedBox(height: DesignTokens.space5),
-                  _Offres(
-                    proChoisi: _proChoisi,
-                    onChoisir: (pro) {
-                      OuroHaptics.selection();
-                      setState(() => _proChoisi = pro);
-                    },
-                  ),
-
-                  // Ce que Pro apporte, avantage par avantage. Une ligne
-                  // touchée ouvre l'explication en plein écran, comme chez
-                  // Telegram : on ne décide pas d'un achat sur trois mots.
-                  const SizedBox(height: DesignTokens.space6),
-                  // ⚠️ IL Y AVAIT ICI DEUX LISTES L'UNE SOUS L'AUTRE —
-                  // « Ce que Pro apporte » et « Ce que le pack ouvre » —
-                  // qui énuméraient LES MÊMES fonctions sous des noms
-                  // différents, avec deux styles d'illustration et deux
-                  // boutons qui ne faisaient pas la même chose. Une seule
-                  // liste reste, tirée du seul catalogue.
-                  _ListeAvantages(
-                    onOuvrir: (i) => ouvrirAvantagesPro(
-                      context,
-                      depart: i,
-                      libelleAchat: AppLocalizations.of(context).avUnlock,
-                      onAcheter: _allerAuPaiement,
-                    ),
-                  ),
-                  if (PaiementService.disponible) ...[
-                    const SizedBox(height: DesignTokens.space6),
-                    _PayerMaintenant(
-                      key: _clePaiement,
-                      souligne: _souligneCible,
-                      controller: _telCtrl,
-                      montant: _proChoisi ? kPrixPro : kPrixPack,
-                      occupe: _paiementEnCours,
-                      message: _messagePaiement,
-                      erreur: _erreur,
-                      onPayer: _payer,
-                    ),
-                  ],
-                  const SizedBox(height: DesignTokens.space6),
-                  _CommentFaire(
-                    code: code,
-                    pro: _proChoisi,
-                    // Quand le paiement automatique existe, la marche à
-                    // suivre manuelle devient le SECOURS — et le titre le
-                    // dit, sinon on lit deux procédures concurrentes sans
-                    // savoir laquelle suivre.
-                    secours: PaiementService.disponible,
-                  ),
-                  const SizedBox(height: DesignTokens.space6),
-                  _SaisieCode(
-                    controller: _codeCtrl,
-                    occupe: _verification,
-                    erreur: _erreur,
-                    onColler: _coller,
-                    onValider: _valider,
-                  ),
-                ],
-                const SizedBox(height: DesignTokens.space8),
-              ],
-            ),
-          ),
-        ),
-      ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  L'ÉTOILE
-// ─────────────────────────────────────────────────────────────
-
-/// L'animation d'ouverture.
-///
-/// ⚠️ ELLE NE TOURNE PAS EN BOUCLE. Une étoile qui scintille sans fin
-/// derrière un prix devient un panneau publicitaire — et sur un écran
-/// où l'on demande de l'argent, l'insistance visuelle produit
-/// exactement l'effet inverse de celui qu'on cherche. Elle joue une
-/// fois, à l'arrivée, puis laisse lire.
-class _Etoile extends StatelessWidget {
-  const _Etoile();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Column(
-      children: [
-        const SizedBox(height: DesignTokens.space4),
-        SizedBox(
-          height: 96,
-          child: AnimatedEmoji(
-            AnimatedEmojis.starStruck,
-            size: 88,
-            repeat: false,
-          ),
-        ),
-        const SizedBox(height: DesignTokens.space4),
-        Text(
-          l10n.pmNeverAskTitle,
-          textAlign: TextAlign.center,
-          style: OuroTypography.title1.copyWith(
-            color: OuroColors.label,
-            height: 1.12,
-          ),
-        ),
-        const SizedBox(height: DesignTokens.space3),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            l10n.pmNeverAskBody,
-            textAlign: TextAlign.center,
-            style: OuroTypography.subheadline.copyWith(
-              color: OuroColors.secondaryLabel,
-              height: 1.45,
-            ),
-          ),
-        ),
-        const SizedBox(height: DesignTokens.space4),
-        Semantics(
-          label: l10n.pmCommunitySemantics,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: OuroColors.accent.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.people_rounded,
-                    size: 15, color: OuroColors.accent),
-                const SizedBox(width: 6),
-                Text(
-                  l10n.pmCommunityText,
-                  style: OuroTypography.footnote.copyWith(
-                    color: OuroColors.accent,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  APERÇU PRO
-// ─────────────────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────
-//  LES DEUX OFFRES
-// ─────────────────────────────────────────────────────────────
-
-class _Offres extends StatelessWidget {
-  const _Offres({required this.proChoisi, required this.onChoisir});
-
-  final bool proChoisi;
-  final ValueChanged<bool> onChoisir;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Column(
-      children: [
-        _Offre(
-          titre: l10n.pmTitle,
-          prix: kPrixPro,
-          mention: l10n.pmOnceForLife,
-          choisi: proChoisi,
-          onTap: () => onChoisir(true),
-          avantages: [
-            l10n.pmProAdvantage1,
-            l10n.pmProAdvantage2,
-            l10n.pmProAdvantage3,
-          ],
-          vedette: true,
-        ),
-        const SizedBox(height: DesignTokens.space3),
-        _Offre(
-          titre: l10n.pmPackTitle,
-          prix: kPrixPack,
-          mention: l10n.pmOnce,
-          choisi: !proChoisi,
-          onTap: () => onChoisir(false),
-          avantages: [
-            l10n.pmPackAdvantage1,
-            l10n.pmPackAdvantage2,
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _Offre extends StatelessWidget {
-  const _Offre({
-    required this.titre,
-    required this.prix,
-    required this.mention,
-    required this.avantages,
-    required this.choisi,
-    required this.onTap,
-    this.vedette = false,
-  });
-
-  final String titre;
-  final int prix;
-  final String mention;
-  final List<String> avantages;
-  final bool choisi;
-  final VoidCallback onTap;
-  final bool vedette;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: DesignTokens.durationFast,
-        curve: DesignTokens.curveStandard,
-        padding: const EdgeInsets.all(DesignTokens.space4),
-        decoration: BoxDecoration(
-          color: OuroColors.secondarySystemGroupedBackground,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          // Le liseré, et lui seul, dit lequel est choisi. Une bascule
-          // de couleur de fond ferait clignoter la moitié de l'écran à
-          // chaque changement d'avis.
-          border: Border.all(
-            color: choisi ? OuroColors.accent : OuroColors.separator,
-            width: choisi ? 1.8 : 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Scaffold(
+        backgroundColor: OuroColors.systemBackground,
+        body: Stack(
           children: [
-            Row(
-              children: [
-                Text(
-                  titre,
-                  style: OuroTypography.headline
-                      .copyWith(color: OuroColors.label),
-                ),
-                if (vedette) ...[
-                  const SizedBox(width: 8),
-                  const BadgePro(taille: 10),
-                ],
-                const Spacer(),
-                Text(
-                  '$prix F',
-                  style: OuroTypography.title3.copyWith(
-                    color: OuroColors.accent,
-                    fontWeight: FontWeight.w700,
+            const Positioned.fill(child: FondPremium()),
+            CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    DesignTokens.screenMargin,
+                    haut + 34,
+                    DesignTokens.screenMargin,
+                    // De quoi dépasser la barre d'achat, toujours visible.
+                    actif ? 40 : 190,
+                  ),
+                  sliver: SliverList.list(
+                    children: [
+                      const Center(child: EmblemePro()),
+                      TitrePro(texte: l10n.pmTitle),
+                      const SizedBox(height: 10),
+                      if (actif) ...[
+                        const SizedBox(height: DesignTokens.space4),
+                        _Actif(niveau: niveau),
+                      ] else ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                          child: Text(
+                            l10n.pmHeroTagline,
+                            textAlign: TextAlign.center,
+                            style: OuroTypography.body.copyWith(
+                              color: OuroColors.secondaryLabel,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const GarantiesPro(),
+                        const SizedBox(height: 30),
+                        CartesOffresPro(
+                          proChoisi: _proChoisi,
+                          prixPro: kPrixPro,
+                          prixPack: kPrixPack,
+                          onChoisir: (pro) => setState(() => _proChoisi = pro),
+                        ),
+                        const SizedBox(height: 14),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: ContenuOffre(
+                            lignes: _proChoisi
+                                ? [l10n.pmProAdvantage1, l10n.pmProAdvantage2, l10n.pmProAdvantage3]
+                                : [l10n.pmPackAdvantage1, l10n.pmPackAdvantage2],
+                          ),
+                        ),
+                        const SizedBox(height: 26),
+                        ListeAvantagesVitrine(
+                          onOuvrir: (i) => ouvrirAvantagesPro(
+                            context,
+                            depart: i,
+                            libelleAchat: l10n.avUnlock,
+                            onAcheter: _allerAuPaiement,
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        // Pourquoi payer : la promesse, en petit, à la fin.
+                        Text(
+                          l10n.pmNeverAskBody,
+                          textAlign: TextAlign.center,
+                          style: OuroTypography.footnote.copyWith(
+                            color: OuroColors.tertiaryLabel,
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
             ),
-            Text(
-              mention,
-              style: OuroTypography.caption1
-                  .copyWith(color: OuroColors.tertiaryLabel),
+            Positioned(
+              top: haut + 8,
+              left: 12,
+              child: BoutonRondVerre(
+                icone: Icons.close_rounded,
+                etiquette: MaterialLocalizations.of(context).closeButtonTooltip,
+                onTap: () => Navigator.of(context).maybePop(),
+              ),
             ),
-            const SizedBox(height: DesignTokens.space3),
-            for (final a in avantages)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 5),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Icon(Icons.check_rounded,
-                          size: 15, color: OuroColors.systemGreen),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        a,
-                        style: OuroTypography.subheadline
-                            .copyWith(color: OuroColors.secondaryLabel),
-                      ),
-                    ),
-                  ],
+            if (!actif)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: BarreAchatPro(
+                  libelle: l10n.pmCtaUnlock(prixLisible(montant)),
+                  precision: l10n.pmCtaFootnote,
+                  onAcheter: _ouvrirPaiement,
+                  libelleCode: l10n.pmAlreadyPaidRestore,
+                  onCode: _ouvrirCode,
                 ),
               ),
           ],
@@ -1674,37 +1598,3 @@ class _Actif extends StatelessWidget {
   }
 }
 
-/// La liste des avantages de Pro : icône de couleur, nom, une ligne, et le
-/// chevron qui promet une suite. C'est la porte d'entrée des explications.
-class _ListeAvantages extends StatelessWidget {
-  const _ListeAvantages({required this.onOuvrir});
-
-  final ValueChanged<int> onOuvrir;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final avantages = avantagesPro();
-    return OuroListSection(
-      header: l10n.avSectionHeader,
-      children: [
-        for (var i = 0; i < avantages.length; i++)
-          OuroListRow(
-            icon: avantages[i].icone,
-            // ⚠️ LA COULEUR N'EST PLUS CHOISIE À LA MAIN. C'étaient six
-            // teintes système sans rapport entre elles ; chaque ligne
-            // prend désormais la sienne sur le dégradé premium, selon sa
-            // place. La liste se lit comme une seule pièce — c'est
-            // l'astuce de Telegram, et elle ne coûte rien.
-            iconColor: couleurAvantage(i),
-            title: avantages[i].titre(l10n),
-            subtitle: avantages[i].court(l10n),
-            onTap: () {
-              OuroHaptics.selection();
-              onOuvrir(i);
-            },
-          ),
-      ],
-    );
-  }
-}

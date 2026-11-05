@@ -1390,6 +1390,29 @@ class AppLocalizationsDe extends AppLocalizations {
   String get pmTitle => 'Droplet Pro';
 
   @override
+  String get pmHeroTagline => 'Sprachnachrichten als Text, Übersetzung, animierte Sticker, die ganze Galerie. Einmal zahlen, für immer deins.';
+
+  @override
+  String get pmTrustOnce => 'Einmalzahlung';
+
+  @override
+  String get pmTrustNoSub => 'Kein Abo';
+
+  @override
+  String get pmTrustOffline => 'Funktioniert offline';
+
+  @override
+  String get pmBestValue => 'Am umfangreichsten';
+
+  @override
+  String get pmCtaFootnote => 'Einmal per Mobile Money bezahlt · danach keine Abbuchung';
+
+  @override
+  String pmCtaUnlock(String prix) {
+    return 'Freischalten für $prix';
+  }
+
+  @override
   String get pmNeverAskTitle => 'Was Droplet\nniemals verlangen wird';
 
   @override

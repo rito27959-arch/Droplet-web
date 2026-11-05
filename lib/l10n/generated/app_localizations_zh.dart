@@ -1309,6 +1309,29 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pmTitle => 'Droplet Pro';
 
   @override
+  String get pmHeroTagline => '语音转文字、翻译、动态贴纸、完整图库。一次付费，永久拥有。';
+
+  @override
+  String get pmTrustOnce => '一次性付款';
+
+  @override
+  String get pmTrustNoSub => '无需订阅';
+
+  @override
+  String get pmTrustOffline => '离线可用';
+
+  @override
+  String get pmBestValue => '最完整';
+
+  @override
+  String get pmCtaFootnote => '通过 Mobile Money 付款一次 · 之后不再扣费';
+
+  @override
+  String pmCtaUnlock(String prix) {
+    return '以 $prix 解锁';
+  }
+
+  @override
   String get pmNeverAskTitle => 'Droplet\n绝不会索取的东西';
 
   @override

@@ -404,6 +404,20 @@
   "pmPackUnlocked": "Pack débloqué",
   "pmInvalidCode": "Ce code n'est pas valable sur cet appareil. Vérifiez que vous avez bien envoyé le code d'appareil affiché ci-dessus.",
   "pmTitle": "Droplet Pro",
+  "pmHeroTagline": "Vos vocaux en texte, la traduction, les autocollants animés, toute la galerie. Payé une fois, à vous pour toujours.",
+  "pmTrustOnce": "Paiement unique",
+  "pmTrustNoSub": "Sans abonnement",
+  "pmTrustOffline": "Marche hors ligne",
+  "pmBestValue": "Le plus complet",
+  "pmCtaFootnote": "Payé une fois par Mobile Money · aucun prélèvement ensuite",
+  "pmCtaUnlock": "Débloquer pour {prix}",
+  "@pmCtaUnlock": {
+    "placeholders": {
+      "prix": {
+        "type": "String"
+      }
+    }
+  },
   "pmNeverAskTitle": "Ce que Droplet\nne demandera jamais",
   "pmNeverAskBody": "Ni publicité, ni abonnement obligatoire, ni revente de vos données — il n'y a même pas de serveur pour les recueillir. Le pack et Pro financent le reste.",
   "pmCommunitySemantics": "Rejoignez la communauté de plus de 1200 membres actifs",

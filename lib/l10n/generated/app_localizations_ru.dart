@@ -1411,6 +1411,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pmTitle => 'Droplet Pro';
 
   @override
+  String get pmHeroTagline => 'Голосовые в текст, перевод, анимированные стикеры, вся галерея. Один платёж — навсегда ваше.';
+
+  @override
+  String get pmTrustOnce => 'Разовый платёж';
+
+  @override
+  String get pmTrustNoSub => 'Без подписки';
+
+  @override
+  String get pmTrustOffline => 'Работает офлайн';
+
+  @override
+  String get pmBestValue => 'Самый полный';
+
+  @override
+  String get pmCtaFootnote => 'Один платёж через Mobile Money · без списаний потом';
+
+  @override
+  String pmCtaUnlock(String prix) {
+    return 'Открыть за $prix';
+  }
+
+  @override
   String get pmNeverAskTitle => 'То, что Droplet\nникогда не попросит';
 
   @override

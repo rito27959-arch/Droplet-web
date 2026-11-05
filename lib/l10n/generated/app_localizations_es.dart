@@ -1389,6 +1389,29 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pmTitle => 'Droplet Pro';
 
   @override
+  String get pmHeroTagline => 'Notas de voz en texto, traducción, stickers animados, toda la galería. Pagas una vez, tuyo para siempre.';
+
+  @override
+  String get pmTrustOnce => 'Pago único';
+
+  @override
+  String get pmTrustNoSub => 'Sin suscripción';
+
+  @override
+  String get pmTrustOffline => 'Funciona sin conexión';
+
+  @override
+  String get pmBestValue => 'El más completo';
+
+  @override
+  String get pmCtaFootnote => 'Un solo pago con Mobile Money · sin cargos después';
+
+  @override
+  String pmCtaUnlock(String prix) {
+    return 'Desbloquear por $prix';
+  }
+
+  @override
   String get pmNeverAskTitle => 'Lo que Droplet\nnunca pedirá';
 
   @override
