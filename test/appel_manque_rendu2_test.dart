@@ -106,7 +106,10 @@ void main() {
             ),
           ),
         ));
-        await tester.pump(const Duration(milliseconds: 1500));
+        // Plusieurs images : les apparitions (fondu, rebond) se jouent.
+        for (var k = 0; k < 20; k++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
         await tester.runAsync(() async {
           final boite = cle.currentContext!.findRenderObject()! as RenderRepaintBoundary;
           final image = await boite.toImage(pixelRatio: 2);
