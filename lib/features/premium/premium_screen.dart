@@ -458,6 +458,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
             message: _messagePaiement,
             erreur: _erreur,
             onPayer: _payer,
+            souligne: false,
           ),
           const SizedBox(height: DesignTokens.space6),
         ],

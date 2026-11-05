@@ -262,9 +262,10 @@ class EmblemePro extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: kDegradePremium[1].withValues(alpha: 0.5),
-                    blurRadius: 30,
-                    offset: const Offset(0, 10),
+                    color: kDegradePremium[1].withValues(alpha: 0.38),
+                    blurRadius: 36,
+                    spreadRadius: -6,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
@@ -330,7 +331,8 @@ class TitrePro extends StatelessWidget {
           fontSize: 38,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.8,
-          height: 1.05,
+          // Assez haut pour que le dégradé couvre aussi le jambage du « p ».
+          height: 1.2,
         ),
       ),
     );
