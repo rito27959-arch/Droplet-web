@@ -42,10 +42,14 @@ Color couleurFonction(int index, int total) {
 /// Le bouton du pack : dégradé animé et reflet qui passe, comme celui de
 /// Telegram (`PremiumButtonView`).
 class BoutonPremium extends StatefulWidget {
-  const BoutonPremium({super.key, required this.libelle, required this.onTap});
+  const BoutonPremium({super.key, required this.libelle, required this.onTap, this.rayon = 14});
 
   final String libelle;
   final VoidCallback onTap;
+
+  /// 14 : bouton carré-arrondi ; la moitié de la hauteur : une pilule,
+  /// comme le bouton d'achat de Telegram Premium.
+  final double rayon;
 
   @override
   State<BoutonPremium> createState() => _BoutonPremiumState();
@@ -75,13 +79,13 @@ class _BoutonPremiumState extends State<BoutonPremium>
         animation: _reflet,
         builder: (context, _) => Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(widget.rayon),
             gradient: const LinearGradient(
               colors: [Color(0xFF6C51FF), Color(0xFFE151B0), Color(0xFFFFA932)],
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(widget.rayon),
             child: Stack(
               alignment: Alignment.center,
               children: [

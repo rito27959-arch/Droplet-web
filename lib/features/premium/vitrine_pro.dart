@@ -59,22 +59,28 @@ class FondPremium extends StatefulWidget {
 class _FondPremiumState extends State<FondPremium> with SingleTickerProviderStateMixin {
   late final AnimationController _temps = AnimationController(
     vsync: this,
-    duration: const Duration(seconds: 24),
+    duration: const Duration(seconds: 30),
   );
 
-  // Les étoiles : positions et vitesses tirées une fois.
-  final List<_Etoile> _etoiles = () {
-    final r = math.Random(7);
+  // Les étincelles : tirées une fois, regroupées autour de l'emblème —
+  // denses près de lui, rares plus loin, comme chez Telegram Premium.
+  final List<_Etincelle> _etincelles = () {
+    final r = math.Random(11);
     return [
-      for (var i = 0; i < 46; i++)
-        _Etoile(
-          x: r.nextDouble(),
-          y: r.nextDouble(),
-          rayon: 0.6 + r.nextDouble() * 1.5,
-          vitesse: 0.15 + r.nextDouble() * 0.5,
-          phase: r.nextDouble() * math.pi * 2,
-          teinte: r.nextInt(3),
-        ),
+      for (var i = 0; i < 120; i++)
+        () {
+          // Distance : surtout entre 60 et 210 px du centre, quelques
+          // égarées plus loin.
+          final d = 55 + math.pow(r.nextDouble(), 1.6) * 230;
+          return _Etincelle(
+            angle: r.nextDouble() * math.pi * 2,
+            distance: d.toDouble(),
+            taille: 1.6 + r.nextDouble() * 3.4,
+            vitesse: 0.4 + r.nextDouble() * 1.2,
+            phase: r.nextDouble() * math.pi * 2,
+            teinte: r.nextInt(3),
+          );
+        }(),
     ];
   }();
 
@@ -97,15 +103,18 @@ class _FondPremiumState extends State<FondPremium> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final haut = MediaQuery.paddingOf(context).top;
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _temps,
         builder: (context, _) => CustomPaint(
           painter: _PeintreFond(
             t: _temps.value,
-            etoiles: _etoiles,
+            etincelles: _etincelles,
             sombre: OuroColors.isDark,
             fond: OuroColors.systemBackground,
+            // Le centre de l'emblème (voir la mise en page de l'écran).
+            centreY: haut + 34 + 88,
           ),
           size: Size.infinite,
         ),
@@ -114,94 +123,90 @@ class _FondPremiumState extends State<FondPremium> with SingleTickerProviderStat
   }
 }
 
-class _Etoile {
-  const _Etoile({
-    required this.x,
-    required this.y,
-    required this.rayon,
+class _Etincelle {
+  const _Etincelle({
+    required this.angle,
+    required this.distance,
+    required this.taille,
     required this.vitesse,
     required this.phase,
     required this.teinte,
   });
 
-  final double x, y, rayon, vitesse, phase;
+  final double angle, distance, taille, vitesse, phase;
   final int teinte;
 }
+
+/// Les teintes des étincelles : violet, bleu, rose — celles de l'emblème.
+const List<Color> _teintesEtincelles = [
+  Color(0xFF9F8CFF),
+  Color(0xFF7FA2FF),
+  Color(0xFFE59BFF),
+];
 
 class _PeintreFond extends CustomPainter {
   _PeintreFond({
     required this.t,
-    required this.etoiles,
+    required this.etincelles,
     required this.sombre,
     required this.fond,
+    required this.centreY,
   });
 
   final double t;
-  final List<_Etoile> etoiles;
+  final List<_Etincelle> etincelles;
   final bool sombre;
   final Color fond;
+  final double centreY;
 
   @override
   void paint(Canvas canvas, Size taille) {
     canvas.drawRect(Offset.zero & taille, Paint()..color = fond);
-    final a = t * math.pi * 2;
-    final force = sombre ? 0.42 : 0.22;
+    final centre = Offset(taille.width / 2, centreY);
 
-    // L'aurore : trois lueurs qui tournent lentement autour de leur place.
-    void lueur(Color c, double cx, double cy, double r, double dephasage) {
-      final centre = Offset(
-        taille.width * (cx + 0.06 * math.cos(a + dephasage)),
-        taille.height * (cy + 0.025 * math.sin(a * 1.3 + dephasage)),
-      );
-      final rayon = taille.width * r;
-      canvas.drawCircle(
-        centre,
-        rayon,
-        Paint()
-          ..shader = RadialGradient(
-            colors: [c.withValues(alpha: force), c.withValues(alpha: 0)],
-          ).createShader(Rect.fromCircle(center: centre, radius: rayon)),
-      );
-    }
-
-    lueur(kDegradePremium[0], 0.22, 0.10, 0.75, 0);
-    lueur(kDegradePremium[1], 0.80, 0.16, 0.65, 2.1);
-    lueur(kDegradePremium[2], 0.50, 0.30, 0.55, 4.2);
-
-    // Fondu vers le fond, pour que la liste se lise sur du calme.
-    final fondu = Rect.fromLTWH(0, taille.height * 0.25, taille.width, taille.height * 0.4);
-    canvas.drawRect(
-      fondu,
+    // Une lueur très douce derrière l'emblème — à peine là.
+    final rayonLueur = taille.width * 0.75;
+    canvas.drawCircle(
+      centre,
+      rayonLueur,
       Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [fond.withValues(alpha: 0), fond],
-        ).createShader(fondu),
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(0, taille.height * 0.65, taille.width, taille.height * 0.35),
-      Paint()..color = fond,
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFF7B5CFF).withValues(alpha: sombre ? 0.22 : 0.12),
+            const Color(0xFF7B5CFF).withValues(alpha: 0),
+          ],
+        ).createShader(Rect.fromCircle(center: centre, radius: rayonLueur)),
     );
 
-    // La poussière d'étoiles, dans le haut seulement.
-    final hauteur = taille.height * 0.55;
-    for (final e in etoiles) {
-      final y = ((e.y - t * e.vitesse) % 1.0) * hauteur;
-      final scintille = 0.35 + 0.65 * (0.5 + 0.5 * math.sin(a * 6 * e.vitesse + e.phase));
-      final effacement = (1 - y / hauteur).clamp(0.0, 1.0);
-      final c = sombre ? Colors.white : kDegradePremium[e.teinte];
-      canvas.drawCircle(
-        Offset(e.x * taille.width, y),
-        e.rayon,
-        Paint()..color = c.withValues(alpha: (sombre ? 0.75 : 0.45) * scintille * effacement),
-      );
+    // Les étincelles à quatre branches : elles tournent très lentement
+    // autour de l'emblème et scintillent chacune à son rythme.
+    final a = t * math.pi * 2;
+    final pinceau = Paint()..style = PaintingStyle.fill;
+    for (final e in etincelles) {
+      final ang = e.angle + a * 0.05 * (e.vitesse > 1 ? 1 : -1);
+      final p = centre + Offset(math.cos(ang), math.sin(ang) * 0.85) * e.distance;
+      if (p.dy < -10 || p.dy > taille.height * 0.6) continue;
+      final scintille = 0.25 + 0.75 * (0.5 + 0.5 * math.sin(a * 8 * e.vitesse + e.phase));
+      final eloignement = (1 - (e.distance - 55) / 260).clamp(0.25, 1.0);
+      final c = _teintesEtincelles[e.teinte];
+      pinceau.color = c.withValues(alpha: (sombre ? 0.9 : 0.75) * scintille * eloignement);
+      final l = e.taille * (0.7 + 0.3 * scintille);
+      final w = l * 0.22;
+      // Une étincelle « + » aux branches effilées.
+      final chemin = Path()
+        ..moveTo(p.dx, p.dy - l)
+        ..quadraticBezierTo(p.dx + w * 0.3, p.dy - w * 0.3, p.dx + l, p.dy)
+        ..quadraticBezierTo(p.dx + w * 0.3, p.dy + w * 0.3, p.dx, p.dy + l)
+        ..quadraticBezierTo(p.dx - w * 0.3, p.dy + w * 0.3, p.dx - l, p.dy)
+        ..quadraticBezierTo(p.dx - w * 0.3, p.dy - w * 0.3, p.dx, p.dy - l)
+        ..close();
+      canvas.drawPath(chemin, pinceau);
     }
   }
 
   @override
   bool shouldRepaint(_PeintreFond ancien) =>
-      ancien.t != t || ancien.sombre != sombre || ancien.fond != fond;
+      ancien.t != t || ancien.sombre != sombre || ancien.fond != fond || ancien.centreY != centreY;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -216,9 +221,23 @@ class EmblemePro extends StatelessWidget {
 
   final double taille;
 
+  /// Le dégradé de l'emblème : bleu-violet en haut, rose-violet en bas,
+  /// comme l'étoile de Telegram Premium.
+  static const List<Color> degrade = [Color(0xFF6E7BFF), Color(0xFF9A5CFF), Color(0xFFE05ACB)];
+
   @override
   Widget build(BuildContext context) {
     final reduit = OuroMotion.of(context).reduceMotion;
+    final cote = taille * 1.7;
+    Widget goutte(double alphaReflet) => ShaderMask(
+          blendMode: BlendMode.srcIn,
+          shaderCallback: (r) => const LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+            colors: degrade,
+          ).createShader(r),
+          child: Icon(Icons.water_drop_rounded, size: cote * 0.92),
+        );
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: reduit ? 1 : 0, end: 1),
       duration: const Duration(milliseconds: 900),
@@ -228,78 +247,44 @@ class EmblemePro extends StatelessWidget {
         child: Transform.scale(scale: 0.6 + 0.4 * v, child: enfant),
       ),
       child: SizedBox(
-        width: taille * 1.7,
-        height: taille * 1.7,
+        width: cote,
+        height: cote,
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Le halo.
-            Container(
-              width: taille * 1.7,
-              height: taille * 1.7,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    kDegradePremium[1].withValues(alpha: 0.45),
-                    kDegradePremium[0].withValues(alpha: 0.12),
-                    Colors.transparent,
-                  ],
-                  stops: const [0, 0.5, 1],
+            // L'ombre colorée, floue, sous la goutte.
+            Transform.translate(
+              offset: Offset(0, taille * 0.06),
+              child: ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Opacity(opacity: 0.55, child: goutte(0)),
+              ),
+            ),
+            goutte(1),
+            // Le reflet : un éclat clair en haut à gauche de la goutte.
+            Positioned(
+              left: cote * 0.33,
+              top: cote * 0.42,
+              child: Transform.rotate(
+                angle: -0.5,
+                child: Container(
+                  width: cote * 0.1,
+                  height: cote * 0.2,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(cote),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.white.withValues(alpha: 0.55), Colors.white.withValues(alpha: 0)],
+                    ),
+                  ),
                 ),
               ),
             ),
-            // La goutte.
-            Container(
-              width: taille,
-              height: taille,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: kDegradePremium,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: kDegradePremium[1].withValues(alpha: 0.38),
-                    blurRadius: 36,
-                    spreadRadius: -6,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Le reflet, en haut à gauche : la lumière vient d'au-dessus.
-                  Positioned(
-                    top: taille * 0.1,
-                    left: taille * 0.16,
-                    child: Container(
-                      width: taille * 0.42,
-                      height: taille * 0.22,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(taille),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.45),
-                            Colors.white.withValues(alpha: 0),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Icon(Icons.water_drop_rounded, color: Colors.white, size: taille * 0.52),
-                  Positioned(
-                    right: taille * 0.2,
-                    top: taille * 0.22,
-                    child: Icon(Icons.auto_awesome_rounded, color: Colors.white, size: taille * 0.2),
-                  ),
-                ],
-              ),
+            Positioned(
+              right: cote * 0.27,
+              top: cote * 0.16,
+              child: Icon(Icons.auto_awesome_rounded, color: Colors.white.withValues(alpha: 0.95), size: taille * 0.26),
             ),
           ],
         ),
@@ -317,23 +302,17 @@ class TitrePro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShaderMask(
-      blendMode: BlendMode.srcIn,
-      shaderCallback: (r) => LinearGradient(
-        colors: OuroColors.isDark
-            ? [Colors.white, const Color(0xFFFFD6F0), const Color(0xFFFFE2B8)]
-            : kDegradePremium,
-      ).createShader(r),
-      child: Text(
-        texte,
-        textAlign: TextAlign.center,
-        style: OuroTypography.largeTitle.copyWith(
-          fontSize: 38,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.8,
-          // Assez haut pour que le dégradé couvre aussi le jambage du « p ».
-          height: 1.2,
-        ),
+    // Comme chez Telegram : un nom net, en blanc (ou noir), sans effet —
+    // c'est l'emblème et ses étincelles qui portent la magie.
+    return Text(
+      texte,
+      textAlign: TextAlign.center,
+      style: OuroTypography.largeTitle.copyWith(
+        fontSize: 30,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.4,
+        height: 1.2,
+        color: OuroColors.label,
       ),
     );
   }
@@ -413,31 +392,137 @@ class CartesOffresPro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    // Comme Telegram : UNE carte, une ligne par offre, la case ronde à
+    // gauche, le prix à droite. Plus calme que deux cartes côte à côte,
+    // et le choix se lit comme une liste.
+    return Container(
+      decoration: BoxDecoration(
+        color: couleurCarteVitrine,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
         children: [
-          Expanded(
-            child: _CarteOffre(
-              titre: l10n.pmTitle,
-              prix: prixPro,
-              mention: l10n.pmOnceForLife,
-              choisi: proChoisi,
-              vedette: l10n.pmBestValue,
-              onTap: () => onChoisir(true),
-            ),
+          _LigneOffre(
+            titre: l10n.pmTitle,
+            badge: l10n.pmBestValue,
+            mention: l10n.pmOnceForLife,
+            prix: prixPro,
+            choisi: proChoisi,
+            onTap: () => onChoisir(true),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _CarteOffre(
-              titre: l10n.pmPackTitle,
-              prix: prixPack,
-              mention: l10n.pmOnce,
-              choisi: !proChoisi,
-              onTap: () => onChoisir(false),
-            ),
+          Padding(
+            padding: const EdgeInsets.only(left: 58),
+            child: Divider(height: 0.5, thickness: 0.5, color: OuroColors.separator),
+          ),
+          _LigneOffre(
+            titre: l10n.pmPackTitle,
+            mention: l10n.pmOnce,
+            prix: prixPack,
+            choisi: !proChoisi,
+            onTap: () => onChoisir(false),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Le fond des cartes de la vitrine : un gris bleuté en sombre (comme les
+/// cartes de Telegram sur son fond), blanc en clair.
+Color get couleurCarteVitrine =>
+    OuroColors.isDark ? const Color(0xFF1C1C22) : Colors.white;
+
+class _LigneOffre extends StatelessWidget {
+  const _LigneOffre({
+    required this.titre,
+    required this.mention,
+    required this.prix,
+    required this.choisi,
+    required this.onTap,
+    this.badge,
+  });
+
+  final String titre;
+  final String mention;
+  final int prix;
+  final bool choisi;
+  final VoidCallback onTap;
+  final String? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: choisi,
+      label: '$titre, ${prixLisible(prix)}, $mention',
+      excludeSemantics: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: () {
+            OuroHaptics.selection();
+            onTap();
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 18, 14),
+            child: Row(
+              children: [
+                _Coche(choisi: choisi),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              titre,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: OuroTypography.headline.copyWith(color: OuroColors.label),
+                            ),
+                          ),
+                          if (badge != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6),
+                                gradient: const LinearGradient(colors: EmblemePro.degrade),
+                              ),
+                              child: Text(
+                                badge!,
+                                style: OuroTypography.caption2.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        mention,
+                        style: OuroTypography.subheadline.copyWith(color: OuroColors.secondaryLabel),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  prixLisible(prix),
+                  style: OuroTypography.headline.copyWith(
+                    color: choisi ? OuroColors.label : OuroColors.secondaryLabel,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -454,144 +539,6 @@ String prixLisible(int prix) {
   return '$b F';
 }
 
-class _CarteOffre extends StatelessWidget {
-  const _CarteOffre({
-    required this.titre,
-    required this.prix,
-    required this.mention,
-    required this.choisi,
-    required this.onTap,
-    this.vedette,
-  });
-
-  final String titre;
-  final int prix;
-  final String mention;
-  final bool choisi;
-  final VoidCallback onTap;
-  final String? vedette;
-
-  @override
-  Widget build(BuildContext context) {
-    final sombre = OuroColors.isDark;
-    final rayon = BorderRadius.circular(20);
-    final carte = AnimatedContainer(
-      duration: const Duration(milliseconds: 240),
-      curve: Curves.easeOutCubic,
-      // Le liseré : le dégradé premium quand elle est choisie (padding de
-      // 2 px autour de la carte intérieure), un trait discret sinon.
-      padding: EdgeInsets.all(choisi ? 2 : 1),
-      decoration: BoxDecoration(
-        borderRadius: rayon,
-        gradient: choisi ? const LinearGradient(colors: kDegradePremium) : null,
-        color: choisi
-            ? null
-            : (sombre ? Colors.white.withValues(alpha: 0.10) : Colors.black.withValues(alpha: 0.08)),
-        boxShadow: choisi
-            ? [
-                BoxShadow(
-                  color: kDegradePremium[1].withValues(alpha: sombre ? 0.35 : 0.22),
-                  blurRadius: 22,
-                  spreadRadius: -4,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : null,
-      ),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(choisi ? 18 : 19),
-          color: sombre ? const Color(0xFF15131C) : Colors.white,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    titre,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: OuroTypography.subheadline.copyWith(
-                      color: OuroColors.secondaryLabel,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                _Coche(choisi: choisi),
-              ],
-            ),
-            const SizedBox(height: 8),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                prixLisible(prix),
-                style: OuroTypography.title1.copyWith(
-                  color: OuroColors.label,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              mention,
-              style: OuroTypography.caption1.copyWith(color: OuroColors.tertiaryLabel),
-            ),
-          ],
-        ),
-      ),
-    );
-    return Semantics(
-      button: true,
-      selected: choisi,
-      label: '$titre, ${prixLisible(prix)}, $mention',
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          OuroHaptics.selection();
-          onTap();
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(child: carte),
-            // Pour que le Stack prenne la taille de la carte.
-            Opacity(opacity: 0, child: IgnorePointer(child: carte)),
-            if (vedette != null)
-              Positioned(
-                top: -10,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: const LinearGradient(colors: kDegradePremium),
-                    ),
-                    child: Text(
-                      vedette!.toUpperCase(),
-                      style: OuroTypography.caption2.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.4,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _Coche extends StatelessWidget {
   const _Coche({required this.choisi});
 
@@ -605,7 +552,7 @@ class _Coche extends StatelessWidget {
       height: 22,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: choisi ? const LinearGradient(colors: kDegradePremium) : null,
+        gradient: choisi ? const LinearGradient(colors: EmblemePro.degrade) : null,
         border: choisi ? null : Border.all(color: OuroColors.tertiaryLabel, width: 1.5),
       ),
       child: choisi ? const Icon(Icons.check_rounded, size: 15, color: Colors.white) : null,
@@ -686,7 +633,7 @@ class ListeAvantagesVitrine extends StatelessWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            color: sombre ? const Color(0xFF15131C) : Colors.white,
+            color: couleurCarteVitrine,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: sombre ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
@@ -699,7 +646,7 @@ class ListeAvantagesVitrine extends StatelessWidget {
               for (var i = 0; i < avantages.length; i++) ...[
                 if (i > 0)
                   Padding(
-                    padding: const EdgeInsets.only(left: 60),
+                    padding: const EdgeInsets.only(left: 64),
                     child: Divider(height: 0.5, thickness: 0.5, color: OuroColors.separator),
                   ),
                 Material(
@@ -714,10 +661,10 @@ class ListeAvantagesVitrine extends StatelessWidget {
                       child: Row(
                         children: [
                           Container(
-                            width: 32,
-                            height: 32,
+                            width: 36,
+                            height: 36,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(9),
+                              borderRadius: BorderRadius.circular(10),
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
@@ -727,7 +674,7 @@ class ListeAvantagesVitrine extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            child: Icon(avantages[i].icone, color: Colors.white, size: 18),
+                            child: Icon(avantages[i].icone, color: Colors.white, size: 21),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -811,7 +758,7 @@ class BarreAchatPro extends StatelessWidget {
               SizedBox(
                 height: 54,
                 width: double.infinity,
-                child: BoutonPremium(libelle: libelle, onTap: onAcheter),
+                child: BoutonPremium(libelle: libelle, onTap: onAcheter, rayon: 27),
               ),
               const SizedBox(height: 8),
               Text(
