@@ -82,6 +82,7 @@ import 'mascotte_envoi.dart';
 import 'mise_en_forme.dart';
 import 'transition_envoi.dart';
 import 'avion_envoi.dart';
+import '../../core/services/vues_uniques_ouvertes.dart';
 import 'bulle_appel.dart';
 import 'transition_vocale.dart';
 import 'network_sheet.dart';
@@ -2575,7 +2576,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   Future<void> _transfererSelection(List<MeshMessage> messages) async {
     final choisis = _messagesSelectionnes(
       messages,
-    ).where(transferable).toList();
+    ).where((m) => transferable(m) && !(m.type == 'file' && VueUnique.marquee(m.content))).toList();
     if (choisis.isEmpty) return;
     final cibles = await choisirCiblesTransfert(
       context,
@@ -3067,9 +3068,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   void _openMessageActions(MeshMessage m) {
     final l10n = AppLocalizations.of(context);
     final notifier = ref.read(meshMessagesProvider.notifier);
+    // Une vue unique ne s'enregistre pas et ne se transfère pas : sinon
+    // elle ne serait plus unique.
+    final vueUnique = m.type == 'file' && VueUnique.marquee(m.content);
     final canSave =
         m.type == 'file' &&
         m.fileId != null &&
+        !vueUnique &&
         !VoiceNoteMeta.isVoiceNote(m.fileName);
     final dejaEpingle =
         !_isBroadcast && Epingles.estEpingle(_cleConversation, m.id);
@@ -3150,7 +3155,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               onTap: () => _editMessage(m),
             ),
           if (traduisible && !deMoi) actionTraduire,
-          if (transferable(m))
+          if (transferable(m) && !vueUnique)
             MessageAction(
               icon: Icons.shortcut_rounded,
               label: l10n.chForward,
@@ -6962,62 +6967,82 @@ class _MessageBubble extends StatelessWidget {
   bool get _vueUnique =>
       message.type == 'file' && VueUnique.marquee(_contenuVisible);
 
-  /// La ligne d'une vue unique : la pastille « 1 », ce que c'est, et
-  /// l'heure. Rien du média n'est montré tant qu'on ne touche pas.
+  /// La ligne d'une vue unique, comme WhatsApp : la pastille « 1 », ce
+  /// que c'est (« Photo », « Vidéo », « Message vocal »), puis « Ouverte »
+  /// une fois vue. Rien du média n'est montré tant qu'on ne touche pas.
+  ///
+  /// • Chez celui qui REÇOIT : pastille pleine tant qu'il n'a pas ouvert ;
+  ///   un toucher l'ouvre, une seule fois.
+  /// • Chez celui qui ENVOIE : pastille pleine tant que l'autre n'a pas
+  ///   ouvert, puis « Ouverte » quand son accusé arrive. Lui ne l'ouvre
+  ///   jamais — c'est la règle, sinon la vue unique ne promet rien.
   Widget _contenuVueUnique(BuildContext context, AppLocalizations l10n) {
     final couleur = mine ? OuroColors.bubbleOutgoingText : OuroColors.accent;
     return ValueListenableBuilder<int>(
       valueListenable: VueUnique.revision,
-      builder: (context, _, _) {
-        // Celui qui envoie ne rouvre pas non plus : c'est la règle de la
-        // vue unique, sinon elle ne promet rien.
-        final ouverte = mine || VueUnique.ouverte(message.id);
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: ouverte ? null : () => _ouvrirVueUnique(context, l10n),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                PastilleVueUnique(couleur: couleur, ouverte: ouverte),
-                if (VoiceNoteMeta.isVoiceNote(message.fileName)) ...[
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.mic_rounded,
-                    size: 18,
-                    color: couleur.withValues(alpha: ouverte ? 0.5 : 0.9),
+      builder: (context, _, _) => ValueListenableBuilder<int>(
+        valueListenable: VuesUniquesOuvertes.revision,
+        builder: (context, _, _) {
+          final ouverte = mine
+              ? VuesUniquesOuvertes.contient(message.id)
+              : VueUnique.ouverte(message.id);
+          final vocal = VoiceNoteMeta.isVoiceNote(message.fileName);
+          final quoi = vocal ? l10n.vuVoice : (isVideo ? l10n.vuVideo : l10n.vuPhoto);
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: mine || ouverte ? null : () => _ouvrirVueUnique(context, l10n),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PastilleVueUnique(
+                    couleur: couleur,
+                    ouverte: ouverte,
+                    couleurChiffre: mine ? OuroColors.bubbleOutgoing : Colors.white,
                   ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            vocal
+                                ? Icons.mic_rounded
+                                : (isVideo ? Icons.videocam_rounded : Icons.photo_camera_rounded),
+                            size: 16,
+                            color: couleur.withValues(alpha: ouverte ? 0.5 : 0.9),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            ouverte ? l10n.vuOpened : quoi,
+                            style: OuroTypography.subheadline.copyWith(
+                              color: couleur.withValues(alpha: ouverte ? 0.6 : 1),
+                              fontWeight: FontWeight.w600,
+                              fontStyle: ouverte ? FontStyle.italic : FontStyle.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        ouverte ? quoi : l10n.vuOnce,
+                        style: OuroTypography.footnote.copyWith(
+                          color: couleur.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  _timeAndStatus(l10n),
                 ],
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      ouverte ? l10n.vuOpened : l10n.vuOnce,
-                      style: OuroTypography.subheadline.copyWith(
-                        color: couleur.withValues(alpha: ouverte ? 0.6 : 1),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      VoiceNoteMeta.isVoiceNote(message.fileName)
-                          ? l10n.vuVoice
-                          : (isVideo ? l10n.vuVideo : l10n.vuPhoto),
-                      style: OuroTypography.footnote.copyWith(
-                        color: couleur.withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 12),
-                _timeAndStatus(l10n),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -7049,6 +7074,20 @@ class _MessageBubble extends StatelessWidget {
         },
       ),
     );
+    // Vue : on prévient l'expéditeur, dont la bulle passe à « Ouverte ».
+    // En tête-à-tête seulement : dans un groupe, « ouverte » ne dirait pas
+    // par qui.
+    final expediteur = message.senderId;
+    if (message.groupId == null && expediteur != null && context.mounted) {
+      unawaited(
+        ProviderScope.containerOf(context, listen: false)
+            .read(meshRepositoryProvider)
+            .sendVueUniqueOuverte(
+              originalSenderId: expediteur,
+              messageId: message.id,
+            ),
+      );
+    }
   }
 
   Widget _textBubble(AppLocalizations l10n, bool isFile) {

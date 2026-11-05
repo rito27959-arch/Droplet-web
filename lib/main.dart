@@ -1855,6 +1855,7 @@ class _NotificationBridgeState extends ConsumerState<NotificationBridge>
               NotificationService.showMissedCall(
                 peerId: peerId,
                 pseudo: pseudo,
+                video: previous.isVideoEnabled,
               ),
             );
           }

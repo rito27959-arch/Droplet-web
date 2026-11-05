@@ -3402,6 +3402,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get ntfMissedCall => 'Verpasster Anruf';
 
   @override
+  String ntfMissedCallsCount(int count) {
+    return '$count verpasste Anrufe';
+  }
+
+  @override
   String get ntfSendFailedTitle => 'Senden fehlgeschlagen';
 
   @override
@@ -4211,6 +4216,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get vuOpened => 'Geöffnet';
+
+  @override
+  String get vuNoScreenshot => 'Screenshots gesperrt';
 
   @override
   String get vuPhoto => 'Foto';

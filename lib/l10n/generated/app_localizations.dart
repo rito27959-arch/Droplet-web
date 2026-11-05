@@ -6378,6 +6378,12 @@ abstract class AppLocalizations {
   /// **'Appel manqué'**
   String get ntfMissedCall;
 
+  /// No description provided for @ntfMissedCallsCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} appels manqués'**
+  String ntfMissedCallsCount(int count);
+
   /// No description provided for @ntfSendFailedTitle.
   ///
   /// In fr, this message translates to:
@@ -7769,6 +7775,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ouverte'**
   String get vuOpened;
+
+  /// No description provided for @vuNoScreenshot.
+  ///
+  /// In fr, this message translates to:
+  /// **'Captures bloquées'**
+  String get vuNoScreenshot;
 
   /// No description provided for @vuPhoto.
   ///

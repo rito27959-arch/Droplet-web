@@ -442,7 +442,24 @@ class MainActivity : FlutterFragmentActivity() {
         val media = MediaBridge(applicationContext)
         val canalMedia = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, mediaChannel)
         media.canal = canalMedia
-        canalMedia.setMethodCallHandler { call, result -> media.handle(call, result) }
+        canalMedia.setMethodCallHandler { call, result ->
+            // ⚠️ VUE UNIQUE : pendant qu'on la regarde, Android interdit
+            // les captures et l'enregistrement de l'écran (l'image apparaît
+            // noire), et l'aperçu des applis récentes est masqué.
+            if (call.method == "ecranSecurise") {
+                val actif = call.argument<Boolean>("actif") ?: false
+                runOnUiThread {
+                    if (actif) {
+                        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                    } else {
+                        window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                    }
+                }
+                result.success(true)
+            } else {
+                media.handle(call, result)
+            }
+        }
 
         // Transcription des vocaux et traduction des messages — tout se
         // fait sur l'appareil (voir `IntelligenceBridge.kt`).

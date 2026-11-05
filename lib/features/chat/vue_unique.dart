@@ -23,6 +23,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/models/voice_note_meta.dart';
+import '../../core/services/media_service.dart';
 import 'voice_note.dart';
 
 import '../../core/services/storage_service.dart';
@@ -112,6 +113,9 @@ class _EcranVueUniqueState extends State<EcranVueUnique> {
   @override
   void initState() {
     super.initState();
+    // Pas de capture ni d'enregistrement de l'écran tant qu'elle est
+    // affichée (Android) — comme WhatsApp.
+    unawaited(MediaService.ecranSecurise(true));
     if (widget.video) {
       _preparer();
     } else if (widget.vocal) {
@@ -152,6 +156,7 @@ class _EcranVueUniqueState extends State<EcranVueUnique> {
 
   @override
   void dispose() {
+    unawaited(MediaService.ecranSecurise(false));
     unawaited(_suiviPosition?.cancel());
     unawaited(_suiviFin?.cancel());
     _audio?.dispose();
@@ -202,9 +207,45 @@ class _EcranVueUniqueState extends State<EcranVueUnique> {
                   : InteractiveViewer(
                       minScale: 1,
                       maxScale: 4,
-                      child: Image.file(File(widget.chemin), fit: BoxFit.contain),
+                      child: Image.file(
+                        File(widget.chemin),
+                        fit: BoxFit.contain,
+                        // Apparition douce, comme une photo qu'on retourne.
+                        frameBuilder: (_, enfant, image, synchrone) => AnimatedOpacity(
+                          opacity: synchrone || image != null ? 1 : 0,
+                          duration: const Duration(milliseconds: 260),
+                          child: enfant,
+                        ),
+                      ),
                     ),
             ),
+            // La vidéo : une barre fine qui avance, en bas (pas de retour
+            // en arrière possible — on ne revoit pas une vue unique).
+            if (widget.video && lecteur != null && lecteur.value.isInitialized)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 0,
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: VideoProgressIndicator(
+                        lecteur,
+                        allowScrubbing: false,
+                        padding: EdgeInsets.zero,
+                        colors: VideoProgressColors(
+                          playedColor: Colors.white,
+                          bufferedColor: Colors.white.withValues(alpha: 0.35),
+                          backgroundColor: Colors.white.withValues(alpha: 0.18),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             SafeArea(
               child: Row(
                 children: [
@@ -223,6 +264,25 @@ class _EcranVueUniqueState extends State<EcranVueUnique> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const Spacer(),
+                  if (!kIsWeb && Platform.isAndroid)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 14),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.screenshot_monitor_rounded,
+                              size: 16, color: Colors.white.withValues(alpha: 0.6)),
+                          const SizedBox(width: 5),
+                          Text(
+                            l10n.vuNoScreenshot,
+                            style: OuroTypography.caption1.copyWith(
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -233,32 +293,81 @@ class _EcranVueUniqueState extends State<EcranVueUnique> {
   }
 }
 
-/// La pastille « 1 » des bulles en vue unique.
+/// La pastille « 1 » des bulles en vue unique, comme WhatsApp :
+///   • PAS ENCORE OUVERTE : un rond plein avec le « 1 » ;
+///   • OUVERTE : un cercle en pointillés, estompé — elle n'est plus là.
 class PastilleVueUnique extends StatelessWidget {
-  const PastilleVueUnique({super.key, required this.couleur, this.ouverte = false});
+  const PastilleVueUnique({
+    super.key,
+    required this.couleur,
+    this.ouverte = false,
+    this.couleurChiffre = Colors.white,
+  });
 
   final Color couleur;
   final bool ouverte;
 
+  /// Le « 1 » sur le rond plein (la couleur de la bulle, en général).
+  final Color couleurChiffre;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 30,
-      height: 30,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: couleur.withValues(alpha: ouverte ? 0.5 : 1), width: 1.4),
-      ),
-      child: Text(
-        '1',
-        style: OuroTypography.footnote.copyWith(
-          color: couleur.withValues(alpha: ouverte ? 0.5 : 1),
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      transitionBuilder: (enfant, a) => ScaleTransition(scale: a, child: FadeTransition(opacity: a, child: enfant)),
+      child: ouverte
+          ? CustomPaint(
+              key: const ValueKey('ouverte'),
+              size: const Size.square(30),
+              painter: _CerclePointille(couleur.withValues(alpha: 0.55)),
+            )
+          : Container(
+              key: const ValueKey('fermee'),
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: couleur),
+              child: Text(
+                '1',
+                style: OuroTypography.footnote.copyWith(
+                  color: couleurChiffre,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
     );
   }
+}
+
+class _CerclePointille extends CustomPainter {
+  _CerclePointille(this.couleur);
+
+  final Color couleur;
+
+  @override
+  void paint(Canvas canvas, Size taille) {
+    final pinceau = Paint()
+      ..color = couleur
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+    final rayon = taille.width / 2 - 1;
+    final centre = taille.center(Offset.zero);
+    const traits = 12;
+    const pas = 2 * 3.141592653589793 / traits;
+    for (var k = 0; k < traits; k++) {
+      canvas.drawArc(
+        Rect.fromCircle(center: centre, radius: rayon),
+        k * pas,
+        pas * 0.55,
+        false,
+        pinceau,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_CerclePointille ancien) => ancien.couleur != couleur;
 }
 
 /// Couleur de repli quand la bulle n'en impose pas.

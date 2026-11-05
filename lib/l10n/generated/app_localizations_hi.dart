@@ -3365,6 +3365,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get ntfMissedCall => 'मिस्ड कॉल';
 
   @override
+  String ntfMissedCallsCount(int count) {
+    return '$count मिस्ड कॉल';
+  }
+
+  @override
   String get ntfSendFailedTitle => 'भेजना विफल';
 
   @override
@@ -4169,6 +4174,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get vuOpened => 'खोली जा चुकी';
+
+  @override
+  String get vuNoScreenshot => 'स्क्रीनशॉट अवरुद्ध';
 
   @override
   String get vuPhoto => 'फ़ोटो';

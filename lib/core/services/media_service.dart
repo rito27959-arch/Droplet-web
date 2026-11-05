@@ -454,6 +454,15 @@ class MediaService {
   /// Copie un fichier dans la galerie ou les téléchargements du
   /// téléphone. Renvoie le dossier de destination, ou `null` en cas
   /// d'échec.
+  /// Interdit (ou rétablit) les captures et l'enregistrement de l'écran,
+  /// le temps d'une vue unique. Android seulement ; ailleurs, rien.
+  static Future<void> ecranSecurise(bool actif) async {
+    if (kIsWeb || !Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod<bool>('ecranSecurise', {'actif': actif});
+    } catch (_) {}
+  }
+
   static Future<String?> saveToGallery({
     required String path,
     required String name,

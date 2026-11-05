@@ -3454,6 +3454,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ntfMissedCall => 'Пропущенный звонок';
 
   @override
+  String ntfMissedCallsCount(int count) {
+    return 'Пропущенных звонков: $count';
+  }
+
+  @override
   String get ntfSendFailedTitle => 'Не удалось отправить';
 
   @override
@@ -4267,6 +4272,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get vuOpened => 'Просмотрено';
+
+  @override
+  String get vuNoScreenshot => 'Скриншоты запрещены';
 
   @override
   String get vuPhoto => 'Фото';

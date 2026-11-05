@@ -48,6 +48,7 @@ import '../providers/locale_provider.dart';
 import '../services/annonces_droplet.dart';
 import '../services/garde_messages.dart';
 import '../services/media_service.dart';
+import '../services/vues_uniques_ouvertes.dart';
 import '../services/storage_service.dart';
 import '../config/server_config.dart';
 import '../services/mesh_transport_service.dart';
@@ -1707,7 +1708,14 @@ class MeshRepository {
         final readMsgId = content;
         if (senderId != _myId && readMsgId.isNotEmpty &&
             (targetId == null || targetId == _myId)) {
-          _noterLecture(readMsgId, senderId);
+          // « vu1:<id> » : l'autre vient d'ouvrir une vue unique que je lui
+          // ai envoyée → la bulle passe à « Ouvert ».
+          final vueUnique = VuesUniquesOuvertes.idDepuisAccuse(readMsgId);
+          if (vueUnique != null) {
+            VuesUniquesOuvertes.noter(vueUnique);
+          } else {
+            _noterLecture(readMsgId, senderId);
+          }
         }
         _relayOrDefer(data.messageId, data.data, hopCount, excludePeerId: data.peerId, targetId: targetId);
         return;
@@ -2660,6 +2668,29 @@ class MeshRepository {
     data[0] = kDefaultHopCount;
     data[1] = kTextMessageType;
     data.setRange(2, data.length, payloadBytes);
+    await _transport.broadcastToConnectedPeers(data);
+  }
+
+  /// Prévient l'expéditeur d'une vue unique qu'on vient de l'ouvrir : sa
+  /// bulle passera à « Ouvert ». Par le maillage ET par Internet (comme une
+  /// réaction) : l'autre n'est peut-être plus à portée.
+  Future<void> sendVueUniqueOuverte({
+    required String originalSenderId,
+    required String messageId,
+  }) async {
+    if (StorageService.isContactBlocked(originalSenderId)) return;
+    final jsonMap = <String, dynamic>{
+      'c': '${VuesUniquesOuvertes.prefixe}$messageId',
+      's': _myId,
+      'k': 'read',
+      't': originalSenderId,
+    };
+    final payloadBytes = utf8.encode(json.encode(jsonMap));
+    final data = Uint8List(2 + payloadBytes.length);
+    data[0] = kDefaultHopCount;
+    data[1] = kTextMessageType;
+    data.setRange(2, data.length, payloadBytes);
+    unawaited(_doublerParInternet(_destinatairesDe(originalSenderId), data));
     await _transport.broadcastToConnectedPeers(data);
   }
 

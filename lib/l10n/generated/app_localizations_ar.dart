@@ -3460,6 +3460,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ntfMissedCall => 'مكالمة فائتة';
 
   @override
+  String ntfMissedCallsCount(int count) {
+    return '$count مكالمات فائتة';
+  }
+
+  @override
   String get ntfSendFailedTitle => 'فشل الإرسال';
 
   @override
@@ -4278,6 +4283,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get vuOpened => 'تم فتحها';
+
+  @override
+  String get vuNoScreenshot => 'لقطات الشاشة محظورة';
 
   @override
   String get vuPhoto => 'صورة';

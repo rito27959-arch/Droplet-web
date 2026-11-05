@@ -1032,6 +1032,14 @@
   "ntfAnswer": "Répondre",
   "ntfDecline": "Refuser",
   "ntfMissedCall": "Appel manqué",
+  "ntfMissedCallsCount": "{count} appels manqués",
+  "@ntfMissedCallsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "ntfSendFailedTitle": "Échec de l'envoi",
   "ntfSendFailedBody": "Un message n'a pas pu être envoyé — nouvel essai dès qu'un pair est à portée.",
   "ntfNewStatusTitle": "Nouveau statut",
@@ -1337,6 +1345,7 @@
   "chMentionAllSubtitle": "Prévenir tout le groupe",
   "vuOnce": "Vue unique",
   "vuOpened": "Ouverte",
+  "vuNoScreenshot": "Captures bloquées",
   "vuPhoto": "Photo",
   "vuVideo": "Vidéo",
   "vuMissing": "Ce média n'est pas encore arrivé",

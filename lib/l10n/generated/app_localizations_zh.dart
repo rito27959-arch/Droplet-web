@@ -3234,6 +3234,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ntfMissedCall => '未接来电';
 
   @override
+  String ntfMissedCallsCount(int count) {
+    return '$count 个未接来电';
+  }
+
+  @override
   String get ntfSendFailedTitle => '发送失败';
 
   @override
@@ -4024,6 +4029,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get vuOpened => '已查看';
+
+  @override
+  String get vuNoScreenshot => '已禁止截屏';
 
   @override
   String get vuPhoto => '照片';

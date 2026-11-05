@@ -167,6 +167,8 @@ class NotificationService {
   static const String actionLu = 'marquer_lu';
   static const String actionDecrocher = 'decrocher';
   static const String actionRaccrocher = 'raccrocher';
+  static const String actionRappeler = 'rappeler';
+  static const String actionRappelerVideo = 'rappeler_video';
 
   static Future<void> Function(String route, String texte)? _onRepondre;
   static void Function(String route)? _onLu;
@@ -213,6 +215,18 @@ class NotificationService {
         }
       case actionLu:
         _onLu?.call(route);
+      case actionRappeler:
+      case actionRappelerVideo:
+        // « Rappeler » depuis un appel manqué : l'appel part tout de suite.
+        final id = Uri.parse(route).pathSegments.last;
+        _appelsManques.remove(id);
+        final appel = '/call/$id${r.actionId == actionRappelerVideo ? '?video=1' : ''}';
+        final nav = _onNavigate;
+        if (nav != null) {
+          nav(appel);
+        } else {
+          pendingNavigation = appel;
+        }
       case actionDecrocher:
       case actionRaccrocher:
         // ⚠️ `/call/<id>?entrant=1` : l'identifiant s'arrête avant le `?`.
@@ -515,8 +529,10 @@ class NotificationService {
     _filsNatif.remove(conversationId);
     _meta.remove(conversationId);
     _photosAuteurs.remove(conversationId);
+    _appelsManques.remove(conversationId);
     try {
       await _plugin.cancel(id: _idConversation(conversationId));
+      await _plugin.cancel(id: _idConversation(_cleManque(conversationId)));
     } catch (_) {}
   }
 
@@ -719,6 +735,8 @@ class NotificationService {
     /// Rangée dans le volet sans son ni bandeau — livraison discrète, ou
     /// application ouverte (c'est alors la bannière intégrée qui prévient).
     bool silencieux = false,
+    /// La couleur de la petite icône (rouge pour un appel manqué).
+    Color? couleur,
   }) async {
     try {
       await _plugin.show(
@@ -734,7 +752,7 @@ class NotificationService {
             priority: Priority.high,
             actions: actions,
             icon: _iconeBarre,
-            color: OuroColors.accent,
+            color: couleur ?? OuroColors.accent,
             fullScreenIntent: appel,
             ongoing: appel || enCours,
             autoCancel: !appel && !enCours,
@@ -786,6 +804,7 @@ class NotificationService {
           insistant: insistant,
           raccourci: raccourci,
           silencieux: silencieux,
+          couleur: couleur,
         );
       }
     }
@@ -1186,17 +1205,61 @@ class NotificationService {
     }
   }
 
-  /// Notification « appel manqué » — envoyée quand un appel entrant n'a
-  /// jamais été décroché.
+  /// Appels manqués pas encore vus, par personne : « 3 appels manqués ».
+  static final Map<String, int> _appelsManques = {};
+
+  static String _cleManque(String peerId) => 'manque:$peerId';
+
+  /// Notification « appel manqué », comme WhatsApp — envoyée quand un appel
+  /// entrant n'a jamais été décroché :
+  ///   • le nom et la photo de la personne, l'heure de l'appel ;
+  ///   • « Appel vocal manqué » / « Appel vidéo manqué », puis
+  ///     « 3 appels manqués » s'il rappelle encore sans réponse — UNE seule
+  ///     notification par personne, qui se met à jour ;
+  ///   • deux boutons : « Rappeler » (l'appel part, vocal ou vidéo comme
+  ///     le sien) et « Répondre » (un message, sans ouvrir l'application).
+  ///
+  /// Le compteur repart de zéro quand on ouvre la conversation.
   static Future<void> showMissedCall({
     required String peerId,
     required String pseudo,
+    bool video = false,
+    DateTime? quand,
   }) async {
+    final n = (_appelsManques[peerId] ?? 0) + 1;
+    _appelsManques[peerId] = n;
+    final texte = n > 1
+        ? _l10n.ntfMissedCallsCount(n)
+        : (video ? _l10n.clMissedVideo : _l10n.clMissedVoice);
     await _show(
-      title: _l10n.ntfMissedCall,
-      body: pseudo,
+      title: pseudo,
+      body: texte,
       channel: _channelCalls,
       payload: '/chat/$peerId',
+      dedupeKey: _cleManque(peerId),
+      largeIcon: await _grandeIcone(peerId, pseudo),
+      categorie: AndroidNotificationCategory.missedCall,
+      quand: quand ?? DateTime.now(),
+      couleur: OuroColors.systemRed,
+      actions: [
+        AndroidNotificationAction(
+          video ? actionRappelerVideo : actionRappeler,
+          _l10n.clCallBack,
+          // Un appel demande l'écran (micro, raccrocher) : l'app s'ouvre.
+          showsUserInterface: true,
+          cancelNotification: true,
+        ),
+        AndroidNotificationAction(
+          actionRepondre,
+          _l10n.ntfReply,
+          allowGeneratedReplies: true,
+          inputs: [
+            AndroidNotificationActionInput(label: _l10n.ntfYourReply),
+          ],
+          showsUserInterface: false,
+          cancelNotification: true,
+        ),
+      ],
     );
   }
 
