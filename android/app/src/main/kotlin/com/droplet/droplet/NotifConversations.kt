@@ -126,6 +126,7 @@ object NotifConversations {
                         messages = appel.argument<List<Map<String, Any?>>>("messages")
                             ?: emptyList(),
                         photo = appel.argument<String>("photo"),
+                        couleur = appel.argument<Number>("couleur")?.toInt(),
                         route = appel.argument<String>("route") ?: "",
                         groupe = appel.argument<Boolean>("groupe") ?: false,
                         bulleAutorisee = appel.argument<Boolean>("bulle") ?: true,
@@ -288,6 +289,7 @@ object NotifConversations {
         nom: String,
         messages: List<Map<String, Any?>>,
         photo: String?,
+        couleur: Int?,
         route: String,
         groupe: Boolean,
         bulleAutorisee: Boolean,
@@ -298,9 +300,12 @@ object NotifConversations {
         if (idConversation.isEmpty() || messages.isEmpty()) return false
         textes["resume"]?.let { libelleResume = it }
         return try {
+            // ⚠️ SANS PHOTO : L'INITIALE, PAS LE LOGO. L'icône de l'app
+            // donnait un gros logo Droplet + le petit de la barre d'état, et
+            // on ne voyait pas qui écrivait. Voir `AvatarInitiale`.
             val icone = photo?.let { chemin ->
                 BitmapFactory.decodeFile(chemin)?.let { IconCompat.createWithAdaptiveBitmap(it) }
-            } ?: IconCompat.createWithResource(contexte, R.mipmap.ic_launcher)
+            } ?: AvatarInitiale.icone(nom, couleur)
 
             val moi = Person.Builder()
                 .setName(textes["moi"] ?: "Droplet")

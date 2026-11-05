@@ -707,6 +707,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         nom: nom,
         route: _isGroup ? '/group/$id' : '/chat/$id',
         photo: _isGroup ? AvatarService.cheminGroupe(id) : AvatarService.cheminPair(id),
+        couleur: NotificationService.couleurAvatar(nom),
       ));
     }
     LecteurVocal.instance.addListener(_surLecteur);

@@ -243,12 +243,16 @@ class MainActivity : FlutterFragmentActivity() {
         nom: String,
         route: String,
         photo: String?,
+        couleur: Int? = null,
     ): Boolean {
         return try {
+            // Sans photo : l'initiale sur sa couleur (comme dans l'app), pas
+            // le logo — c'est CETTE icône qu'Android montre en grand sur une
+            // notification de conversation.
             val icone = photo?.let { chemin ->
                 val bitmap = BitmapFactory.decodeFile(chemin)
                 if (bitmap == null) null else IconCompat.createWithAdaptiveBitmap(bitmap)
-            } ?: IconCompat.createWithResource(this, R.mipmap.ic_launcher)
+            } ?: AvatarInitiale.icone(nom, couleur)
 
             val personne = Person.Builder().setName(nom).setKey(id).setIcon(icone).build()
             val intention = Intent(this, MainActivity::class.java)
@@ -385,7 +389,13 @@ class MainActivity : FlutterFragmentActivity() {
                             result.error("ARG", "arguments manquants", null)
                         } else {
                             result.success(
-                                publierRaccourci(id, nom, route, call.argument<String>("photo")),
+                                publierRaccourci(
+                                    id,
+                                    nom,
+                                    route,
+                                    call.argument<String>("photo"),
+                                    call.argument<Number>("couleur")?.toInt(),
+                                ),
                             )
                         }
                     }

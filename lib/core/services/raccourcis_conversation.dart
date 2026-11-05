@@ -40,9 +40,14 @@ class RaccourcisConversation {
     required String nom,
     required String route,
     String? photo,
+    /// La couleur de l'avatar (ARGB) : sans photo, Android dessine
+    /// l'initiale sur cette couleur, la même que dans l'application.
+    int? couleur,
   }) async {
     if (!_disponible || id.isEmpty || nom.trim().isEmpty) return;
-    final empreinte = '$nom|$route|${photo ?? ''}';
+    // « v2 » : les raccourcis publiés avant portaient le logo de l'app à la
+    // place de l'initiale ; l'empreinte change pour qu'ils soient refaits.
+    final empreinte = 'v2|$nom|$route|${photo ?? ''}|${couleur ?? ''}';
     if (_publies[id] == empreinte) return;
     try {
       await _canal.invokeMethod<bool>('publier', {
@@ -50,6 +55,7 @@ class RaccourcisConversation {
         'nom': nom,
         'route': route,
         'photo': photo,
+        'couleur': ?couleur,
       });
       _publies[id] = empreinte;
     } catch (e) {

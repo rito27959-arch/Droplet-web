@@ -184,6 +184,9 @@ class NotifsConversation {
     required List<({String texte, DateTime quand, String? auteur})> fil,
     required String route,
     String? cheminPhoto,
+    /// La couleur de l'avatar (ARGB), pour l'initiale quand il n'y a pas
+    /// de photo.
+    int? couleur,
     bool groupe = false,
     bool bulle = true,
     /// Rangée sans son ni bandeau.
@@ -216,6 +219,7 @@ class NotifsConversation {
         ],
         'route': route,
         'photo': cheminPhoto,
+        'couleur': ?couleur,
         'groupe': groupe,
         'bulle': bulle,
         'silencieux': silencieux,

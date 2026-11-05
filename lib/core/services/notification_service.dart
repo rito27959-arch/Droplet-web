@@ -493,6 +493,7 @@ class NotificationService {
       fil: fil,
       route: meta.route,
       cheminPhoto: meta.photo,
+      couleur: couleurAvatar(meta.nom),
       groupe: meta.groupe,
       silencieux: true,
       dernierMessage: meta.dernierMessage,
@@ -632,6 +633,14 @@ class NotificationService {
     if (photo != null) return FilePathAndroidBitmap(photo);
     final octets = await _pastilleInitiale(nom);
     return octets == null ? null : ByteArrayAndroidBitmap(octets);
+  }
+
+  /// La couleur d'avatar de [nom] (ARGB), la même que `PeerAvatar` et que
+  /// la pastille ci-dessous — pour qu'Android dessine l'initiale de la même
+  /// couleur que dans l'application.
+  static int couleurAvatar(String nom) {
+    final palette = OuroColors.avatarPalette;
+    return palette[nom.hashCode.abs() % palette.length].toARGB32();
   }
 
   static final Map<String, Uint8List> _initiales = {};
@@ -989,6 +998,7 @@ class NotificationService {
       nom: titreGroupe ?? pseudo,
       route: routePath,
       photo: titreGroupe != null ? AvatarService.cheminGroupe(conversationId) : AvatarService.cheminPair(expediteurId),
+      couleur: couleurAvatar(titreGroupe ?? pseudo),
     ));
     // ── LA VOIE NATIVE, QUAND ELLE EXISTE ────────────────────────────
     //
@@ -1023,6 +1033,7 @@ class NotificationService {
       cheminPhoto: titreGroupe != null
           ? AvatarService.cheminGroupe(conversationId)
           : AvatarService.cheminPair(expediteurId),
+      couleur: couleurAvatar(titreGroupe ?? pseudo),
       groupe: titreGroupe != null,
     );
     if (natif) return;
