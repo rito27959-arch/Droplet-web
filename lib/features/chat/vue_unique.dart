@@ -22,7 +22,6 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../core/models/voice_note_meta.dart';
 import '../../core/services/media_service.dart';
 import 'voice_note.dart';
 
