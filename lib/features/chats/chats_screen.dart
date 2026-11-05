@@ -89,6 +89,7 @@ import '../../core/providers/locale_provider.dart' show kSupportedLocales;
 import '../status/anneau_statuts.dart';
 import '../../core/services/miroir_appareils.dart';
 import '../../design_system/flou.dart';
+import '../../design_system/ouro_surfaces.dart';
 import '../../core/config/compte_droplet.dart';
 import '../../shared/widgets/avatar_officiel.dart';
 
@@ -980,17 +981,13 @@ class _SearchField extends StatelessWidget {
         DesignTokens.screenMargin,
         DesignTokens.space2,
       ),
-      // ⚠️ UN FOND GRIS PLEIN, PAS UNE CARTE. `OuroCard` est presque de la
-      // couleur de la page : sur fond clair, la recherche n'était plus
-      // qu'un mot gris flottant, qu'on ne reconnaissait pas comme un champ.
-      // La barre de recherche d'iOS est un rectangle gris arrondi — c'est
-      // à sa forme qu'on la reconnaît, avant même de lire « Rechercher ».
-      child: Container(
-        height: 36,
-        decoration: BoxDecoration(
-          color: OuroColors.tertiarySystemFill,
-          borderRadius: BorderRadius.circular(10),
-        ),
+      // ⚠️ UNE FORME DE CHAMP, PAS UN MOT QUI FLOTTE : c'est au rectangle
+      // arrondi qu'on reconnaît la recherche, avant même de la lire.
+      // Le VERRE du système de surfaces : translucide, flouté, liseré
+      // éclairé par le haut — la lueur rouge passe au travers.
+      child: SurfaceVerre(
+        hauteur: 40,
+        rayon: 12,
         child: Material(
           type: MaterialType.transparency,
           child: TextField(
@@ -1012,7 +1009,7 @@ class _SearchField extends StatelessWidget {
               prefixIconConstraints: const BoxConstraints(minWidth: 34),
               filled: true,
               fillColor: Colors.transparent,
-              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                 borderSide: BorderSide.none,
@@ -2327,15 +2324,11 @@ class _MeshNotificationBannerState extends State<_MeshNotificationBanner>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: OuroColors.systemBackground.withValues(alpha: 0.92),
+            color: OuroColors.secondarySystemBackground.withValues(alpha: 0.96),
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            border: Border.all(color: OuroSurfaces.bordPastille, width: 0.5),
+            // Flottant : la double ombre discrète du système de surfaces.
+            boxShadow: OuroSurfaces.ombreFlottante,
           ),
           child: Row(
             children: [
@@ -3295,57 +3288,17 @@ class _PeintreMiniPlan extends CustomPainter {
       ancien.fond != fond || ancien.rue != rue || ancien.epingle != epingle;
 }
 
-/// Le fond de l'écran des discussions, teinté selon l'heure.
-///
-/// ⚠️ À PEINE. Une lueur pêche le matin, bleu ciel le jour, rose le soir,
-/// indigo la nuit — sur le haut de l'écran seulement, et si légère qu'on
-/// la sent plus qu'on ne la voit. Elle ne colore jamais une ligne : les
-/// conversations restent sur leur fond, lisibles à toute heure. C'est le
-/// genre de détail qu'on ne remarque pas, et qui fait que l'écran paraît
-/// vivant plutôt que figé.
+/// Le fond de l'écran des discussions : le noir profond et la lueur rouge
+/// du haut (voir `ouro_surfaces.dart`). Elle remplace l'ancienne teinte
+/// qui changeait avec l'heure : de nuit, ce rose posé sur le noir donnait
+/// un brun-violet qu'on prenait pour une erreur d'affichage.
 class _AmbianceHoraire extends StatelessWidget {
   const _AmbianceHoraire({required this.child});
 
   final Widget child;
 
-  static Color _teinte(int heure) {
-    if (heure >= 5 && heure < 10) return const Color(0xFFFFB37A); // matin
-    if (heure >= 10 && heure < 17) return const Color(0xFF8EC5FF); // jour
-    if (heure >= 17 && heure < 21) return const Color(0xFFFF8FA3); // soir
-    return const Color(0xFF7C83FD); // nuit
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final fond = OuroColors.systemBackground;
-    final teinte = _teinte(DateTime.now().hour)
-        .withValues(alpha: OuroColors.isDark ? 0.16 : 0.12);
-    return DecoratedBox(
-      decoration: BoxDecoration(color: fond),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 320,
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [teinte, teinte.withValues(alpha: 0)],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(child: child),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => FondAvecLueur(child: child);
 }
 
 /// Le résumé de la journée — voir son emplacement dans `build`.

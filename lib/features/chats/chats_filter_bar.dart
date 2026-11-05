@@ -59,6 +59,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../design_system/ouro_surfaces.dart';
 import '../../design_system/design_tokens.dart';
 import '../../design_system/ouro_colors.dart';
 import '../../design_system/ouro_haptics.dart';
@@ -240,7 +241,13 @@ class ChatsFilterBar extends StatelessWidget {
                         // `accentRempli` + `texteSurAccent` : le blanc fixe
                         // devenait illisible sur un accent clair (menthe,
                         // jaune).
-                        color: OuroColors.accentRempli,
+                        //
+                        // ALLUMÉE (système de surfaces) : un reflet plus
+                        // clair en haut et un halo de sa propre couleur —
+                        // elle semble éclairée de l'intérieur, à côté des
+                        // pastilles mates.
+                        gradient: OuroSurfaces.pastilleActive(OuroColors.accentRempli),
+                        boxShadow: OuroSurfaces.haloActif(OuroColors.accentRempli),
                         borderRadius: BorderRadius.circular(hauteurPastille / 2),
                       ),
                     ),
@@ -311,9 +318,15 @@ class _Etiquette extends StatelessWidget {
         // Non sélectionné : une capsule grise, pour qu'on voie que c'est un
         // BOUTON. Sans elle, « Épinglées » n'était qu'un mot posé à côté de
         // la pastille rouge, sans rien qui invite à le toucher.
+        // Surface SOMBRE et mate du système de surfaces, avec un liseré à
+        // peine visible : on la voit comme un bouton sans qu'elle attire.
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: selectionne ? Colors.transparent : OuroColors.tertiarySystemFill,
+            color: selectionne ? Colors.transparent : OuroSurfaces.pastille,
+            border: Border.all(
+              color: selectionne ? Colors.transparent : OuroSurfaces.bordPastille,
+              width: 0.8,
+            ),
             borderRadius: BorderRadius.circular(40),
           ),
           child: Center(

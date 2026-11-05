@@ -133,10 +133,13 @@ class OuroGlassLayer extends ConsumerWidget {
 
   static LiquidGlassSettings get _settings => LiquidGlassSettings(
         thickness: 14,
-        blur: 6,
+        // VERRE DÉPOLI (système de surfaces) : un flou plus marqué et un
+        // voile un peu plus dense — ce qui passe dessous devient une
+        // lumière colorée, plus une image lisible.
+        blur: 11,
         glassColor: OuroColors.isDark
-            ? const Color(0x14FFFFFF)
-            : const Color(0x1FFFFFFF),
+            ? const Color(0x1CFFFFFF)
+            : const Color(0x29FFFFFF),
         refractiveIndex: 1.42,
         lightAngle: 1.25 * math.pi,
         // SOMBRE : 1,15, la valeur d'origine. Ramenée à 0,5, le verre
