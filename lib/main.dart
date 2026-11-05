@@ -1427,7 +1427,12 @@ class _NotificationBridgeState extends ConsumerState<NotificationBridge>
     // Écoute si une autre app essaie de « partager » du contenu vers
     // Droplet (texte, photo...) et prépare l'écran de choix du contact.
     unawaited(
-      ShareIntentService.init(onShared: () => _router.go('/share-target')),
+      ShareIntentService.init(
+        onShared: () => _router.go('/share-target'),
+        // Lien droplet://… ouvert par une autre app (Kunfox) : on va sur la
+        // page demandée (autorisation, invitation, discussions).
+        onLien: (route) => _router.go(route),
+      ),
     );
     // Ouvert par un raccourci de conversation (appui long sur l'icône du
     // lanceur, ou bulle Android) : on va droit à la bonne conversation.

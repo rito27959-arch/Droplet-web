@@ -39,28 +39,75 @@ class ShareIntentService {
   /// (le flux `getMediaStream`), et un partage qui a servi à OUVRIR
   /// Droplet depuis fermé (`getInitialMedia`, lu une seule fois au tout
   /// début).
-  static Future<void> init({required void Function() onShared}) async {
+  ///
+  /// ⚠️ LES LIENS `droplet://…` NE SONT PAS DES PARTAGES. Quand une autre
+  /// app (Kunfox par exemple) ouvre `droplet://droplet/autoriser?…`, Android
+  /// envoie un intent « VIEW ». Le plugin de partage l'attrape lui aussi et
+  /// le présente comme un texte partagé : sans le tri ci-dessous, Droplet
+  /// ouvrait l'écran « Partager vers… » avec le lien affiché comme message
+  /// au lieu d'ouvrir l'écran d'autorisation. Ces liens partent donc vers
+  /// [onLien], avec la route interne (`/autoriser?app=…`).
+  static Future<void> init({
+    required void Function() onShared,
+    required void Function(String route) onLien,
+  }) async {
     if (_initialized) return;
     _initialized = true;
+
+    void traiter(List<SharedMediaFile> items) {
+      final partages = <SharedMediaFile>[];
+      String? route;
+      for (final f in items) {
+        final r = routeDeLien(f.path);
+        if (r != null) {
+          route ??= r;
+        } else {
+          partages.add(f);
+        }
+      }
+      if (route != null) {
+        onLien(route);
+      } else if (partages.isNotEmpty) {
+        pendingItems = partages;
+        onShared();
+      }
+    }
 
     // Écouté pour toute la durée de vie du processus, jamais annulé — au
     // même titre que les autres services singletons de l'app (mesh, etc.).
     ReceiveSharingIntent.instance.getMediaStream().listen((items) {
       if (items.isEmpty) return;
-      pendingItems = items;
-      onShared();
+      traiter(items);
     }, onError: (e) => debugPrint('[ShareIntentService] flux invalide: $e'));
 
     try {
       final initial = await ReceiveSharingIntent.instance.getInitialMedia();
       if (initial.isNotEmpty) {
-        pendingItems = initial;
         ReceiveSharingIntent.instance.reset();
-        onShared();
+        traiter(initial);
       }
     } catch (e) {
       debugPrint('[ShareIntentService] échec lecture intent initial: $e');
     }
+  }
+
+  /// `droplet://droplet/autoriser?app=kunfox&…` → `/autoriser?app=kunfox&…`.
+  /// Rend `null` pour tout ce qui n'est pas un lien Droplet (vrai partage).
+  @visibleForTesting
+  static String? routeDeLien(String? texte) {
+    if (texte == null) return null;
+    final t = texte.trim();
+    if (!t.toLowerCase().startsWith('droplet://')) return null;
+    final uri = Uri.tryParse(t);
+    if (uri == null || uri.scheme != 'droplet') return null;
+    // Forme habituelle : droplet://droplet/chemin. On accepte aussi
+    // droplet://chemin (l'hôte sert alors de premier segment).
+    var chemin = uri.host == 'droplet' || uri.host.isEmpty
+        ? uri.path
+        : '/${uri.host}${uri.path}';
+    if (chemin.isEmpty || chemin == '/') chemin = '/chats';
+    if (!chemin.startsWith('/')) chemin = '/$chemin';
+    return uri.hasQuery ? '$chemin?${uri.query}' : chemin;
   }
 
   /// Vide la salle d'attente — une fois que l'utilisateur a choisi un
