@@ -116,6 +116,9 @@ class NotificationService {
   /// `BuildContext` — voir [currentLocale].
   static AppLocalizations get _l10n => lookupAppLocalizations(currentLocale);
 
+  /// Les textes dans la langue de l'appareil, pour le code hors widget.
+  static AppLocalizations get l10n => _l10n;
+
   /// Conversation actuellement ouverte à l'écran (peerId, groupId, ou
   /// 'broadcast') — mise à jour par ChatScreen. Un message entrant pour
   /// cette conversation précise n'a pas besoin de notification système
@@ -599,6 +602,14 @@ class NotificationService {
     return octets == null ? null : ByteArrayAndroidIcon(octets);
   }
 
+  /// La photo d'un contact pour la notification d'appel native : le chemin
+  /// de sa photo, ou à défaut sa pastille d'initiale (PNG).
+  static Future<(String?, Uint8List?)> iconeAppel(String id, String nom) async {
+    final photo = AvatarService.cheminPair(id);
+    if (photo != null) return (photo, null);
+    return (null, await _pastilleInitiale(nom));
+  }
+
   static Future<AndroidBitmap<Object>?> _grandeIcone(String? id, String nom) async {
     // Un pair OU un groupe : la photo du groupe est rangée à part.
     final photo = AvatarService.cheminPair(id) ?? AvatarService.cheminGroupe(id);
@@ -695,6 +706,8 @@ class NotificationService {
     /// à soixante secondes, et surtout pas de son — un appel déjà pris
     /// n'a rien à annoncer.
     bool enCours = false,
+    // Faux : notification permanente SANS minuteur (appel qui sonne).
+    bool chronometre = true,
 
     /// Écrit en petit à côté du titre : par où passe l'appel.
     String? sousTexte,
@@ -730,7 +743,7 @@ class NotificationService {
                 ? NotificationVisibility.public
                 : null,
             // Le minuteur d'Android, à partir de `when`.
-            usesChronometer: enCours,
+            usesChronometer: enCours && chronometre,
             subText: sousTexte,
             // ⚠️ MUETTE, ET QUI NE REMONTE PAS. Sans `onlyAlertOnce`, la
             // moindre mise à jour (le micro qu'on coupe) referait sonner
@@ -807,10 +820,13 @@ class NotificationService {
     required String pseudo,
     required DateTime debut,
     required bool viaInternet,
+    // Appel sortant qui sonne encore : « Appel en cours… », sans minuteur.
+    bool sonnerie = false,
   }) async {
     await _show(
-      title: _l10n.ntfOngoingCall,
+      title: sonnerie ? _l10n.clOutgoingCall : _l10n.ntfOngoingCall,
       body: pseudo,
+      chronometre: !sonnerie,
       channel: _canalAppelMuet,
       enCours: true,
       categorie: AndroidNotificationCategory.call,

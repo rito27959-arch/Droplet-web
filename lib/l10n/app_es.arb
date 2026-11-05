@@ -747,6 +747,7 @@
   "clMissedVoice": "Llamada de voz perdida",
   "clMissedVideo": "Videollamada perdida",
   "clCallBack": "Devolver llamada",
+  "clTapToCallBack": "Toca para devolver la llamada",
   "stoTitle": "Almacenamiento",
   "stoSubtitle": "Fotos, vídeos y archivos",
   "stoUsed": "{taille} usados",

@@ -751,6 +751,7 @@
   "clMissedVoice": "Appel vocal manqué",
   "clMissedVideo": "Appel vidéo manqué",
   "clCallBack": "Rappeler",
+  "clTapToCallBack": "Appuyez pour rappeler",
   "stoTitle": "Stockage",
   "stoSubtitle": "Photos, vidéos et fichiers",
   "stoUsed": "{taille} utilisés",

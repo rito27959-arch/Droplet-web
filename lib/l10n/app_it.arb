@@ -747,6 +747,7 @@
   "clMissedVoice": "Chiamata vocale persa",
   "clMissedVideo": "Videochiamata persa",
   "clCallBack": "Richiama",
+  "clTapToCallBack": "Tocca per richiamare",
   "stoTitle": "Spazio di archiviazione",
   "stoSubtitle": "Foto, video e file",
   "stoUsed": "{taille} occupati",

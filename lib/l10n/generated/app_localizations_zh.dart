@@ -2424,6 +2424,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clCallBack => '回拨';
 
   @override
+  String get clTapToCallBack => '点按回拨';
+
+  @override
   String get stoTitle => '存储空间';
 
   @override

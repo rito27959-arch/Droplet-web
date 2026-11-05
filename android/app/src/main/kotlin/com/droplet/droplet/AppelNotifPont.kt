@@ -63,6 +63,10 @@ object AppelNotifPont {
                             ?.toLong() ?: System.currentTimeMillis(),
                         video = appel.argument<Boolean>("video") ?: false,
                         via = appel.argument<String>("via") ?: "",
+                        texte = appel.argument<String>("texte") ?: "",
+                        sonnerie = appel.argument<Boolean>("sonnerie") ?: false,
+                        photo = appel.argument<String>("photo"),
+                        pastille = appel.argument<ByteArray>("pastille"),
                     )
                     resultat.success(true)
                 }

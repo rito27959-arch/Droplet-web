@@ -747,6 +747,7 @@
   "clMissedVoice": "未接语音通话",
   "clMissedVideo": "未接视频通话",
   "clCallBack": "回拨",
+  "clTapToCallBack": "点按回拨",
   "stoTitle": "存储空间",
   "stoSubtitle": "照片、视频和文件",
   "stoUsed": "已使用 {taille}",

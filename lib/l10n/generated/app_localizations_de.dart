@@ -2559,6 +2559,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get clCallBack => 'Zurückrufen';
 
   @override
+  String get clTapToCallBack => 'Zum Zurückrufen tippen';
+
+  @override
   String get stoTitle => 'Speicher';
 
   @override

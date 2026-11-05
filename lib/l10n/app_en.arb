@@ -747,6 +747,7 @@
   "clMissedVoice": "Missed voice call",
   "clMissedVideo": "Missed video call",
   "clCallBack": "Call back",
+  "clTapToCallBack": "Tap to call back",
   "stoTitle": "Storage",
   "stoSubtitle": "Photos, videos and files",
   "stoUsed": "{taille} used",

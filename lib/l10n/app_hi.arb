@@ -747,6 +747,7 @@
   "clMissedVoice": "छूटी वॉइस कॉल",
   "clMissedVideo": "छूटी वीडियो कॉल",
   "clCallBack": "वापस कॉल करें",
+  "clTapToCallBack": "वापस कॉल करने के लिए टैप करें",
   "stoTitle": "स्टोरेज",
   "stoSubtitle": "फ़ोटो, वीडियो और फ़ाइलें",
   "stoUsed": "{taille} उपयोग में",

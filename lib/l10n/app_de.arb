@@ -747,6 +747,7 @@
   "clMissedVoice": "Verpasster Sprachanruf",
   "clMissedVideo": "Verpasster Videoanruf",
   "clCallBack": "Zurückrufen",
+  "clTapToCallBack": "Zum Zurückrufen tippen",
   "stoTitle": "Speicher",
   "stoSubtitle": "Fotos, Videos und Dateien",
   "stoUsed": "{taille} belegt",

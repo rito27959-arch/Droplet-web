@@ -2554,6 +2554,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clCallBack => 'Devolver llamada';
 
   @override
+  String get clTapToCallBack => 'Toca para devolver la llamada';
+
+  @override
   String get stoTitle => 'Almacenamiento';
 
   @override

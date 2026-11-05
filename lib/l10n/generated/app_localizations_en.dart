@@ -2547,6 +2547,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clCallBack => 'Call back';
 
   @override
+  String get clTapToCallBack => 'Tap to call back';
+
+  @override
   String get stoTitle => 'Storage';
 
   @override

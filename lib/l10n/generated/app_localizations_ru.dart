@@ -2602,6 +2602,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clCallBack => 'Перезвонить';
 
   @override
+  String get clTapToCallBack => 'Нажмите, чтобы перезвонить';
+
+  @override
   String get stoTitle => 'Хранилище';
 
   @override

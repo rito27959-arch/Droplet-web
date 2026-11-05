@@ -747,6 +747,7 @@
   "clMissedVoice": "Пропущенный голосовой вызов",
   "clMissedVideo": "Пропущенный видеовызов",
   "clCallBack": "Перезвонить",
+  "clTapToCallBack": "Нажмите, чтобы перезвонить",
   "stoTitle": "Хранилище",
   "stoSubtitle": "Фото, видео и файлы",
   "stoUsed": "Занято: {taille}",

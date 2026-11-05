@@ -82,6 +82,7 @@ import 'mascotte_envoi.dart';
 import 'mise_en_forme.dart';
 import 'transition_envoi.dart';
 import 'avion_envoi.dart';
+import 'bulle_appel.dart';
 import 'transition_vocale.dart';
 import 'network_sheet.dart';
 import 'transmission_sheet.dart';
@@ -4646,9 +4647,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                   // Un appel manqué : sa propre bulle, avec
                                   // « Rappeler ».
                                   if (m.type == 'appel') {
+                                    // Suivi d'un autre appel manqué du même
+                                    // genre : c'est le dernier qui porte la
+                                    // bulle, avec le nombre.
+                                    if (i < items.length && appelsGroupes(m, items[i])) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    var nombre = 1;
+                                    for (var j = i - 2; j >= 0 && appelsGroupes(items[j], items[j + 1]); j--) {
+                                      nombre++;
+                                    }
                                     return _buildMessageEntry(
                                       m,
-                                      _BulleAppel(
+                                      BulleAppelManque(
+                                        nombre: nombre,
                                         message: m,
                                         onRappeler: (video) {
                                           OuroHaptics.light();
@@ -11489,103 +11501,6 @@ class _CitationStatut extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Un appel manqué dans la conversation, comme WhatsApp : l'icône rouge, le
-/// type d'appel, l'heure, et « Rappeler ».
-class _BulleAppel extends StatelessWidget {
-  const _BulleAppel({required this.message, required this.onRappeler});
-
-  final MeshMessage message;
-  final void Function(bool video) onRappeler;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final video = message.content.contains('"video":true');
-    final heure = TimeOfDay.fromDateTime(message.timestamp).format(context);
-    return Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 9, bottom: 1),
-            child: Material(
-              color: OuroColors.secondarySystemBackground,
-              borderRadius: BorderRadius.circular(DesignTokens.radiusBubble),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () => onRappeler(video),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: OuroColors.systemRed.withValues(alpha: 0.14),
-                        ),
-                        child: Icon(
-                          video
-                              ? Icons.missed_video_call_rounded
-                              : Icons.phone_missed_rounded,
-                          color: OuroColors.systemRed,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            video ? l10n.clMissedVideo : l10n.clMissedVoice,
-                            style: TextStyle(
-                              color: OuroColors.label,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            heure,
-                            style: TextStyle(
-                              color: OuroColors.secondaryLabel,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 14),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: OuroColors.accent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          l10n.clCallBack,
-                          style: TextStyle(
-                            color: OuroColors.accent,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        )
-        .animate()
-        .fadeIn(duration: 220.ms)
-        .slideX(begin: -0.04, end: 0, duration: 260.ms);
   }
 }
 

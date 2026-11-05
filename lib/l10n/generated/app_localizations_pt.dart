@@ -2553,6 +2553,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get clCallBack => 'Ligar de volta';
 
   @override
+  String get clTapToCallBack => 'Toque para retornar a chamada';
+
+  @override
   String get stoTitle => 'Armazenamento';
 
   @override

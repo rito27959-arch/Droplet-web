@@ -4944,6 +4944,12 @@ abstract class AppLocalizations {
   /// **'Rappeler'**
   String get clCallBack;
 
+  /// No description provided for @clTapToCallBack.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appuyez pour rappeler'**
+  String get clTapToCallBack;
+
   /// No description provided for @stoTitle.
   ///
   /// In fr, this message translates to:

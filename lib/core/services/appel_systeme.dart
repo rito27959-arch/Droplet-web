@@ -32,6 +32,7 @@
 // ============================================================================
 
 import 'dart:io' show Platform;
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -115,6 +116,14 @@ class AppelSysteme {
     required DateTime debut,
     required bool video,
     required String via,
+    // Le texte sous le nom (« Appel en cours… » pendant que ça sonne,
+    // « Appel en cours » ensuite).
+    String texte = '',
+    // Appel sortant pas encore décroché : pas de minuteur.
+    bool sonnerie = false,
+    // La photo du contact (chemin), ou à défaut sa pastille d'initiale (PNG).
+    String? photo,
+    Uint8List? pastille,
   }) async {
     if (!estSupporte) return false;
     _ecouter();
@@ -128,6 +137,10 @@ class AppelSysteme {
         'debut': debut.millisecondsSinceEpoch,
         'video': video,
         'via': via,
+        'texte': texte,
+        'sonnerie': sonnerie,
+        'photo': ?photo,
+        'pastille': ?pastille,
       });
       _natifActif = ok ?? false;
       return _natifActif;

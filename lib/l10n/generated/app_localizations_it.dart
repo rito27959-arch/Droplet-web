@@ -2556,6 +2556,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get clCallBack => 'Richiama';
 
   @override
+  String get clTapToCallBack => 'Tocca per richiamare';
+
+  @override
   String get stoTitle => 'Spazio di archiviazione';
 
   @override

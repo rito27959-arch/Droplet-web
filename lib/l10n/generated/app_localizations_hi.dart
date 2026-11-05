@@ -2535,6 +2535,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clCallBack => 'वापस कॉल करें';
 
   @override
+  String get clTapToCallBack => 'वापस कॉल करने के लिए टैप करें';
+
+  @override
   String get stoTitle => 'स्टोरेज';
 
   @override

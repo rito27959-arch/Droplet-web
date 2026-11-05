@@ -54,11 +54,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Shader
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.content.ContextCompat
 
 class AppelEnCoursService : Service() {
@@ -75,6 +82,14 @@ class AppelEnCoursService : Service() {
         const val EXTRA_DEBUT = "debut"
         const val EXTRA_VIDEO = "video"
         const val EXTRA_VIA = "via"
+        const val EXTRA_TEXTE = "texte"
+        const val EXTRA_SONNERIE = "sonnerie"
+        const val EXTRA_PHOTO = "photo"
+        const val EXTRA_PASTILLE = "pastille"
+
+        /// Le service tourne-t-il en ce moment ? (même processus)
+        @Volatile
+        private var instance: AppelEnCoursService? = null
 
         fun demarrer(
             contexte: Context,
@@ -83,7 +98,22 @@ class AppelEnCoursService : Service() {
             debutMs: Long,
             video: Boolean,
             via: String,
+            texte: String = "",
+            sonnerie: Boolean = false,
+            photo: String? = null,
+            pastille: ByteArray? = null,
         ) {
+            // ⚠️ DÉJÀ EN COURS (ça sonnait, et l'autre vient de décrocher) :
+            // on met la notification à jour SANS redémarrer le service.
+            // L'autre personne décroche souvent quand Droplet est en
+            // arrière-plan, et Android 12+ interdit de (re)lancer un service
+            // de premier plan depuis l'arrière-plan : la notification serait
+            // restée sur « Appel en cours… », sans le minuteur.
+            val vivant = instance
+            if (vivant != null) {
+                vivant.mettreAJour(pair, pseudo, debutMs, video, via, texte, sonnerie, photo, pastille)
+                return
+            }
             val i = Intent(contexte, AppelEnCoursService::class.java).apply {
                 action = ACTION_DEMARRER
                 putExtra(EXTRA_PAIR, pair)
@@ -91,6 +121,10 @@ class AppelEnCoursService : Service() {
                 putExtra(EXTRA_DEBUT, debutMs)
                 putExtra(EXTRA_VIDEO, video)
                 putExtra(EXTRA_VIA, via)
+                putExtra(EXTRA_TEXTE, texte)
+                putExtra(EXTRA_SONNERIE, sonnerie)
+                putExtra(EXTRA_PHOTO, photo)
+                putExtra(EXTRA_PASTILLE, pastille)
             }
             // ⚠️ `startForegroundService` ET PAS `startService`. Depuis
             // Android 8, une application en arrière-plan n'a pas le droit
@@ -130,9 +164,15 @@ class AppelEnCoursService : Service() {
         val debut = intent?.getLongExtra(EXTRA_DEBUT, 0L) ?: 0L
         val video = intent?.getBooleanExtra(EXTRA_VIDEO, false) ?: false
         val via = intent?.getStringExtra(EXTRA_VIA) ?: ""
+        val texte = intent?.getStringExtra(EXTRA_TEXTE) ?: ""
+        val sonnerie = intent?.getBooleanExtra(EXTRA_SONNERIE, false) ?: false
+        val photo = intent?.getStringExtra(EXTRA_PHOTO)
+        val pastille = intent?.getByteArrayExtra(EXTRA_PASTILLE)
 
         creerCanal()
-        val notif = construire(pair, pseudo, debut, video, via)
+        // Sans la photo d'abord : la lire sur le disque prendrait du temps
+        // sur les cinq secondes permises. Elle arrive juste après.
+        val notif = construire(pair, pseudo, debut, video, via, texte, sonnerie, null)
 
         // Première chose faite, et sans aucune entrée/sortie avant : la
         // limite est de cinq secondes.
@@ -164,6 +204,10 @@ class AppelEnCoursService : Service() {
         } else {
             startForeground(ID_NOTIF, notif)
         }
+        instance = this
+        if (photo != null || pastille != null) {
+            mettreAJour(pair, pseudo, debut, video, via, texte, sonnerie, photo, pastille)
+        }
         // START_NOT_STICKY : si le système nous tue, il ne doit PAS nous
         // relancer. Un service d'appel ressuscité sans appel afficherait
         // une notification d'appel pour un appel qui n'existe plus — et
@@ -171,7 +215,75 @@ class AppelEnCoursService : Service() {
         return START_NOT_STICKY
     }
 
+    override fun onDestroy() {
+        if (instance === this) instance = null
+        super.onDestroy()
+    }
+
+    /// Redessine la notification (photo arrivée, ou appel décroché : le
+    /// minuteur démarre). Même identifiant : Android la remplace sur place.
+    fun mettreAJour(
+        pair: String,
+        pseudo: String,
+        debut: Long,
+        video: Boolean,
+        via: String,
+        texte: String,
+        sonnerie: Boolean,
+        photo: String?,
+        pastille: ByteArray?,
+    ) {
+        val icone = try {
+            iconeRonde(photo, pastille)
+        } catch (e: Throwable) {
+            null
+        }
+        val notif = construire(pair, pseudo, debut, video, via, texte, sonnerie, icone)
+        try {
+            NotificationManagerCompat.from(this).notify(ID_NOTIF, notif)
+        } catch (e: SecurityException) {
+            // Notifications refusées : le service garde sa notification de
+            // départ, l'appel continue.
+        }
+    }
+
+    /// La photo du contact (ou sa pastille d'initiale), en rond, comme
+    /// WhatsApp. Réduite : une notification n'a pas besoin de 4000 pixels.
+    private fun iconeRonde(photo: String?, pastille: ByteArray?): Bitmap? {
+        val opts = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 }
+        val brute: Bitmap = when {
+            photo != null -> {
+                val taille = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(photo, taille)
+                var echelle = 1
+                while (taille.outWidth / (echelle * 2) >= 256 && taille.outHeight / (echelle * 2) >= 256) echelle *= 2
+                opts.inSampleSize = echelle
+                BitmapFactory.decodeFile(photo, opts)
+            }
+            pastille != null -> BitmapFactory.decodeByteArray(pastille, 0, pastille.size, opts)
+            else -> null
+        } ?: return null
+        val cote = minOf(brute.width, brute.height, 256)
+        val carre = Bitmap.createScaledBitmap(
+            Bitmap.createBitmap(
+                brute,
+                (brute.width - minOf(brute.width, brute.height)) / 2,
+                (brute.height - minOf(brute.width, brute.height)) / 2,
+                minOf(brute.width, brute.height),
+                minOf(brute.width, brute.height),
+            ),
+            cote, cote, true,
+        )
+        val rond = Bitmap.createBitmap(cote, cote, Bitmap.Config.ARGB_8888)
+        val pinceau = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            shader = BitmapShader(carre, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        }
+        Canvas(rond).drawCircle(cote / 2f, cote / 2f, cote / 2f, pinceau)
+        return rond
+    }
+
     private fun arreterProprement() {
+        instance = null
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
@@ -215,6 +327,9 @@ class AppelEnCoursService : Service() {
         debut: Long,
         video: Boolean,
         via: String,
+        texte: String,
+        sonnerie: Boolean,
+        icone: Bitmap?,
     ): Notification {
         val drapeaux = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
@@ -251,6 +366,7 @@ class AppelEnCoursService : Service() {
         val personne = Person.Builder()
             .setName(if (pseudo.isNotEmpty()) pseudo else pair)
             .setImportant(true)
+            .apply { if (icone != null) setIcon(IconCompat.createWithBitmap(icone)) }
             .build()
 
         val b = NotificationCompat.Builder(this, CANAL)
@@ -264,12 +380,18 @@ class AppelEnCoursService : Service() {
             // date. Une durée écrite par l'application se figerait dès que
             // le système gèle le processus — c'est-à-dire au moment précis
             // où cette notification sert à quelque chose.
-            .setWhen(debut)
-            .setUsesChronometer(true)
-            .setShowWhen(true)
+            //
+            // ⚠️ PENDANT QUE ÇA SONNE (appel sortant pas encore décroché),
+            // PAS DE MINUTEUR : comme WhatsApp, « Appel en cours… » jusqu'à
+            // ce que l'autre décroche, puis le minuteur part de zéro.
+            .setWhen(if (sonnerie) System.currentTimeMillis() else debut)
+            .setUsesChronometer(!sonnerie)
+            .setShowWhen(!sonnerie)
             // Ce qui passe par le maillage ou par Internet, en petit.
             .setSubText(via)
             .addPerson(personne)
+            .apply { if (texte.isNotEmpty()) setContentText(texte) }
+            .apply { if (icone != null) setLargeIcon(icone) }
             .setStyle(
                 NotificationCompat.CallStyle
                     .forOngoingCall(personne, pIRaccrocher)

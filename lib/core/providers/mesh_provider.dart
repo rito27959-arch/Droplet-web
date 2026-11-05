@@ -2492,9 +2492,18 @@ class CallNotifier extends StateNotifier<CallState> {
     // été décroché, et c'est la seule chose qui compte.
     final actif =
         s.isCallActive && s.peerId != null && s.debutConnexion != null;
-    AppelSysteme.appelActif = actif;
+    // ⚠️ L'APPEL SORTANT QUI SONNE ENCORE. Avant, rien n'apparaissait tant
+    // que l'autre n'avait pas décroché : en quittant Droplet pendant que ça
+    // sonnait, on n'avait ni pastille, ni moyen de raccrocher, ni de revenir
+    // à l'appel. Comme WhatsApp : « Appel en cours… » tout de suite, puis
+    // le minuteur dès que l'autre décroche.
+    final sonne = !actif &&
+        s.isCallActive &&
+        s.peerId != null &&
+        s.direction == CallDirection.outgoing;
+    AppelSysteme.appelActif = actif || sonne;
 
-    if (!actif) {
+    if (!actif && !sonne) {
       final ancien = _notifAppelId;
       if (ancien != null) {
         _notifAppelId = null;
@@ -2504,9 +2513,18 @@ class CallNotifier extends StateNotifier<CallState> {
       unawaited(AppelSysteme.arreter());
       return;
     }
-    // Déjà affichée pour ce pair : on ne la redessine pas. Android
-    // redémarrerait le chronomètre à chaque mise à jour du niveau sonore.
-    if (_notifAppelId == s.peerId) return;
+    // Déjà affichée pour ce pair, dans ce même état (sonnerie ou décroché) :
+    // on ne la redessine pas. Android redémarrerait le chronomètre à
+    // chaque mise à jour du niveau sonore.
+    final etatNotif = sonne ? 'sonne' : 'decroche';
+    if (_notifAppelId == s.peerId && _notifAppelEtat == etatNotif) return;
+    if (_notifAppelId == s.peerId) {
+      // Même appel, il vient d'être décroché : la notification passe de
+      // « Appel en cours… » au minuteur, sur place.
+      _notifAppelEtat = etatNotif;
+      unawaited(_poserNotification(s, sonne: sonne));
+      return;
+    }
 
     // ⚠️ LE PAIR A CHANGÉ SANS PASSER PAR L'ÉTAT INACTIF — un appel en
     // attente pris à la volée. Chaque pair a sa propre notification :
@@ -2517,8 +2535,12 @@ class CallNotifier extends StateNotifier<CallState> {
       unawaited(NotificationService.fermerAppelEnCours(precedent));
     }
     _notifAppelId = s.peerId;
-    unawaited(_poserNotification(s));
+    _notifAppelEtat = etatNotif;
+    unawaited(_poserNotification(s, sonne: sonne));
   }
+
+  /// « sonne » ou « decroche » : l'état que montre la notification.
+  String? _notifAppelEtat;
 
   /// ⚠️ LE NATIF D'ABORD, LE DART EN REPLI — ET JAMAIS LES DEUX.
   ///
@@ -2532,7 +2554,7 @@ class CallNotifier extends StateNotifier<CallState> {
   /// la notification Dart, elle, marche partout. Afficher les deux serait
   /// pire que les deux cas — deux notifications d'appel empilées, dont
   /// aucune ne se balaie.
-  Future<void> _poserNotification(CallState s) async {
+  Future<void> _poserNotification(CallState s, {bool sonne = false}) async {
     // ⚠️ JAMAIS L'IDENTIFIANT BRUT. Pour un appel REÇU par Internet,
     // `peerPseudo` est vide (l'offre ne porte pas de nom) : la notification
     // d'Android affichait alors l'empreinte de 64 caractères de l'appelant
@@ -2543,19 +2565,26 @@ class CallNotifier extends StateNotifier<CallState> {
       StorageService.getPeerRecord(s.peerId!)?.pseudo,
       _callPeerPseudo,
     ]);
+    final (photo, pastille) = await NotificationService.iconeAppel(s.peerId!, pseudo);
+    final l10n = NotificationService.l10n;
     final natif = await AppelSysteme.demarrer(
       pairId: s.peerId!,
       pseudo: pseudo,
-      debut: s.debutConnexion!,
+      debut: s.debutConnexion ?? DateTime.now(),
       video: s.isVideoEnabled,
-      via: s.isRemoteCall ? 'Internet' : 'Maillage',
+      via: s.isRemoteCall ? l10n.ntfViaInternet : l10n.ntfViaMesh,
+      texte: sonne ? l10n.clOutgoingCall : l10n.ntfOngoingCall,
+      sonnerie: sonne,
+      photo: photo,
+      pastille: pastille,
     );
     if (natif) return;
     await NotificationService.appelEnCours(
       peerId: s.peerId!,
       pseudo: pseudo,
-      debut: s.debutConnexion!,
+      debut: s.debutConnexion ?? DateTime.now(),
       viaInternet: s.isRemoteCall,
+      sonnerie: sonne,
     );
   }
 

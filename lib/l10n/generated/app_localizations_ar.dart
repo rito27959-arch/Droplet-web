@@ -2619,6 +2619,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clCallBack => 'معاودة الاتصال';
 
   @override
+  String get clTapToCallBack => 'انقر لمعاودة الاتصال';
+
+  @override
   String get stoTitle => 'التخزين';
 
   @override

@@ -747,6 +747,7 @@
   "clMissedVoice": "مكالمة صوتية فائتة",
   "clMissedVideo": "مكالمة فيديو فائتة",
   "clCallBack": "معاودة الاتصال",
+  "clTapToCallBack": "انقر لمعاودة الاتصال",
   "stoTitle": "التخزين",
   "stoSubtitle": "الصور والفيديوهات والملفات",
   "stoUsed": "{taille} مستخدمة",
