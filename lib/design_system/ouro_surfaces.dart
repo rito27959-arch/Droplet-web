@@ -93,10 +93,10 @@ class OuroSurfaces {
 
   static List<BoxShadow> haloActif(Color c) => [
         BoxShadow(
-          color: c.withValues(alpha: _sombre ? 0.45 : 0.28),
-          blurRadius: 16,
-          spreadRadius: -3,
-          offset: const Offset(0, 4),
+          color: c.withValues(alpha: _sombre ? 0.55 : 0.30),
+          blurRadius: 18,
+          spreadRadius: -2,
+          offset: const Offset(0, 3),
         ),
       ];
 
@@ -106,15 +106,15 @@ class OuroSurfaces {
   /// l'ombre.
   static List<BoxShadow> get ombreFlottante => [
         BoxShadow(
-          color: Colors.black.withValues(alpha: _sombre ? 0.38 : 0.10),
-          blurRadius: 10,
-          offset: const Offset(0, 3),
+          color: Colors.black.withValues(alpha: _sombre ? 0.38 : 0.08),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
         ),
         BoxShadow(
-          color: Colors.black.withValues(alpha: _sombre ? 0.30 : 0.07),
-          blurRadius: 32,
-          spreadRadius: -4,
-          offset: const Offset(0, 14),
+          color: Colors.black.withValues(alpha: _sombre ? 0.30 : 0.05),
+          blurRadius: 24,
+          spreadRadius: -6,
+          offset: const Offset(0, 9),
         ),
       ];
 }
@@ -188,7 +188,7 @@ class SurfaceVerre extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withValues(alpha: OuroColors.isDark ? 0.035 : 0.25),
+                    Colors.white.withValues(alpha: OuroColors.isDark ? 0.035 : 0.10),
                     Colors.transparent,
                   ],
                 ),
