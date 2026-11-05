@@ -23,11 +23,15 @@ class BulleAppelManque extends StatelessWidget {
     required this.message,
     required this.onRappeler,
     this.nombre = 1,
+    this.anime = true,
   });
 
   final MeshMessage message;
   final void Function(bool video) onRappeler;
   final int nombre;
+
+  /// Faux : pas d'animation d'entrée (captures d'écran, tests).
+  final bool anime;
 
   static bool estVideo(MeshMessage m) => m.content.contains('"video":true');
 
@@ -39,7 +43,7 @@ class BulleAppelManque extends StatelessWidget {
     final titre = video ? l10n.clMissedVideo : l10n.clMissedVoice;
     final rouge = OuroColors.systemRed;
     final largeurMax = MediaQuery.sizeOf(context).width * 0.78;
-    return Align(
+    final bulle = Align(
           alignment: Alignment.centerLeft,
           child: Padding(
             padding: const EdgeInsets.only(top: 9, bottom: 1),
@@ -64,7 +68,10 @@ class BulleAppelManque extends StatelessWidget {
                       children: [
                         // L'icône rouge, qui « sonne » une fois quand l'appel
                         // vient d'être manqué (pas à chaque défilement).
-                        _IconeAppelManque(video: video, recent: DateTime.now().difference(message.timestamp) < const Duration(minutes: 2)),
+                        _IconeAppelManque(
+                          video: video,
+                          recent: anime && DateTime.now().difference(message.timestamp) < const Duration(minutes: 2),
+                        ),
                         const SizedBox(width: 10),
                         Flexible(
                           child: Column(
@@ -143,7 +150,9 @@ class BulleAppelManque extends StatelessWidget {
               ),
             ),
           ),
-        )
+        );
+    if (!anime) return bulle;
+    return bulle
         .animate()
         .fadeIn(duration: 220.ms)
         .slideX(begin: -0.04, end: 0, duration: 260.ms);
