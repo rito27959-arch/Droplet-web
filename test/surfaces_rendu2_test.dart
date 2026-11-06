@@ -10,6 +10,7 @@ import 'dart:ui' as ui;
 import 'package:droplet/design_system/ouro_colors.dart';
 import 'package:droplet/design_system/ouro_theme.dart';
 import 'package:droplet/design_system/ouro_surfaces.dart';
+import 'package:droplet/features/chats/bouton_nouvelle_discussion.dart';
 import 'package:droplet/features/chats/chats_filter_bar.dart';
 import 'package:droplet/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +41,7 @@ void main() {
   for (final sombre in [true, false]) {
     final nom = 'surfaces_${sombre ? 'sombre' : 'clair'}';
     testWidgets(nom, (tester) async {
-      tester.view.physicalSize = const Size(390, 520) * 2;
+      tester.view.physicalSize = const Size(390, 600) * 2;
       tester.view.devicePixelRatio = 2;
       addTearDown(tester.view.reset);
       final b = sombre ? Brightness.dark : Brightness.light;
@@ -89,17 +90,19 @@ void main() {
                   Align(
                     alignment: Alignment.centerRight,
                     child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: OuroSurfaces.pastilleActive(OuroColors.accentRempli),
-                          boxShadow: OuroSurfaces.ombreFlottante,
-                        ),
-                        child: const Icon(Icons.add_comment_rounded, color: Colors.white),
-                      ),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                      child: BoutonNouvelleDiscussion(visible: true, etiquette: 'Nouveau message', onTap: () {}),
+                    ),
+                  ),
+                  // Une capsule à la place de la barre d'onglets, pour juger
+                  // le bouton à sa vraie place.
+                  Container(
+                    height: 58,
+                    margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(29),
+                      color: OuroColors.isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
+                      boxShadow: OuroSurfaces.ombreFlottante,
                     ),
                   ),
                 ],

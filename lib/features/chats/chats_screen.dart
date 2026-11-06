@@ -89,9 +89,11 @@ import '../../core/providers/locale_provider.dart' show kSupportedLocales;
 import '../status/anneau_statuts.dart';
 import '../../core/services/miroir_appareils.dart';
 import '../../design_system/flou.dart';
+import '../../design_system/ouro_tab_bar.dart';
 import '../../design_system/ouro_surfaces.dart';
 import '../../core/config/compte_droplet.dart';
 import '../../shared/widgets/avatar_officiel.dart';
+import 'bouton_nouvelle_discussion.dart';
 
 class ChatsScreen extends ConsumerStatefulWidget {
   const ChatsScreen({super.key});
@@ -415,8 +417,28 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
 
     final l10n = AppLocalizations.of(context);
 
+    final clavier = MediaQuery.viewInsetsOf(context).bottom > 0;
     return IosMagnifierOverlay(
       child: _AmbianceHoraire(
+      child: Stack(
+      children: [
+      // Le défilement décide si le bouton « nouvelle discussion » se montre :
+      // il s'efface quand on descend dans la liste (on lit), revient quand
+      // on remonte (on cherche quelqu'un).
+      NotificationListener<UserScrollNotification>(
+      onNotification: (n) {
+        final montrer = switch (n.direction) {
+          ScrollDirection.reverse => false,
+          ScrollDirection.forward => true,
+          ScrollDirection.idle => _boutonVisible,
+        };
+        if (n.metrics.pixels <= 0 && !_boutonVisible) {
+          setState(() => _boutonVisible = true);
+        } else if (montrer != _boutonVisible) {
+          setState(() => _boutonVisible = montrer);
+        }
+        return false;
+      },
       child: OuroLargeTitleScaffold(
         // Transparent : c'est `_AmbianceHoraire` qui peint le fond, avec sa
         // teinte du moment en haut. Les lignes, elles, restent opaques.
@@ -742,8 +764,26 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
         ],
       ),
       ),
+      // ── L'ACCÈS RAPIDE AUX CONTACTS, sous le pouce ─────────────────
+      // Au-dessus de la barre d'onglets flottante, aligné sur sa marge.
+      Positioned(
+        right: DesignTokens.screenMargin,
+        bottom: OuroTabBar.reservedHeight(MediaQuery.paddingOf(context).bottom) + 2,
+        child: BoutonNouvelleDiscussion(
+          visible: _boutonVisible && !clavier && _query.isEmpty,
+          etiquette: l10n.nmTitle,
+          onTap: () => context.push('/new-message'),
+          onLongPress: _showComposeMenu,
+        ),
+      ),
+      ],
+      ),
+      ),
     );
   }
+
+  /// Le bouton « nouvelle discussion » est-il montré ? (voir le défilement)
+  bool _boutonVisible = true;
 
   /// Les messages dont le texte contient la recherche, du plus récent au plus
   /// ancien (40 au plus). À partir de deux lettres : une seule lettre
