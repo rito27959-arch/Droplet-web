@@ -32,6 +32,7 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart'
     show CupertinoAlertDialog, CupertinoDialogAction, showCupertinoDialog;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/models/mesh_message.dart';
