@@ -331,8 +331,9 @@ class _PasserelleParametresState extends ConsumerState<PasserelleParametres> {
     return {
       'titre': textes.stTitle,
       'retour': MaterialLocalizations.of(context).backButtonTooltip,
-      // Les écrans Glasmio sont toujours en noir (choix de design).
-      'sombre': true,
+      // Suit le réglage clair/sombre de Droplet : noir pur de Glasmio en
+      // sombre, fond groupé clair d'iOS en clair. Aucune lueur.
+      'sombre': OuroColors.isDark,
       'accent': _c(OuroColors.accent),
       'profil': {
         'id': 'profil',
