@@ -41,32 +41,32 @@ Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 === ANALYSE (fichiers Glasmio)
 code 0
 0
-warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:125:8 • unused_import
+warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:126:8 • unused_import
 
-55 issues found. (ran in 27.6s)
+55 issues found. (ran in 30.3s)
 === DEBUG : 0
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 111: initializers are not permitted on arrays (or structs containing arrays)
         error: 112: unknown identifier 'param_2'
-warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_filter.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
-SkSL Error:
-        error: 121: initializers are not permitted on arrays (or structs containing arrays)
-        error: 122: unknown identifier 'param_2'
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 58: loop index initializer must be a constant expression
         error: 55: loop index initializer must be a constant expression
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_filter.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 121: initializers are not permitted on arrays (or structs containing arrays)
+        error: 122: unknown identifier 'param_2'
 15 packages have newer versions incompatible with dependency constraints.
 === RELEASE (R8) : 0
-total 904304
-drwxr-xr-x 2 runner runner      4096 Nov 10 13:32 .
-drwxr-xr-x 8 runner runner      4096 Nov 10 13:28 ..
--rw-r--r-- 1 runner runner 158226904 Nov 10 13:32 app-arm64-v8a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 13:32 app-arm64-v8a-release.apk.sha1
--rw-r--r-- 1 runner runner  92132836 Nov 10 13:32 app-armeabi-v7a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 13:32 app-armeabi-v7a-release.apk.sha1
--rw-r--r-- 1 runner runner 501234433 Nov 10 13:10 app-debug.apk
--rw-r--r-- 1 runner runner        40 Nov 10 13:10 app-debug.apk.sha1
--rw-r--r-- 1 runner runner 174376262 Nov 10 13:32 app-x86_64-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 13:32 app-x86_64-release.apk.sha1
+total 904308
+drwxr-xr-x 2 runner runner      4096 Nov 10 13:59 .
+drwxr-xr-x 8 runner runner      4096 Nov 10 13:55 ..
+-rw-r--r-- 1 runner runner 158226904 Nov 10 13:59 app-arm64-v8a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 13:59 app-arm64-v8a-release.apk.sha1
+-rw-r--r-- 1 runner runner  92132836 Nov 10 13:59 app-armeabi-v7a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 13:59 app-armeabi-v7a-release.apk.sha1
+-rw-r--r-- 1 runner runner 501236009 Nov 10 13:36 app-debug.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 13:36 app-debug.apk.sha1
+-rw-r--r-- 1 runner runner 174376262 Nov 10 13:59 app-x86_64-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 13:59 app-x86_64-release.apk.sha1
