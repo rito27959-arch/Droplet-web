@@ -62,19 +62,19 @@ jobs:
           api-level: 34
           arch: x86_64
           target: google_apis
-          profile: pixel_6
           ram-size: 4096M
           disk-size: 6000M
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -skin 1080x2340
           disable-animations: false
           script: bash .github/outils/captures-emulateur.sh
       - name: Publier
         if: always()
         run: |
-          cd /tmp/cap
+          set +e
+          mkdir -p /tmp/cap && cd /tmp/cap
           git init -q j && cd j
           git config user.name "verif" && git config user.email "verif@users.noreply.github.com"
           git checkout -q -b captures-glasmio
           rm -rf captures && mkdir -p captures; cp ../*.png captures/ 2>/dev/null; cp ../*.txt captures/ 2>/dev/null; true
           echo "${GITHUB_SHA}" > captures/commit.txt
-          git add -A && git commit -qm "Captures Glasmio ${GITHUB_SHA}" && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" captures-glasmio
+          git add -A && git commit -qm "Captures Glasmio ${GITHUB_SHA}" && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" captures-glasmio; echo "push: $?"
