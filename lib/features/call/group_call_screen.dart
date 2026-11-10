@@ -38,6 +38,7 @@
 //    n'apparaît que pendant la connexion ou après un échec.
 // ============================================================================
 
+import 'barre_appel_glasmio.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -1468,18 +1469,49 @@ class _BarreControlesSalon extends StatelessWidget {
       borderRadius: BorderRadius.circular(30),
       border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
     );
+    // Flou d'arrière-plan seulement là où l'appareil peut se le permettre.
+    final repli = DeviceProfile.menager
+        ? DecoratedBox(decoration: decor, child: contenu)
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: Flou(repli: const Color(0x66000000),
+              filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: DecoratedBox(decoration: decor, child: contenu),
+            ),
+          );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      // Flou d'arrière-plan seulement là où l'appareil peut se le permettre.
-      child: DeviceProfile.menager
-          ? DecoratedBox(decoration: decor, child: contenu)
-          : ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: Flou(repli: const Color(0x66000000), 
-                filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                child: DecoratedBox(decoration: decor, child: contenu),
-              ),
-            ),
+      // Avec Glasmio : la même barre, en vrai verre natif, posée par-dessus.
+      child: BarreAppelGlasmio(
+        visible: true,
+        repli: repli,
+        boutons: [
+          BoutonBarreAppel(
+            id: 'haut_parleur',
+            icone: hautParleur ? 'haut_parleur_on' : 'haut_parleur_off',
+            legende: l10n.clLabelSpeaker,
+            semantique: hautParleur ? l10n.clDisableSpeaker : l10n.clEnableSpeaker,
+            actif: hautParleur,
+            onTap: onHautParleur,
+          ),
+          BoutonBarreAppel(
+            id: 'micro',
+            icone: muet ? 'micro_off' : 'micro',
+            legende: l10n.clLabelMic,
+            semantique: muet ? l10n.clEnableMic : l10n.clMuteMic,
+            actif: muet,
+            onTap: onMicro,
+          ),
+          BoutonBarreAppel(
+            id: 'raccrocher',
+            icone: 'raccrocher',
+            legende: l10n.clHangUp,
+            semantique: l10n.clHangUp,
+            destructif: true,
+            onTap: onRaccrocher,
+          ),
+        ],
+      ),
     );
   }
 }

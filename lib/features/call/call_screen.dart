@@ -23,6 +23,7 @@
 // `webrtc_call_service.dart`, `mesh_provider.dart`) : ce fichier n'affiche.
 // ============================================================================
 
+import 'barre_appel_glasmio.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -539,6 +540,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
                           child: _BarreControles(
+                            visible: controlesVisibles,
                             call: call,
                             onMute: notifier.toggleMute,
                             onSpeaker: notifier.toggleSpeaker,
@@ -871,6 +873,7 @@ class _BarresQualite extends StatelessWidget {
 /// La barre de contrôle en verre : boutons légendés, et le rouge pour finir.
 class _BarreControles extends StatelessWidget {
   const _BarreControles({
+    required this.visible,
     required this.call,
     required this.onMute,
     required this.onSpeaker,
@@ -879,6 +882,8 @@ class _BarreControles extends StatelessWidget {
     required this.onHangUp,
   });
 
+  /// Les contrôles sont affichés (ils s'effacent pendant une vidéo).
+  final bool visible;
   final CallState call;
   final VoidCallback onMute;
   final VoidCallback onSpeaker;
@@ -950,15 +955,61 @@ class _BarreControles extends StatelessWidget {
       border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
     );
     // Flou d'arrière-plan seulement là où l'appareil peut se le permettre.
-    if (DeviceProfile.menager) {
-      return DecoratedBox(decoration: decor, child: contenu);
-    }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
-      child: Flou(repli: const Color(0x66000000), 
-        filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: DecoratedBox(decoration: decor, child: contenu),
-      ),
+    final repli = DeviceProfile.menager
+        ? DecoratedBox(decoration: decor, child: contenu)
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: Flou(repli: const Color(0x66000000),
+              filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: DecoratedBox(decoration: decor, child: contenu),
+            ),
+          );
+    // Avec Glasmio : la même barre, en vrai verre natif, posée par-dessus.
+    return BarreAppelGlasmio(
+      visible: visible,
+      repli: repli,
+      boutons: [
+        BoutonBarreAppel(
+          id: 'haut_parleur',
+          icone: call.isSpeakerOn ? 'haut_parleur_on' : 'haut_parleur_off',
+          legende: l10n.clLabelSpeaker,
+          semantique: call.isSpeakerOn ? l10n.clDisableSpeaker : l10n.clEnableSpeaker,
+          actif: call.isSpeakerOn,
+          onTap: onSpeaker,
+        ),
+        BoutonBarreAppel(
+          id: 'camera',
+          icone: call.isVideoEnabled ? 'camera_on' : 'camera_off',
+          legende: l10n.clLabelCamera,
+          semantique: call.isVideoEnabled ? l10n.clDisableCamera : l10n.clEnableCamera,
+          actif: call.isVideoEnabled,
+          onTap: onVideo,
+        ),
+        if (call.isVideoEnabled)
+          BoutonBarreAppel(
+            id: 'retourner',
+            icone: 'retourner',
+            legende: l10n.clLabelFlip,
+            semantique: l10n.clSwitchCamera,
+            onTap: onFlip,
+          ),
+        BoutonBarreAppel(
+          id: 'micro',
+          icone: call.isMuted ? 'micro_off' : 'micro',
+          legende: l10n.clLabelMic,
+          semantique: call.isMuted ? l10n.clEnableMic : l10n.clMuteMic,
+          actif: call.isMuted,
+          onTap: onMute,
+        ),
+        BoutonBarreAppel(
+          id: 'raccrocher',
+          icone: 'raccrocher',
+          legende: l10n.clHangUp,
+          semantique: l10n.clHangUp,
+          destructif: true,
+          onTap: onHangUp,
+        ),
+      ],
     );
   }
 }

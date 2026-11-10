@@ -117,6 +117,14 @@ object PontGlasmio {
                     }
                     resultat.success(null)
                 }
+                "barre_appel" -> {
+                    val act = activiteFlutter?.get()
+                    val desc = appel.argument<String>("description")
+                    if (disponible && act != null && desc != null) {
+                        runCatching { BarreAppelGlasmio.mettreAJour(act, JSONObject(desc)) }
+                    }
+                    resultat.success(null)
+                }
                 "barre_activite" -> {
                     BarreNavigationGlasmio.signalerActivite()
                     resultat.success(null)
@@ -131,6 +139,11 @@ object PontGlasmio {
     }
 
     /** Un geste dans la barre de navigation : Dart change d'onglet. */
+    /** Un bouton de la barre d'appel native a été touché. */
+    fun barreAppel(id: String) {
+        principal { canal?.invokeMethod("barre_appel", mapOf("id" to id)) }
+    }
+
     fun barre(id: String, valeur: Any?) {
         principal { canal?.invokeMethod("barre", mapOf("id" to id, "valeur" to valeur)) }
     }
