@@ -47,8 +47,7 @@ jobs:
           [ -f android/app/proguard-rules.pro ] || { echo "# vide (fichier absent du dépôt)" > android/app/proguard-rules.pro; echo "⚠️ proguard-rules.pro absent : release compilée SANS les règles de Droplet" >> $J; }
           # Ressources présentes sur l'ordinateur mais absentes du dépôt :
           # remplacées ici par des bouche-trous, seulement pour compiler.
-          for d in assets/icon/premuim assets/stickers; do [ -d $d ] || { mkdir -p $d; touch $d/.bouche-trou; echo "⚠️ $d absent du dépôt (bouche-trou)" >> $J; }; done
-          [ -f assets/fonts/Inter-Variable.ttf ] || { cp "$(ls assets/fonts/*.ttf | head -1)" assets/fonts/Inter-Variable.ttf; echo "⚠️ Inter-Variable.ttf absent du dépôt (bouche-trou)" >> $J; }
+          python3 .github/outils/bouche-trous.py >> $J
           if [ "${{ matrix.mode }}" = "glasmio" ]; then
             bash .github/outils/passer-a-glasmio.sh >> $J 2>&1
           fi

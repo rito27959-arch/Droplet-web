@@ -23,7 +23,31 @@ sed -i -E 's#^(    id\("kotlin-android"\))#\1\n    id("org.jetbrains.kotlin.plug
 # plugin Android 9, la seconde forme se lit « android-37.0 », et le greffon
 # `tor` (via cargokit) découpe cette chaîne pour en faire un entier — « 37.0 »
 # le fait échouer. La forme texte garde « android-37 ».
-sed -i -E 's/compileSdk = flutter.compileSdkVersion/compileSdkVersion("android-37")/' $A
+sed -i -E 's/compileSdk = flutter.compileSdkVersion/compileSdk = 37/' $A
+# Le greffon `tor` (cargokit) lit compileSdk comme « android-37 » et le
+# convertit en entier ; le plugin Android 9 écrit « android-37.0 ». Correctif
+# appliqué à la volée, avant l'évaluation de `:tor` (voir build.gradle.kts).
+cat >> build.gradle.kts <<'K'
+
+// ── tor / cargokit et le plugin Android 9 ───────────────────────────────
+// cargokit fait `compileSdkVersion.substring(8) as int`, ce qui suppose
+// « android-37 ». Le plugin Android 9 donne « android-37.0 » : la
+// conversion échoue et la compilation s'arrête. On remplace, dans le
+// fichier de cargokit du cache de paquets, cette conversion par une
+// lecture qui ignore la partie « .0 ». Idempotent : ne fait rien si déjà
+// corrigé, et marche aussi avec l'ancien plugin (« android-36 »).
+gradle.beforeProject {
+    if (name == "tor") {
+        val f = projectDir.resolve("../cargokit/gradle/plugin.gradle")
+        if (f.exists()) {
+            val avant = "compileSdkVersion.substring(8) as int"
+            val apres = "compileSdkVersion.substring(8).tokenize('.')[0] as int"
+            val texte = f.readText()
+            if (texte.contains(avant)) f.writeText(texte.replace(avant, apres))
+        }
+    }
+}
+K
 cat >> $A <<'G'
 
 android { buildFeatures { compose = true } }
