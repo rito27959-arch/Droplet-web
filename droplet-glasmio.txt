@@ -58,7 +58,7 @@ code 0
 0
 warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:135:8 • unused_import
 
-67 issues found. (ran in 27.8s)
+67 issues found. (ran in 23.1s)
 === DEBUG : 0
 an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_filter.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
@@ -76,14 +76,14 @@ SkSL Error:
 15 packages have newer versions incompatible with dependency constraints.
 === RELEASE (R8) : 0
 total 939016
-drwxr-xr-x 2 runner runner      4096 Nov 10 20:04 .
-drwxr-xr-x 8 runner runner      4096 Nov 10 20:00 ..
--rw-r--r-- 1 runner runner 162502830 Nov 10 20:04 app-arm64-v8a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 20:04 app-arm64-v8a-release.apk.sha1
--rw-r--r-- 1 runner runner  96228530 Nov 10 20:04 app-armeabi-v7a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 20:04 app-armeabi-v7a-release.apk.sha1
--rw-r--r-- 1 runner runner 524213663 Nov 10 19:43 app-debug.apk
--rw-r--r-- 1 runner runner        40 Nov 10 19:43 app-debug.apk.sha1
--rw-r--r-- 1 runner runner 178570262 Nov 10 20:04 app-x86_64-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 20:04 app-x86_64-release.apk.sha1
-=== APK publié : 68946da8201a615dc6749d5b17b4fda909497e57
+drwxr-xr-x 2 runner runner      4096 Nov 10 20:26 .
+drwxr-xr-x 8 runner runner      4096 Nov 10 20:23 ..
+-rw-r--r-- 1 runner runner 162502830 Nov 10 20:26 app-arm64-v8a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 20:26 app-arm64-v8a-release.apk.sha1
+-rw-r--r-- 1 runner runner  96228530 Nov 10 20:26 app-armeabi-v7a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 20:26 app-armeabi-v7a-release.apk.sha1
+-rw-r--r-- 1 runner runner 524213663 Nov 10 20:08 app-debug.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 20:08 app-debug.apk.sha1
+-rw-r--r-- 1 runner runner 178570262 Nov 10 20:26 app-x86_64-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 20:26 app-x86_64-release.apk.sha1
+=== APK publié : d39b53a10f3a370af72af54a6909e61cad321eb3
