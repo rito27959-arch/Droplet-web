@@ -32,6 +32,8 @@ jobs:
         with:
           channel: stable
       - name: Compiler
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set +e
           mkdir -p /tmp/res; J=/tmp/res/droplet-${{ matrix.mode }}.txt
@@ -40,6 +42,9 @@ jobs:
           cat > android/app/google-services.json <<'G'
           {"project_info":{"project_number":"123456789012","project_id":"droplet-ci","storage_bucket":"droplet-ci.appspot.com"},
            "client":[{"client_info":{"mobilesdk_app_id":"1:123456789012:android:0123456789abcdef","android_client_info":{"package_name":"com.droplet.droplet"}},
+           "oauth_client":[],"api_key":[{"current_key":"AIzaSyA-ci-factice-0000000000000000000"}],
+           "services":{"appinvite_service":{"other_platform_oauth_client":[]}}},
+           {"client_info":{"mobilesdk_app_id":"1:123456789012:android:0123456789abcdee","android_client_info":{"package_name":"com.droplet.droplet.glasmio"}},
            "oauth_client":[],"api_key":[{"current_key":"AIzaSyA-ci-factice-0000000000000000000"}],
            "services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}
           G
@@ -51,6 +56,9 @@ jobs:
           bash .github/outils/bouche-trous-android.sh >> $J
           if [ "${{ matrix.mode }}" = "glasmio" ]; then
             bash .github/outils/passer-a-glasmio.sh >> $J 2>&1
+            # APK D'ESSAI : un autre identifiant (com.droplet.droplet.glasmio),
+            # pour l'installer À CÔTÉ du vrai Droplet sans y toucher.
+            printf '\nandroid { defaultConfig { applicationIdSuffix = ".glasmio" } }\n' >> android/app/build.gradle.kts
           fi
           flutter pub get > /dev/null 2>&1
           echo "=== ANALYSE (fichiers Glasmio)" >> $J
@@ -65,6 +73,11 @@ jobs:
           grep -E "^e: |ERROR|Missing class|What went wrong|FAILURE" /tmp/r.txt | head -40 >> $J
           sed -n '/What went wrong/,/Try:/p' /tmp/r.txt | head -40 >> $J
           ls -la build/app/outputs/flutter-apk/ >> $J 2>&1
+          if [ "${{ matrix.mode }}" = "glasmio" ] && [ -f build/app/outputs/flutter-apk/app-arm64-v8a-release.apk ]; then
+            cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk /tmp/droplet-glasmio-essai.apk
+            gh release view essai-glasmio >/dev/null 2>&1 || gh release create essai-glasmio --prerelease --title "Droplet Glasmio (essai)" --notes "APK d'essai, installé à côté de Droplet (com.droplet.droplet.glasmio). Signé avec une clé de test." --target "$GITHUB_SHA"
+            gh release upload essai-glasmio /tmp/droplet-glasmio-essai.apk --clobber && echo "=== APK publié : ${GITHUB_SHA}" >> $J
+          fi
           true
       - uses: actions/upload-artifact@v4
         if: always()
