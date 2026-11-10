@@ -52,6 +52,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -171,6 +173,7 @@ private fun Superposition(d: JSONObject, capture: ImageBitmap?, fini: (Map<Strin
                         "feuille" -> FeuilleSuperposee(d, fini)
                         "menu" -> MenuSuperpose(d, capture, fini)
                         "message" -> MessageSuperpose(d, capture, fini)
+                        "selection" -> SelectionSuperposee(d, fini)
                         else -> LaunchedEffect(Unit) { fini(null) }
                     }
                 },
@@ -519,5 +522,63 @@ private fun MessageSuperpose(d: JSONObject, capture: ImageBitmap?, fini: (Map<St
                 },
             )
         }
+    }
+}
+
+
+// ─────────────────────────────────────────────────────────────
+//  L'appui long dans la BARRE DE SAISIE : le menu d'édition d'Apple
+//  (GlasmioTextSelectionMenu) — la capsule de verre Couper · Copier ·
+//  Coller · Tout sélectionner au-dessus de la sélection, et « Plus » qui
+//  s'ouvre sur les styles d'écriture (Gras, Italique…).
+// ─────────────────────────────────────────────────────────────
+
+@Composable
+private fun SelectionSuperposee(d: JSONObject, fini: (Map<String, Any?>?) -> Unit) {
+    val densite = LocalDensity.current
+    val vue = androidx.compose.ui.platform.LocalView.current
+    val zone = d.optJSONObject("zone") ?: JSONObject()
+    val px = densite.density
+    // Le menu veut la sélection en pixels de l'ÉCRAN.
+    val pos = remember { IntArray(2).also { vue.getLocationOnScreen(it) } }
+    val bornes = androidx.compose.ui.geometry.Rect(
+        pos[0] + (zone.optDouble("x", 0.0) * px).toFloat(),
+        pos[1] + (zone.optDouble("y", 0.0) * px).toFloat(),
+        pos[0] + ((zone.optDouble("x", 0.0) + zone.optDouble("l", 1.0)) * px).toFloat(),
+        pos[1] + ((zone.optDouble("y", 0.0) + zone.optDouble("h", 1.0)) * px).toFloat(),
+    )
+    var ouvert by remember { mutableStateOf(true) }
+    var resultat by remember { mutableStateOf<Map<String, Any?>?>(null) }
+    fun choisir(id: String?) {
+        resultat = id?.let { mapOf("id" to it) }
+        ouvert = false
+    }
+    fun elements(cle: String) = d.optJSONArray(cle)?.objets().orEmpty().map { e ->
+        io.github.neoruaa.glasmio.ui.GlasmioCascadingMenuItem(
+            title = e.optString("titre"),
+            systemName = e.texte("cle"),
+            destructive = e.optBoolean("destructif"),
+            onClick = { choisir(e.optString("id")) },
+        )
+    }
+    val etiquettes = d.optJSONObject("etiquettes") ?: JSONObject()
+    Box(Modifier.fillMaxSize()) {
+        // Toucher à côté ferme le menu, comme sur iOS.
+        Box(
+            Modifier.fillMaxSize().pointerInput(Unit) {
+                detectTapGestures { choisir(null) }
+            },
+        )
+        io.github.neoruaa.glasmio.ui.GlasmioTextSelectionMenu(
+            selectionBounds = bornes,
+            primaryActions = elements("principales"),
+            additionalItems = elements("autres"),
+            onDismiss = { choisir(null) },
+            labels = io.github.neoruaa.glasmio.ui.GlasmioTextSelectionLabels(
+                more = etiquettes.optString("plus", "Plus"),
+            ),
+            expanded = ouvert,
+            onClosed = { fini(resultat) },
+        )
     }
 }

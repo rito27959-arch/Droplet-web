@@ -165,4 +165,102 @@ class SuperpositionGlasmio {
         'aDroite': aDroite,
         'apercuTouchable': apercuTouchable,
       });
+
+  /// Le menu d'édition d'Apple au-dessus d'une sélection de texte
+  /// (GlasmioTextSelectionMenu). [zone] : la sélection, en points logiques
+  /// de l'écran. Réponses : `pN` (une action principale), `aN` (une autre,
+  /// sous « Plus »), ou `null` (fermé sans choix, ou Glasmio absent).
+  static Future<ChoixGlasmio?> selection({
+    required Rect zone,
+    required List<String> principales,
+    List<String> autres = const [],
+    String plus = 'Plus',
+  }) =>
+      _afficher({
+        'type': 'selection',
+        'zone': {'x': zone.left, 'y': zone.top, 'l': zone.width, 'h': zone.height},
+        'principales': [for (var i = 0; i < principales.length; i++) {'id': 'p$i', 'titre': principales[i]}],
+        'autres': [for (var i = 0; i < autres.length; i++) {'id': 'a$i', 'titre': autres[i]}],
+        'etiquettes': {'plus': plus},
+      });
+
+  /// Glasmio peut-il dessiner ses superpositions ici ?
+  static Future<bool> disponible() async {
+    if (kIsWeb || !Platform.isAndroid) return false;
+    return PontGlasmio.disponible();
+  }
+}
+
+/// Le menu d'édition d'un champ de texte, dessiné par Glasmio. À rendre
+/// depuis `contextMenuBuilder` ; retombe sur [repli] sans Glasmio.
+class MenuSelectionGlasmio extends StatefulWidget {
+  const MenuSelectionGlasmio({
+    super.key,
+    required this.etat,
+    required this.principaux,
+    this.autres = const [],
+    required this.repli,
+  });
+
+  final EditableTextState etat;
+  final List<ContextMenuButtonItem> principaux;
+  final List<ContextMenuButtonItem> autres;
+  final WidgetBuilder repli;
+
+  @override
+  State<MenuSelectionGlasmio> createState() => _MenuSelectionGlasmioState();
+}
+
+class _MenuSelectionGlasmioState extends State<MenuSelectionGlasmio> {
+  bool _repli = false;
+  bool _pret = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ouvrir());
+  }
+
+  String _libelle(ContextMenuButtonItem b) =>
+      b.label ?? AdaptiveTextSelectionToolbar.getButtonLabel(context, b);
+
+  Future<void> _ouvrir() async {
+    if (!mounted) return;
+    if (!await SuperpositionGlasmio.disponible()) {
+      if (mounted) setState(() => _repli = true);
+      return;
+    }
+    if (!mounted) return;
+    final principaux = List.of(widget.principaux);
+    final autres = List.of(widget.autres);
+    final ancres = widget.etat.contextMenuAnchors;
+    final p = ancres.primaryAnchor;
+    final s = ancres.secondaryAnchor ?? p + const Offset(0, 22);
+    final zone = Rect.fromLTRB(
+      p.dx < s.dx ? p.dx : s.dx,
+      p.dy < s.dy ? p.dy : s.dy,
+      (p.dx > s.dx ? p.dx : s.dx) + 1,
+      (p.dy > s.dy ? p.dy : s.dy) + 1,
+    );
+    _pret = true;
+    final r = await SuperpositionGlasmio.selection(
+      zone: zone,
+      principales: [for (final b in principaux) _libelle(b)],
+      autres: [for (final b in autres) _libelle(b)],
+      plus: MaterialLocalizations.of(context).moreButtonTooltip,
+    );
+    final id = r?.id;
+    if (id == null || id.length < 2) {
+      widget.etat.hideToolbar();
+      return;
+    }
+    final n = int.tryParse(id.substring(1));
+    final liste = id.startsWith('p') ? principaux : autres;
+    if (n == null || n >= liste.length) return;
+    liste[n].onPressed?.call();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _repli ? widget.repli(context) : SizedBox.shrink(key: ValueKey(_pret));
 }
