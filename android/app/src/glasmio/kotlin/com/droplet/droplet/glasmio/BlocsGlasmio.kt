@@ -456,6 +456,31 @@ internal fun Ligne(l: JSONObject, premiere: Boolean, provisoire: MutableMap<Stri
                 },
             )
         }
+        // Un champ de saisie (masqué pour un mot de passe). La saisie reste ici
+        // et part avec chaque geste ; « signaler » prévient Dart à chaque
+        // frappe (pour la jauge de solidité du mot de passe).
+        "champ" -> io.github.neoruaa.glasmio.ui.GlasmioTextField(
+            value = PontGlasmio.champs[id] ?: "",
+            onValueChange = { v ->
+                PontGlasmio.champs[id] = v
+                if (l.optBoolean("signaler")) PontGlasmio.evenement(id, v)
+            },
+            placeholder = l.optString("titre"),
+            enabled = actif,
+            visualTransformation = if (l.optBoolean("masque")) {
+                androidx.compose.ui.text.input.PasswordVisualTransformation()
+            } else {
+                androidx.compose.ui.text.input.VisualTransformation.None
+            },
+            keyboardOptions = if (l.optBoolean("masque")) {
+                androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password, autoCorrectEnabled = false)
+            } else {
+                androidx.compose.foundation.text.KeyboardOptions.Default
+            },
+            trailing = l.texte("valeur")?.let { v ->
+                { Text(v, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = teinte) }
+            },
+        )
         // Un paragraphe (question et réponse de l'aide) : le texte entier,
         // sur autant de lignes qu'il faut.
         "paragraphe" -> Column(

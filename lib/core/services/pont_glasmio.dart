@@ -64,6 +64,9 @@ class PontGlasmio {
   static const _canal = MethodChannel('droplet/glasmio');
 
   static bool? _disponible;
+
+  /// Les champs de saisie de l'écran natif ouvert, tels qu'au dernier geste.
+  static Map<String, String> champs = const {};
   static GestionnaireGlasmio? _gestionnaire;
   static VoidCallback? _surFermeture;
   static bool _installe = false;
@@ -97,6 +100,9 @@ class PontGlasmio {
           final args = Map<String, Object?>.from(appel.arguments as Map);
           final g = _gestionnaire;
           if (g == null) return const <String, Object?>{};
+          champs = {
+            for (final e in (args['champs'] as Map? ?? const {}).entries) '${e.key}': '${e.value}',
+          };
           try {
             final r = await g(args['id'] as String? ?? '', args['valeur']);
             return r.versCarte();

@@ -43,6 +43,10 @@ object PontGlasmio {
     var alerte by mutableStateOf<JSONObject?>(null)
         internal set
 
+    /** Les champs de saisie de l'écran ouvert (mot de passe de la
+     *  sauvegarde…) : gardés ici, envoyés à Dart avec chaque geste. */
+    val champs = androidx.compose.runtime.mutableStateMapOf<String, String>()
+
     /** Vrai pendant qu'un geste attend la réponse de Dart. */
     var occupe by mutableStateOf(false)
         internal set
@@ -69,6 +73,7 @@ object PontGlasmio {
                     try {
                         description = JSONObject(desc)
                         alerte = null
+                        champs.clear()
                         val intention = Intent(act, EcranGlasmioActivity::class.java)
                         // Au retour d'une page Flutter, l'écran revient sans glisser :
                         // on a l'impression de ne l'avoir jamais quitté.
@@ -137,7 +142,7 @@ object PontGlasmio {
         principal {
             c.invokeMethod(
                 "evenement",
-                mapOf("id" to id, "valeur" to valeur),
+                mapOf("id" to id, "valeur" to valeur, "champs" to HashMap(champs)),
                 object : MethodChannel.Result {
                     override fun success(result: Any?) {
                         occupe = false
@@ -158,7 +163,11 @@ object PontGlasmio {
 
     private fun appliquer(reponse: Map<*, *>?) {
         if (reponse == null) return
-        (reponse["description"] as? String)?.let { runCatching { description = JSONObject(it) } }
+        (reponse["description"] as? String)?.let { runCatching {
+            val d = JSONObject(it)
+            if (d.optBoolean("effacerChamps")) champs.clear()
+            description = d
+        } }
         (reponse["alerte"] as? String)?.let { runCatching { alerte = JSONObject(it) } }
         if (reponse["fermer"] == true) ecranOuvert?.get()?.finish()
     }
@@ -167,7 +176,10 @@ object PontGlasmio {
     fun annulerAlerte() {
         val a = alerte ?: return
         alerte = null
-        a.optJSONObject("description")?.let { description = it }
+        a.optJSONObject("description")?.let {
+            if (it.optBoolean("effacerChamps")) champs.clear()
+            description = it
+        }
     }
 
     /** Un des choix d'une alerte à plusieurs boutons (signaler…). */

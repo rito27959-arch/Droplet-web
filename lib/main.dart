@@ -55,6 +55,7 @@ import 'features/tor/tor_glasmio.dart';
 import 'features/aide/donnees_glasmio.dart';
 import 'features/settings/stockage_glasmio.dart';
 import 'features/settings/icone_glasmio.dart';
+import 'features/settings/sauvegarde_glasmio.dart';
 import 'core/services/raccourcis_conversation.dart';
 import 'features/settings/stockage_screen.dart';
 import 'features/autoriser/autoriser_app.dart';
@@ -887,7 +888,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/backup/export',
-      pageBuilder: (context, state) => _pushPage(const BackupExportScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserelleSauvegarde()),
     ),
     GoRoute(
       path: '/contribution',
