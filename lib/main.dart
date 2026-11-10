@@ -45,6 +45,7 @@ import 'core/services/avatar_service.dart';
 import 'core/services/premium_service.dart';
 import 'core/services/reponses_differees.dart';
 import 'features/premium/pro_glasmio.dart';
+import 'core/services/barre_glasmio.dart';
 import 'core/services/raccourcis_conversation.dart';
 import 'features/settings/stockage_screen.dart';
 import 'features/autoriser/autoriser_app.dart';
@@ -746,6 +747,8 @@ class _IncomingButton extends StatelessWidget {
 final _router = GoRouter(
   // Les liens s'ouvrent dans l'app même depuis un widget sans contexte.
   navigatorKey: cleNavigateurRacine,
+  // La barre Glasmio de l'accueil se cache dès qu'une page la recouvre.
+  observers: [observateurRoutesGlasmio],
   // La toute première page qu'on voit en ouvrant l'app.
   initialLocation: '/',
   // `redirect` s'exécute AVANT chaque changement de page, et peut décider

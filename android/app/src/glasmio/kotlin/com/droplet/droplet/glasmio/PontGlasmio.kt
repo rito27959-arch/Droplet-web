@@ -103,6 +103,19 @@ object PontGlasmio {
                         resultat.success(mapOf("indisponible" to true))
                     }
                 }
+                // La barre de navigation Glasmio de l'accueil.
+                "barre" -> {
+                    val act = activiteFlutter?.get()
+                    val desc = appel.argument<String>("description")
+                    if (disponible && act != null && desc != null) {
+                        runCatching { BarreNavigationGlasmio.mettreAJour(act, JSONObject(desc)) }
+                    }
+                    resultat.success(null)
+                }
+                "barre_activite" -> {
+                    BarreNavigationGlasmio.signalerActivite()
+                    resultat.success(null)
+                }
                 "fermer" -> {
                     ecranOuvert?.get()?.finish()
                     resultat.success(null)
@@ -110,6 +123,11 @@ object PontGlasmio {
                 else -> resultat.notImplemented()
             }
         }
+    }
+
+    /** Un geste dans la barre de navigation : Dart change d'onglet. */
+    fun barre(id: String, valeur: Any?) {
+        principal { canal?.invokeMethod("barre", mapOf("id" to id, "valeur" to valeur)) }
     }
 
     /** Un geste dans l'écran natif : Dart décide de la suite. */

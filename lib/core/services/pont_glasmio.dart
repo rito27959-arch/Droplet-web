@@ -82,6 +82,12 @@ class PontGlasmio {
     return _disponible!;
   }
 
+  /// Les gestes de la barre de navigation Glasmio (voir `barre_glasmio.dart`).
+  static void Function(String id, Object? valeur)? surBarre;
+
+  /// Installe la réception des messages du côté Android (idempotent).
+  static void installerRecepteur() => _installer();
+
   static void _installer() {
     if (_installe) return;
     _installe = true;
@@ -98,6 +104,10 @@ class PontGlasmio {
             debugPrint('[PontGlasmio] événement ${args['id']} : $e');
             return const <String, Object?>{};
           }
+        case 'barre':
+          final args = Map<String, Object?>.from(appel.arguments as Map);
+          surBarre?.call(args['id'] as String? ?? '', args['valeur']);
+          return null;
         case 'ferme':
           // L'écran natif a disparu (retour, geste, ou fermeture demandée).
           final f = _surFermeture;

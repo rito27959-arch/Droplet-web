@@ -11,6 +11,8 @@ import '../peers/peers_screen.dart';
 import '../tor/tor_status_indicator.dart';
 import '../../core/providers/mesh_provider.dart';
 import '../../design_system/flou.dart';
+import '../../core/services/barre_glasmio.dart';
+import 'dart:async';
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
@@ -24,6 +26,77 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   bool _tabBarMinimized = false;
   double _scrollRun = 0;
 
+  // ── LA BARRE GLASMIO (Android 13+) ─────────────────────────────────
+  // Quand elle est disponible, la barre d'onglets est la vraie barre de
+  // Glasmio, dessinée par Android par-dessus cet écran ; la barre Flutter
+  // n'est plus construite. Sinon, rien ne change.
+  bool _natif = false;
+  StreamSubscription<(String, Object?)>? _gestes;
+
+  @override
+  void initState() {
+    super.initState();
+    BarreGlasmio.disponible().then((ok) {
+      if (!ok || !mounted) return;
+      setState(() => _natif = true);
+      barreGlasmioActive.value = true;
+      _gestes = BarreGlasmio.gestes.listen(_surGeste);
+      observateurRoutesGlasmio.sommet.addListener(_majBarre);
+    });
+  }
+
+  @override
+  void dispose() {
+    _gestes?.cancel();
+    observateurRoutesGlasmio.sommet.removeListener(_majBarre);
+    if (_natif) {
+      barreGlasmioActive.value = false;
+      BarreGlasmio.afficher(visible: false, onglets: const [], index: 0, compact: false, recherche: '');
+    }
+    super.dispose();
+  }
+
+  void _surGeste((String, Object?) g) {
+    if (!mounted) return;
+    switch (g.$1) {
+      case 'onglet':
+        final i = (g.$2 as num?)?.toInt() ?? 0;
+        setState(() {
+          _currentIndex = i;
+          _tabBarMinimized = false;
+          _scrollRun = 0;
+        });
+      case 'recherche':
+        // La loupe : la liste des discussions, sa recherche ouverte.
+        setState(() {
+          _currentIndex = 0;
+          _tabBarMinimized = false;
+          _scrollRun = 0;
+        });
+        demandeRechercheGlasmio.value++;
+      case 'deplier':
+        setState(() => _tabBarMinimized = false);
+    }
+  }
+
+  /// Décrit la barre native : visible seulement si l'accueil est la page
+  /// du dessus et que le clavier est fermé.
+  void _majBarre() {
+    if (!_natif || !mounted) return;
+    final route = ModalRoute.of(context);
+    final sommet = observateurRoutesGlasmio.sommet.value;
+    final dessus = sommet == null || sommet == route;
+    final clavier = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final items = _items(context);
+    BarreGlasmio.afficher(
+      visible: dessus && !clavier,
+      onglets: [for (final it in items) OngletGlasmio(it.label, badge: it.badge)],
+      index: _currentIndex,
+      compact: _tabBarMinimized,
+      recherche: MaterialLocalizations.of(context).searchFieldLabel,
+    );
+  }
+
   static const double _minimizeThreshold = 24;
   static const double _alwaysVisibleZone = 40;
 
@@ -32,6 +105,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     if (notification.metrics.axis != Axis.vertical) return false;
 
     if (notification is ScrollUpdateNotification) {
+      if (_natif) BarreGlasmio.activite();
       final delta = notification.scrollDelta ?? 0;
       if (delta == 0) return false;
 
@@ -107,6 +181,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     // bas, remontait avec lui jusqu'au milieu de l'écran et recouvrait la
     // liste pendant qu'on cherchait. WhatsApp la masque de la même façon.
     final clavier = mq.viewInsets.bottom > 0;
+    if (_natif) WidgetsBinding.instance.addPostFrameCallback((_) => _majBarre());
 
     return Scaffold(
       backgroundColor: OuroColors.systemBackground,
@@ -199,6 +274,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const TorStatusIndicator(),
+                if (_natif)
+                  // La barre native occupe cette place (même hauteur).
+                  SizedBox(height: OuroTabBar.reservedHeight(mq.padding.bottom))
+                else
                 OuroTabBar(
                   items: _items(context),
                   currentIndex: _currentIndex,

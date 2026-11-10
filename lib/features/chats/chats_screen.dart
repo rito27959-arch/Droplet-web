@@ -92,6 +92,7 @@ import '../../core/services/miroir_appareils.dart';
 import '../../design_system/flou.dart';
 import '../../design_system/ouro_tab_bar.dart';
 import '../../design_system/ouro_surfaces.dart';
+import '../../core/services/barre_glasmio.dart';
 import '../../core/config/compte_droplet.dart';
 import '../../shared/widgets/avatar_officiel.dart';
 import 'bouton_nouvelle_discussion.dart';
@@ -107,6 +108,19 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
   bool _meshStarted = false;
   final _searchCtrl = TextEditingController();
   String _query = '';
+
+  /// La recherche, que la loupe de la barre Glasmio ouvre.
+  final _focusRecherche = FocusNode();
+
+  void _ouvrirRecherche() {
+    if (!mounted) return;
+    // On remonte en haut de la liste, là où est le champ, puis on l'ouvre.
+    final defilement = PrimaryScrollController.maybeOf(context);
+    if (defilement != null && defilement.hasClients) {
+      defilement.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOutCubic);
+    }
+    _focusRecherche.requestFocus();
+  }
 
   /// Un rapport d'erreur attend d'être envoyé.
   bool _rapportEnAttente = false;
@@ -143,10 +157,13 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
     // présentations de fonctionnalités.
     Future.delayed(const Duration(milliseconds: 900), _visiteGuidee);
     _searchCtrl.addListener(() => setState(() => _query = _searchCtrl.text.trim().toLowerCase()));
+    demandeRechercheGlasmio.addListener(_ouvrirRecherche);
   }
 
   @override
   void dispose() {
+    demandeRechercheGlasmio.removeListener(_ouvrirRecherche);
+    _focusRecherche.dispose();
     _minuteurVerrous?.cancel();
     _searchCtrl.dispose();
     super.dispose();
@@ -587,7 +604,7 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
                 },
               ),
             ),
-          SliverToBoxAdapter(child: _SearchField(controller: _searchCtrl)),
+          SliverToBoxAdapter(child: _SearchField(controller: _searchCtrl, focusNode: _focusRecherche)),
 
           // ── LA BARRE DE FILTRES ────────────────────────────────────
           //
@@ -770,11 +787,17 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
       Positioned(
         right: DesignTokens.screenMargin,
         bottom: OuroTabBar.reservedHeight(MediaQuery.paddingOf(context).bottom) + 2,
-        child: BoutonNouvelleDiscussion(
+        // Avec la barre Glasmio, la loupe de la barre remplace ce bouton
+        // (la nouvelle discussion reste dans le « + » du haut).
+        child: ValueListenableBuilder<bool>(
+          valueListenable: barreGlasmioActive,
+          builder: (context, glasmio, bouton) => glasmio ? const SizedBox.shrink() : bouton!,
+          child: BoutonNouvelleDiscussion(
           visible: _boutonVisible && !clavier && _query.isEmpty,
           etiquette: l10n.nmTitle,
           onTap: () => context.push('/new-message'),
           onLongPress: _showComposeMenu,
+        ),
         ),
       ),
       ],
@@ -1010,8 +1033,9 @@ class _BandeauRapport extends StatelessWidget {
 }
 
 class _SearchField extends StatelessWidget {
-  const _SearchField({required this.controller});
+  const _SearchField({required this.controller, this.focusNode});
   final TextEditingController controller;
+  final FocusNode? focusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -1033,6 +1057,7 @@ class _SearchField extends StatelessWidget {
           type: MaterialType.transparency,
           child: TextField(
             controller: controller,
+            focusNode: focusNode,
             style: OuroTypography.body.copyWith(color: OuroColors.label),
             cursorColor: OuroColors.accent,
             magnifierConfiguration: TextMagnifier.adaptiveMagnifierConfiguration,
