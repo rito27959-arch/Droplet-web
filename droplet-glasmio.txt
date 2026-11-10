@@ -56,15 +56,11 @@ gradle/wrapper/gradle-wrapper.properties:distributionUrl=https\://services.gradl
 === ANALYSE (fichiers Glasmio)
 code 0
 0
-warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:129:8 • unused_import
+warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:134:8 • unused_import
 
-59 issues found. (ran in 28.5s)
+64 issues found. (ran in 23.4s)
 === DEBUG : 0
 an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
-warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
-SkSL Error:
-        error: 58: loop index initializer must be a constant expression
-        error: 55: loop index initializer must be a constant expression
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 111: initializers are not permitted on arrays (or structs containing arrays)
@@ -73,17 +69,21 @@ warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.
 SkSL Error:
         error: 121: initializers are not permitted on arrays (or structs containing arrays)
         error: 122: unknown identifier 'param_2'
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 58: loop index initializer must be a constant expression
+        error: 55: loop index initializer must be a constant expression
 15 packages have newer versions incompatible with dependency constraints.
 === RELEASE (R8) : 0
-total 931640
-drwxr-xr-x 2 runner runner      4096 Nov 10 14:02 .
-drwxr-xr-x 8 runner runner      4096 Nov 10 13:58 ..
--rw-r--r-- 1 runner runner 159997732 Nov 10 14:02 app-arm64-v8a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 14:02 app-arm64-v8a-release.apk.sha1
--rw-r--r-- 1 runner runner  93788972 Nov 10 14:02 app-armeabi-v7a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 14:02 app-armeabi-v7a-release.apk.sha1
--rw-r--r-- 1 runner runner 524049476 Nov 10 13:40 app-debug.apk
--rw-r--r-- 1 runner runner        40 Nov 10 13:40 app-debug.apk.sha1
--rw-r--r-- 1 runner runner 176130700 Nov 10 14:02 app-x86_64-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 14:02 app-x86_64-release.apk.sha1
-=== APK publié : 00a695c517b68f7ccc7c8c166cc5f9f24e90dd17
+total 932184
+drwxr-xr-x 2 runner runner      4096 Nov 10 14:03 .
+drwxr-xr-x 8 runner runner      4096 Nov 10 14:01 ..
+-rw-r--r-- 1 runner runner 160210724 Nov 10 14:03 app-arm64-v8a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 14:03 app-arm64-v8a-release.apk.sha1
+-rw-r--r-- 1 runner runner  93920044 Nov 10 14:03 app-armeabi-v7a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 14:03 app-armeabi-v7a-release.apk.sha1
+-rw-r--r-- 1 runner runner 524114992 Nov 10 13:46 app-debug.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 13:47 app-debug.apk.sha1
+-rw-r--r-- 1 runner runner 176278156 Nov 10 14:03 app-x86_64-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 14:03 app-x86_64-release.apk.sha1
+=== APK publié : 99a24e2c3f40e3322d6dec2ad17d1ed1717413f6

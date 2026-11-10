@@ -41,9 +41,9 @@ Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 === ANALYSE (fichiers Glasmio)
 code 0
 0
-warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:129:8 • unused_import
+warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:134:8 • unused_import
 
-59 issues found. (ran in 30.0s)
+64 issues found. (ran in 29.6s)
 === DEBUG : 0
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
@@ -59,14 +59,14 @@ SkSL Error:
         error: 122: unknown identifier 'param_2'
 15 packages have newer versions incompatible with dependency constraints.
 === RELEASE (R8) : 0
-total 904352
-drwxr-xr-x 2 runner runner      4096 Nov 10 14:01 .
-drwxr-xr-x 8 runner runner      4096 Nov 10 13:58 ..
--rw-r--r-- 1 runner runner 158226904 Nov 10 14:01 app-arm64-v8a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 14:01 app-arm64-v8a-release.apk.sha1
--rw-r--r-- 1 runner runner  92165604 Nov 10 14:01 app-armeabi-v7a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 14:01 app-armeabi-v7a-release.apk.sha1
--rw-r--r-- 1 runner runner 501251793 Nov 10 13:38 app-debug.apk
--rw-r--r-- 1 runner runner        40 Nov 10 13:39 app-debug.apk.sha1
--rw-r--r-- 1 runner runner 174376262 Nov 10 14:01 app-x86_64-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 14:01 app-x86_64-release.apk.sha1
+total 904828
+drwxr-xr-x 2 runner runner      4096 Nov 10 14:12 .
+drwxr-xr-x 8 runner runner      4096 Nov 10 14:08 ..
+-rw-r--r-- 1 runner runner 158423512 Nov 10 14:12 app-arm64-v8a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 14:12 app-arm64-v8a-release.apk.sha1
+-rw-r--r-- 1 runner runner  92280292 Nov 10 14:12 app-armeabi-v7a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 14:12 app-armeabi-v7a-release.apk.sha1
+-rw-r--r-- 1 runner runner 501300925 Nov 10 13:49 app-debug.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 13:49 app-debug.apk.sha1
+-rw-r--r-- 1 runner runner 174507334 Nov 10 14:12 app-x86_64-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 14:12 app-x86_64-release.apk.sha1
