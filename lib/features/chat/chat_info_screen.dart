@@ -43,6 +43,7 @@ import '../../design_system/ouro_icon_button.dart';
 import 'package:flutter/cupertino.dart';
 import '../../design_system/ouro_alert.dart';
 import '../../shared/widgets/afficher_toast.dart';
+import '../../core/services/superposition_glasmio.dart';
 import '../../design_system/ouro_retour_ios.dart';
 import '../navigateur/navigateur_integre.dart';
 import '../../core/services/apercus_liens.dart';
@@ -1149,7 +1150,18 @@ class _BlockSectionState extends ConsumerState<_BlockSection> {
 
   Future<void> _report() async {
     final l10n = AppLocalizations.of(context);
-    final motif = await showCupertinoModalPopup<String>(
+    final glasmio = await SuperpositionGlasmio.feuille(
+      titre: l10n.ciReportContactTitle,
+      message: l10n.ciReportContactBody(widget.pseudo),
+      boutons: [
+        for (final m in _motifsSignalement(l10n)) BoutonGlasmio(m.code, m.label),
+        BoutonGlasmio('annuler', l10n.actionCancel, annuler: true),
+      ],
+    );
+    if (!mounted) return;
+    final motif = glasmio != null
+        ? glasmio.id
+        : await showCupertinoModalPopup<String>(
       context: context,
       builder: (ctx) => CupertinoActionSheet(
         title: Text(l10n.ciReportContactTitle),

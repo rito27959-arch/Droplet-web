@@ -42,6 +42,7 @@ import '../notifications/notifs_conversation_screen.dart' show LigneNotifsConver
 import '../../core/services/avatar_service.dart';
 import '../../shared/widgets/avatar_picker_sheet.dart';
 import '../../shared/widgets/afficher_toast.dart';
+import '../../core/services/superposition_glasmio.dart';
 
 /// Page « Infos du groupe » : membres, administration, renommage.
 class GroupInfoScreen extends ConsumerWidget {
@@ -288,7 +289,22 @@ class GroupInfoScreen extends ConsumerWidget {
   Future<void> _ficheMembre(BuildContext context, WidgetRef ref, GroupInfo group, String moi, GroupMemberRecord m, String nom) async {
     final l10n = AppLocalizations.of(context);
     final admin = group.isAdmin(moi);
-    final choix = await showCupertinoModalPopup<String>(
+    // Android 13+ : la feuille d'actions Glasmio ; sinon celle de Cupertino.
+    final glasmio = await SuperpositionGlasmio.feuille(
+      titre: nom,
+      boutons: [
+        BoutonGlasmio('ecrire', l10n.vgMessage(nom)),
+        BoutonGlasmio('appeler', l10n.vgCallMember(nom)),
+        BoutonGlasmio('infos', l10n.vgViewInfo),
+        if (admin) BoutonGlasmio('admin', m.isAdmin ? l10n.giRemoveAdmin : l10n.giMakeAdmin),
+        if (admin) BoutonGlasmio('retirer', l10n.vgRemoveFromGroup(nom), destructif: true),
+        BoutonGlasmio('annuler', l10n.actionCancel, annuler: true),
+      ],
+    );
+    if (!context.mounted) return;
+    final choix = glasmio != null
+        ? glasmio.id
+        : await showCupertinoModalPopup<String>(
       context: context,
       builder: (ctx) => CupertinoActionSheet(
         title: Text(nom),
