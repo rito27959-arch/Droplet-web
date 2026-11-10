@@ -39,28 +39,33 @@ Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 ⚠️ absent du dépôt (bouche-trou Android) : MediaBridge.kt
 ⚠️ absent du dépôt (bouche-trou Android) : WidgetDroplet.kt
 === ANALYSE (fichiers Glasmio)
-code 1
-  error • Undefined class 'ConnectedPeer'. Try changing the name to the name of an existing class, or creating a class with the name 'ConnectedPeer' • lib/features/chat/infos_contact_glasmio.dart:222:5 • undefined_class
-0
-warning • The declaration '_hold' isn't referenced. Try removing the declaration of '_hold' • lib/features/status/status_viewer_screen.dart:544:8 • unused_element
+code 0
+   info • The import of 'package:flutter/scheduler.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart'. Try removing the import directive • lib/features/settings/settings_screen.dart:24:8 • unnecessary_import
 
-53 issues found. (ran in 25.9s)
-=== DEBUG : 1
-lib/features/chat/infos_contact_glasmio.dart:222:5: Error: 'ConnectedPeer' isn't a type.
-FAILURE: Build failed with an exception.
-* What went wrong:
-BUILD FAILED in 6m 42s
-* What went wrong:
-Execution failed for task ':app:compileFlutterBuildDebug'.
-> Process 'command '/opt/hostedtoolcache/flutter/stable-3.47.9-x64/flutter/bin/flutter'' finished with non-zero exit value 1
-
-* Try:
-=== RELEASE (R8) : 1
-FAILURE: Build failed with an exception.
-* What went wrong:
-* What went wrong:
-Execution failed for task ':app:compileFlutterBuildRelease'.
-> Process 'command '/opt/hostedtoolcache/flutter/stable-3.47.9-x64/flutter/bin/flutter'' finished with non-zero exit value 1
-
-* Try:
-ls: cannot access 'build/app/outputs/flutter-apk/': No such file or directory
+1 issue found. (ran in 23.4s)
+=== DEBUG : 0
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 111: initializers are not permitted on arrays (or structs containing arrays)
+        error: 112: unknown identifier 'param_2'
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 58: loop index initializer must be a constant expression
+        error: 55: loop index initializer must be a constant expression
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_filter.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 121: initializers are not permitted on arrays (or structs containing arrays)
+        error: 122: unknown identifier 'param_2'
+15 packages have newer versions incompatible with dependency constraints.
+=== RELEASE (R8) : 0
+total 903928
+drwxr-xr-x 2 runner runner      4096 Nov 10 12:47 .
+drwxr-xr-x 8 runner runner      4096 Nov 10 12:43 ..
+-rw-r--r-- 1 runner runner 158161368 Nov 10 12:47 app-arm64-v8a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 12:47 app-arm64-v8a-release.apk.sha1
+-rw-r--r-- 1 runner runner  92001764 Nov 10 12:47 app-armeabi-v7a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 12:47 app-armeabi-v7a-release.apk.sha1
+-rw-r--r-- 1 runner runner 501175193 Nov 10 12:26 app-debug.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 12:26 app-debug.apk.sha1
+-rw-r--r-- 1 runner runner 174245190 Nov 10 12:47 app-x86_64-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 12:47 app-x86_64-release.apk.sha1
