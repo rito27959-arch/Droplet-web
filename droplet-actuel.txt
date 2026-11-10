@@ -43,7 +43,7 @@ code 0
 0
 warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:135:8 • unused_import
 
-67 issues found. (ran in 21.9s)
+67 issues found. (ran in 27.2s)
 === DEBUG : 0
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
@@ -59,14 +59,14 @@ SkSL Error:
         error: 122: unknown identifier 'param_2'
 15 packages have newer versions incompatible with dependency constraints.
 === RELEASE (R8) : 0
-total 904864
-drwxr-xr-x 2 runner runner      4096 Nov 10 16:39 .
-drwxr-xr-x 8 runner runner      4096 Nov 10 16:37 ..
--rw-r--r-- 1 runner runner 158426724 Nov 10 16:39 app-arm64-v8a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 16:39 app-arm64-v8a-release.apk.sha1
--rw-r--r-- 1 runner runner  92299888 Nov 10 16:39 app-armeabi-v7a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 16:39 app-armeabi-v7a-release.apk.sha1
--rw-r--r-- 1 runner runner 501304637 Nov 10 16:23 app-debug.apk
--rw-r--r-- 1 runner runner        40 Nov 10 16:24 app-debug.apk.sha1
--rw-r--r-- 1 runner runner 174510546 Nov 10 16:39 app-x86_64-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 16:39 app-x86_64-release.apk.sha1
+total 904872
+drwxr-xr-x 2 runner runner      4096 Nov 10 16:51 .
+drwxr-xr-x 8 runner runner      4096 Nov 10 16:48 ..
+-rw-r--r-- 1 runner runner 158426724 Nov 10 16:51 app-arm64-v8a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 16:51 app-arm64-v8a-release.apk.sha1
+-rw-r--r-- 1 runner runner  92299888 Nov 10 16:51 app-armeabi-v7a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 16:51 app-armeabi-v7a-release.apk.sha1
+-rw-r--r-- 1 runner runner 501311001 Nov 10 16:32 app-debug.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 16:32 app-debug.apk.sha1
+-rw-r--r-- 1 runner runner 174510546 Nov 10 16:51 app-x86_64-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 16:51 app-x86_64-release.apk.sha1
