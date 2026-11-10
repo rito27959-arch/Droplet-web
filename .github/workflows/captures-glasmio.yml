@@ -75,6 +75,6 @@ jobs:
           git init -q j && cd j
           git config user.name "verif" && git config user.email "verif@users.noreply.github.com"
           git checkout -q -b captures-glasmio
-          rm -rf captures && mkdir -p captures && cp ../*.png ../*.txt captures/ 2>/dev/null
+          rm -rf captures && mkdir -p captures; cp ../*.png captures/ 2>/dev/null; cp ../*.txt captures/ 2>/dev/null; true
           echo "${GITHUB_SHA}" > captures/commit.txt
           git add -A && git commit -qm "Captures Glasmio ${GITHUB_SHA}" && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" captures-glasmio
