@@ -66,6 +66,19 @@ gradle.beforeProject {
             if (texte != avant) f.writeText(texte)
         }
     }
+    // ── Greffons compilés contre une API trop ancienne ─────────────────
+    // Avec le plugin Android 9, `flutter_plugin_android_lifecycle` exige que
+    // tout ce qui en dépend compile contre l'API 36 au moins ; certains
+    // greffons (file_picker…) déclarent encore 34. On relève leur compileSdk
+    // à 36 — sans toucher à leur minSdk ni à leur targetSdk : aucun
+    // changement de comportement à l'exécution.
+    if (path != ":app") {
+        afterEvaluate {
+            val a = extensions.findByName("android") as? com.android.build.gradle.BaseExtension
+            val v = a?.compileSdkVersion?.removePrefix("android-")?.substringBefore('.')?.toIntOrNull()
+            if (a != null && v != null && v < 36) a.compileSdkVersion(36)
+        }
+    }
 }
 K
 cat >> $A <<'G'

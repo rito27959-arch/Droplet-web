@@ -44,7 +44,7 @@ jobs:
            "services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}
           G
           # proguard-rules.pro : celui de Droplet s'il est dans le dépôt.
-          [ -f android/app/proguard-rules.pro ] || { echo "# vide (fichier absent du dépôt)" > android/app/proguard-rules.pro; echo "⚠️ proguard-rules.pro absent : release compilée SANS les règles de Droplet" >> $J; }
+          [ -f android/app/proguard-rules.pro ] || { printf '# Bouche-trou (le vrai fichier est absent du depot) : ne pas bloquer R8\n# sur les classes optionnelles absentes (MediaPipe...).\n-ignorewarnings\n' > android/app/proguard-rules.pro; echo "⚠️ proguard-rules.pro absent : release compilée SANS les règles de Droplet" >> $J; }
           # Ressources présentes sur l'ordinateur mais absentes du dépôt :
           # remplacées ici par des bouche-trous, seulement pour compiler.
           python3 .github/outils/bouche-trous.py >> $J
