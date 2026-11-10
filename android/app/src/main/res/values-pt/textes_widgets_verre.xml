@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Les textes des widgets « verre » de Droplet. Aucun contenu de message :
+     seulement des nombres (voir WidgetsVerre.kt). -->
+<resources>
+    <string name="verre_nouveau">Nova</string>
+    <string name="verre_reseau">Rede</string>
+    <string name="verre_carte">Mapa</string>
+    <string name="verre_urgence">SOS</string>
+    <string name="verre_aucun">Nenhuma mensagem por ler</string>
+    <string name="verre_personne">Ninguém ao alcance</string>
+    <string name="verre_un_non_lu">mensagem por ler</string>
+    <string name="verre_non_lus">mensagens por ler</string>
+    <string name="verre_portee" formatted="true">%d ao alcance</string>
+    <string name="verre_nom_petit">Droplet · Por ler</string>
+    <string name="verre_nom_raccourcis">Droplet · Atalhos</string>
+    <string name="verre_nom_moyen">Droplet · Vidro</string>
+    <string name="verre_desc_petit">As tuas mensagens por ler e quem está ao alcance.</string>
+    <string name="verre_desc_raccourcis">Nova mensagem, rede, mapa e SOS com um toque.</string>
+    <string name="verre_desc_moyen">Mensagens por ler, quem está ao alcance e quatro atalhos.</string>
+</resources>

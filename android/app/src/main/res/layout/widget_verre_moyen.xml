@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget Droplet au style Glasmio (voir WidgetsVerre.kt). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/verre_racine"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/verre_fond"
+    android:clipToOutline="true"
+    android:orientation="horizontal"
+    android:padding="16dp">
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="@drawable/verre_rond_accent"
+                android:padding="6dp"
+                android:src="@drawable/verre_ic_droplet"
+                android:contentDescription="@null" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Droplet"
+                android:textColor="@color/verre_texte"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+        <TextView
+            android:id="@+id/verre_nombre"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:includeFontPadding="false"
+            android:text="0"
+            android:textColor="@color/verre_texte"
+            android:textSize="34sp"
+            android:fontFamily="sans-serif-medium" />
+        <TextView
+            android:id="@+id/verre_libelle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/verre_aucun"
+            android:textColor="@color/verre_texte_doux"
+            android:textSize="12sp" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/verre_point"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:src="@drawable/verre_point_gris"
+                android:contentDescription="@null" />
+            <TextView
+                android:id="@+id/verre_portee"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/verre_personne"
+                android:textColor="@color/verre_texte_doux"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1.35"
+        android:gravity="center"
+        android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+        <LinearLayout
+            android:id="@+id/verre_b_nouveau"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+            <ImageView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/verre_bouton"
+                android:padding="11dp"
+                android:src="@drawable/verre_ic_nouveau"
+                android:contentDescription="@string/verre_nouveau" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/verre_nouveau"
+                android:textColor="@color/verre_texte"
+                android:textSize="10sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/verre_b_reseau"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+            <ImageView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/verre_bouton"
+                android:padding="11dp"
+                android:src="@drawable/verre_ic_reseau"
+                android:contentDescription="@string/verre_reseau" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/verre_reseau"
+                android:textColor="@color/verre_texte"
+                android:textSize="10sp" />
+        </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="horizontal">
+        <LinearLayout
+            android:id="@+id/verre_b_carte"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+            <ImageView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/verre_bouton"
+                android:padding="11dp"
+                android:src="@drawable/verre_ic_carte"
+                android:contentDescription="@string/verre_carte" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/verre_carte"
+                android:textColor="@color/verre_texte"
+                android:textSize="10sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/verre_b_urgence"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+            <ImageView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/verre_rond_rouge"
+                android:padding="11dp"
+                android:src="@drawable/verre_ic_urgence"
+                android:contentDescription="@string/verre_urgence" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/verre_urgence"
+                android:textColor="@color/verre_texte"
+                android:textSize="10sp" />
+        </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

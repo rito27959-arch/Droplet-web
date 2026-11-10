@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LE VERRE DES WIDGETS (style Glasmio). Un écran d'accueil ne laisse pas un
+  widget flouter le fond d'écran : on reproduit donc le verre en couches —
+  un corps translucide en dégradé, un reflet en haut, et le liseré de
+  lumière sur le bord.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/verre_rayon" />
+            <gradient android:angle="270" android:startColor="@color/verre_haut" android:endColor="@color/verre_bas" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/verre_rayon" />
+            <gradient android:angle="270" android:startColor="@color/verre_reflet" android:centerColor="#00FFFFFF" android:centerY="0.32" android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/verre_rayon" />
+            <stroke android:width="1dp" android:color="@color/verre_lisere" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Les widgets « verre » de Droplet (style Glasmio), en mode sombre. -->
+<resources>
+    <color name="verre_haut">#8C2C2C2E</color>
+    <color name="verre_bas">#B30A0A0C</color>
+    <color name="verre_lisere">#40FFFFFF</color>
+    <color name="verre_reflet">#1FFFFFFF</color>
+    <color name="verre_bouton">#33FFFFFF</color>
+    <color name="verre_bouton_lisere">#33FFFFFF</color>
+    <color name="verre_texte">#FFFFFFFF</color>
+    <color name="verre_texte_doux">#99EBEBF5</color>
+    <color name="verre_icone">#FFFFFFFF</color>
+    <color name="verre_accent">#FF0A84FF</color>
+    <color name="verre_vert">#FF30D158</color>
+    <color name="verre_gris">#FF8E8E93</color>
+    <color name="verre_rouge">#FFFF453A</color>
+</resources>

@@ -471,6 +471,20 @@ class MainActivity : FlutterFragmentActivity() {
             }
 
         val media = MediaBridge(applicationContext)
+        // Les widgets « verre » (WidgetsVerre.kt) : deux nombres, jamais de contenu.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.droplet.droplet/widgets_verre")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "maj") {
+                    WidgetsVerre.maj(
+                        applicationContext,
+                        call.argument<Int>("nonLus") ?: 0,
+                        call.argument<Int>("pairs") ?: 0,
+                    )
+                    result.success(true)
+                } else {
+                    result.notImplemented()
+                }
+            }
         val canalMedia = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, mediaChannel)
         media.canal = canalMedia
         canalMedia.setMethodCallHandler { call, result ->

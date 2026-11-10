@@ -73,6 +73,14 @@ class MediaService {
     } catch (e) {
       debugPrint('[Média] widget non mis à jour: $e');
     }
+    // Les widgets « verre » (style Glasmio, WidgetsVerre.kt) : les mêmes
+    // deux nombres, et rien d'autre.
+    try {
+      await const MethodChannel('com.droplet.droplet/widgets_verre')
+          .invokeMethod<bool>('maj', {'nonLus': nonLus, 'pairs': pairs});
+    } catch (e) {
+      debugPrint('[Widgets verre] non mis à jour: $e');
+    }
   }
 
   /// Ouvre le clavier téléphonique avec un code opérateur déjà écrit.

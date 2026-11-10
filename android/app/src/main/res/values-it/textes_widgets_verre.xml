@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Les textes des widgets « verre » de Droplet. Aucun contenu de message :
+     seulement des nombres (voir WidgetsVerre.kt). -->
+<resources>
+    <string name="verre_nouveau">Nuovo</string>
+    <string name="verre_reseau">Rete</string>
+    <string name="verre_carte">Mappa</string>
+    <string name="verre_urgence">SOS</string>
+    <string name="verre_aucun">Nessun messaggio non letto</string>
+    <string name="verre_personne">Nessuno nel raggio</string>
+    <string name="verre_un_non_lu">messaggio non letto</string>
+    <string name="verre_non_lus">messaggi non letti</string>
+    <string name="verre_portee" formatted="true">%d nel raggio</string>
+    <string name="verre_nom_petit">Droplet · Non letti</string>
+    <string name="verre_nom_raccourcis">Droplet · Scorciatoie</string>
+    <string name="verre_nom_moyen">Droplet · Vetro</string>
+    <string name="verre_desc_petit">I tuoi messaggi non letti e chi è nel raggio.</string>
+    <string name="verre_desc_raccourcis">Nuovo messaggio, rete, mappa e SOS con un tocco.</string>
+    <string name="verre_desc_moyen">Messaggi non letti, chi è nel raggio e quattro scorciatoie.</string>
+</resources>

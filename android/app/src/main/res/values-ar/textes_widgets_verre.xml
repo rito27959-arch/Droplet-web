@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Les textes des widgets « verre » de Droplet. Aucun contenu de message :
+     seulement des nombres (voir WidgetsVerre.kt). -->
+<resources>
+    <string name="verre_nouveau">جديد</string>
+    <string name="verre_reseau">الشبكة</string>
+    <string name="verre_carte">الخريطة</string>
+    <string name="verre_urgence">SOS</string>
+    <string name="verre_aucun">لا رسائل غير مقروءة</string>
+    <string name="verre_personne">لا أحد في المدى</string>
+    <string name="verre_un_non_lu">رسالة غير مقروءة</string>
+    <string name="verre_non_lus">رسائل غير مقروءة</string>
+    <string name="verre_portee" formatted="true">%d في المدى</string>
+    <string name="verre_nom_petit">Droplet · غير مقروءة</string>
+    <string name="verre_nom_raccourcis">Droplet · اختصارات</string>
+    <string name="verre_nom_moyen">Droplet · زجاج</string>
+    <string name="verre_desc_petit">رسائلك غير المقروءة ومن في المدى.</string>
+    <string name="verre_desc_raccourcis">رسالة جديدة والشبكة والخريطة وSOS بلمسة.</string>
+    <string name="verre_desc_moyen">رسائلك غير المقروءة ومن في المدى وأربعة اختصارات.</string>
+</resources>

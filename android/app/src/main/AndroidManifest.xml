@@ -444,6 +444,42 @@
                 android:resource="@xml/widget_droplet_info"/>
         </receiver>
 
+        <!-- Les widgets « verre », au style de Glasmio (voir WidgetsVerre.kt),
+             en plus du widget ci-dessus. -->
+        <receiver
+            android:name=".WidgetVerrePetit"
+            android:label="@string/verre_nom_petit"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_verre_petit_info"/>
+        </receiver>
+        <receiver
+            android:name=".WidgetVerreRaccourcis"
+            android:label="@string/verre_nom_raccourcis"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_verre_raccourcis_info"/>
+        </receiver>
+        <receiver
+            android:name=".WidgetVerreMoyen"
+            android:label="@string/verre_nom_moyen"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_verre_moyen_info"/>
+        </receiver>
+
         <!-- ══ LES CONVERSATIONS ANDROID ════════════════════════════ -->
         <!--
           LA FENÊTRE DE LA BULLE. Elle affiche une conversation PAR-DESSUS

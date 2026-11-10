@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Les textes des widgets « verre » de Droplet. Aucun contenu de message :
+     seulement des nombres (voir WidgetsVerre.kt). -->
+<resources>
+    <string name="verre_nouveau">New</string>
+    <string name="verre_reseau">Network</string>
+    <string name="verre_carte">Map</string>
+    <string name="verre_urgence">SOS</string>
+    <string name="verre_aucun">No unread messages</string>
+    <string name="verre_personne">No one in range</string>
+    <string name="verre_un_non_lu">unread message</string>
+    <string name="verre_non_lus">unread messages</string>
+    <string name="verre_portee" formatted="true">%d in range</string>
+    <string name="verre_nom_petit">Droplet · Unread</string>
+    <string name="verre_nom_raccourcis">Droplet · Shortcuts</string>
+    <string name="verre_nom_moyen">Droplet · Glass</string>
+    <string name="verre_desc_petit">Unread messages and who is in range, on glass.</string>
+    <string name="verre_desc_raccourcis">New message, network, map and SOS in one touch.</string>
+    <string name="verre_desc_moyen">Your unread messages, who is in range and four shortcuts.</string>
+</resources>

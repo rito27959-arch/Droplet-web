@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Les textes des widgets « verre » de Droplet. Aucun contenu de message :
+     seulement des nombres (voir WidgetsVerre.kt). -->
+<resources>
+    <string name="verre_nouveau">Новое</string>
+    <string name="verre_reseau">Сеть</string>
+    <string name="verre_carte">Карта</string>
+    <string name="verre_urgence">SOS</string>
+    <string name="verre_aucun">Нет непрочитанных</string>
+    <string name="verre_personne">Рядом никого</string>
+    <string name="verre_un_non_lu">непрочитанное</string>
+    <string name="verre_non_lus">непрочитанных</string>
+    <string name="verre_portee" formatted="true">Рядом: %d</string>
+    <string name="verre_nom_petit">Droplet · Непрочитанные</string>
+    <string name="verre_nom_raccourcis">Droplet · Ярлыки</string>
+    <string name="verre_nom_moyen">Droplet · Стекло</string>
+    <string name="verre_desc_petit">Непрочитанные сообщения и кто рядом.</string>
+    <string name="verre_desc_raccourcis">Новое сообщение, сеть, карта и SOS одним касанием.</string>
+    <string name="verre_desc_moyen">Непрочитанные, кто рядом и четыре ярлыка.</string>
+</resources>

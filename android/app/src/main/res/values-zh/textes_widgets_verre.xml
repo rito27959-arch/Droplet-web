@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Les textes des widgets « verre » de Droplet. Aucun contenu de message :
+     seulement des nombres (voir WidgetsVerre.kt). -->
+<resources>
+    <string name="verre_nouveau">新消息</string>
+    <string name="verre_reseau">网络</string>
+    <string name="verre_carte">地图</string>
+    <string name="verre_urgence">SOS</string>
+    <string name="verre_aucun">没有未读消息</string>
+    <string name="verre_personne">附近没有人</string>
+    <string name="verre_un_non_lu">条未读消息</string>
+    <string name="verre_non_lus">条未读消息</string>
+    <string name="verre_portee" formatted="true">附近 %d 人</string>
+    <string name="verre_nom_petit">Droplet · 未读</string>
+    <string name="verre_nom_raccourcis">Droplet · 快捷方式</string>
+    <string name="verre_nom_moyen">Droplet · 玻璃</string>
+    <string name="verre_desc_petit">未读消息和附近的人。</string>
+    <string name="verre_desc_raccourcis">一触即可新消息、网络、地图和 SOS。</string>
+    <string name="verre_desc_moyen">未读消息、附近的人和四个快捷方式。</string>
+</resources>

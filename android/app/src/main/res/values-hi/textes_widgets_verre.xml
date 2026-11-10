@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Les textes des widgets « verre » de Droplet. Aucun contenu de message :
+     seulement des nombres (voir WidgetsVerre.kt). -->
+<resources>
+    <string name="verre_nouveau">नया</string>
+    <string name="verre_reseau">नेटवर्क</string>
+    <string name="verre_carte">नक्शा</string>
+    <string name="verre_urgence">SOS</string>
+    <string name="verre_aucun">कोई अपठित संदेश नहीं</string>
+    <string name="verre_personne">पास में कोई नहीं</string>
+    <string name="verre_un_non_lu">अपठित संदेश</string>
+    <string name="verre_non_lus">अपठित संदेश</string>
+    <string name="verre_portee" formatted="true">पास में %d</string>
+    <string name="verre_nom_petit">Droplet · अपठित</string>
+    <string name="verre_nom_raccourcis">Droplet · शॉर्टकट</string>
+    <string name="verre_nom_moyen">Droplet · ग्लास</string>
+    <string name="verre_desc_petit">आपके अपठित संदेश और पास में कौन है।</string>
+    <string name="verre_desc_raccourcis">नया संदेश, नेटवर्क, नक्शा और SOS एक स्पर्श में।</string>
+    <string name="verre_desc_moyen">अपठित संदेश, पास में कौन है और चार शॉर्टकट।</string>
+</resources>
