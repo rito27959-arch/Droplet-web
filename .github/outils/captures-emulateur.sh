@@ -12,6 +12,7 @@ adb wait-for-device
 for k in $(seq 1 90); do [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ] && break; sleep 2; done
 echo "démarré après ${k} essais" >> $J
 adb shell input keyevent 82 2>/dev/null
+adb shell wm density 440 >> $J 2>&1
 adb install -r -g build/app/outputs/flutter-apk/app-release.apk >> $J 2>&1
 adb shell pm grant $P android.permission.POST_NOTIFICATIONS 2>/dev/null
 adb logcat -c
