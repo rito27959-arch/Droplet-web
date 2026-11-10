@@ -10,6 +10,16 @@ fl = p.get("flutter", {}) or {}
 entrees = [a if isinstance(a, str) else a.get("path") for a in fl.get("assets", []) or []]
 for f in fl.get("fonts", []) or []:
     entrees += [x["asset"] for x in f.get("fonts", [])]
+SHADER = """#include <flutter/runtime_effect.glsl>
+uniform vec2 uTaille;
+out vec4 fragColor;
+void main() { fragColor = vec4(0.0); }
+"""
+for e in fl.get("shaders", []) or []:
+    if not os.path.exists(e):
+        os.makedirs(os.path.dirname(e) or ".", exist_ok=True)
+        open(e, "w").write(SHADER)
+        print(f"⚠️ absent du dépôt (bouche-trou de shader) : {e}")
 police = (glob.glob("assets/fonts/*.ttf") or [None])[0]
 for e in entrees:
     # « packages/<paquet>/… » désigne les ressources d'une dépendance : elles
