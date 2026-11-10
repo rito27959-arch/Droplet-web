@@ -67,6 +67,8 @@ jobs:
           fi
           # L'app : Compose + Glasmio.
           A=app/build.gradle.kts
+          # Comme Droplet : Kotlin appliqué explicitement, puis le plugin Compose.
+          grep -q 'kotlin-android' $A || sed -i -E 's#(id\("com.android.application"\))#\1\n    id("kotlin-android")#' $A
           sed -i -E 's#(id\("kotlin-android"\))#\1\n    id("org.jetbrains.kotlin.plugin.compose")#' $A
           sed -i -E 's/compileSdk = flutter.compileSdkVersion/compileSdk = ${{ matrix.sdk }}/' $A
           sed -i -E 's/minSdk = flutter.minSdkVersion/minSdk = 24/' $A
