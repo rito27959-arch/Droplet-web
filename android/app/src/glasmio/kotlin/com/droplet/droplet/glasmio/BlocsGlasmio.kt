@@ -906,7 +906,15 @@ internal fun BarreDuBas(b: JSONObject) {
     Column(
         Modifier
             .fillMaxWidth()
-            .background(couleurs.groupedBackground.copy(alpha = 0.94f))
+            // Un fond PLEIN : le fond groupé de Glasmio est transparent (il
+            // compte sur le verre), et la liste se lisait à travers la barre.
+            .background(
+                androidx.compose.ui.graphics.Brush.verticalGradient(
+                    0f to (if (couleurs.isDark) Color.Black else Color(0xFFF2F2F7)).copy(alpha = 0f),
+                    0.12f to (if (couleurs.isDark) Color.Black else Color(0xFFF2F2F7)),
+                ),
+            )
+            .padding(top = 14.dp)
             .navigationBarsPadding()
             .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

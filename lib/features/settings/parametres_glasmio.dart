@@ -275,7 +275,8 @@ class _PasserelleParametresState extends EtatPasserelleGlasmio<PasserelleParamet
               'teinte': _c(OuroColors.systemIndigo),
               'titre': textes.sectionLanguage,
               'options': [
-                {'id': 'langue:auto', 'titre': textes.languageAuto, 'coche': choisie == null},
+                // Le mot court : la pastille tient sur une ligne.
+                {'id': 'langue:auto', 'titre': textes.appearanceAuto, 'coche': choisie == null},
                 for (final locale in kSupportedLocales)
                   {'id': 'langue:${locale.languageCode}', 'titre': languageLabel(locale), 'coche': choisie == locale},
               ],
