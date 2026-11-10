@@ -9,6 +9,10 @@ Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 ⚠️ absent du dépôt (bouche-trou) : assets/fonts/Inter-Variable.ttf
 === ANALYSE (fichiers Glasmio)
 === DEBUG : 1
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 58: loop index initializer must be a constant expression
+        error: 55: loop index initializer must be a constant expression
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 111: initializers are not permitted on arrays (or structs containing arrays)
@@ -17,10 +21,6 @@ warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.
 SkSL Error:
         error: 121: initializers are not permitted on arrays (or structs containing arrays)
         error: 122: unknown identifier 'param_2'
-warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
-SkSL Error:
-        error: 58: loop index initializer must be a constant expression
-        error: 55: loop index initializer must be a constant expression
 FAILURE: Build failed with an exception.
 * What went wrong:
      ERROR: /home/runner/work/Droplet-web/Droplet-web/build/app/intermediates/packaged_manifests/debug/processDebugManifestForPackage/AndroidManifest.xml:173: AAPT: error: resource mipmap/ic_launcher (aka com.droplet.droplet:mipmap/ic_launcher) not found.
@@ -43,7 +43,7 @@ FAILURE: Build failed with an exception.
      ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:265:9-277:26: AAPT: error: resource mipmap/ic_launcher_v5_round (aka com.droplet.droplet:mipmap/ic_launcher_v5_round) not found.
      ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:251:9-263:26: AAPT: error: resource mipmap/ic_launcher_v4 (aka com.droplet.droplet:mipmap/ic_launcher_v4) not found.
      ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:251:9-263:26: AAPT: error: resource mipmap/ic_launcher_v4_round (aka com.droplet.droplet:mipmap/ic_launcher_v4_round) not found.
-BUILD FAILED in 5m 29s
+BUILD FAILED in 6m 24s
 * What went wrong:
 Execution failed for task ':app:processDebugResources'.
 > A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
