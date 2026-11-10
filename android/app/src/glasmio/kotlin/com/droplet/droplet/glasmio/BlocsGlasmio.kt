@@ -15,6 +15,7 @@ import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -481,6 +482,51 @@ internal fun Ligne(l: JSONObject, premiere: Boolean, provisoire: MutableMap<Stri
                 { Text(v, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = teinte) }
             },
         )
+        // Un curseur de verre (taille du texte, arrondi des bulles). La valeur
+        // suit le doigt ; elle part à Dart quand on relâche.
+        "curseur" -> {
+            val min = l.optDouble("min", 0.0).toFloat()
+            val max = l.optDouble("max", 1.0).toFloat()
+            var v by androidx.compose.runtime.remember(l.optDouble("valeur")) {
+                androidx.compose.runtime.mutableFloatStateOf(l.optDouble("valeur", min.toDouble()).toFloat())
+            }
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(l.optString("titre"), style = IosTypography.body, color = couleurs.content, modifier = Modifier.weight(1f))
+                    Text("${v.toInt()}", style = IosTypography.body, color = couleurs.secondaryContent)
+                }
+                io.github.neoruaa.glasmio.ui.GlasmioSlider(
+                    value = v,
+                    onValueChange = { v = kotlin.math.round(it) },
+                    valueRange = min..max,
+                    enabled = actif,
+                    onValueChangeFinished = { PontGlasmio.evenement(id, v.toDouble()) },
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+        }
+        // Une rangée de pastilles de couleur (accent) : la choisie cochée.
+        "couleurs" -> Row(
+            Modifier
+                .fillMaxWidth()
+                .horizontalScroll(androidx.compose.foundation.rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            l.optJSONArray("options")?.objets().orEmpty().forEach { o ->
+                val coche = o.optBoolean("coche")
+                Box(
+                    Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(couleur(o, "teinte", couleurs.accent))
+                        .clickable { if (!coche) PontGlasmio.evenement(o.optString("id")) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (coche) Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                }
+            }
+        }
         // Un paragraphe (question et réponse de l'aide) : le texte entier,
         // sur autant de lignes qu'il faut.
         "paragraphe" -> Column(

@@ -57,6 +57,7 @@ import 'features/settings/stockage_glasmio.dart';
 import 'features/settings/icone_glasmio.dart';
 import 'features/settings/sauvegarde_glasmio.dart';
 import 'features/group/infos_groupe_glasmio.dart';
+import 'features/settings/apparence_glasmio.dart';
 import 'core/services/raccourcis_conversation.dart';
 import 'features/settings/stockage_screen.dart';
 import 'features/autoriser/autoriser_app.dart';
@@ -907,7 +908,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/settings/apparence',
-      pageBuilder: (context, state) => _pushPage(const ApparenceScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserelleApparence()),
     ),
     GoRoute(
       path: '/settings/icon',
