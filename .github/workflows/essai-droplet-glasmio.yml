@@ -48,6 +48,7 @@ jobs:
           # Ressources présentes sur l'ordinateur mais absentes du dépôt :
           # remplacées ici par des bouche-trous, seulement pour compiler.
           python3 .github/outils/bouche-trous.py >> $J
+          bash .github/outils/bouche-trous-android.sh >> $J
           if [ "${{ matrix.mode }}" = "glasmio" ]; then
             bash .github/outils/passer-a-glasmio.sh >> $J 2>&1
           fi
@@ -57,7 +58,7 @@ jobs:
           grep -E "error|warning" /tmp/a.txt | head -40 >> $J; tail -3 /tmp/a.txt >> $J
           flutter build apk --debug > /tmp/d.txt 2>&1
           echo "=== DEBUG : $?" >> $J
-          grep -E "^e: |error:|Error:|Error |lib/.*dart:[0-9]+|What went wrong|FAILURE|requires|incompatible|Could not|not found|Unresolved|No file|BUILD (SUCCESSFUL|FAILED)" /tmp/d.txt | head -60 >> $J
+          grep -E "^w: .*glasmio|^e: |error:|Error:|Error |lib/.*dart:[0-9]+|What went wrong|FAILURE|requires|incompatible|Could not|not found|Unresolved|No file|BUILD (SUCCESSFUL|FAILED)" /tmp/d.txt | head -60 >> $J
           sed -n '/What went wrong/,/Try:/p' /tmp/d.txt | head -40 >> $J
           flutter build apk --release --split-per-abi > /tmp/r.txt 2>&1
           echo "=== RELEASE (R8) : $?" >> $J
