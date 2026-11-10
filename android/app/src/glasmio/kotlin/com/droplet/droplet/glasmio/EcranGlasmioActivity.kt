@@ -124,6 +124,7 @@ private fun EcranGlasmio(d: JSONObject, onRetour: () -> Unit) {
                         d.optJSONObject("entete")?.let { e -> item(key = "entete") { EnTeteContact(e) } }
                         d.optJSONObject("vitrine")?.let { v -> item(key = "vitrine") { Vitrine(v) } }
                         d.optJSONArray("stats")?.let { s -> item(key = "stats") { Statistiques(s.objets()) } }
+                        d.optJSONObject("recherche")?.let { r -> item(key = "recherche") { Recherche(r) } }
                         d.optJSONArray("sections")?.objets().orEmpty().forEachIndexed { i, s ->
                             item(key = "section-$i") { Section(s, provisoire) }
                         }

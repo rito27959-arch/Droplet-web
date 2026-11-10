@@ -46,6 +46,9 @@ import 'core/services/premium_service.dart';
 import 'core/services/reponses_differees.dart';
 import 'features/premium/pro_glasmio.dart';
 import 'core/services/barre_glasmio.dart';
+import 'features/notifications/notifs_glasmio.dart';
+import 'features/appareils/appareils_glasmio.dart';
+import 'features/aide/aide_glasmio.dart';
 import 'core/services/raccourcis_conversation.dart';
 import 'features/settings/stockage_screen.dart';
 import 'features/autoriser/autoriser_app.dart';
@@ -917,7 +920,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/settings/notifications',
-      pageBuilder: (context, state) => _pushPage(const ReglagesNotifsScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserelleNotifs()),
     ),
     GoRoute(
       path: '/notifications',
@@ -949,11 +952,11 @@ final _router = GoRouter(
     // règle sûre quand les chemins se préfixent.
     GoRoute(
       path: '/aide',
-      pageBuilder: (context, state) => _pushPage(const AideScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserelleAide()),
     ),
     GoRoute(
       path: '/settings/appareils',
-      pageBuilder: (context, state) => _pushPage(const AppareilsLiesScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserelleAppareils()),
     ),
     GoRoute(
       path: '/settings/storage',

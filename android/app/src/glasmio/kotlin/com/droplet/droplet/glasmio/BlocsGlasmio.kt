@@ -86,10 +86,41 @@ import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material.icons.rounded.WifiOff
 import androidx.compose.material.icons.rounded.WifiTethering
 import androidx.compose.material.icons.rounded.WorkspacePremium
+import androidx.compose.material.icons.rounded.StopCircle
+import androidx.compose.material.icons.rounded.AlternateEmail
+import androidx.compose.material.icons.rounded.ViewDay
+import androidx.compose.material.icons.rounded.Inbox
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.SettingsApplications
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.material.icons.rounded.Smartphone
+import androidx.compose.material.icons.rounded.QrCodeScanner
+import androidx.compose.material.icons.rounded.Mail
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.CleaningServices
+import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Psychology
+import androidx.compose.material.icons.rounded.Emergency
+import androidx.compose.material.icons.rounded.Sos
+import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.PersonAdd
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Logout
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Upload
+import androidx.compose.material.icons.rounded.Key
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.PushPin
+import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -179,6 +210,36 @@ internal val ICONES: Map<String, ImageVector> = mapOf(
     "flag" to Icons.Rounded.Flag,
     "play_circle" to Icons.Rounded.PlayCircle,
     "image" to Icons.Rounded.Image,
+    "stop_circle" to Icons.Rounded.StopCircle,
+    "alternate_email" to Icons.Rounded.AlternateEmail,
+    "view_day" to Icons.Rounded.ViewDay,
+    "inbox" to Icons.Rounded.Inbox,
+    "visibility" to Icons.Rounded.Visibility,
+    "settings_applications" to Icons.Rounded.SettingsApplications,
+    "delete" to Icons.Rounded.Delete,
+    "devices" to Icons.Rounded.Devices,
+    "smartphone" to Icons.Rounded.Smartphone,
+    "qr_code_scanner" to Icons.Rounded.QrCodeScanner,
+    "mail" to Icons.Rounded.Mail,
+    "description" to Icons.Rounded.Description,
+    "folder" to Icons.Rounded.Folder,
+    "cleaning" to Icons.Rounded.CleaningServices,
+    "storage" to Icons.Rounded.Storage,
+    "history" to Icons.Rounded.History,
+    "psychology" to Icons.Rounded.Psychology,
+    "map_offline" to Icons.Rounded.Map,
+    "emergency" to Icons.Rounded.Emergency,
+    "sos" to Icons.Rounded.Sos,
+    "group" to Icons.Rounded.Group,
+    "person_add" to Icons.Rounded.PersonAdd,
+    "edit" to Icons.Rounded.Edit,
+    "logout" to Icons.Rounded.Logout,
+    "download" to Icons.Rounded.Download,
+    "upload" to Icons.Rounded.Upload,
+    "key" to Icons.Rounded.Key,
+    "star" to Icons.Rounded.Star,
+    "push_pin" to Icons.Rounded.PushPin,
+    "archive" to Icons.Rounded.Archive,
 )
 
 /** Les symboles internes de Glasmio (chevrons, retour…) gardent leur
@@ -349,6 +410,19 @@ internal fun Ligne(l: JSONObject, premiere: Boolean, provisoire: MutableMap<Stri
             titleColor = if (l.optBoolean("destructif")) couleurs.destructive else couleurs.accent,
             titleAlignment = TextAlign.Center,
         )
+        // Un paragraphe (question et réponse de l'aide) : le texte entier,
+        // sur autant de lignes qu'il faut.
+        "paragraphe" -> Column(
+            Modifier
+                .fillMaxWidth()
+                .then(if (l.optBoolean("cliquable")) Modifier.clickable { PontGlasmio.evenement(id) } else Modifier)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            Text(l.optString("titre"), style = IosTypography.body, fontWeight = FontWeight.SemiBold, color = couleurs.content)
+            l.texte("sous")?.let {
+                Text(it, style = IosTypography.subheadline, color = couleurs.secondaryContent, modifier = Modifier.padding(top = 4.dp))
+            }
+        }
         // Une ligne d'information, sans geste.
         "info" -> GlasmioListRow(
             title = l.optString("titre"),
@@ -631,4 +705,38 @@ internal fun BarreDuBas(b: JSONObject) {
             )
         }
     }
+}
+
+
+// ─────────────────────────────────────────────────────────────
+//  La recherche (Aide) : le champ garde sa saisie ; chaque frappe est
+//  envoyée à Dart, qui renvoie la liste filtrée.
+// ─────────────────────────────────────────────────────────────
+
+@Composable
+internal fun Recherche(r: JSONObject) {
+    var saisie by androidx.compose.runtime.saveable.rememberSaveable(stateSaver = androidx.compose.ui.text.input.TextFieldValue.Saver) {
+        androidx.compose.runtime.mutableStateOf(androidx.compose.ui.text.input.TextFieldValue(r.optString("texte")))
+    }
+    var active by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    io.github.neoruaa.glasmio.ui.GlasmioSearchBar(
+        query = saisie,
+        onQueryChange = {
+            val change = it.text != saisie.text
+            saisie = it
+            if (change) PontGlasmio.evenement(r.optString("id"), it.text)
+        },
+        active = active,
+        onActiveChange = { active = it },
+        onClose = {
+            active = false
+            if (saisie.text.isNotEmpty()) {
+                saisie = androidx.compose.ui.text.input.TextFieldValue("")
+                PontGlasmio.evenement(r.optString("id"), "")
+            }
+        },
+        placeholder = r.optString("indice"),
+        closeContentDescription = r.optString("fermer", "Cancel"),
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+    )
 }
