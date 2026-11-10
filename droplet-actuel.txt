@@ -1,9 +1,12 @@
 Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 ⚠️ proguard-rules.pro absent : release compilée SANS les règles de Droplet
 === DEBUG : 1
+Error: unable to find directory entry in pubspec.yaml: /home/runner/work/Droplet-web/Droplet-web/assets/icon/premuim/
+Error: unable to find directory entry in pubspec.yaml: /home/runner/work/Droplet-web/Droplet-web/assets/stickers/
+Error: unable to locate asset entry in pubspec.yaml: "assets/fonts/Inter-Variable.ttf".
 FAILURE: Build failed with an exception.
 * What went wrong:
-BUILD FAILED in 4m 16s
+BUILD FAILED in 5m 2s
 * What went wrong:
 Execution failed for task ':app:compileFlutterBuildDebug'.
 > Process 'command '/opt/hostedtoolcache/flutter/stable-3.47.9-x64/flutter/bin/flutter'' finished with non-zero exit value 1
