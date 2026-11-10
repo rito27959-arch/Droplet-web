@@ -21,6 +21,16 @@ timeout 480 adb logcat -v raw -s flutter:I | while read -r l; do
       f=$(printf '%02d-%s.png' $i "$n"); i=$((i+1))
       adb exec-out screencap -p > "$C/$f"
       echo "capture $f" >> $J
+      if [ "$n" = loupe ]; then
+        # La loupe : en bas à droite, au-dessus de la barre système.
+        L=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); W=${L%x*}; H=${L#*x}
+        adb shell input tap $((W*91/100)) $((H*93/100)); sleep 1
+        adb exec-out screencap -p > "$C/$(printf '%02d' $i)-recherche_transition.png"; i=$((i+1)); sleep 2
+        adb exec-out screencap -p > "$C/$(printf '%02d' $i)-recherche.png"; i=$((i+1))
+        adb shell input text "Am"; sleep 2
+        adb exec-out screencap -p > "$C/$(printf '%02d' $i)-recherche_texte.png"; i=$((i+1))
+        adb shell input keyevent 4; sleep 1; adb shell input keyevent 4; sleep 1
+      fi
       if [ "$n" = alerte ]; then sleep 1; adb shell input keyevent 4; fi
       if [ "$n" = fin ]; then break; fi
       ;;

@@ -44,6 +44,10 @@ Future<void> lancerCaptures(GoRouter routeur) async {
     ('appareils', '/settings/appareils'),
     ('aide', '/aide'),
     ('contact', '/chat/demo/info'),
+    ('stockage', '/settings/storage'),
+    ('apparence', '/settings/apparence'),
+    ('icone', '/settings/icon'),
+    ('sauvegarde', '/backup/export'),
   ]) {
     routeur.push(route);
     await _attendre(6);
@@ -52,6 +56,10 @@ Future<void> lancerCaptures(GoRouter routeur) async {
     await PontGlasmio.fermer();
     await _attendre(3);
   }
+  // La recherche flottante : le script touche la loupe de la barre native
+  // (en bas à droite) et tape un mot, puis photographie la transformation.
+  _capture('loupe');
+  await _attendre(14);
   final contexte = cleNavigateurRacine.currentContext;
   if (contexte != null && contexte.mounted) {
     // L'alerte Glasmio par-dessus l'accueil ; le script la ferme (retour).
