@@ -84,11 +84,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
@@ -206,9 +204,6 @@ private fun JSONArray.objets(): List<JSONObject> = (0 until length()).mapNotNull
 //  L'écran
 // ─────────────────────────────────────────────────────────────
 
-/** La lueur rouge du haut de Droplet (voir ouro_surfaces.dart). */
-private val ROUGE_LUEUR = Color(0xFFE8344E)
-
 @Composable
 private fun EcranParametres(d: JSONObject, onRetour: () -> Unit) {
     val sombre = d.optBoolean("sombre", true)
@@ -216,16 +211,9 @@ private fun EcranParametres(d: JSONObject, onRetour: () -> Unit) {
     GlasmioIconProvider(resolver = RESOLVEUR) {
         GlasmioTheme(isDark = sombre, colorScheme = glasmioColorScheme(sombre, accent)) {
             val couleurs = LocalGlassColors.current
+            // Le fond groupé de Glasmio, tel quel : noir pur en sombre.
+            // ⚠️ Aucune lueur, aucun dégradé sur les écrans Glasmio.
             val fond = couleurs.groupedBackground
-            val intensite = if (sombre) 0.17f else 0.075f
-            // Le même fond que l'accueil : la lueur rouge s'éteint vers le bas.
-            val lueur = Brush.verticalGradient(
-                0f to lerp(fond, ROUGE_LUEUR, intensite),
-                0.45f to lerp(fond, ROUGE_LUEUR, intensite * 0.35f),
-                1f to fond,
-                startY = 0f,
-                endY = 1000f,
-            )
             // Un interrupteur suit le doigt tout de suite, sans attendre Dart ;
             // la description suivante (l'état réel) reprend la main.
             val provisoire = remember { mutableStateMapOf<String, Boolean>() }
@@ -233,13 +221,13 @@ private fun EcranParametres(d: JSONObject, onRetour: () -> Unit) {
 
             GlasmioBackdropHost(
                 modifier = Modifier.fillMaxSize(),
-                sampledContent = { Box(Modifier.fillMaxSize().background(lueur)) },
+                sampledContent = { Box(Modifier.fillMaxSize().background(fond)) },
                 overlayContent = {
                     GlasmioPinnedListPage(
                         title = d.optString("titre"),
                         onNavigateBack = onRetour,
                         navigateBackContentDescription = d.texte("retour") ?: "Back",
-                        backgroundBrush = lueur,
+                        backgroundColor = fond,
                     ) {
                         d.optJSONObject("profil")?.let { p ->
                             item(key = "profil") { CarteProfil(p) }

@@ -331,7 +331,8 @@ class _PasserelleParametresState extends ConsumerState<PasserelleParametres> {
     return {
       'titre': textes.stTitle,
       'retour': MaterialLocalizations.of(context).backButtonTooltip,
-      'sombre': OuroColors.isDark,
+      // Les écrans Glasmio sont toujours en noir (choix de design).
+      'sombre': true,
       'accent': _c(OuroColors.accent),
       'profil': {
         'id': 'profil',
