@@ -6,12 +6,18 @@ C=/tmp/cap; J=$C/journal.txt
 P=com.droplet.droplet.glasmio
 # -g : toutes les autorisations accordées d'avance (sinon la demande de
 # localisation recouvre chaque capture).
+# L'émulateur doit avoir fini de démarrer (sinon install et captures échouent
+# en silence, avec des images vides).
+adb wait-for-device
+for k in $(seq 1 90); do [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ] && break; sleep 2; done
+echo "démarré après ${k} essais" >> $J
+adb shell input keyevent 82 2>/dev/null
 adb install -r -g build/app/outputs/flutter-apk/app-release.apk >> $J 2>&1
 adb shell pm grant $P android.permission.POST_NOTIFICATIONS 2>/dev/null
 adb logcat -c
 adb shell am start -n $P/com.droplet.droplet.MainActivity >> $J 2>&1
 # Filet : une image au bout de 45 s, quoi qu'il arrive.
-( sleep 45; adb exec-out screencap -p > $C/00-demarrage.png ) &
+( sleep 45; timeout 20 adb exec-out screencap -p > $C/00-demarrage.png ) &
 i=1
 timeout 480 adb logcat -v raw -s flutter:I | while read -r l; do
   case "$l" in
@@ -19,7 +25,7 @@ timeout 480 adb logcat -v raw -s flutter:I | while read -r l; do
       n=$(echo "${l##*CAPTURE:}" | tr -cd 'a-z_')
       sleep 2
       f=$(printf '%02d-%s.png' $i "$n"); i=$((i+1))
-      adb exec-out screencap -p > "$C/$f"
+      timeout 20 adb exec-out screencap -p > "$C/$f"
       echo "capture $f" >> $J
       if [ "$n" = loupe ]; then
         # La loupe : en bas à droite, au-dessus de la barre système.
@@ -36,5 +42,5 @@ timeout 480 adb logcat -v raw -s flutter:I | while read -r l; do
       ;;
   esac
 done
-adb logcat -d | grep -iE "glasmio|AndroidRuntime|FATAL|flutter" | tail -150 > $C/logcat.txt
+timeout 30 adb logcat -d | grep -iE "glasmio|AndroidRuntime|FATAL|flutter" | tail -150 > $C/logcat.txt
 true
