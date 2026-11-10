@@ -1,8 +1,9 @@
 Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 ⚠️ proguard-rules.pro absent : release compilée SANS les règles de Droplet
-⚠️ assets/icon/premuim absent du dépôt (bouche-trou)
-⚠️ assets/stickers absent du dépôt (bouche-trou)
-⚠️ Inter-Variable.ttf absent du dépôt (bouche-trou)
+⚠️ absent du dépôt (bouche-trou) : assets/icon/droplet_icon.png
+⚠️ absent du dépôt (bouche-trou) : assets/icon/premuim/
+⚠️ absent du dépôt (bouche-trou) : assets/stickers/
+⚠️ absent du dépôt (bouche-trou) : assets/fonts/Inter-Variable.ttf
 --- configuration passée à Glasmio :
 settings.gradle.kts:    id("dev.flutter.flutter-plugin-loader") version "1.0.0"
 settings.gradle.kts:    id("com.android.application") version "9.4.1" apply false
@@ -11,31 +12,28 @@ settings.gradle.kts:    id("org.jetbrains.kotlin.plugin.compose") version "2.4.2
 settings.gradle.kts:    id("com.google.gms.google-services") version "4.4.2" apply false
 gradle/wrapper/gradle-wrapper.properties:distributionUrl=https\://services.gradle.org/distributions/gradle-9.6.0-bin.zip
 6:    id("org.jetbrains.kotlin.plugin.compose")
-65:    compileSdkVersion("android-37")
+65:    compileSdk = 37
 196:    implementation("io.github.neoruaa.glasmio:glasmio-scaffold:0.1.2")
 197:    implementation("io.github.neoruaa.glasmio:glasmio-preference:0.1.2")
 1
 === DEBUG : 1
+an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
+Error detected in pubspec.yaml:
+No file or variants found for asset: shaders/liquid.frag.
 FAILURE: Build failed with an exception.
 * What went wrong:
-BUILD FAILED in 3m 58s
+BUILD FAILED in 5m 23s
 * What went wrong:
-A problem occurred configuring project ':tor'.
-> Failed to notify project evaluation listener.
-   > For input string: "37.0"
-   > For input string: "37.0"
-   > For input string: "37.0"
+Execution failed for task ':app:compileFlutterBuildDebug' (registered by plugin 'dev.flutter.flutter-gradle-plugin').
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.47.9-x64/flutter/bin/flutter'' finished with non-zero exit value 1
 
 * Try:
 === RELEASE (R8) : 1
 FAILURE: Build failed with an exception.
 * What went wrong:
 * What went wrong:
-A problem occurred configuring project ':tor'.
-> Failed to notify project evaluation listener.
-   > For input string: "37.0"
-   > For input string: "37.0"
-   > For input string: "37.0"
+Execution failed for task ':app:compileFlutterBuildRelease' (registered by plugin 'dev.flutter.flutter-gradle-plugin').
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.47.9-x64/flutter/bin/flutter'' finished with non-zero exit value 1
 
 * Try:
 ls: cannot access 'build/app/outputs/flutter-apk/': No such file or directory

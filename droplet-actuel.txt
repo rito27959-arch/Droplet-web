@@ -1,14 +1,15 @@
 Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 ⚠️ proguard-rules.pro absent : release compilée SANS les règles de Droplet
-⚠️ assets/icon/premuim absent du dépôt (bouche-trou)
-⚠️ assets/stickers absent du dépôt (bouche-trou)
-⚠️ Inter-Variable.ttf absent du dépôt (bouche-trou)
+⚠️ absent du dépôt (bouche-trou) : assets/icon/droplet_icon.png
+⚠️ absent du dépôt (bouche-trou) : assets/icon/premuim/
+⚠️ absent du dépôt (bouche-trou) : assets/stickers/
+⚠️ absent du dépôt (bouche-trou) : assets/fonts/Inter-Variable.ttf
 === DEBUG : 1
 Error detected in pubspec.yaml:
-No file or variants found for asset: assets/icon/droplet_icon.png.
+No file or variants found for asset: shaders/liquid.frag.
 FAILURE: Build failed with an exception.
 * What went wrong:
-BUILD FAILED in 5m 22s
+BUILD FAILED in 5m 21s
 * What went wrong:
 Execution failed for task ':app:compileFlutterBuildDebug'.
 > Process 'command '/opt/hostedtoolcache/flutter/stable-3.47.9-x64/flutter/bin/flutter'' finished with non-zero exit value 1
