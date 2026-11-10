@@ -4,7 +4,9 @@
 set +e
 C=/tmp/cap; J=$C/journal.txt
 P=com.droplet.droplet.glasmio
-adb install -r build/app/outputs/flutter-apk/app-release.apk >> $J 2>&1
+# -g : toutes les autorisations accordées d'avance (sinon la demande de
+# localisation recouvre chaque capture).
+adb install -r -g build/app/outputs/flutter-apk/app-release.apk >> $J 2>&1
 adb shell pm grant $P android.permission.POST_NOTIFICATIONS 2>/dev/null
 adb logcat -c
 adb shell am start -n $P/com.droplet.droplet.MainActivity >> $J 2>&1

@@ -40,6 +40,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Call
@@ -201,8 +203,16 @@ object BarreNavigationGlasmio {
 
         GlasmioIconProvider(resolver = RESOLVEUR_BARRE) {
             GlasmioTheme(isDark = sombre, colorScheme = glasmioColorScheme(sombre, accent)) {
+                // ⚠️ UNE HAUTEUR FIXE : le fond échantillonné de Glasmio remplit
+                // tout l'espace qu'on lui donne ; sans hauteur, la vue prenait
+                // l'écran entier et la barre se dessinait EN HAUT.
+                val bas = androidx.compose.foundation.layout.WindowInsets.navigationBars
+                    .asPaddingValues().calculateBottomPadding()
                 GlasmioBackdropHost(
-                    modifier = Modifier.fillMaxWidth().wrapContentHeight().onGloballyPositioned { origine = it.positionInWindow() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(io.github.neoruaa.glasmio.ui.NavigationBarSurfaceHeight + 16.dp + bas)
+                        .onGloballyPositioned { origine = it.positionInWindow() },
                     sampledContent = {
                         bande?.let { Image(it, contentDescription = null, contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize()) }
                     },
