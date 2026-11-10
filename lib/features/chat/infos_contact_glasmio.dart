@@ -25,6 +25,7 @@ import '../../core/models/voice_note_meta.dart';
 import '../../core/providers/chat_background_provider.dart';
 import '../../core/providers/mesh_provider.dart';
 import '../../core/services/avatar_service.dart';
+import '../../core/services/mesh_transport_service.dart' show ConnectedPeer;
 import '../../core/services/notification_service.dart';
 import '../../core/services/passerelle_glasmio.dart';
 import '../../core/services/pont_glasmio.dart';
