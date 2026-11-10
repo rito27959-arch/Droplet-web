@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -253,7 +254,14 @@ internal val ICONES: Map<String, ImageVector> = mapOf(
 
 /** Les symboles internes de Glasmio (chevrons, retour…) gardent leur
  *  repli Material ; les clés de Droplet passent avant. */
-internal val RESOLVEUR = GlasmioIconResolver { nom -> ICONES[nom] ?: MaterialGlasmioIconResolver.resolve(nom) }
+internal val RESOLVEUR = GlasmioIconResolver { nom ->
+    ICONES[nom] ?: when {
+        // Le chevron fin d'iOS pour les lignes qui mènent ailleurs (le repli
+        // de Glasmio dessine une flèche).
+        nom.startsWith("chevron.right") || nom.startsWith("chevron.forward") -> Icons.Rounded.ChevronRight
+        else -> MaterialGlasmioIconResolver.resolve(nom)
+    }
+}
 
 internal fun couleur(o: JSONObject, cle: String, defaut: Color): Color =
     if (o.has(cle)) Color(o.optLong(cle).toInt()) else defaut
@@ -450,6 +458,8 @@ internal fun Ligne(l: JSONObject, premiere: Boolean, provisoire: MutableMap<Stri
                             onSelected = { o -> PontGlasmio.evenement(o.optString("id")) },
                             label = { o -> o.optString("titre") },
                             enabled = actif,
+                            // La pastille reste courte : le titre de la ligne doit rester lisible.
+                            modifier = Modifier.widthIn(max = 150.dp),
                         )
                     }
                 } else {
