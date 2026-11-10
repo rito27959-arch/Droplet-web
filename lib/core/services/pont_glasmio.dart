@@ -110,7 +110,8 @@ class PontGlasmio {
     });
   }
 
-  /// Ouvre un écran natif Glasmio. [ecran] : `parametres`.
+  /// Ouvre un écran natif Glasmio ([ecran] sert au journal). [sansAnimation] :
+  /// au retour d'une page Flutter, l'écran revient sans glisser.
   /// [gestionnaire] reçoit chaque geste ; [surFermeture] est appelé quand
   /// l'écran disparaît, quelle qu'en soit la raison.
   static Future<bool> ouvrir({
@@ -118,6 +119,7 @@ class PontGlasmio {
     required Map<String, Object?> description,
     required GestionnaireGlasmio gestionnaire,
     VoidCallback? surFermeture,
+    bool sansAnimation = false,
   }) async {
     if (!await disponible()) return false;
     _installer();
@@ -127,6 +129,7 @@ class PontGlasmio {
       await _canal.invokeMethod<void>('ouvrir', {
         'ecran': ecran,
         'description': jsonEncode(description),
+        'sansAnimation': sansAnimation,
       });
       return true;
     } catch (e) {

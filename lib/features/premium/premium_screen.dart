@@ -180,7 +180,15 @@ const List<Operateur> kOperateurs = [
 ];
 
 class PremiumScreen extends ConsumerStatefulWidget {
-  const PremiumScreen({super.key});
+  const PremiumScreen({super.key, this.actionInitiale, this.proChoisi = true});
+
+  /// Ce que l'écran fait dès qu'il s'affiche — utilisé quand on arrive de
+  /// la vitrine Glasmio (Android 13+) : `paiement`, `code`, ou
+  /// `avantage:<n>`. Le parcours de paiement reste CELUI-CI, inchangé.
+  final String? actionInitiale;
+
+  /// L'offre choisie dans la vitrine Glasmio.
+  final bool proChoisi;
 
   @override
   ConsumerState<PremiumScreen> createState() => _PremiumScreenState();
@@ -208,6 +216,31 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
   /// La feuille ouverte (paiement ou code), pour la refermer au succès.
   BuildContext? _feuille;
+
+  @override
+  void initState() {
+    super.initState();
+    _proChoisi = widget.proChoisi;
+    final action = widget.actionInitiale;
+    if (action != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (action == 'paiement') {
+          _ouvrirPaiement();
+        } else if (action == 'code') {
+          _ouvrirCode();
+        } else if (action.startsWith('avantage:')) {
+          final l10n = AppLocalizations.of(context);
+          ouvrirAvantagesPro(
+            context,
+            depart: int.tryParse(action.substring(9)) ?? 0,
+            libelleAchat: l10n.avUnlock,
+            onAcheter: _allerAuPaiement,
+          );
+        }
+      });
+    }
+  }
 
   @override
   void setState(VoidCallback fn) {

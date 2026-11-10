@@ -19,7 +19,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/models/mesh_message.dart' show ContributionRank;
 import '../../core/providers/locale_provider.dart';
@@ -30,6 +29,7 @@ import '../../core/services/appareils_lies.dart';
 import '../../core/services/avatar_service.dart';
 import '../../core/services/mesh_foreground_service.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/services/passerelle_glasmio.dart';
 import '../../core/services/pont_glasmio.dart';
 import '../../core/services/premium_service.dart';
 import '../../core/services/reglages_notifs.dart';
@@ -72,145 +72,51 @@ class PasserelleParametres extends ConsumerStatefulWidget {
   ConsumerState<PasserelleParametres> createState() => _PasserelleParametresState();
 }
 
-enum _Etat { attente, natif, flutter }
-
-class _PasserelleParametresState extends ConsumerState<PasserelleParametres> {
-  _Etat _etat = _Etat.attente;
-
-  /// Ce qu'il faut faire côté Flutter une fois l'écran natif fermé.
-  Future<void> Function()? _apres;
-
+class _PasserelleParametresState extends EtatPasserelleGlasmio<PasserelleParametres> {
   ProviderSubscription<AsyncValue<TorServiceState>>? _ecouteTor;
 
-  /// Les textes de la langue choisie pendant que l'écran natif est ouvert
-  /// (Flutter, en arrière-plan, n'a pas encore reconstruit les siens).
-  AppLocalizations? _textes;
+  @override
+  String get ecran => 'parametres';
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _demarrer());
-  }
+  Widget construireRepli(BuildContext context) => const SettingsScreen();
 
   @override
-  void dispose() {
+  Future<Map<String, Object?>> decrire() => _description();
+
+  // Tor change d'état tout seul (connexion en cours…) : l'écran suit.
+  @override
+  void surOuvert() {
     _ecouteTor?.close();
-    super.dispose();
+    _ecouteTor = ref.listenManual(torStateProvider, (_, __) => rafraichir());
   }
 
-  Future<void> _demarrer() async {
-    if (!await PontGlasmio.disponible()) {
-      if (mounted) setState(() => _etat = _Etat.flutter);
-      return;
-    }
-    if (!mounted) return;
-    final ok = await PontGlasmio.ouvrir(
-      ecran: 'parametres',
-      description: await _description(),
-      gestionnaire: _gerer,
-      surFermeture: _surFermeture,
-    );
-    if (!mounted) return;
-    if (!ok) {
-      setState(() => _etat = _Etat.flutter);
-      return;
-    }
-    setState(() => _etat = _Etat.natif);
-    // Tor change d'état tout seul (connexion en cours…) : l'écran suit.
-    _ecouteTor = ref.listenManual(torStateProvider, (_, __) async {
-      if (mounted) await PontGlasmio.mettreAJour(await _description());
-    });
-  }
-
-  void _surFermeture() {
+  @override
+  void surFerme() {
     _ecouteTor?.close();
     _ecouteTor = null;
-    _textes = null;
-    if (!mounted) return;
-    final apres = _apres;
-    _apres = null;
-    if (apres != null) {
-      unawaited(apres());
-    } else {
-      // Retour simple : on quitte les réglages comme avec la flèche.
-      final routeur = GoRouter.of(context);
-      if (routeur.canPop()) {
-        routeur.pop();
-      } else {
-        routeur.go('/');
-      }
-    }
-  }
-
-  /// Ferme l'écran natif, puis remplace cette passerelle par [route].
-  ReponseGlasmio _allerA(String route) {
-    final routeur = GoRouter.of(context);
-    _apres = () async {
-      if (routeur.canPop()) {
-        routeur.pop();
-      } else if (mounted) {
-        // Rien dessous (arrivée directe) : la passerelle reste, et montre
-        // les réglages Flutter quand on reviendra.
-        setState(() => _etat = _Etat.flutter);
-      }
-      await routeur.push(route);
-    };
-    return const ReponseGlasmio.fermer();
-  }
-
-  /// Ferme l'écran natif et montre les réglages Flutter (pour la photo du
-  /// profil, qui demande l'interface de choix d'image de Droplet).
-  ReponseGlasmio _reglagesFlutter() {
-    _apres = () async {
-      if (mounted) setState(() => _etat = _Etat.flutter);
-    };
-    return const ReponseGlasmio.fermer();
-  }
-
-  /// Ferme l'écran natif, ouvre une feuille Flutter par-dessus cette
-  /// passerelle, puis quitte les réglages quand la feuille se ferme.
-  ReponseGlasmio _feuille(Future<void> Function(BuildContext) ouvrir) {
-    final routeur = GoRouter.of(context);
-    _apres = () async {
-      if (!mounted) return;
-      await ouvrir(context);
-      if (!mounted) return;
-      if (routeur.canPop()) {
-        routeur.pop();
-      } else {
-        setState(() => _etat = _Etat.flutter);
-      }
-    };
-    return const ReponseGlasmio.fermer();
   }
 
   // ─────────────────────────────────────────────────────────────
   //  Les gestes
   // ─────────────────────────────────────────────────────────────
 
-  Future<ReponseGlasmio> _gerer(String id, Object? valeur) async {
+  @override
+  Future<ReponseGlasmio> gerer(String id, Object? valeur) async {
     final route = _routes[id];
-    if (route != null) return _allerA(route);
+    if (route != null) return allerA(route);
 
     switch (id) {
       case 'profil':
-        return _reglagesFlutter();
+        // Changer sa photo demande l'interface de Droplet : on montre les
+        // réglages Flutter (le profil y est en tête).
+        return basculerVersFlutter();
       case 'bloques':
-        final routeur = GoRouter.of(context);
-        final nav = Navigator.of(context);
-        _apres = () async {
-          if (routeur.canPop()) {
-            routeur.pop();
-          } else if (mounted) {
-            setState(() => _etat = _Etat.flutter);
-          }
-          await nav.push(MaterialPageRoute<void>(builder: (_) => const ContactsBloquesScreen()));
-        };
-        return const ReponseGlasmio.fermer();
+        return pousser(MaterialPageRoute<void>(builder: (_) => const ContactsBloquesScreen()));
       case 'journal':
-        return _feuille(afficherJournal);
+        return feuille(afficherJournal);
       case 'a_propos':
-        return _feuille(afficherAPropos);
+        return feuille(afficherAPropos);
       case 'sons':
         final on = valeur == true;
         await SoundService.setEnabled(on);
@@ -232,7 +138,7 @@ class _PasserelleParametresState extends ConsumerState<PasserelleParametres> {
         if (valeur == true) {
           // Même confirmation que l'écran Flutter, en alerte Glasmio.
           if (!mounted) return ReponseGlasmio.rien;
-          final l10n = _textes ?? AppLocalizations.of(context);
+          final l10n = textes;
           return ReponseGlasmio.alerte({
             'titre': l10n.stKeepActiveTitle,
             'message': l10n.stKeepActiveBody,
@@ -261,7 +167,7 @@ class _PasserelleParametresState extends ConsumerState<PasserelleParametres> {
           // directement les traductions de la nouvelle langue pour redécrire
           // l'écran natif tout de suite.
           final l10n = await AppLocalizations.delegate.load(resolveLocale(locale));
-          _textes = l10n;
+          textesForces = l10n;
           if (!mounted) return ReponseGlasmio.rien;
           return ReponseGlasmio.maj(await _description());
         }
@@ -308,7 +214,7 @@ class _PasserelleParametresState extends ConsumerState<PasserelleParametres> {
       };
 
   Future<Map<String, Object?>> _description({AppLocalizations? l10n}) async {
-    final textes = l10n ?? _textes ?? AppLocalizations.of(context);
+    final textes = l10n ?? this.textes;
     final me = StorageService.currentUser;
     final pseudo = me?.pseudo ?? '—';
     final myId = ref.read(meshRepositoryProvider).myId;
@@ -524,16 +430,6 @@ class _PasserelleParametresState extends ConsumerState<PasserelleParametres> {
               icone: 'info', teinte: OuroColors.systemGray, titre: textes.stAbout),
         ]),
       ],
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return switch (_etat) {
-      _Etat.flutter => const SettingsScreen(),
-      // Pendant que l'écran natif est ouvert (ou s'ouvre), un simple fond :
-      // c'est lui qu'on aperçoit une fraction de seconde à la fermeture.
-      _ => ColoredBox(color: OuroColors.systemGroupedBackground, child: const SizedBox.expand()),
     };
   }
 }

@@ -44,7 +44,7 @@ import 'core/services/share_intent_service.dart';
 import 'core/services/avatar_service.dart';
 import 'core/services/premium_service.dart';
 import 'core/services/reponses_differees.dart';
-import 'features/premium/premium_screen.dart';
+import 'features/premium/pro_glasmio.dart';
 import 'core/services/raccourcis_conversation.dart';
 import 'features/settings/stockage_screen.dart';
 import 'features/autoriser/autoriser_app.dart';
@@ -72,7 +72,7 @@ import 'features/home/home_shell.dart';
 import 'features/chats/chats_screen.dart';
 import 'features/chat/chat_screen.dart';
 import 'features/chat/location_message.dart';
-import 'features/chat/chat_info_screen.dart';
+import 'features/chat/infos_contact_glasmio.dart';
 import 'features/chat/security_code_screen.dart';
 import 'features/chat/new_message_screen.dart';
 import 'core/services/appel_systeme.dart';
@@ -849,8 +849,10 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/chat/:peerId/info',
+      // Android 13+ : les infos du contact en Glasmio (natif) ; sinon
+      // l'écran Flutter.
       pageBuilder: (context, state) => _pushPage(
-        ChatInfoScreen(peerId: state.pathParameters['peerId'] ?? ''),
+        PasserelleInfosContact(peerId: state.pathParameters['peerId'] ?? ''),
       ),
     ),
     GoRoute(
@@ -881,7 +883,9 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/premium',
-      builder: (context, state) => const PremiumScreen(),
+      // Android 13+ : la vitrine en Glasmio (natif) ; sinon l'écran Flutter.
+      // Le paiement reste celui de PremiumScreen dans les deux cas.
+      builder: (context, state) => const PasserellePro(),
     ),
     GoRoute(
       path: '/settings/apparence',

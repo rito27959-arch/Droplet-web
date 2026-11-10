@@ -13,6 +13,7 @@
 package com.droplet.droplet.glasmio
 
 import android.app.Activity
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Build
 import android.os.Handler
@@ -60,15 +61,22 @@ object PontGlasmio {
                 "ouvrir" -> {
                     val act = activiteFlutter?.get()
                     val desc = appel.argument<String>("description")
-                    val ecran = appel.argument<String>("ecran")
-                    if (!disponible || act == null || desc == null || ecran != "parametres") {
+                    val sansAnimation = appel.argument<Boolean>("sansAnimation") == true
+                    if (!disponible || act == null || desc == null) {
                         resultat.success(false)
                         return@setMethodCallHandler
                     }
                     try {
                         description = JSONObject(desc)
                         alerte = null
-                        act.startActivity(Intent(act, ParametresGlasmioActivity::class.java))
+                        val intention = Intent(act, EcranGlasmioActivity::class.java)
+                        // Au retour d'une page Flutter, l'écran revient sans glisser :
+                        // on a l'impression de ne l'avoir jamais quitté.
+                        if (sansAnimation) {
+                            act.startActivity(intention, ActivityOptions.makeCustomAnimation(act, 0, 0).toBundle())
+                        } else {
+                            act.startActivity(intention)
+                        }
                         resultat.success(true)
                     } catch (e: Exception) {
                         resultat.error("glasmio", e.message, null)
@@ -127,6 +135,12 @@ object PontGlasmio {
         val a = alerte ?: return
         alerte = null
         a.optJSONObject("description")?.let { description = it }
+    }
+
+    /** Un des choix d'une alerte à plusieurs boutons (signaler…). */
+    fun choisirDansAlerte(id: String) {
+        alerte = null
+        evenement(id)
     }
 
     fun confirmerAlerte() {

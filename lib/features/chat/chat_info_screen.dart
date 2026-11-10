@@ -75,49 +75,8 @@ class _ChatInfoScreenState extends ConsumerState<ChatInfoScreen> {
   }
 
   Future<void> _toggleLock() async {
-    final l10n = AppLocalizations.of(context);
-    final auth = LocalAuthentication();
-    final newState = !_isLocked;
-
-    if (newState) {
-      // Verrouiller : vérifier que la biométrie est disponible.
-      try {
-        final available = await auth.canCheckBiometrics;
-        if (!available) {
-          if (mounted) {
-            afficherToast(context, l10n.ciSetupBiometrics, type: DropletToastType.info);
-          }
-          return;
-        }
-        // Demander une authentification pour confirmer l'activation.
-        final didAuth = await auth.authenticate(
-          localizedReason: l10n.ciEnableLockReason,
-          options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
-        );
-        if (!didAuth) return;
-        HapticFeedback.mediumImpact();
-      } catch (_) {
-        return;
-      }
-    } else {
-      // Déverrouiller : petit feedback.
-      HapticFeedback.lightImpact();
-    }
-
-    await StorageService.setConversationLocked(widget.peerId, newState);
-    if (mounted) setState(() => _isLocked = newState);
-    // `StorageService.getLockedConversations()` est un cache synchrone, pas
-    // un state Riverpod — `conversationsProvider` ne se relit pas tout seul
-    // sans ce signal (même pattern que l'épinglage/sourdine juste au-dessus
-    // dans ce fichier). Sans lui, la conversation resterait visible dans la
-    // liste principale jusqu'au prochain redémarrage.
-    ref.read(pinMuteRevisionProvider.notifier).state++;
-    // La liste ne montre plus les discussions verrouillées, ni même leur
-    // existence : il faut donc dire UNE fois, au moment où l'on verrouille,
-    // comment on les retrouve.
-    if (newState && mounted) {
-      afficherToast(context, l10n.ciLockedWhereHint, type: DropletToastType.info);
-    }
+    final nouveau = await changerVerrouConversation(context, ref, widget.peerId, _isLocked);
+    if (nouveau != null && mounted) setState(() => _isLocked = nouveau);
   }
 
   @override
@@ -397,6 +356,94 @@ class _ChatInfoScreenState extends ConsumerState<ChatInfoScreen> {
     if (t == null) return '—';
     return '${t.day.toString().padLeft(2, '0')}/${t.month.toString().padLeft(2, '0')}/${t.year}';
   }
+}
+
+/// Verrouille ou déverrouille une conversation (biométrie demandée pour
+/// verrouiller). Renvoie le nouvel état, ou `null` si rien n'a changé.
+/// Publique : l'écran Glasmio des infos du contact l'utilise aussi.
+Future<bool?> changerVerrouConversation(
+  BuildContext context,
+  WidgetRef ref,
+  String peerId,
+  bool verrouille,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final auth = LocalAuthentication();
+  final newState = !verrouille;
+
+  if (newState) {
+    // Verrouiller : vérifier que la biométrie est disponible.
+    try {
+      final available = await auth.canCheckBiometrics;
+      if (!available) {
+        if (context.mounted) {
+          afficherToast(context, l10n.ciSetupBiometrics, type: DropletToastType.info);
+        }
+        return null;
+      }
+      // Demander une authentification pour confirmer l'activation.
+      final didAuth = await auth.authenticate(
+        localizedReason: l10n.ciEnableLockReason,
+        options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
+      );
+      if (!didAuth) return null;
+      HapticFeedback.mediumImpact();
+    } catch (_) {
+      return null;
+    }
+  } else {
+    // Déverrouiller : petit feedback.
+    HapticFeedback.lightImpact();
+  }
+
+  await StorageService.setConversationLocked(peerId, newState);
+  // `StorageService.getLockedConversations()` est un cache synchrone, pas
+  // un state Riverpod — `conversationsProvider` ne se relit pas tout seul
+  // sans ce signal. Sans lui, la conversation resterait visible dans la
+  // liste principale jusqu'au prochain redémarrage.
+  ref.read(pinMuteRevisionProvider.notifier).state++;
+  // La liste ne montre plus les discussions verrouillées, ni même leur
+  // existence : il faut donc dire UNE fois, au moment où l'on verrouille,
+  // comment on les retrouve.
+  if (newState && context.mounted) {
+    afficherToast(context, l10n.ciLockedWhereHint, type: DropletToastType.info);
+  }
+  return newState;
+}
+
+/// Ouvre une photo partagée en grand (zoom au pincement).
+Future<void> ouvrirPhotoPartagee(BuildContext context, MeshMessage message) {
+  HapticFeedback.selectionClick();
+  return showDialog<void>(
+    context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.92),
+    builder: (context) => _ImageViewer(message: message),
+  );
+}
+
+/// Motifs de signalement — une liste FERMÉE (voir `_BlockSection`).
+List<({String code, String label})> motifsSignalement(AppLocalizations l10n) => [
+      (code: 'spam', label: l10n.ciReportReasonSpam),
+      (code: 'harcelement', label: l10n.ciReportReasonHarassment),
+      (code: 'illegal', label: l10n.ciReportReasonIllegal),
+      (code: 'autre', label: l10n.ciReportReasonOther),
+    ];
+
+/// Le libellé du minuteur de messages éphémères.
+String libelleMinuteurEphemere(AppLocalizations l10n, int secondes) {
+  final options = [
+    MapEntry(l10n.ciDisabled, 0),
+    MapEntry(l10n.ci30Seconds, 30),
+    MapEntry(l10n.ci5Minutes, 300),
+    MapEntry(l10n.ci1Hour, 3600),
+    MapEntry(l10n.ci24Hours, 86400),
+    MapEntry(l10n.epDays7, 604800),
+    MapEntry(l10n.epDays90, 7776000),
+  ];
+  for (final o in options) {
+    if (o.value == secondes) return o.key;
+  }
+  return l10n.ciDisabled;
 }
 
 /// Ligne cliquable vers l'écran de vérification hors-bande (code de
@@ -1097,15 +1144,8 @@ class _BlockSectionState extends ConsumerState<_BlockSection> {
   /// choisi dans cette liste est un code de quelques lettres, jamais du
   /// texte qui pourrait accidentellement transporter un fragment de
   /// conversation jusqu'au serveur.
-  List<({String code, String label})> _motifsSignalement(
-    AppLocalizations l10n,
-  ) =>
-      [
-        (code: 'spam', label: l10n.ciReportReasonSpam),
-        (code: 'harcelement', label: l10n.ciReportReasonHarassment),
-        (code: 'illegal', label: l10n.ciReportReasonIllegal),
-        (code: 'autre', label: l10n.ciReportReasonOther),
-      ];
+  List<({String code, String label})> _motifsSignalement(AppLocalizations l10n) =>
+      motifsSignalement(l10n);
 
   Future<void> _report() async {
     final l10n = AppLocalizations.of(context);
