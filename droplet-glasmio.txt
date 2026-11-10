@@ -1,0 +1,64 @@
+Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
+⚠️ proguard-rules.pro absent : release compilée SANS les règles de Droplet
+--- configuration passée à Glasmio :
+settings.gradle.kts:    id("dev.flutter.flutter-plugin-loader") version "1.0.0"
+settings.gradle.kts:    id("com.android.application") version "9.4.1" apply false
+settings.gradle.kts:    id("org.jetbrains.kotlin.android") version "2.4.21" apply false
+settings.gradle.kts:    id("org.jetbrains.kotlin.plugin.compose") version "2.4.21" apply false
+settings.gradle.kts:    id("com.google.gms.google-services") version "4.4.2" apply false
+gradle/wrapper/gradle-wrapper.properties:distributionUrl=https\://services.gradle.org/distributions/gradle-9.6.0-bin.zip
+6:    id("org.jetbrains.kotlin.plugin.compose")
+65:    compileSdk = 37
+193:    implementation("io.github.neoruaa.glasmio:glasmio-scaffold:0.1.2")
+194:    implementation("io.github.neoruaa.glasmio:glasmio-preference:0.1.2")
+1
+=== DEBUG : 1
+e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/build.gradle.kts:77:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+FAILURE: Build failed with an exception.
+* What went wrong:
+BUILD FAILED in 1m 33s
+* What went wrong:
+Script compilation errors:
+
+  Line 063: android {
+            ^ 'fun Project.android(configure: Action<BaseAppModuleExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.ApplicationExtension.
+                This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+
+  Line 076:     kotlinOptions {
+                ^ 'fun BaseAppModuleExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+
+  Line 077:         jvmTarget = JavaVersion.VERSION_17.toString()
+                    ^ 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+
+  Line 191: android { buildFeatures { compose = true } }
+            ^ 'fun Project.android(configure: Action<BaseAppModuleExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.ApplicationExtension.
+                This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+
+4 errors
+
+* Try:
+=== RELEASE (R8) : 1
+e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/build.gradle.kts:77:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+FAILURE: Build failed with an exception.
+* What went wrong:
+* What went wrong:
+Script compilation errors:
+
+  Line 063: android {
+            ^ 'fun Project.android(configure: Action<BaseAppModuleExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.ApplicationExtension.
+                This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+
+  Line 076:     kotlinOptions {
+                ^ 'fun BaseAppModuleExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+
+  Line 077:         jvmTarget = JavaVersion.VERSION_17.toString()
+                    ^ 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+
+  Line 191: android { buildFeatures { compose = true } }
+            ^ 'fun Project.android(configure: Action<BaseAppModuleExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.ApplicationExtension.
+                This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+
+4 errors
+
+* Try:
+ls: cannot access 'build/app/outputs/flutter-apk/': No such file or directory
