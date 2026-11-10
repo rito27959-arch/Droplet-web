@@ -110,7 +110,14 @@ object BarreAppelGlasmio {
             description = d
             placer(act, v, d)
             principal.removeCallbacks(cacher)
+            if (v.visibility != View.VISIBLE) {
+                v.alpha = 0f
+                v.translationY = 24 * act.resources.displayMetrics.density
+            }
             v.visibility = View.VISIBLE
+            // Apparition par la vue Android (pas de calque Compose autour du
+            // verre : il reste posé tel quel une fois arrivé).
+            v.animate().alpha(1f).translationY(0f).setDuration(240).start()
             montree = true
             demarrerBoucle()
         } else {
@@ -118,7 +125,8 @@ object BarreAppelGlasmio {
             boucle = false
             // La barre s'efface (fondu), puis ne prend plus aucun toucher.
             principal.removeCallbacks(cacher)
-            principal.postDelayed(cacher, 260)
+            v.animate().alpha(0f).translationY(24 * act.resources.displayMetrics.density).setDuration(220).start()
+            principal.postDelayed(cacher, 240)
         }
     }
 
@@ -216,13 +224,9 @@ object BarreAppelGlasmio {
     private fun Barre() {
         val d = description ?: return
         val boutons = d.optJSONArray("boutons")?.objets().orEmpty()
-        val apparition by animateFloatAsState(if (montree) 1f else 0f, tween(240), label = "apparition")
         GlasmioTheme(isDark = true, colorScheme = glasmioColorScheme(true, Color(0xFF0A84FF))) {
             GlasmioBackdropHost(
-                modifier = Modifier.fillMaxSize().graphicsLayer {
-                    alpha = apparition
-                    translationY = (1f - apparition) * 24.dp.toPx()
-                },
+                modifier = Modifier.fillMaxSize(),
                 sampledContent = {
                     bande?.let { Image(it, contentDescription = null, contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize()) }
                 },
