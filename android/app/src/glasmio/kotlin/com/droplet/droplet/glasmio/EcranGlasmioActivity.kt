@@ -111,9 +111,15 @@ private fun EcranGlasmio(d: JSONObject, onRetour: () -> Unit) {
                 modifier = Modifier.fillMaxSize(),
                 sampledContent = { Box(Modifier.fillMaxSize().background(fond)) },
                 overlayContent = {
+                    // Un sous-niveau du même écran (Stockage → une discussion) :
+                    // le retour remonte d'un niveau au lieu de fermer l'écran.
+                    val retourId = d.texte("retourId")
+                    androidx.activity.compose.BackHandler(enabled = retourId != null) {
+                        retourId?.let { PontGlasmio.evenement(it) }
+                    }
                     GlasmioPinnedListPage(
                         title = d.optString("titre"),
-                        onNavigateBack = onRetour,
+                        onNavigateBack = { if (retourId != null) PontGlasmio.evenement(retourId) else onRetour() },
                         navigateBackContentDescription = d.texte("retour") ?: "Back",
                         backgroundColor = fond,
                         // La barre d'achat flotte en bas : la liste doit pouvoir

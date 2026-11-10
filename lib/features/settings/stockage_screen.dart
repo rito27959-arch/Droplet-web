@@ -39,88 +39,66 @@ import '../../design_system/ouro_icon_button.dart';
 import '../../design_system/ouro_alert.dart';
 import '../../shared/taille_lisible.dart';
 
-enum _Genre { photo, video, audio, document, autre }
+enum GenreStockage { photo, video, audio, document, autre }
 
-class _Fichier {
-  _Fichier({required this.fichier, required this.taille, required this.genre, this.message});
+class FichierStockage {
+  FichierStockage({required this.fichier, required this.taille, required this.genre, this.message});
 
   final File fichier;
   final int taille;
-  final _Genre genre;
+  final GenreStockage genre;
 
   /// Le message qui porte ce fichier, s'il existe encore.
   final MeshMessage? message;
 }
 
-class _Discussion {
-  _Discussion({required this.cle, required this.nom, this.peerId, this.groupe = false});
+class DiscussionStockage {
+  DiscussionStockage({required this.cle, required this.nom, this.peerId, this.groupe = false});
 
   final String cle;
   final String nom;
   final String? peerId;
   final bool groupe;
-  final List<_Fichier> fichiers = [];
+  final List<FichierStockage> fichiers = [];
 
   int get taille => fichiers.fold(0, (t, f) => t + f.taille);
 }
 
 
-Color _couleur(_Genre g) => switch (g) {
-      _Genre.photo => OuroColors.accent,
-      _Genre.video => OuroColors.systemPurple,
-      _Genre.audio => OuroColors.systemOrange,
-      _Genre.document => OuroColors.systemGreen,
-      _Genre.autre => OuroColors.systemGray,
+Color couleurGenre(GenreStockage g) => switch (g) {
+      GenreStockage.photo => OuroColors.accent,
+      GenreStockage.video => OuroColors.systemPurple,
+      GenreStockage.audio => OuroColors.systemOrange,
+      GenreStockage.document => OuroColors.systemGreen,
+      GenreStockage.autre => OuroColors.systemGray,
     };
 
-String _libelle(AppLocalizations l10n, _Genre g) => switch (g) {
-      _Genre.photo => l10n.stoPhotos,
-      _Genre.video => l10n.stoVideos,
-      _Genre.audio => l10n.stoAudio,
-      _Genre.document => l10n.stoDocuments,
-      _Genre.autre => l10n.stoOther,
+String libelleGenre(AppLocalizations l10n, GenreStockage g) => switch (g) {
+      GenreStockage.photo => l10n.stoPhotos,
+      GenreStockage.video => l10n.stoVideos,
+      GenreStockage.audio => l10n.stoAudio,
+      GenreStockage.document => l10n.stoDocuments,
+      GenreStockage.autre => l10n.stoOther,
     };
 
-IconData _icone(_Genre g) => switch (g) {
-      _Genre.photo => Icons.image_rounded,
-      _Genre.video => Icons.videocam_rounded,
-      _Genre.audio => Icons.graphic_eq_rounded,
-      _Genre.document => Icons.description_rounded,
-      _Genre.autre => Icons.folder_rounded,
+IconData iconeGenre(GenreStockage g) => switch (g) {
+      GenreStockage.photo => Icons.image_rounded,
+      GenreStockage.video => Icons.videocam_rounded,
+      GenreStockage.audio => Icons.graphic_eq_rounded,
+      GenreStockage.document => Icons.description_rounded,
+      GenreStockage.autre => Icons.folder_rounded,
     };
 
-class StockageScreen extends ConsumerStatefulWidget {
-  const StockageScreen({super.key});
-
-  @override
-  ConsumerState<StockageScreen> createState() => _StockageScreenState();
-}
-
-class _StockageScreenState extends ConsumerState<StockageScreen> {
-  List<_Discussion>? _discussions;
-
-  @override
-  void initState() {
-    super.initState();
-    // Après la première image : l'analyse lit les traductions, qui ne sont
-    // pas encore accessibles pendant `initState`.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _analyser();
-    });
-  }
-
-  /// Parcourt le dossier des fichiers partagés (`shared/<id>-<nom>`) et
-  /// rattache chaque fichier à son message, donc à sa discussion.
-  Future<void> _analyser() async {
-    final l10n = AppLocalizations.of(context);
+/// L'analyse du stockage (publique : l'écran Glasmio l'utilise aussi).
+Future<List<DiscussionStockage>> analyserStockage(WidgetRef ref, AppLocalizations l10n) async {
     final messages = ref.read(meshMessagesProvider);
     final moi = ref.read(meshRepositoryProvider).myId;
     final parFichier = {
       for (final m in messages)
         if (m.type == 'file' && m.fileId != null) m.fileId!: m,
     };
-    final discussions = <String, _Discussion>{};
-    final autres = _Discussion(cle: '_autres', nom: l10n.stoOther);
+    final discussions = <String, DiscussionStockage>{};
+    final autres = DiscussionStockage(cle: '_autres', nom: l10n.stoOther);
 
     try {
       final dossier = Directory('${(await getApplicationDocumentsDirectory()).path}/shared');
@@ -133,14 +111,14 @@ class _StockageScreenState extends ConsumerState<StockageScreen> {
           final message = parFichier[id];
           final taille = (await entree.stat()).size;
           final genre = message == null && id.isEmpty
-              ? _Genre.autre
+              ? GenreStockage.autre
               : switch (mediaKindOf(message?.fileMimeType, nom)) {
-                  MediaKind.image => _Genre.photo,
-                  MediaKind.video => _Genre.video,
-                  MediaKind.audio => _Genre.audio,
-                  _ => _Genre.document,
+                  MediaKind.image => GenreStockage.photo,
+                  MediaKind.video => GenreStockage.video,
+                  MediaKind.audio => GenreStockage.audio,
+                  _ => GenreStockage.document,
                 };
-          final fichier = _Fichier(fichier: entree, taille: taille, genre: genre, message: message);
+          final fichier = FichierStockage(fichier: entree, taille: taille, genre: genre, message: message);
           if (message == null) {
             autres.fichiers.add(fichier);
             continue;
@@ -150,14 +128,14 @@ class _StockageScreenState extends ConsumerState<StockageScreen> {
           final cle = groupe ?? autre ?? 'broadcast';
           final discussion = discussions.putIfAbsent(cle, () {
             if (groupe != null) {
-              return _Discussion(
+              return DiscussionStockage(
                 cle: cle,
                 nom: StorageService.getGroup(groupe)?.name ?? groupe,
                 groupe: true,
               );
             }
-            if (autre == null) return _Discussion(cle: cle, nom: l10n.chBroadcastChannel);
-            return _Discussion(
+            if (autre == null) return DiscussionStockage(cle: cle, nom: l10n.chBroadcastChannel);
+            return DiscussionStockage(
               cle: cle,
               nom: StorageService.getPeerRecord(autre)?.pseudo ?? message.authorPseudo,
               peerId: autre,
@@ -175,6 +153,48 @@ class _StockageScreenState extends ConsumerState<StockageScreen> {
     for (final d in liste) {
       d.fichiers.sort((a, b) => b.taille.compareTo(a.taille));
     }
+    return liste;
+  }
+
+/// Supprime ces fichiers et leurs messages (publique : l'écran Glasmio
+/// l'utilise aussi).
+Future<void> supprimerFichiersStockage(WidgetRef ref, DiscussionStockage d, Iterable<FichierStockage> choisis) async {
+  final notifier = ref.read(meshMessagesProvider.notifier);
+  final liste = choisis.toList();
+  for (final f in liste) {
+    try {
+      await f.fichier.delete();
+    } catch (_) {}
+    final message = f.message;
+    if (message != null) notifier.deleteMessage(message.id);
+  }
+  d.fichiers.removeWhere(liste.contains);
+}
+
+class StockageScreen extends ConsumerStatefulWidget {
+  const StockageScreen({super.key});
+
+  @override
+  ConsumerState<StockageScreen> createState() => _StockageScreenState();
+}
+
+class _StockageScreenState extends ConsumerState<StockageScreen> {
+  List<DiscussionStockage>? _discussions;
+
+  @override
+  void initState() {
+    super.initState();
+    // Après la première image : l'analyse lit les traductions, qui ne sont
+    // pas encore accessibles pendant `initState`.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _analyser();
+    });
+  }
+
+  /// Parcourt le dossier des fichiers partagés (`shared/<id>-<nom>`) et
+  /// rattache chaque fichier à son message, donc à sa discussion.
+  Future<void> _analyser() async {
+    final liste = await analyserStockage(ref, AppLocalizations.of(context));
     if (mounted) setState(() => _discussions = liste);
   }
 
@@ -231,19 +251,19 @@ class _StockageScreenState extends ConsumerState<StockageScreen> {
 class _Resume extends StatelessWidget {
   const _Resume({required this.discussions});
 
-  final List<_Discussion> discussions;
+  final List<DiscussionStockage> discussions;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final parGenre = <_Genre, int>{};
+    final parGenre = <GenreStockage, int>{};
     for (final d in discussions) {
       for (final f in d.fichiers) {
         parGenre[f.genre] = (parGenre[f.genre] ?? 0) + f.taille;
       }
     }
     final total = parGenre.values.fold(0, (t, v) => t + v);
-    final genres = _Genre.values.where((g) => (parGenre[g] ?? 0) > 0).toList();
+    final genres = GenreStockage.values.where((g) => (parGenre[g] ?? 0) > 0).toList();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -273,7 +293,7 @@ class _Resume extends StatelessWidget {
                           alignment: Alignment.centerLeft,
                           child: FractionallySizedBox(
                             widthFactor: t,
-                            child: ColoredBox(color: _couleur(g)),
+                            child: ColoredBox(color: couleurGenre(g)),
                           ),
                         ),
                       ),
@@ -294,11 +314,11 @@ class _Resume extends StatelessWidget {
                     Container(
                       width: 9,
                       height: 9,
-                      decoration: BoxDecoration(color: _couleur(g), shape: BoxShape.circle),
+                      decoration: BoxDecoration(color: couleurGenre(g), shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      '${_libelle(l10n, g)} · ${tailleLisible(parGenre[g]!)}',
+                      '${libelleGenre(l10n, g)} · ${tailleLisible(parGenre[g]!)}',
                       style: OuroTypography.caption1.copyWith(color: OuroColors.secondaryLabel),
                     ),
                   ],
@@ -314,7 +334,7 @@ class _Resume extends StatelessWidget {
 class _LigneDiscussion extends StatelessWidget {
   const _LigneDiscussion({required this.discussion, required this.onTap});
 
-  final _Discussion discussion;
+  final DiscussionStockage discussion;
   final VoidCallback onTap;
 
   @override
@@ -345,7 +365,7 @@ class _LigneDiscussion extends StatelessWidget {
 class _DetailDiscussion extends ConsumerStatefulWidget {
   const _DetailDiscussion({required this.discussion});
 
-  final _Discussion discussion;
+  final DiscussionStockage discussion;
 
   @override
   ConsumerState<_DetailDiscussion> createState() => _DetailDiscussionState();
@@ -432,7 +452,7 @@ class _DetailDiscussionState extends ConsumerState<_DetailDiscussion> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: f.genre == _Genre.photo
+                      child: f.genre == GenreStockage.photo
                           ? Image.file(
                               f.fichier,
                               fit: BoxFit.cover,
@@ -497,13 +517,13 @@ class _DetailDiscussionState extends ConsumerState<_DetailDiscussion> {
 class _Tuile extends StatelessWidget {
   const _Tuile({required this.genre});
 
-  final _Genre genre;
+  final GenreStockage genre;
 
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: _couleur(genre).withValues(alpha: 0.16),
-      child: Center(child: Icon(_icone(genre), color: _couleur(genre), size: 34)),
+      color: couleurGenre(genre).withValues(alpha: 0.16),
+      child: Center(child: Icon(iconeGenre(genre), color: couleurGenre(genre), size: 34)),
     );
   }
 }

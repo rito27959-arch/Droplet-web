@@ -118,6 +118,7 @@ import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.ForwardToInbox
 import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material.icons.rounded.PersonSearch
+import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -213,6 +214,7 @@ internal val ICONES: Map<String, ImageVector> = mapOf(
     "flag" to Icons.Rounded.Flag,
     "play_circle" to Icons.Rounded.PlayCircle,
     "image" to Icons.Rounded.Image,
+    "videocam" to Icons.Rounded.Videocam,
     "person_search" to Icons.Rounded.PersonSearch,
     "podcasts" to Icons.Rounded.Podcasts,
     "forward_to_inbox" to Icons.Rounded.ForwardToInbox,
@@ -262,8 +264,17 @@ internal fun JSONArray.objets(): List<JSONObject> = (0 until length()).mapNotNul
 
 /** Une vignette d'image sur le disque — jamais l'image entière en mémoire. */
 @Composable
-internal fun vignette(chemin: String?, cote: Int): ImageBitmap? = remember(chemin, cote) {
+internal fun vignette(chemin: String?, cote: Int): ImageBitmap? {
+    val contexte = androidx.compose.ui.platform.LocalContext.current
+    return remember(chemin, cote) {
     chemin?.let { c ->
+        // Une image embarquée dans l'appli Flutter (« asset:assets/… »).
+        if (c.startsWith("asset:")) {
+            return@let runCatching {
+                val cle = io.flutter.FlutterInjector.instance().flutterLoader().getLookupKeyForAsset(c.removePrefix("asset:"))
+                contexte.assets.open(cle).use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
+            }.getOrNull()
+        }
         runCatching {
             if (!File(c).exists()) return@runCatching null
             val bornes = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -272,6 +283,7 @@ internal fun vignette(chemin: String?, cote: Int): ImageBitmap? = remember(chemi
             while (bornes.outWidth / (echelle * 2) >= cote && bornes.outHeight / (echelle * 2) >= cote) echelle *= 2
             BitmapFactory.decodeFile(c, BitmapFactory.Options().apply { inSampleSize = echelle })?.asImageBitmap()
         }.getOrNull()
+    }
     }
 }
 
@@ -416,6 +428,34 @@ internal fun Ligne(l: JSONObject, premiere: Boolean, provisoire: MutableMap<Stri
             titleColor = if (l.optBoolean("destructif")) couleurs.destructive else couleurs.accent,
             titleAlignment = TextAlign.Center,
         )
+        // Un choix dans un menu de verre qui s'ouvre EN SE GONFLANT depuis la
+        // pastille de la ligne (GlasmioPopUpButton : la bulle se déforme et
+        // grandit jusqu'au menu, comme sur iOS). Sert à la langue.
+        "menu" -> {
+            val options = l.optJSONArray("options")?.objets().orEmpty()
+            val choisi = options.firstOrNull { it.optBoolean("coche") } ?: options.firstOrNull()
+            GlasmioListRow(
+                title = l.optString("titre"),
+                subtitle = l.texte("sous"),
+                leading = pastille,
+                showTopSeparator = !premiere,
+                enabled = actif,
+                showDisclosure = false,
+                trailing = if (choisi != null) {
+                    {
+                        io.github.neoruaa.glasmio.ui.GlasmioPopUpButton(
+                            selected = choisi,
+                            items = options,
+                            onSelected = { o -> PontGlasmio.evenement(o.optString("id")) },
+                            label = { o -> o.optString("titre") },
+                            enabled = actif,
+                        )
+                    }
+                } else {
+                    null
+                },
+            )
+        }
         // Un paragraphe (question et réponse de l'aide) : le texte entier,
         // sur autant de lignes qu'il faut.
         "paragraphe" -> Column(
@@ -598,20 +638,79 @@ internal fun GrillePhotos(photos: List<JSONObject>) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 rang.forEach { p ->
                     val image = vignette(p.texte("chemin"), 300)
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
                         Modifier
-                            .weight(1f)
+                            .fillMaxWidth()
                             .aspectRatio(1f)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(if (p.has("titre")) 22.dp else 12.dp))
                             .background(couleurs.elevatedBackground)
                             .clickable { PontGlasmio.evenement(p.optString("id")) },
                         contentAlignment = Alignment.Center,
                     ) {
+                        val teinte = couleur(p, "teinte", couleurs.tertiaryContent)
                         if (image != null) {
                             Image(image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                         } else {
-                            Icon(Icons.Rounded.Image, contentDescription = null, tint = couleurs.tertiaryContent)
+                            Box(Modifier.fillMaxSize().background(teinte.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                                Icon(ICONES[p.optString("icone")] ?: Icons.Rounded.Image, contentDescription = null, tint = teinte, modifier = Modifier.size(32.dp))
+                            }
                         }
+                        // La taille du fichier, en bas à gauche.
+                        p.texte("legende")?.let {
+                            Text(
+                                it,
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(6.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color.Black.copy(alpha = 0.5f))
+                                    .padding(horizontal = 5.dp, vertical = 2.dp),
+                            )
+                        }
+                        // La sélection, en haut à droite.
+                        if (p.has("coche")) {
+                            val coche = p.optBoolean("coche")
+                            Box(
+                                Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(6.dp)
+                                    .size(24.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(if (coche) couleurs.accent else Color.Black.copy(alpha = 0.25f)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (coche) Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                        // Réservé à Droplet Pro : une petite étincelle.
+                        if (p.optBoolean("verrou")) {
+                            Box(
+                                Modifier
+                                    .align(Alignment.TopStart)
+                                    .padding(6.dp)
+                                    .size(22.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(couleurs.groupedBackground.copy(alpha = 0.9f)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = couleurs.accent, modifier = Modifier.size(13.dp))
+                            }
+                        }
+                    }
+                    p.texte("titre")?.let {
+                        Text(
+                            it,
+                            fontSize = 12.sp,
+                            color = if (p.optBoolean("coche")) couleurs.accent else couleurs.content,
+                            fontWeight = if (p.optBoolean("coche")) FontWeight.SemiBold else FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    }
                     }
                 }
                 repeat(3 - rang.size) { Spacer(Modifier.weight(1f)) }
@@ -650,6 +749,22 @@ internal fun Vitrine(v: JSONObject) {
         v.texte("sous")?.let {
             Text(it, style = IosTypography.subheadline, color = couleurs.secondaryContent, modifier = Modifier.padding(top = 2.dp))
         }
+        // Une barre de répartition (Stockage : photos, vidéos, audio…).
+        val segments = v.optJSONArray("segments")?.objets().orEmpty()
+        if (segments.isNotEmpty()) {
+            Row(
+                Modifier.padding(top = 16.dp).fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)),
+            ) {
+                segments.forEach { g ->
+                    Box(
+                        Modifier
+                            .weight(g.optDouble("part", 0.01).toFloat().coerceAtLeast(0.01f))
+                            .fillMaxSize()
+                            .background(couleur(g, "teinte", couleurs.accent)),
+                    )
+                }
+            }
+        }
         // Une jauge (progression vers le palier suivant).
         if (v.has("progression")) {
             val p = v.optDouble("progression", 0.0).toFloat().coerceIn(0f, 1f)
@@ -685,12 +800,16 @@ internal fun Vitrine(v: JSONObject) {
             ) {
                 puces.forEach { p ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            ICONES[p.optString("icone")] ?: Icons.Rounded.Check,
-                            contentDescription = null,
-                            tint = couleurs.secondaryContent,
-                            modifier = Modifier.size(14.dp),
-                        )
+                        if (p.has("teinte") && !p.has("icone")) {
+                            Box(Modifier.size(9.dp).clip(RoundedCornerShape(50)).background(couleur(p, "teinte", couleurs.accent)))
+                        } else {
+                            Icon(
+                                ICONES[p.optString("icone")] ?: Icons.Rounded.Check,
+                                contentDescription = null,
+                                tint = couleurs.secondaryContent,
+                                modifier = Modifier.size(14.dp),
+                            )
+                        }
                         Spacer(Modifier.width(4.dp))
                         Text(p.optString("texte"), fontSize = 12.sp, color = couleurs.secondaryContent, maxLines = 1)
                     }
@@ -716,6 +835,7 @@ internal fun BarreDuBas(b: JSONObject) {
             modifier = Modifier.fillMaxWidth(),
             emphasis = GlassEmphasis.Prominent,
             size = GlasmioButtonSize.Large,
+            destructive = b.optBoolean("destructif"),
         ) {
             Text(b.optString("titre"), fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
         }

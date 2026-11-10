@@ -263,18 +263,23 @@ class _PasserelleParametresState extends EtatPasserelleGlasmio<PasserelleParamet
               icone: 'palette', teinte: OuroColors.systemIndigo,
               titre: textes.stAppearanceRow, sous: textes.stAppearanceSubtitle),
         ]),
+        // ── LA LANGUE : une seule ligne, et un menu de verre qui se gonfle
+        // depuis sa pastille (GlasmioPopUpButton) avec les dix langues.
         _section(
-          entete: textes.sectionLanguage,
           pied: textes.languageFooter,
           [
-            _ligne('langue:auto', 'choix',
-                icone: 'translate', teinte: OuroColors.systemGray,
-                titre: textes.languageAuto, coche: choisie == null),
-            for (final locale in kSupportedLocales)
-              _ligne('langue:${locale.languageCode}', 'choix',
-                  icone: 'lettre:${kLanguageEndonyms[locale.languageCode]!.characters.first}',
-                  teinte: OuroColors.secondaryLabel,
-                  titre: languageLabel(locale), coche: choisie == locale),
+            {
+              'id': 'langue',
+              'type': 'menu',
+              'icone': 'translate',
+              'teinte': _c(OuroColors.systemIndigo),
+              'titre': textes.sectionLanguage,
+              'options': [
+                {'id': 'langue:auto', 'titre': textes.languageAuto, 'coche': choisie == null},
+                for (final locale in kSupportedLocales)
+                  {'id': 'langue:${locale.languageCode}', 'titre': languageLabel(locale), 'coche': choisie == locale},
+              ],
+            },
           ],
         ),
         _section([

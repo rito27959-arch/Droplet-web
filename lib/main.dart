@@ -53,6 +53,8 @@ import 'features/aide/aide_glasmio.dart';
 import 'features/contribution/contribution_glasmio.dart';
 import 'features/tor/tor_glasmio.dart';
 import 'features/aide/donnees_glasmio.dart';
+import 'features/settings/stockage_glasmio.dart';
+import 'features/settings/icone_glasmio.dart';
 import 'core/services/raccourcis_conversation.dart';
 import 'features/settings/stockage_screen.dart';
 import 'features/autoriser/autoriser_app.dart';
@@ -907,7 +909,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/settings/icon',
-      pageBuilder: (context, state) => _pushPage(const AppIconScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserelleIcone()),
     ),
     GoRoute(
       path: '/maps/offline',
@@ -968,7 +970,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/settings/storage',
-      pageBuilder: (context, state) => _pushPage(const StockageScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserelleStockage()),
     ),
     GoRoute(
       path: '/tor',

@@ -47,6 +47,9 @@ class AppIconScreen extends ConsumerStatefulWidget {
 /// français en dur — c'est une décision délibérée : la localisation vit
 /// dans la couche WIDGET, jamais dans le modèle. Voir le même choix pour
 /// `ContributionRank.label`/`rankLabel` dans `contribution_screen.dart`.
+/// Le nom affiché d'une icône (public : l'écran Glasmio l'utilise aussi).
+String nomIcone(AppLocalizations l10n, String alias) => _iconName(l10n, alias);
+
 String _iconName(AppLocalizations l10n, String alias) {
   return switch (alias) {
     'Default' => l10n.aicOriginal,
