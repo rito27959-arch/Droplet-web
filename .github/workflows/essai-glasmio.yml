@@ -15,20 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - nom: actuelle
-            agp: 8.11.1
-            kotlin: 2.2.20
-            gradle: 8.14.3
-            jdk: 17
-            sdk: 36
-            nouveau_dsl: ""
-          - nom: kotlin24
-            agp: 8.13.0
-            kotlin: 2.4.21
-            gradle: 8.14.3
-            jdk: 21
-            sdk: 37
-            nouveau_dsl: ""
           - nom: agp9
             agp: 9.4.1
             kotlin: 2.4.21
@@ -93,6 +79,7 @@ jobs:
           import android.os.Bundle
           import androidx.activity.ComponentActivity
           import androidx.activity.compose.setContent
+          import androidx.compose.foundation.background
           import androidx.compose.foundation.layout.*
           import androidx.compose.material3.Text
           import androidx.compose.runtime.*
@@ -107,9 +94,12 @@ jobs:
                   super.onCreate(savedInstanceState)
                   setContent {
                       GlasmioTheme {
+                          val couleurs = GlasmioTheme.colors
                           GlasmioBackdropHost(
-                              sampledColor = GlasmioTheme.colors.groupedBackground,
                               modifier = Modifier.fillMaxSize(),
+                              sampledContent = {
+                                  Box(Modifier.fillMaxSize().background(couleurs.groupedBackground))
+                              },
                           ) {
                               var actif by remember { mutableStateOf(true) }
                               Column(Modifier.safeDrawingPadding().padding(24.dp)) {
@@ -129,6 +119,11 @@ jobs:
           flutter build apk --debug > /tmp/build.txt 2>&1
           R=$?
           echo "=== RESULTAT ${{ matrix.nom }} : $R" >> $J
+          # Puis en release, avec R8 comme dans Droplet.
+          sed -i 's#signingConfig = signingConfigs.getByName("debug")#signingConfig = signingConfigs.getByName("debug")\n            isMinifyEnabled = true\n            isShrinkResources = true\n            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))#' android/app/build.gradle.kts
+          flutter build apk --release > /tmp/build_rel.txt 2>&1
+          echo "=== RELEASE R8 : $?" >> $J
+          grep -E "^e: |ERROR|Missing class|R8|FAILURE|What went wrong" /tmp/build_rel.txt | head -30 >> $J
           grep -E "^e: |error:|FAILURE|What went wrong|incompatible|metadata|requires|minCompileSdk|BUILD (SUCCESSFUL|FAILED)|Unsupported class file|compileSdk" /tmp/build.txt | head -60 >> $J
           tail -40 /tmp/build.txt >> $J
           ls -la build/app/outputs/flutter-apk/ >> $J 2>&1
