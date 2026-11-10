@@ -130,7 +130,9 @@ jobs:
           grep -E "^e: |error:|FAILURE|What went wrong|incompatible|metadata|requires|minCompileSdk|BUILD (SUCCESSFUL|FAILED)|Unsupported class file|compileSdk" /tmp/build.txt | head -60 >> $J
           tail -40 /tmp/build.txt >> $J
           ls -la build/app/outputs/flutter-apk/ >> $J 2>&1
+          true
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: resultat-${{ matrix.nom }}
           path: /tmp/res/
