@@ -7,144 +7,72 @@ Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 ⚠️ absent du dépôt (bouche-trou) : assets/icon/premuim/
 ⚠️ absent du dépôt (bouche-trou) : assets/stickers/
 ⚠️ absent du dépôt (bouche-trou) : assets/fonts/Inter-Variable.ttf
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v1
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v10
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v10_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v11
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v11_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v12
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v12_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v1_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v2
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v2_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v3
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v3_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v4
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v4_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v5
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v5_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v6
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v6_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v7
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v7_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v8
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v8_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v9
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v9_round
 === ANALYSE (fichiers Glasmio)
+code 0
+   info • The import of 'package:flutter/scheduler.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart'. Try removing the import directive • lib/features/settings/settings_screen.dart:24:8 • unnecessary_import
+
+1 issue found. (ran in 20.8s)
 === DEBUG : 1
-warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
-SkSL Error:
-        error: 58: loop index initializer must be a constant expression
-        error: 55: loop index initializer must be a constant expression
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 111: initializers are not permitted on arrays (or structs containing arrays)
         error: 112: unknown identifier 'param_2'
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 58: loop index initializer must be a constant expression
+        error: 55: loop index initializer must be a constant expression
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_filter.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 121: initializers are not permitted on arrays (or structs containing arrays)
         error: 122: unknown identifier 'param_2'
 FAILURE: Build failed with an exception.
 * What went wrong:
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/build/app/intermediates/packaged_manifests/debug/processDebugManifestForPackage/AndroidManifest.xml:173: AAPT: error: resource mipmap/ic_launcher (aka com.droplet.droplet:mipmap/ic_launcher) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/build/app/intermediates/packaged_manifests/debug/processDebugManifestForPackage/AndroidManifest.xml:173: AAPT: error: resource mipmap/ic_launcher_round (aka com.droplet.droplet:mipmap/ic_launcher_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:369:9-381:26: AAPT: error: resource mipmap/ic_launcher_v12 (aka com.droplet.droplet:mipmap/ic_launcher_v12) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:369:9-381:26: AAPT: error: resource mipmap/ic_launcher_v12_round (aka com.droplet.droplet:mipmap/ic_launcher_v12_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:349:9-361:26: AAPT: error: resource mipmap/ic_launcher_v11 (aka com.droplet.droplet:mipmap/ic_launcher_v11) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:349:9-361:26: AAPT: error: resource mipmap/ic_launcher_v11_round (aka com.droplet.droplet:mipmap/ic_launcher_v11_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:335:9-347:26: AAPT: error: resource mipmap/ic_launcher_v10 (aka com.droplet.droplet:mipmap/ic_launcher_v10) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:335:9-347:26: AAPT: error: resource mipmap/ic_launcher_v10_round (aka com.droplet.droplet:mipmap/ic_launcher_v10_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:321:9-333:26: AAPT: error: resource mipmap/ic_launcher_v9 (aka com.droplet.droplet:mipmap/ic_launcher_v9) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:321:9-333:26: AAPT: error: resource mipmap/ic_launcher_v9_round (aka com.droplet.droplet:mipmap/ic_launcher_v9_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:307:9-319:26: AAPT: error: resource mipmap/ic_launcher_v8 (aka com.droplet.droplet:mipmap/ic_launcher_v8) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:307:9-319:26: AAPT: error: resource mipmap/ic_launcher_v8_round (aka com.droplet.droplet:mipmap/ic_launcher_v8_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:293:9-305:26: AAPT: error: resource mipmap/ic_launcher_v7 (aka com.droplet.droplet:mipmap/ic_launcher_v7) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:293:9-305:26: AAPT: error: resource mipmap/ic_launcher_v7_round (aka com.droplet.droplet:mipmap/ic_launcher_v7_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:279:9-291:26: AAPT: error: resource mipmap/ic_launcher_v6 (aka com.droplet.droplet:mipmap/ic_launcher_v6) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:279:9-291:26: AAPT: error: resource mipmap/ic_launcher_v6_round (aka com.droplet.droplet:mipmap/ic_launcher_v6_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:265:9-277:26: AAPT: error: resource mipmap/ic_launcher_v5 (aka com.droplet.droplet:mipmap/ic_launcher_v5) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:265:9-277:26: AAPT: error: resource mipmap/ic_launcher_v5_round (aka com.droplet.droplet:mipmap/ic_launcher_v5_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:251:9-263:26: AAPT: error: resource mipmap/ic_launcher_v4 (aka com.droplet.droplet:mipmap/ic_launcher_v4) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:251:9-263:26: AAPT: error: resource mipmap/ic_launcher_v4_round (aka com.droplet.droplet:mipmap/ic_launcher_v4_round) not found.
-BUILD FAILED in 6m 24s
+     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:442:13-444:62: AAPT: error: resource xml/widget_droplet_info (aka com.droplet.droplet:xml/widget_droplet_info) not found.
+BUILD FAILED in 5m 10s
 * What went wrong:
 Execution failed for task ':app:processDebugResources'.
 > A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
    > Android resource linking failed
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/build/app/intermediates/packaged_manifests/debug/processDebugManifestForPackage/AndroidManifest.xml:173: AAPT: error: resource mipmap/ic_launcher (aka com.droplet.droplet:mipmap/ic_launcher) not found.
+     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:442:13-444:62: AAPT: error: resource xml/widget_droplet_info (aka com.droplet.droplet:xml/widget_droplet_info) not found.
 
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/build/app/intermediates/packaged_manifests/debug/processDebugManifestForPackage/AndroidManifest.xml:173: AAPT: error: resource mipmap/ic_launcher_round (aka com.droplet.droplet:mipmap/ic_launcher_round) not found.
 
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:369:9-381:26: AAPT: error: resource mipmap/ic_launcher_v12 (aka com.droplet.droplet:mipmap/ic_launcher_v12) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:369:9-381:26: AAPT: error: resource mipmap/ic_launcher_v12_round (aka com.droplet.droplet:mipmap/ic_launcher_v12_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:349:9-361:26: AAPT: error: resource mipmap/ic_launcher_v11 (aka com.droplet.droplet:mipmap/ic_launcher_v11) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:349:9-361:26: AAPT: error: resource mipmap/ic_launcher_v11_round (aka com.droplet.droplet:mipmap/ic_launcher_v11_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:335:9-347:26: AAPT: error: resource mipmap/ic_launcher_v10 (aka com.droplet.droplet:mipmap/ic_launcher_v10) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:335:9-347:26: AAPT: error: resource mipmap/ic_launcher_v10_round (aka com.droplet.droplet:mipmap/ic_launcher_v10_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:321:9-333:26: AAPT: error: resource mipmap/ic_launcher_v9 (aka com.droplet.droplet:mipmap/ic_launcher_v9) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:321:9-333:26: AAPT: error: resource mipmap/ic_launcher_v9_round (aka com.droplet.droplet:mipmap/ic_launcher_v9_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:307:9-319:26: AAPT: error: resource mipmap/ic_launcher_v8 (aka com.droplet.droplet:mipmap/ic_launcher_v8) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:307:9-319:26: AAPT: error: resource mipmap/ic_launcher_v8_round (aka com.droplet.droplet:mipmap/ic_launcher_v8_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:293:9-305:26: AAPT: error: resource mipmap/ic_launcher_v7 (aka com.droplet.droplet:mipmap/ic_launcher_v7) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:293:9-305:26: AAPT: error: resource mipmap/ic_launcher_v7_round (aka com.droplet.droplet:mipmap/ic_launcher_v7_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:279:9-291:26: AAPT: error: resource mipmap/ic_launcher_v6 (aka com.droplet.droplet:mipmap/ic_launcher_v6) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:279:9-291:26: AAPT: error: resource mipmap/ic_launcher_v6_round (aka com.droplet.droplet:mipmap/ic_launcher_v6_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:265:9-277:26: AAPT: error: resource mipmap/ic_launcher_v5 (aka com.droplet.droplet:mipmap/ic_launcher_v5) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:265:9-277:26: AAPT: error: resource mipmap/ic_launcher_v5_round (aka com.droplet.droplet:mipmap/ic_launcher_v5_round) not found.
-
+* Try:
 === RELEASE (R8) : 1
 FAILURE: Build failed with an exception.
 * What went wrong:
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/build/app/intermediates/packaged_manifests/release/processReleaseManifestForPackage/armeabi-v7a/AndroidManifest.xml:172: AAPT: error: resource mipmap/ic_launcher (aka com.droplet.droplet:mipmap/ic_launcher) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/build/app/intermediates/packaged_manifests/release/processReleaseManifestForPackage/armeabi-v7a/AndroidManifest.xml:172: AAPT: error: resource mipmap/ic_launcher_round (aka com.droplet.droplet:mipmap/ic_launcher_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:369:9-381:26: AAPT: error: resource mipmap/ic_launcher_v12 (aka com.droplet.droplet:mipmap/ic_launcher_v12) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:369:9-381:26: AAPT: error: resource mipmap/ic_launcher_v12_round (aka com.droplet.droplet:mipmap/ic_launcher_v12_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:349:9-361:26: AAPT: error: resource mipmap/ic_launcher_v11 (aka com.droplet.droplet:mipmap/ic_launcher_v11) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:349:9-361:26: AAPT: error: resource mipmap/ic_launcher_v11_round (aka com.droplet.droplet:mipmap/ic_launcher_v11_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:335:9-347:26: AAPT: error: resource mipmap/ic_launcher_v10 (aka com.droplet.droplet:mipmap/ic_launcher_v10) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:335:9-347:26: AAPT: error: resource mipmap/ic_launcher_v10_round (aka com.droplet.droplet:mipmap/ic_launcher_v10_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:321:9-333:26: AAPT: error: resource mipmap/ic_launcher_v9 (aka com.droplet.droplet:mipmap/ic_launcher_v9) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:321:9-333:26: AAPT: error: resource mipmap/ic_launcher_v9_round (aka com.droplet.droplet:mipmap/ic_launcher_v9_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:307:9-319:26: AAPT: error: resource mipmap/ic_launcher_v8 (aka com.droplet.droplet:mipmap/ic_launcher_v8) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:307:9-319:26: AAPT: error: resource mipmap/ic_launcher_v8_round (aka com.droplet.droplet:mipmap/ic_launcher_v8_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:293:9-305:26: AAPT: error: resource mipmap/ic_launcher_v7 (aka com.droplet.droplet:mipmap/ic_launcher_v7) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:293:9-305:26: AAPT: error: resource mipmap/ic_launcher_v7_round (aka com.droplet.droplet:mipmap/ic_launcher_v7_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:279:9-291:26: AAPT: error: resource mipmap/ic_launcher_v6 (aka com.droplet.droplet:mipmap/ic_launcher_v6) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:279:9-291:26: AAPT: error: resource mipmap/ic_launcher_v6_round (aka com.droplet.droplet:mipmap/ic_launcher_v6_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:265:9-277:26: AAPT: error: resource mipmap/ic_launcher_v5 (aka com.droplet.droplet:mipmap/ic_launcher_v5) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:265:9-277:26: AAPT: error: resource mipmap/ic_launcher_v5_round (aka com.droplet.droplet:mipmap/ic_launcher_v5_round) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:251:9-263:26: AAPT: error: resource mipmap/ic_launcher_v4 (aka com.droplet.droplet:mipmap/ic_launcher_v4) not found.
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:251:9-263:26: AAPT: error: resource mipmap/ic_launcher_v4_round (aka com.droplet.droplet:mipmap/ic_launcher_v4_round) not found.
+     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:442:13-444:62: AAPT: error: resource xml/widget_droplet_info (aka com.droplet.droplet:xml/widget_droplet_info) not found.
 * What went wrong:
 Execution failed for task ':app:processReleaseResources'.
 > A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
    > Android resource linking failed
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/build/app/intermediates/packaged_manifests/release/processReleaseManifestForPackage/armeabi-v7a/AndroidManifest.xml:172: AAPT: error: resource mipmap/ic_launcher (aka com.droplet.droplet:mipmap/ic_launcher) not found.
+     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:442:13-444:62: AAPT: error: resource xml/widget_droplet_info (aka com.droplet.droplet:xml/widget_droplet_info) not found.
 
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/build/app/intermediates/packaged_manifests/release/processReleaseManifestForPackage/armeabi-v7a/AndroidManifest.xml:172: AAPT: error: resource mipmap/ic_launcher_round (aka com.droplet.droplet:mipmap/ic_launcher_round) not found.
 
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:369:9-381:26: AAPT: error: resource mipmap/ic_launcher_v12 (aka com.droplet.droplet:mipmap/ic_launcher_v12) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:369:9-381:26: AAPT: error: resource mipmap/ic_launcher_v12_round (aka com.droplet.droplet:mipmap/ic_launcher_v12_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:349:9-361:26: AAPT: error: resource mipmap/ic_launcher_v11 (aka com.droplet.droplet:mipmap/ic_launcher_v11) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:349:9-361:26: AAPT: error: resource mipmap/ic_launcher_v11_round (aka com.droplet.droplet:mipmap/ic_launcher_v11_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:335:9-347:26: AAPT: error: resource mipmap/ic_launcher_v10 (aka com.droplet.droplet:mipmap/ic_launcher_v10) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:335:9-347:26: AAPT: error: resource mipmap/ic_launcher_v10_round (aka com.droplet.droplet:mipmap/ic_launcher_v10_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:321:9-333:26: AAPT: error: resource mipmap/ic_launcher_v9 (aka com.droplet.droplet:mipmap/ic_launcher_v9) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:321:9-333:26: AAPT: error: resource mipmap/ic_launcher_v9_round (aka com.droplet.droplet:mipmap/ic_launcher_v9_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:307:9-319:26: AAPT: error: resource mipmap/ic_launcher_v8 (aka com.droplet.droplet:mipmap/ic_launcher_v8) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:307:9-319:26: AAPT: error: resource mipmap/ic_launcher_v8_round (aka com.droplet.droplet:mipmap/ic_launcher_v8_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:293:9-305:26: AAPT: error: resource mipmap/ic_launcher_v7 (aka com.droplet.droplet:mipmap/ic_launcher_v7) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:293:9-305:26: AAPT: error: resource mipmap/ic_launcher_v7_round (aka com.droplet.droplet:mipmap/ic_launcher_v7_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:279:9-291:26: AAPT: error: resource mipmap/ic_launcher_v6 (aka com.droplet.droplet:mipmap/ic_launcher_v6) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:279:9-291:26: AAPT: error: resource mipmap/ic_launcher_v6_round (aka com.droplet.droplet:mipmap/ic_launcher_v6_round) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:265:9-277:26: AAPT: error: resource mipmap/ic_launcher_v5 (aka com.droplet.droplet:mipmap/ic_launcher_v5) not found.
-
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:265:9-277:26: AAPT: error: resource mipmap/ic_launcher_v5_round (aka com.droplet.droplet:mipmap/ic_launcher_v5_round) not found.
-
+* Try:
 ls: cannot access 'build/app/outputs/flutter-apk/': No such file or directory
