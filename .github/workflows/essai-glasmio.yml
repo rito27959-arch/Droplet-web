@@ -5,6 +5,7 @@ name: Essai Glasmio
 on:
   push:
     branches: [essai-glasmio]
+    paths: ['.github/workflows/essai-glasmio.yml']
   workflow_dispatch:
 permissions:
   contents: write

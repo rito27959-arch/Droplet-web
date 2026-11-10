@@ -1,1 +1,8 @@
 build/
+
+# ── Android : secrets et fichiers propres à chaque machine ──
+android/key.properties
+android/local.properties
+android/app/google-services.json
+*.jks
+*.keystore

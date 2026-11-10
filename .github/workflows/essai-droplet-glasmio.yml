@@ -1,0 +1,81 @@
+name: Essai Droplet + Glasmio
+# Compile le VRAI Droplet (ses plugins, sa configuration) :
+#   • « actuel »  : tel qu'il est aujourd'hui — pour vérifier que la
+#                   compilation sur GitHub reproduit bien celle de l'ordinateur ;
+#   • « glasmio » : plugin Android 9.4.1, Gradle 9.6, Kotlin 2.4.21, Java 21,
+#                   compileSdk 37, plus Glasmio — debug puis release (R8).
+# Aucun secret : sans key.properties, la release est signée en débogage ; le
+# google-services.json est factice (il suffit à compiler, pas à se connecter).
+on:
+  push:
+    branches: [essai-glasmio]
+    paths: ['android/**', '.github/workflows/essai-droplet-glasmio.yml', 'pubspec.yaml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [actuel, glasmio]
+    steps:
+      - name: Libérer de la place
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.mode == 'glasmio' && '21' || '17' }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Compiler
+        run: |
+          set +e
+          mkdir -p /tmp/res; J=/tmp/res/droplet-${{ matrix.mode }}.txt
+          flutter --version | head -1 > $J
+          # google-services.json factice (même paquet que Droplet).
+          cat > android/app/google-services.json <<'G'
+          {"project_info":{"project_number":"123456789012","project_id":"droplet-ci","storage_bucket":"droplet-ci.appspot.com"},
+           "client":[{"client_info":{"mobilesdk_app_id":"1:123456789012:android:0123456789abcdef","android_client_info":{"package_name":"com.droplet.droplet"}},
+           "oauth_client":[],"api_key":[{"current_key":"AIzaSyA-ci-factice-0000000000000000000"}],
+           "services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}
+          G
+          # proguard-rules.pro : celui de Droplet s'il est dans le dépôt.
+          [ -f android/app/proguard-rules.pro ] || { echo "# vide (fichier absent du dépôt)" > android/app/proguard-rules.pro; echo "⚠️ proguard-rules.pro absent : release compilée SANS les règles de Droplet" >> $J; }
+          if [ "${{ matrix.mode }}" = "glasmio" ]; then
+            bash .github/outils/passer-a-glasmio.sh >> $J 2>&1
+          fi
+          flutter pub get > /dev/null 2>&1
+          flutter build apk --debug > /tmp/d.txt 2>&1
+          echo "=== DEBUG : $?" >> $J
+          grep -E "^e: |error:|What went wrong|FAILURE|requires|incompatible|Could not|not found|Unresolved|BUILD (SUCCESSFUL|FAILED)" /tmp/d.txt | head -50 >> $J
+          sed -n '/What went wrong/,/Try:/p' /tmp/d.txt | head -40 >> $J
+          flutter build apk --release --split-per-abi > /tmp/r.txt 2>&1
+          echo "=== RELEASE (R8) : $?" >> $J
+          grep -E "^e: |ERROR|Missing class|What went wrong|FAILURE" /tmp/r.txt | head -40 >> $J
+          sed -n '/What went wrong/,/Try:/p' /tmp/r.txt | head -40 >> $J
+          ls -la build/app/outputs/flutter-apk/ >> $J 2>&1
+          true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: droplet-${{ matrix.mode }}
+          path: /tmp/res/
+  journal:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: res
+      - name: Publier
+        run: |
+          git init -q j && cd j
+          git config user.name "verif" && git config user.email "verif@users.noreply.github.com"
+          git fetch -q "https://github.com/${{ github.repository }}" journal-glasmio && git checkout -q -b journal-glasmio FETCH_HEAD || git checkout -q -b journal-glasmio
+          cp ../res/*/*.txt . && git add . && git commit -qm "Essai Droplet ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" journal-glasmio
