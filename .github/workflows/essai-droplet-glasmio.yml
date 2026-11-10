@@ -9,7 +9,7 @@ name: Essai Droplet + Glasmio
 on:
   push:
     branches: [essai-glasmio]
-    paths: ['android/**', '.github/workflows/essai-droplet-glasmio.yml', 'pubspec.yaml']
+    paths: ['android/**', 'lib/**', '.github/outils/**', '.github/workflows/essai-droplet-glasmio.yml', 'pubspec.yaml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -52,6 +52,8 @@ jobs:
             bash .github/outils/passer-a-glasmio.sh >> $J 2>&1
           fi
           flutter pub get > /dev/null 2>&1
+          echo "=== ANALYSE (fichiers Glasmio)" >> $J
+          flutter analyze --no-fatal-infos lib/core/services/pont_glasmio.dart lib/features/settings/ lib/main.dart 2>&1 | grep -E " error | warning |issues found|No issues" | head -40 >> $J
           flutter build apk --debug > /tmp/d.txt 2>&1
           echo "=== DEBUG : $?" >> $J
           grep -E "^e: |error:|Error:|Error |lib/.*dart:[0-9]+|What went wrong|FAILURE|requires|incompatible|Could not|not found|Unresolved|No file|BUILD (SUCCESSFUL|FAILED)" /tmp/d.txt | head -60 >> $J

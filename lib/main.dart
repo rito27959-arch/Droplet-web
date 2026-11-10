@@ -87,7 +87,7 @@ import 'features/group/group_info_screen.dart';
 import 'features/settings/backup_export_screen.dart';
 import 'features/settings/app_icon_screen.dart';
 import 'features/settings/apparence_screen.dart';
-import 'features/settings/settings_screen.dart';
+import 'features/settings/parametres_glasmio.dart';
 import 'features/aide/aide_screen.dart';
 import 'features/aide/contact_screen.dart';
 import 'features/aide/donnees_screen.dart';
@@ -905,7 +905,8 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/settings',
-      pageBuilder: (context, state) => _pushPage(const SettingsScreen()),
+      // Android 13+ : les réglages en Glasmio (natif) ; sinon l'écran Flutter.
+      pageBuilder: (context, state) => _pushPage(const PasserelleParametres()),
     ),
     GoRoute(
       path: '/settings/notifications',

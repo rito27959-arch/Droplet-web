@@ -392,14 +392,18 @@ class SettingsScreen extends ConsumerWidget {
     await afficherJournal(context);
   }
 
-  Future<void> _showAbout(BuildContext context) {
-    OuroHaptics.selection();
-    return showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const _AboutSheet(),
-    );
-  }
+  Future<void> _showAbout(BuildContext context) => afficherAPropos(context);
+}
+
+/// La feuille « À propos » (avec la mention de licence obligatoire des
+/// émojis animés). Publique : les réglages Glasmio l'ouvrent aussi.
+Future<void> afficherAPropos(BuildContext context) {
+  OuroHaptics.selection();
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (context) => const _AboutSheet(),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────

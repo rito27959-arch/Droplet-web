@@ -293,8 +293,29 @@ class MainActivity : FlutterFragmentActivity() {
         }
     }
 
+    // ── Glasmio (écrans natifs Jetpack Compose, Android 13+) ──────────────
+    // Le code Glasmio vit dans `src/glasmio/` : il n'est compilé qu'avec la
+    // configuration Glasmio (plugin Android 9, compileSdk 37). On le cherche
+    // donc par son nom : absent, rien ne se passe, `PontGlasmio.disponible`
+    // répond faux côté Dart et Droplet garde ses écrans Flutter.
+    private fun installerGlasmio(flutterEngine: FlutterEngine) {
+        try {
+            Class.forName("com.droplet.droplet.glasmio.PontGlasmio")
+                .getMethod(
+                    "installer",
+                    android.app.Activity::class.java,
+                    io.flutter.plugin.common.BinaryMessenger::class.java,
+                )
+                .invoke(null, this, flutterEngine.dartExecutor.binaryMessenger)
+        } catch (_: ReflectiveOperationException) {
+        } catch (e: RuntimeException) {
+            android.util.Log.w("Droplet", "Glasmio indisponible", e)
+        }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        installerGlasmio(flutterEngine)
         contactDrop?.dispose()
         contactDrop = ContactDropBridge(this, flutterEngine.dartExecutor.binaryMessenger)
 
