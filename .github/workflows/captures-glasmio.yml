@@ -1,0 +1,79 @@
+name: Captures Glasmio (émulateur)
+# Compile Droplet avec Glasmio pour l'émulateur (x86_64, Android 14), avec les
+# captures automatiques (`--dart-define=DROPLET_CAPTURES=true`, voir
+# lib/captures_glasmio.dart), l'installe sur un émulateur et photographie
+# chaque écran. Les images sont publiées sur la branche journal-glasmio,
+# dossier captures/.
+on:
+  push:
+    branches: [essai-glasmio]
+    paths: ['android/**', 'lib/**', '.github/outils/**', '.github/workflows/captures-glasmio.yml', 'pubspec.yaml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  captures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Libérer de la place
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost || true
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Compiler l'APK de l'émulateur
+        run: |
+          set +e
+          mkdir -p /tmp/cap; J=/tmp/cap/journal.txt
+          cat > android/app/google-services.json <<'G'
+          {"project_info":{"project_number":"123456789012","project_id":"droplet-ci","storage_bucket":"droplet-ci.appspot.com"},
+           "client":[{"client_info":{"mobilesdk_app_id":"1:123456789012:android:0123456789abcdef","android_client_info":{"package_name":"com.droplet.droplet"}},
+           "oauth_client":[],"api_key":[{"current_key":"AIzaSyA-ci-factice-0000000000000000000"}],
+           "services":{"appinvite_service":{"other_platform_oauth_client":[]}}},
+           {"client_info":{"mobilesdk_app_id":"1:123456789012:android:0123456789abcdee","android_client_info":{"package_name":"com.droplet.droplet.glasmio"}},
+           "oauth_client":[],"api_key":[{"current_key":"AIzaSyA-ci-factice-0000000000000000000"}],
+           "services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}
+          G
+          [ -f android/app/proguard-rules.pro ] || printf -- '-ignorewarnings\n' > android/app/proguard-rules.pro
+          python3 .github/outils/bouche-trous.py >> $J
+          bash .github/outils/bouche-trous-android.sh >> $J
+          bash .github/outils/passer-a-glasmio.sh >> $J 2>&1
+          printf '\nandroid { defaultConfig { applicationIdSuffix = ".glasmio" } }\n' >> android/app/build.gradle.kts
+          flutter pub get > /dev/null 2>&1
+          flutter build apk --release --target-platform android-x64 --dart-define=DROPLET_CAPTURES=true > /tmp/b.txt 2>&1
+          echo "=== APK : $?" >> $J
+          grep -E "^e: |error:|Error:|What went wrong|FAILURE|BUILD" /tmp/b.txt | head -40 >> $J
+          ls -la build/app/outputs/flutter-apk/ >> $J 2>&1
+          true
+      - name: Activer KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Émulateur et captures
+        if: hashFiles('build/app/outputs/flutter-apk/app-release.apk') != ''
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          ram-size: 4096M
+          disk-size: 6000M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: bash .github/outils/captures-emulateur.sh
+      - name: Publier
+        if: always()
+        run: |
+          cd /tmp/cap
+          git init -q j && cd j
+          git config user.name "verif" && git config user.email "verif@users.noreply.github.com"
+          git checkout -q -b captures-glasmio
+          rm -rf captures && mkdir -p captures && cp ../*.png ../*.txt captures/ 2>/dev/null
+          echo "${GITHUB_SHA}" > captures/commit.txt
+          git add -A && git commit -qm "Captures Glasmio ${GITHUB_SHA}" && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" captures-glasmio

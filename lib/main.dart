@@ -46,6 +46,7 @@ import 'core/services/premium_service.dart';
 import 'core/services/reponses_differees.dart';
 import 'features/premium/pro_glasmio.dart';
 import 'core/services/barre_glasmio.dart';
+import 'captures_glasmio.dart';
 import 'features/notifications/notifs_glasmio.dart';
 import 'features/appareils/appareils_glasmio.dart';
 import 'features/aide/aide_glasmio.dart';
@@ -265,7 +266,11 @@ Future<void> main() async {
   // magique de Riverpod qui permet à toutes les pages de l'app de partager
   // des informations (qui je suis, mes messages, mes contacts...) sans
   // avoir à se les passer à la main.
+  // Captures d'écran automatiques (essai Glasmio, émulateur) — jamais dans
+  // une vraie version (voir `captures_glasmio.dart`).
+  if (kCapturesGlasmio) await preparerIdentiteCaptures();
   runApp(const ProviderScope(child: DropletApp()));
+  if (kCapturesGlasmio) unawaited(lancerCaptures(_router));
   // Mesure le temps des images pendant l'usage : un téléphone qui saccade
   // passe de lui-même en effets allégés (voir `DeviceProfile.surveiller`).
   DeviceProfile.surveiller();
