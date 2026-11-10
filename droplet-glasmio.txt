@@ -1,5 +1,8 @@
 Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 ⚠️ proguard-rules.pro absent : release compilée SANS les règles de Droplet
+⚠️ assets/icon/premuim absent du dépôt (bouche-trou)
+⚠️ assets/stickers absent du dépôt (bouche-trou)
+⚠️ Inter-Variable.ttf absent du dépôt (bouche-trou)
 --- configuration passée à Glasmio :
 settings.gradle.kts:    id("dev.flutter.flutter-plugin-loader") version "1.0.0"
 settings.gradle.kts:    id("com.android.application") version "9.4.1" apply false
@@ -8,14 +11,14 @@ settings.gradle.kts:    id("org.jetbrains.kotlin.plugin.compose") version "2.4.2
 settings.gradle.kts:    id("com.google.gms.google-services") version "4.4.2" apply false
 gradle/wrapper/gradle-wrapper.properties:distributionUrl=https\://services.gradle.org/distributions/gradle-9.6.0-bin.zip
 6:    id("org.jetbrains.kotlin.plugin.compose")
-65:    compileSdk = 37
+65:    compileSdkVersion("android-37")
 196:    implementation("io.github.neoruaa.glasmio:glasmio-scaffold:0.1.2")
 197:    implementation("io.github.neoruaa.glasmio:glasmio-preference:0.1.2")
 1
 === DEBUG : 1
 FAILURE: Build failed with an exception.
 * What went wrong:
-BUILD FAILED in 4m 1s
+BUILD FAILED in 3m 58s
 * What went wrong:
 A problem occurred configuring project ':tor'.
 > Failed to notify project evaluation listener.
