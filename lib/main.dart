@@ -56,6 +56,7 @@ import 'features/aide/donnees_glasmio.dart';
 import 'features/settings/stockage_glasmio.dart';
 import 'features/settings/icone_glasmio.dart';
 import 'features/settings/sauvegarde_glasmio.dart';
+import 'features/group/infos_groupe_glasmio.dart';
 import 'core/services/raccourcis_conversation.dart';
 import 'features/settings/stockage_screen.dart';
 import 'features/autoriser/autoriser_app.dart';
@@ -1024,7 +1025,7 @@ final _router = GoRouter(
     GoRoute(
       path: '/group/:groupId/info',
       pageBuilder: (context, state) => _pushPage(
-        GroupInfoScreen(groupId: state.pathParameters['groupId'] ?? ''),
+        PasserelleInfosGroupe(groupId: state.pathParameters['groupId'] ?? ''),
       ),
     ),
     GoRoute(

@@ -52,7 +52,7 @@ class GroupInfoScreen extends ConsumerWidget {
 
   /// Ouvre une petite fenêtre pour taper un nouveau nom de groupe.
   /// Ecrire la description : elle part aussitot vers les autres membres.
-  Future<void> _modifierDescription(
+  Future<void> modifierDescription(
     BuildContext context,
     WidgetRef ref,
     ReglagesGroupe reglages,
@@ -76,7 +76,7 @@ class GroupInfoScreen extends ConsumerWidget {
   /// téléphone, puis le manifeste repart aux membres. Tant que l'image
   /// elle-même ne circule pas, les autres gardent l'avatar à initiales :
   /// c'est dit à l'écran plutôt que caché.
-  Future<void> _changerPhoto(
+  Future<void> changerPhoto(
     BuildContext context,
     WidgetRef ref,
     GroupInfo group,
@@ -97,16 +97,16 @@ class GroupInfoScreen extends ConsumerWidget {
   }
 
   /// Le stockage du groupe : ce qui a été envoyé, par qui, et le poids.
-  void _ouvrirStockage(BuildContext context, GroupInfo group) {
+  Future<void> ouvrirStockage(BuildContext context, GroupInfo group) {
     OuroHaptics.selection();
-    Navigator.of(context).push(
+    return Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => StockageGroupeScreen(groupId: group.id, nom: group.name),
       ),
     );
   }
 
-  Future<void> _rename(BuildContext context, WidgetRef ref, String currentName) async {
+  Future<void> renommer(BuildContext context, WidgetRef ref, String currentName) async {
     final l10n = AppLocalizations.of(context);
     final name = await ouroPrompt(
       context,
@@ -127,7 +127,7 @@ class GroupInfoScreen extends ConsumerWidget {
   /// Propose la liste des pairs pas encore membres (connectés ou déjà
   /// rencontrés), et ajoute celui choisi au groupe (réservé aux
   /// administrateurs).
-  Future<void> _addMember(BuildContext context, WidgetRef ref, GroupInfo group) async {
+  Future<void> ajouterMembre(BuildContext context, WidgetRef ref, GroupInfo group) async {
     final l10n = AppLocalizations.of(context);
     final peers = ref.read(meshPeerListProvider);
     final known = StorageService.getKnownPeers();
@@ -203,7 +203,7 @@ class GroupInfoScreen extends ConsumerWidget {
 
   /// Demande confirmation puis retire un membre du groupe (réservé aux
   /// administrateurs) — il ne pourra plus lire les futurs messages.
-  Future<void> _removeMember(BuildContext context, WidgetRef ref, String peerId) async {
+  Future<void> retirerMembre(BuildContext context, WidgetRef ref, String peerId) async {
     final l10n = AppLocalizations.of(context);
     final confirmed = await ouroConfirm(
       context,
@@ -223,7 +223,7 @@ class GroupInfoScreen extends ConsumerWidget {
   }
 
   /// Demande confirmation puis me fait quitter le groupe moi-même.
-  Future<void> _leave(BuildContext context, WidgetRef ref) async {
+  Future<void> quitterGroupe(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final confirmed = await ouroConfirm(
       context,
@@ -242,7 +242,7 @@ class GroupInfoScreen extends ConsumerWidget {
   /// Démarre un appel de groupe avec les membres actuellement joignables
   /// en Wi-Fi local (max 3 autres personnes, voir la limite de
   /// `group_webrtc_call_service.dart`).
-  Future<void> _startGroupCall(
+  Future<void> appelerGroupe(
     BuildContext context,
     WidgetRef ref,
     GroupInfo group,
@@ -286,7 +286,7 @@ class GroupInfoScreen extends ConsumerWidget {
 
   /// Toucher un membre, comme WhatsApp : écrire, appeler, voir ses infos —
   /// et pour un administrateur, changer son rôle ou le retirer.
-  Future<void> _ficheMembre(BuildContext context, WidgetRef ref, GroupInfo group, String moi, GroupMemberRecord m, String nom) async {
+  Future<void> ficheMembre(BuildContext context, WidgetRef ref, GroupInfo group, String moi, GroupMemberRecord m, String nom) async {
     final l10n = AppLocalizations.of(context);
     final admin = group.isAdmin(moi);
     // Android 13+ : la feuille d'actions Glasmio ; sinon celle de Cupertino.
@@ -332,7 +332,7 @@ class GroupInfoScreen extends ConsumerWidget {
         HapticFeedback.selectionClick();
         await ref.read(meshRepositoryProvider).changerRoleMembre(groupId: groupId, peerId: m.peerId, admin: !m.isAdmin);
       case 'retirer':
-        await _removeMember(context, ref, m.peerId);
+        await retirerMembre(context, ref, m.peerId);
     }
   }
 
@@ -379,18 +379,18 @@ class GroupInfoScreen extends ConsumerWidget {
           ),
           ligneNotifs: LigneNotifsConversation(conversationId: groupId, nom: group.name, groupe: true),
           actions: ActionsInfosGroupe(
-            changerPhoto: () => infos ? _changerPhoto(context, ref, group) : refuse(),
-            renommer: () => infos ? _rename(context, ref, group.name) : refuse(),
-            modifierDescription: () => infos ? _modifierDescription(context, ref, reglages) : refuse(),
-            appeler: () => _startGroupCall(context, ref, group, myId, pseudoFor),
-            ajouter: () => _addMember(context, ref, group),
+            changerPhoto: () => infos ? changerPhoto(context, ref, group) : refuse(),
+            renommer: () => infos ? renommer(context, ref, group.name) : refuse(),
+            modifierDescription: () => infos ? modifierDescription(context, ref, reglages) : refuse(),
+            appeler: () => appelerGroupe(context, ref, group, myId, pseudoFor),
+            ajouter: () => ajouterMembre(context, ref, group),
             inviter: () => ouvrirCodeGroupe(context, groupId: groupId, nom: group.name, moi: myId),
-            medias: () => _ouvrirStockage(context, group),
+            medias: () => ouvrirStockage(context, group),
             importants: () => context.push('/starred'),
             parametres: () => Navigator.of(context).push(
               CupertinoPageRoute<void>(builder: (_) => ParametresGroupeScreen(groupId: groupId)),
             ),
-            membre: (m) => _ficheMembre(context, ref, group, myId, m, pseudoFor(m.peerId)),
+            membre: (m) => ficheMembre(context, ref, group, myId, m, pseudoFor(m.peerId)),
             accepterDemande: (d) async {
               HapticFeedback.mediumImpact();
               try {
@@ -403,7 +403,7 @@ class GroupInfoScreen extends ConsumerWidget {
               HapticFeedback.selectionClick();
               ref.read(meshRepositoryProvider).refuserDemandeAdhesion(groupId: groupId, peerId: d.peerId);
             },
-            quitter: () => _leave(context, ref),
+            quitter: () => quitterGroupe(context, ref),
           ),
         );
       },
