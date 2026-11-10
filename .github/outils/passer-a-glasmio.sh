@@ -19,7 +19,11 @@ s = s.replace("\nflutter {", "\nkotlin {\n    compilerOptions {\n        jvmTarg
 open(p, "w").write(s)
 PY
 sed -i -E 's#^(    id\("kotlin-android"\))#\1\n    id("org.jetbrains.kotlin.plugin.compose")#' $A
-sed -i -E 's/compileSdk = flutter.compileSdkVersion/compileSdk = 37/' $A
+# ⚠️ `compileSdkVersion("android-37")` plutôt que `compileSdk = 37` : avec le
+# plugin Android 9, la seconde forme se lit « android-37.0 », et le greffon
+# `tor` (via cargokit) découpe cette chaîne pour en faire un entier — « 37.0 »
+# le fait échouer. La forme texte garde « android-37 ».
+sed -i -E 's/compileSdk = flutter.compileSdkVersion/compileSdkVersion("android-37")/' $A
 cat >> $A <<'G'
 
 android { buildFeatures { compose = true } }
