@@ -43,30 +43,30 @@ code 0
 0
 warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:135:8 • unused_import
 
-66 issues found. (ran in 23.7s)
+67 issues found. (ran in 21.9s)
 === DEBUG : 0
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 58: loop index initializer must be a constant expression
         error: 55: loop index initializer must be a constant expression
-warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_filter.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
-SkSL Error:
-        error: 121: initializers are not permitted on arrays (or structs containing arrays)
-        error: 122: unknown identifier 'param_2'
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 111: initializers are not permitted on arrays (or structs containing arrays)
         error: 112: unknown identifier 'param_2'
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_filter.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 121: initializers are not permitted on arrays (or structs containing arrays)
+        error: 122: unknown identifier 'param_2'
 15 packages have newer versions incompatible with dependency constraints.
 === RELEASE (R8) : 0
 total 904864
-drwxr-xr-x 2 runner runner      4096 Nov 10 16:20 .
-drwxr-xr-x 8 runner runner      4096 Nov 10 16:17 ..
--rw-r--r-- 1 runner runner 158426724 Nov 10 16:19 app-arm64-v8a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 16:20 app-arm64-v8a-release.apk.sha1
--rw-r--r-- 1 runner runner  92299888 Nov 10 16:19 app-armeabi-v7a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 16:20 app-armeabi-v7a-release.apk.sha1
--rw-r--r-- 1 runner runner 501303149 Nov 10 16:03 app-debug.apk
--rw-r--r-- 1 runner runner        40 Nov 10 16:03 app-debug.apk.sha1
--rw-r--r-- 1 runner runner 174510546 Nov 10 16:19 app-x86_64-release.apk
--rw-r--r-- 1 runner runner        40 Nov 10 16:20 app-x86_64-release.apk.sha1
+drwxr-xr-x 2 runner runner      4096 Nov 10 16:39 .
+drwxr-xr-x 8 runner runner      4096 Nov 10 16:37 ..
+-rw-r--r-- 1 runner runner 158426724 Nov 10 16:39 app-arm64-v8a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 16:39 app-arm64-v8a-release.apk.sha1
+-rw-r--r-- 1 runner runner  92299888 Nov 10 16:39 app-armeabi-v7a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 16:39 app-armeabi-v7a-release.apk.sha1
+-rw-r--r-- 1 runner runner 501304637 Nov 10 16:23 app-debug.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 16:24 app-debug.apk.sha1
+-rw-r--r-- 1 runner runner 174510546 Nov 10 16:39 app-x86_64-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 16:39 app-x86_64-release.apk.sha1
