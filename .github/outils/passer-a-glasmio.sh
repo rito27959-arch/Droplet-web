@@ -7,7 +7,7 @@ cd android
 sed -i -E 's/id\("com.android.application"\) version "[^"]+"/id("com.android.application") version "9.4.1"/' settings.gradle.kts
 sed -i -E 's/id\("org.jetbrains.kotlin.android"\) version "[^"]+" apply false/id("org.jetbrains.kotlin.android") version "2.4.21" apply false\n    id("org.jetbrains.kotlin.plugin.compose") version "2.4.21" apply false/' settings.gradle.kts
 sed -i -E 's#distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-9.6.0-bin.zip#' gradle/wrapper/gradle-wrapper.properties
-grep -q builtInKotlin gradle.properties || printf '\nandroid.builtInKotlin=false\nandroid.newDsl=false\n' >> gradle.properties
+grep -q builtInKotlin gradle.properties || printf "\nandroid.builtInKotlin=false\nandroid.newDsl=false\nbuiltInKotlin=false\n" >> gradle.properties
 # Java 21 : certains greffons (receive_sharing_intent) compilent leur Java en
 # 17 et leur Kotlin en 21. Sans effet à l'exécution sur Android (D8) :
 # on avertit au lieu d'arrêter la compilation.
