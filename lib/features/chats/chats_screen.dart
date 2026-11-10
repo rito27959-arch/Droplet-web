@@ -158,11 +158,33 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
     Future.delayed(const Duration(milliseconds: 900), _visiteGuidee);
     _searchCtrl.addListener(() => setState(() => _query = _searchCtrl.text.trim().toLowerCase()));
     demandeRechercheGlasmio.addListener(_ouvrirRecherche);
+    requeteGlasmio.addListener(_requeteNative);
+  }
+
+  /// La recherche flottante native : son texte filtre la liste.
+  bool _rechercheNative = false;
+  void _requeteNative() {
+    if (!mounted) return;
+    final q = requeteGlasmio.value;
+    if (q == null) {
+      if (_rechercheNative) _searchCtrl.clear();
+      _rechercheNative = false;
+      return;
+    }
+    if (!_rechercheNative) {
+      _rechercheNative = true;
+      final defilement = PrimaryScrollController.maybeOf(context);
+      if (defilement != null && defilement.hasClients) {
+        defilement.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOutCubic);
+      }
+    }
+    if (_searchCtrl.text != q) _searchCtrl.text = q;
   }
 
   @override
   void dispose() {
     demandeRechercheGlasmio.removeListener(_ouvrirRecherche);
+    requeteGlasmio.removeListener(_requeteNative);
     _focusRecherche.dispose();
     _minuteurVerrous?.cancel();
     _searchCtrl.dispose();

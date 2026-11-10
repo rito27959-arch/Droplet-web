@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -57,8 +58,36 @@ class ElementMenuGlasmio {
           'glyphe': icone!.codePoint,
           'police': icone!.fontFamily,
           'paquet': icone!.fontPackage,
+          if (_cles[icone!.codePoint] != null) 'cle': _cles[icone!.codePoint],
         },
       };
+
+  /// Le nom de l'icône côté natif (clé d'ICONES dans BlocsGlasmio.kt) : le
+  /// menu des messages de Glasmio dessine ses icônes lui-même, par leur nom.
+  static final Map<int, String> _cles = {
+    Icons.archive_rounded.codePoint: 'archive',
+    Icons.auto_awesome_rounded.codePoint: 'auto_awesome',
+    Icons.check_circle_outline_rounded.codePoint: 'check_circle',
+    Icons.copy_rounded.codePoint: 'content_copy',
+    Icons.delete_outline_rounded.codePoint: 'delete',
+    Icons.download_rounded.codePoint: 'download',
+    Icons.edit_rounded.codePoint: 'edit',
+    Icons.forum_rounded.codePoint: 'forum',
+    Icons.info_outline_rounded.codePoint: 'info',
+    Icons.mark_chat_read_outlined.codePoint: 'mark_chat_read',
+    Icons.mark_chat_unread_outlined.codePoint: 'mark_chat_unread',
+    Icons.more_horiz_rounded.codePoint: 'more_horiz',
+    Icons.push_pin_outlined.codePoint: 'push_pin',
+    Icons.push_pin_rounded.codePoint: 'push_pin',
+    Icons.refresh_rounded.codePoint: 'refresh',
+    Icons.reply_rounded.codePoint: 'reply',
+    Icons.shortcut_rounded.codePoint: 'shortcut',
+    Icons.star_outline_rounded.codePoint: 'star_outline',
+    Icons.star_rounded.codePoint: 'star',
+    Icons.translate_rounded.codePoint: 'translate',
+    Icons.volume_off_rounded.codePoint: 'volume_off',
+    Icons.volume_up_rounded.codePoint: 'volume_up',
+  };
 }
 
 class SuperpositionGlasmio {
@@ -123,9 +152,12 @@ class SuperpositionGlasmio {
     List<String> actuelles = const [],
     bool aDroite = false,
     bool apercuTouchable = false,
+    bool message = false,
   }) =>
       _afficher({
-        'type': 'menu',
+        // « message » : le vrai menu des messages de Glasmio (la bulle se
+        // soulève, la bulle de verre des réactions s'ouvre au-dessus).
+        'type': message ? 'message' : 'menu',
         'zone': {'x': zone.left, 'y': zone.top, 'l': zone.width, 'h': zone.height},
         'elements': [for (final e in elements) e.versCarte()],
         'reactions': reactions,

@@ -51,6 +51,10 @@ final ValueNotifier<bool> barreGlasmioActive = ValueNotifier(false);
 /// discussions remonte et ouvre sa recherche.
 final ValueNotifier<int> demandeRechercheGlasmio = ValueNotifier(0);
 
+/// La recherche flottante native : `null` quand elle est fermée, sinon le
+/// texte tapé dans le champ de verre (la liste des discussions s'y filtre).
+final ValueNotifier<String?> requeteGlasmio = ValueNotifier(null);
+
 class OngletGlasmio {
   const OngletGlasmio(this.titre, {this.badge = 0});
 
@@ -65,7 +69,8 @@ class BarreGlasmio {
   static String? _derniere;
   static DateTime _derniereActivite = DateTime(0);
 
-  /// Les gestes : `onglet` (valeur = index), `recherche`, `deplier`.
+  /// Les gestes : `onglet` (valeur = index), `recherche` (la barre devient
+  /// un champ), `requete` (valeur = texte), `recherche_fin`, `deplier`.
   static final StreamController<(String, Object?)> _gestes = StreamController.broadcast();
   static Stream<(String, Object?)> get gestes {
     PontGlasmio.surBarre ??= (id, valeur) => _gestes.add((id, valeur));
@@ -85,6 +90,7 @@ class BarreGlasmio {
     required int index,
     required bool compact,
     required String recherche,
+    String annuler = 'Annuler',
   }) async {
     final d = jsonEncode({
       'visible': visible,
@@ -94,6 +100,7 @@ class BarreGlasmio {
       'index': index,
       'compact': compact,
       'recherche': recherche,
+      'annuler': annuler,
     });
     if (d == _derniere) return;
     _derniere = d;

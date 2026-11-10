@@ -67,13 +67,18 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           _scrollRun = 0;
         });
       case 'recherche':
-        // La loupe : la liste des discussions, sa recherche ouverte.
+        // La loupe : la barre native devient un champ de recherche de verre ;
+        // la liste des discussions, dessous, se filtre à chaque lettre.
         setState(() {
           _currentIndex = 0;
           _tabBarMinimized = false;
           _scrollRun = 0;
         });
-        demandeRechercheGlasmio.value++;
+        requeteGlasmio.value = '';
+      case 'requete':
+        requeteGlasmio.value = (g.$2 as String?) ?? '';
+      case 'recherche_fin':
+        requeteGlasmio.value = null;
       case 'deplier':
         setState(() => _tabBarMinimized = false);
     }
@@ -88,12 +93,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     final dessus = sommet == null || sommet == route;
     final clavier = MediaQuery.viewInsetsOf(context).bottom > 0;
     final items = _items(context);
+    // Le clavier de la recherche native ne doit pas cacher la barre : c'est
+    // elle qui porte le champ.
+    final enRecherche = requeteGlasmio.value != null;
+    if (!dessus && enRecherche) requeteGlasmio.value = null;
     BarreGlasmio.afficher(
-      visible: dessus && !clavier,
+      visible: dessus && (!clavier || enRecherche),
       onglets: [for (final it in items) OngletGlasmio(it.label, badge: it.badge)],
       index: _currentIndex,
       compact: _tabBarMinimized,
       recherche: MaterialLocalizations.of(context).searchFieldLabel,
+      annuler: MaterialLocalizations.of(context).cancelButtonLabel,
     );
   }
 

@@ -14,6 +14,13 @@
 //
 // La vue ne couvre que la bande du bas, et laisse passer tout toucher qui ne
 // tombe pas sur un bouton : la liste reste utilisable jusqu'au bord.
+//
+// LA RECHERCHE FLOTTANTE (le geste d'iOS 26/27) : toucher la loupe fait
+// FONDRE la barre dans un champ de recherche de verre (GlasmioFloatingSearch
+// et GlasmioSearchTransition : un seul ressort pour les deux côtés). La vue
+// passe alors en plein écran, le champ suit le clavier, et chaque lettre
+// tapée part vers Dart, qui filtre la liste des discussions en dessous —
+// visible à travers, et touchable.
 // ============================================================================
 package com.droplet.droplet.glasmio
 
@@ -58,7 +65,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.ime
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.IntSize
+import io.github.neoruaa.glasmio.scaffold.GlasmioFloatingSearch
+import io.github.neoruaa.glasmio.scaffold.rememberGlasmioSearchTransition
 import androidx.compose.ui.geometry.Rect as RectCompose
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -94,6 +112,13 @@ object BarreNavigationGlasmio {
     private var rapideJusqua = 0L
     private var boucle = false
 
+    /** La recherche flottante est ouverte (la loupe a été touchée). */
+    private var enRecherche by mutableStateOf(false)
+    private var requete by mutableStateOf(TextFieldValue())
+
+    /** La vue couvre l'écran (recherche ouverte ou en train de se refermer). */
+    private var plein = false
+
     /** Les onglets de Droplet, posés sur des symboles Glasmio dont ce
      *  résolveur remplace le dessin (la barre ne connaît que ses symboles). */
     private val SYMBOLES = listOf(SfSymbol.House, SfSymbol.RadioWaves, SfSymbol.Clock, SfSymbol.PersonFilled)
@@ -111,6 +136,12 @@ object BarreNavigationGlasmio {
         activite = java.lang.ref.WeakReference(act)
         description = d
         val visible = d.optBoolean("visible")
+        if (!visible && enRecherche) {
+            // Une conversation s'ouvre depuis les résultats : la recherche se ferme.
+            enRecherche = false
+            requete = TextFieldValue()
+            pleinEcran(false)
+        }
         if (vue == null && visible) creer(act)
         vue?.visibility = if (visible) View.VISIBLE else View.GONE
         if (visible) demarrerBoucle() else boucle = false
@@ -129,6 +160,17 @@ object BarreNavigationGlasmio {
         vue = v
     }
 
+    private fun pleinEcran(oui: Boolean) {
+        plein = oui
+        val v = vue ?: return
+        val lp = v.layoutParams as? FrameLayout.LayoutParams ?: return
+        val h = if (oui) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT
+        if (lp.height != h) {
+            lp.height = h
+            v.layoutParams = lp
+        }
+    }
+
     private fun demarrerBoucle() {
         if (boucle) return
         boucle = true
@@ -137,7 +179,7 @@ object BarreNavigationGlasmio {
                 if (!boucle) return
                 capturer()
                 val rapide = System.currentTimeMillis() < rapideJusqua
-                principal.postDelayed(this, if (rapide) 33L else 1000L)
+                principal.postDelayed(this, if (rapide) 33L else if (plein) 100L else 1000L)
             }
         }
         principal.post(tache)
@@ -203,58 +245,146 @@ object BarreNavigationGlasmio {
         val cadres = remember { mutableStateMapOf<Int, RectCompose>() }
         var origine by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
 
+        val transition = rememberGlasmioSearchTransition(enRecherche)
+        val morph = transition.progressState.value.coerceIn(0f, 1f)
+        val couvre = enRecherche || morph > 0.001f
+        LaunchedEffect(couvre) { pleinEcran(couvre) }
+
         GlasmioIconProvider(resolver = RESOLVEUR_BARRE) {
             GlasmioTheme(isDark = sombre, colorScheme = glasmioColorScheme(sombre, accent)) {
-                // ⚠️ UNE HAUTEUR FIXE : le fond échantillonné de Glasmio remplit
-                // tout l'espace qu'on lui donne ; sans hauteur, la vue prenait
-                // l'écran entier et la barre se dessinait EN HAUT.
+                // ⚠️ UNE HAUTEUR FIXE hors recherche : le fond échantillonné de
+                // Glasmio remplit tout l'espace qu'on lui donne ; sans hauteur,
+                // la vue prenait l'écran entier et la barre se dessinait EN HAUT.
                 val bas = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                val clavier = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+                val hauteurBarre = io.github.neoruaa.glasmio.ui.NavigationBarSurfaceHeight + 16.dp + bas
                 GlasmioBackdropHost(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(io.github.neoruaa.glasmio.ui.NavigationBarSurfaceHeight + 16.dp + bas)
+                    modifier = (if (couvre) Modifier.fillMaxSize() else Modifier.fillMaxWidth().height(hauteurBarre))
                         .onGloballyPositioned { origine = it.positionInWindow() },
                     sampledContent = {
-                        bande?.let { Image(it, contentDescription = null, contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize()) }
+                        val b = bande
+                        if (b != null && !couvre) {
+                            Image(b, contentDescription = null, contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
+                        } else if (b != null) {
+                            // En recherche, seule la bande sous le champ (au-dessus du
+                            // clavier) est recopiée : la liste filtrée reste la VRAIE
+                            // liste de Flutter, vivante, et non une photo.
+                            Canvas(
+                                Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                                    .height(maxOf(clavier, bas) + 120.dp),
+                            ) {
+                                val h = size.height.toInt().coerceIn(1, b.height)
+                                drawImage(
+                                    b,
+                                    srcOffset = IntOffset(0, b.height - h),
+                                    srcSize = IntSize(b.width, h),
+                                    dstOffset = IntOffset(0, (size.height - h).toInt()),
+                                    dstSize = IntSize(size.width.toInt(), h),
+                                )
+                            }
+                        }
                     },
                     overlayContent = {
-                        Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)) {
-                            GlasmioNavigationBarWithTrailingItem(
-                                items = items,
-                                trailingItem = recherche,
-                                selectedKey = d.optInt("index", 0),
-                                onSelected = { k -> PontGlasmio.barre(if (k == -1) "recherche" else "onglet", k) },
-                                onExpand = { PontGlasmio.barre("deplier", null) },
-                                compactProgress = progression,
-                                modifier = Modifier.fillMaxWidth(),
-                                onItemBoundsChanged = { k, r -> cadres[k] = r },
-                            )
-                            // Les pastilles de non-lus (la barre de Glasmio n'en a pas).
-                            onglets.forEachIndexed { i, o ->
-                                val n = o.optInt("badge", 0)
-                                val r = cadres[i]
-                                if (n > 0 && r != null && compact < 0.5f) {
-                                    Text(
-                                        if (n > 99) "99+" else "$n",
-                                        color = Color.White,
-                                        fontSize = 10.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier
-                                            .offset {
-                                                IntOffset(
-                                                    (r.center.x - origine.x - 16.dp.toPx() + 6.dp.toPx()).toInt(),
-                                                    (r.top - origine.y - 8.dp.toPx() + 6.dp.toPx()).toInt(),
-                                                )
-                                            }
-                                            .clip(RoundedCornerShape(50))
-                                            .background(Color(0xFFFF3B30))
-                                            .padding(horizontal = 5.dp, vertical = 1.dp),
-                                    )
+                        Box(Modifier.fillMaxSize()) {
+                            // La barre d'onglets : elle s'efface et rétrécit vers la loupe
+                            // pendant que le champ de recherche grandit depuis elle.
+                            Box(
+                                Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(hauteurBarre)
+                                    .graphicsLayer {
+                                        alpha = 1f - morph
+                                        val e = 1f - 0.08f * morph
+                                        scaleX = e
+                                        scaleY = e
+                                        transformOrigin = TransformOrigin(1f, 1f)
+                                    },
+                            ) {
+                                if (morph < 0.999f) BarreOnglets(d, onglets, items, recherche, progression, compact, cadres, origine)
+                            }
+                            if (couvre) {
+                                // Le fond des résultats de Glasmio est rendu transparent :
+                                // les résultats sont la liste Flutter, juste en dessous.
+                                MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(background = Color.Transparent)) {
+                                    GlasmioFloatingSearch(
+                                        active = enRecherche,
+                                        query = requete,
+                                        onQueryChange = { q ->
+                                            val change = q.text != requete.text
+                                            requete = q
+                                            if (change) PontGlasmio.barre("requete", q.text)
+                                        },
+                                        onSearch = { },
+                                        onDismiss = {
+                                            enRecherche = false
+                                            requete = TextFieldValue()
+                                            PontGlasmio.barre("recherche_fin", null)
+                                        },
+                                        placeholder = d.optString("recherche"),
+                                        cancelLabel = d.optString("annuler", "Annuler"),
+                                        handleBack = true,
+                                        transition = transition,
+                                        sourceBoundsInWindow = cadres[-1],
+                                    ) { }
                                 }
                             }
                         }
                     },
                 )
+            }
+        }
+    }
+
+    @Composable
+    private fun BarreOnglets(
+        d: JSONObject,
+        onglets: List<JSONObject>,
+        items: List<GlasmioTabItem<Int>>,
+        recherche: GlasmioTabItem<Int>,
+        progression: androidx.compose.runtime.State<Float>,
+        compact: Float,
+        cadres: MutableMap<Int, RectCompose>,
+        origine: androidx.compose.ui.geometry.Offset,
+    ) {
+        Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)) {
+            GlasmioNavigationBarWithTrailingItem(
+                items = items,
+                trailingItem = recherche,
+                selectedKey = d.optInt("index", 0),
+                onSelected = { k ->
+                    if (k == -1) {
+                        // La loupe : la barre se change en champ de recherche.
+                        enRecherche = true
+                        PontGlasmio.barre("recherche", k)
+                    } else {
+                        PontGlasmio.barre("onglet", k)
+                    }
+                },
+                onExpand = { PontGlasmio.barre("deplier", null) },
+                compactProgress = progression,
+                modifier = Modifier.fillMaxWidth(),
+                onItemBoundsChanged = { k, r -> cadres[k] = r },
+            )
+            // Les pastilles de non-lus (la barre de Glasmio n'en a pas).
+            onglets.forEachIndexed { i, o ->
+                val n = o.optInt("badge", 0)
+                val r = cadres[i]
+                if (n > 0 && r != null && compact < 0.5f) {
+                    Text(
+                        if (n > 99) "99+" else "$n",
+                        color = Color.White,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .offset {
+                                IntOffset(
+                                    (r.center.x - origine.x - 16.dp.toPx() + 6.dp.toPx()).toInt(),
+                                    (r.top - origine.y - 8.dp.toPx() + 6.dp.toPx()).toInt(),
+                                )
+                            }
+                            .clip(RoundedCornerShape(50))
+                            .background(Color(0xFFFF3B30))
+                            .padding(horizontal = 5.dp, vertical = 1.dp),
+                    )
+                }
             }
         }
     }

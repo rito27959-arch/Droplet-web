@@ -51,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -169,6 +170,7 @@ private fun Superposition(d: JSONObject, capture: ImageBitmap?, fini: (Map<Strin
                         "alerte" -> AlerteSuperposee(d, fini)
                         "feuille" -> FeuilleSuperposee(d, fini)
                         "menu" -> MenuSuperpose(d, capture, fini)
+                        "message" -> MessageSuperpose(d, capture, fini)
                         else -> LaunchedEffect(Unit) { fini(null) }
                     }
                 },
@@ -415,5 +417,107 @@ private fun MenuSuperpose(d: JSONObject, capture: ImageBitmap?, fini: (Map<Strin
             }
         }
         Spacer(Modifier.height(0.dp))
+    }
+}
+
+
+// ─────────────────────────────────────────────────────────────
+//  L'appui long sur un MESSAGE : le vrai menu de Messages de Glasmio
+//  (GlasmioMessageContextMenu). La bulle touchée (son image) se soulève,
+//  la barre de réactions de verre s'ouvre au-dessus avec les dessins animés
+//  de Glasmio (cœur, pouce, « HA HA »…), et les actions en dessous.
+// ─────────────────────────────────────────────────────────────
+
+private fun dessinReaction(emoji: String) = when (emoji) {
+    "❤️" -> io.github.neoruaa.glasmio.ui.GlasmioMessageReactionArtwork.Heart
+    "👍" -> io.github.neoruaa.glasmio.ui.GlasmioMessageReactionArtwork.ThumbsUp
+    "👎" -> io.github.neoruaa.glasmio.ui.GlasmioMessageReactionArtwork.ThumbsDown
+    "😂" -> io.github.neoruaa.glasmio.ui.GlasmioMessageReactionArtwork.Laugh
+    "‼️" -> io.github.neoruaa.glasmio.ui.GlasmioMessageReactionArtwork.Exclamation
+    "❓" -> io.github.neoruaa.glasmio.ui.GlasmioMessageReactionArtwork.Question
+    else -> null
+}
+
+@Composable
+private fun MessageSuperpose(d: JSONObject, capture: ImageBitmap?, fini: (Map<String, Any?>?) -> Unit) {
+    val densite = LocalDensity.current
+    val portee = androidx.compose.runtime.rememberCoroutineScope()
+    val zone = d.optJSONObject("zone") ?: JSONObject()
+    val px = densite.density
+    val zx = (zone.optDouble("x", 0.0) * px).toFloat()
+    val zy = (zone.optDouble("y", 0.0) * px).toFloat()
+    val zl = (zone.optDouble("l", 1.0) * px).toFloat().coerceAtLeast(1f)
+    val zh = (zone.optDouble("h", 1.0) * px).toFloat().coerceAtLeast(1f)
+    var ouvert by remember { mutableStateOf(false) }
+    var resultat by remember { mutableStateOf<Map<String, Any?>?>(null) }
+    var termine by remember { mutableStateOf(false) }
+    fun terminer() {
+        if (termine) return
+        termine = true
+        // On laisse le menu jouer sa fermeture avant d'ôter la vue.
+        portee.launch { kotlinx.coroutines.delay(320); fini(resultat) }
+    }
+    // Le menu s'ouvre une fois la bulle posée (il en photographie l'image).
+    LaunchedEffect(Unit) {
+        androidx.compose.runtime.withFrameNanos { }
+        ouvert = true
+    }
+    val emojis = d.optJSONArray("reactions")?.let { a -> (0 until a.length()).map { a.optString(it) } }.orEmpty()
+    val actuelles = d.optJSONArray("actuelles")?.let { a -> (0 until a.length()).map { a.optString(it) } }.orEmpty()
+    val reactions = emojis.map { e -> io.github.neoruaa.glasmio.ui.GlasmioMessageReaction(e, e, e, dessinReaction(e)) }
+    val actions = d.optJSONArray("elements")?.objets().orEmpty().map { e ->
+        io.github.neoruaa.glasmio.ui.GlasmioCascadingMenuItem(
+            title = e.optString("titre"),
+            systemName = e.texte("cle"),
+            destructive = e.optBoolean("destructif"),
+            separatorBefore = e.optBoolean("section"),
+            onClick = {
+                resultat = mapOf("id" to e.optString("id"))
+                ouvert = false
+                terminer()
+            },
+        )
+    }
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+        val ecranL = constraints.maxWidth.toFloat().coerceAtLeast(1f)
+        val ecranH = constraints.maxHeight.toFloat().coerceAtLeast(1f)
+        Box(
+            Modifier
+                .offset { IntOffset(zx.toInt(), zy.toInt()) }
+                .size(with(densite) { zl.toDp() }, with(densite) { zh.toDp() }),
+        ) {
+            io.github.neoruaa.glasmio.ui.GlasmioMessageContextMenu(
+                outgoing = d.optBoolean("aDroite"),
+                expanded = ouvert,
+                onExpandedChange = { e ->
+                    ouvert = e
+                    if (!e) terminer()
+                },
+                actions = actions,
+                reactions = reactions,
+                onReaction = { r ->
+                    resultat = mapOf("id" to "reaction", "texte" to r.emoji)
+                    ouvert = false
+                    terminer()
+                },
+                selectedReaction = actuelles.firstOrNull(),
+                shape = RoundedCornerShape(18.dp),
+                anchor = { _ ->
+                    // La bulle, telle qu'elle était à l'écran (copie de la capture).
+                    Canvas(Modifier.size(with(densite) { zl.toDp() }, with(densite) { zh.toDp() })) {
+                        if (capture != null) {
+                            val echX = capture.width / ecranL
+                            val echY = capture.height / ecranH
+                            drawImage(
+                                capture,
+                                srcOffset = IntOffset((zx * echX).toInt(), (zy * echY).toInt()),
+                                srcSize = IntSize((zl * echX).toInt().coerceAtLeast(1), (zh * echY).toInt().coerceAtLeast(1)),
+                                dstSize = IntSize(size.width.toInt(), size.height.toInt()),
+                            )
+                        }
+                    }
+                },
+            )
+        }
     }
 }

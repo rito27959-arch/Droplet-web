@@ -208,6 +208,8 @@ Future<ChoixGlasmio?> _menuGlasmio({
       actuelles: current,
       aDroite: mine,
       apercuTouchable: apercuTouchable,
+      // Un message (avec réactions) : le menu des messages de Glasmio.
+      message: reactions.isNotEmpty,
     );
 
 class _ContextMenuOverlay extends StatelessWidget {

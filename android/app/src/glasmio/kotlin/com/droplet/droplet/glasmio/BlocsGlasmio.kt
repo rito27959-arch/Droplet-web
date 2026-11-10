@@ -121,6 +121,17 @@ import androidx.compose.material.icons.rounded.ForwardToInbox
 import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material.icons.rounded.PersonSearch
 import androidx.compose.material.icons.rounded.Videocam
+import androidx.compose.material.icons.rounded.StarOutline
+import androidx.compose.material.icons.rounded.Shortcut
+import androidx.compose.material.icons.rounded.Reply
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.MoreHoriz
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.VolumeOff
+import androidx.compose.material.icons.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.MarkChatRead
+import androidx.compose.material.icons.rounded.MarkChatUnread
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -216,6 +227,17 @@ internal val ICONES: Map<String, ImageVector> = mapOf(
     "flag" to Icons.Rounded.Flag,
     "play_circle" to Icons.Rounded.PlayCircle,
     "image" to Icons.Rounded.Image,
+    "mark_chat_unread" to Icons.Rounded.MarkChatUnread,
+    "mark_chat_read" to Icons.Rounded.MarkChatRead,
+    "volume_up" to Icons.Rounded.VolumeUp,
+    "volume_off" to Icons.Rounded.VolumeOff,
+    "check_circle" to Icons.Rounded.CheckCircle,
+    "content_copy" to Icons.Rounded.ContentCopy,
+    "more_horiz" to Icons.Rounded.MoreHoriz,
+    "refresh" to Icons.Rounded.Refresh,
+    "reply" to Icons.Rounded.Reply,
+    "shortcut" to Icons.Rounded.Shortcut,
+    "star_outline" to Icons.Rounded.StarOutline,
     "videocam" to Icons.Rounded.Videocam,
     "person_search" to Icons.Rounded.PersonSearch,
     "podcasts" to Icons.Rounded.Podcasts,
