@@ -33,6 +33,11 @@ Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 ⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v8_round
 ⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v9
 ⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v9_round
+⚠️ absent du dépôt (bouche-trou Android) : drawable/ic_stat_droplet
+⚠️ absent du dépôt (bouche-trou Android) : xml/widget_droplet_info
+⚠️ absent du dépôt (bouche-trou Android) : ContactDropBridge.kt
+⚠️ absent du dépôt (bouche-trou Android) : MediaBridge.kt
+⚠️ absent du dépôt (bouche-trou Android) : WidgetDroplet.kt
 --- configuration passée à Glasmio :
 settings.gradle.kts:    id("dev.flutter.flutter-plugin-loader") version "1.0.0"
 settings.gradle.kts:    id("com.android.application") version "9.4.1" apply false
@@ -52,91 +57,79 @@ gradle/wrapper/gradle-wrapper.properties:distributionUrl=https\://services.gradl
 code 0
    info • The import of 'package:flutter/scheduler.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart'. Try removing the import directive • lib/features/settings/settings_screen.dart:24:8 • unnecessary_import
 
-1 issue found. (ran in 20.0s)
+1 issue found. (ran in 20.1s)
 === DEBUG : 1
 an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
-warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
-SkSL Error:
-        error: 58: loop index initializer must be a constant expression
-        error: 55: loop index initializer must be a constant expression
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 111: initializers are not permitted on arrays (or structs containing arrays)
         error: 112: unknown identifier 'param_2'
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 58: loop index initializer must be a constant expression
+        error: 55: loop index initializer must be a constant expression
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_filter.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 121: initializers are not permitted on arrays (or structs containing arrays)
         error: 122: unknown identifier 'param_2'
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:373:38 Unresolved reference 'ic_stat_droplet'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:374:14 Unresolved reference 'setContentIntent'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:393:14 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:393:20 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:393:46 Unresolved reference 'setContentText'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:394:14 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:394:20 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:394:41 Unresolved reference 'setLargeIcon'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:395:14 Unresolved reference 'setStyle'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/LectureVocaleService.kt:227:35 Unresolved reference 'ic_stat_droplet'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/LectureVocaleService.kt:228:14 Unresolved reference 'setContentTitle'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:50:30 Unresolved reference 'ContactDropBridge'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:53:22 Unresolved reference 'onPause'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:58:22 Unresolved reference 'dispose'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:319:22 Unresolved reference 'dispose'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:320:23 Unresolved reference 'ContactDropBridge'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:473:21 Unresolved reference 'MediaBridge'.
-ERROR: D8: java.lang.OutOfMemoryError: Java heap space
-com.android.builder.dexing.DexArchiveMergerException: Error while merging dex archives: 
-Caused by: java.lang.OutOfMemoryError: Java heap space
-FAILURE: Build completed with 2 failures.
+15 packages have newer versions incompatible with dependency constraints.
+FAILURE: Build failed with an exception.
 * What went wrong:
-         Unresolved reference 'ic_stat_droplet'.
+       1.  Dependency ':flutter_plugin_android_lifecycle' requires libraries and applications that
+BUILD FAILED in 18m 4s
 * What went wrong:
-         > com.android.builder.dexing.DexArchiveMergerException: Error while merging dex archives: 
-BUILD FAILED in 8m 45s
-* What went wrong:
-Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'kotlin-android').
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
-   > Kotlin compiler: UNRESOLVED_REFERENCE
-       Kotlin compiler error
-         Unresolved reference 'ic_stat_droplet'.
-         Location: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt line 373
+Execution failed for task ':file_picker:checkDebugAarMetadata' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckAarMetadataWorkAction
+   > An issue was found when checking AAR metadata:
 
-* Try:
-* What went wrong:
-Execution failed for task ':app:mergeExtDexDebug' (registered by plugin 'com.android.internal.application').
-> A failure occurred while executing com.android.build.gradle.internal.tasks.DexMergingTaskDelegate
-   > There was a failure while executing work items
-      > A failure occurred while executing com.android.build.gradle.internal.tasks.DexMergingWorkAction
-         > com.android.builder.dexing.DexArchiveMergerException: Error while merging dex archives: 
+       1.  Dependency ':flutter_plugin_android_lifecycle' requires libraries and applications that
+           depend on it to compile against version 36 or later of the
+           Android APIs.
+
+           :file_picker is currently compiled against android-34.
+
+           Recommended action: Update this project to use a newer compileSdk
+           of at least 36, for example 37.2.
+
+           Note that updating a library or application's compileSdk (which
+           allows newer APIs to be used) can be done separately from updating
+           targetSdk (which opts the app in to new runtime behavior) and
+           minSdk (which determines which devices the app can be installed
+           on).
 
 * Try:
 === RELEASE (R8) : 1
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:373:38 Unresolved reference 'ic_stat_droplet'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:374:14 Unresolved reference 'setContentIntent'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:393:14 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:393:20 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:393:46 Unresolved reference 'setContentText'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:394:14 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:394:20 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:394:41 Unresolved reference 'setLargeIcon'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt:395:14 Unresolved reference 'setStyle'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/LectureVocaleService.kt:227:35 Unresolved reference 'ic_stat_droplet'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/LectureVocaleService.kt:228:14 Unresolved reference 'setContentTitle'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:50:30 Unresolved reference 'ContactDropBridge'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:53:22 Unresolved reference 'onPause'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:58:22 Unresolved reference 'dispose'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:319:22 Unresolved reference 'dispose'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:320:23 Unresolved reference 'ContactDropBridge'.
-e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:473:21 Unresolved reference 'MediaBridge'.
-FAILURE: Build failed with an exception.
+ERROR: Missing classes detected while running R8. Please add the missing classes or apply additional keep rules that are generated in /home/runner/work/Droplet-web/Droplet-web/build/app/outputs/mapping/release/missing_rules.txt.
+ERROR: R8: Missing class com.google.mediapipe.proto.CalculatorProfileProto$CalculatorProfile (referenced from: java.util.List com.google.mediapipe.framework.GraphProfiler.getCalculatorProfiles())
+Missing class com.google.mediapipe.proto.GraphTemplateProto$CalculatorGraphTemplate (referenced from: void com.google.mediapipe.framework.Graph.loadBinaryGraphTemplate(com.google.mediapipe.proto.GraphTemplateProto$CalculatorGraphTemplate))
+FAILURE: Build completed with 2 failures.
 * What went wrong:
 * What went wrong:
-Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'kotlin-android').
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
-   > Kotlin compiler: UNRESOLVED_REFERENCE
-       Kotlin compiler error
-         Unresolved reference 'ic_stat_droplet'.
-         Location: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/AppelEnCoursService.kt line 373
+* What went wrong:
+Execution failed for task ':file_picker:checkReleaseAarMetadata' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckAarMetadataWorkAction
+   > An issue was found when checking AAR metadata:
+
+       1.  Dependency ':flutter_plugin_android_lifecycle' requires libraries and applications that
+           depend on it to compile against version 36 or later of the
+           Android APIs.
+
+           :file_picker is currently compiled against android-34.
+
+           Recommended action: Update this project to use a newer compileSdk
+           of at least 36, for example 37.2.
+
+           Note that updating a library or application's compileSdk (which
+           allows newer APIs to be used) can be done separately from updating
+           targetSdk (which opts the app in to new runtime behavior) and
+           minSdk (which determines which devices the app can be installed
+           on).
+
+* Try:
+* What went wrong:
+Execution failed for task ':app:minifyReleaseWithR8' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing com.android.build.gradle.internal.tasks.R8Task$R8Runnable
+   > Compilation failed to complete
 
 * Try:
 ls: cannot access 'build/app/outputs/flutter-apk/': No such file or directory

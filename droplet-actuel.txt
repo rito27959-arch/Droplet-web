@@ -33,46 +33,44 @@ Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
 ⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v8_round
 ⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v9
 ⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v9_round
+⚠️ absent du dépôt (bouche-trou Android) : drawable/ic_stat_droplet
+⚠️ absent du dépôt (bouche-trou Android) : xml/widget_droplet_info
+⚠️ absent du dépôt (bouche-trou Android) : ContactDropBridge.kt
+⚠️ absent du dépôt (bouche-trou Android) : MediaBridge.kt
+⚠️ absent du dépôt (bouche-trou Android) : WidgetDroplet.kt
 === ANALYSE (fichiers Glasmio)
 code 0
    info • The import of 'package:flutter/scheduler.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart'. Try removing the import directive • lib/features/settings/settings_screen.dart:24:8 • unnecessary_import
 
-1 issue found. (ran in 20.8s)
-=== DEBUG : 1
+1 issue found. (ran in 23.3s)
+=== DEBUG : 0
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 111: initializers are not permitted on arrays (or structs containing arrays)
         error: 112: unknown identifier 'param_2'
-warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
-SkSL Error:
-        error: 58: loop index initializer must be a constant expression
-        error: 55: loop index initializer must be a constant expression
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_filter.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 121: initializers are not permitted on arrays (or structs containing arrays)
         error: 122: unknown identifier 'param_2'
-FAILURE: Build failed with an exception.
-* What went wrong:
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:442:13-444:62: AAPT: error: resource xml/widget_droplet_info (aka com.droplet.droplet:xml/widget_droplet_info) not found.
-BUILD FAILED in 5m 10s
-* What went wrong:
-Execution failed for task ':app:processDebugResources'.
-> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
-   > Android resource linking failed
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:442:13-444:62: AAPT: error: resource xml/widget_droplet_info (aka com.droplet.droplet:xml/widget_droplet_info) not found.
-
-
-* Try:
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 58: loop index initializer must be a constant expression
+        error: 55: loop index initializer must be a constant expression
+15 packages have newer versions incompatible with dependency constraints.
 === RELEASE (R8) : 1
+ERROR: Missing classes detected while running R8. Please add the missing classes or apply additional keep rules that are generated in /home/runner/work/Droplet-web/Droplet-web/build/app/outputs/mapping/release/missing_rules.txt.
+ERROR: R8: Missing class com.google.mediapipe.proto.CalculatorProfileProto$CalculatorProfile (referenced from: java.util.List com.google.mediapipe.framework.GraphProfiler.getCalculatorProfiles())
+Missing class com.google.mediapipe.proto.GraphTemplateProto$CalculatorGraphTemplate (referenced from: void com.google.mediapipe.framework.Graph.loadBinaryGraphTemplate(com.google.mediapipe.proto.GraphTemplateProto$CalculatorGraphTemplate))
 FAILURE: Build failed with an exception.
 * What went wrong:
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:442:13-444:62: AAPT: error: resource xml/widget_droplet_info (aka com.droplet.droplet:xml/widget_droplet_info) not found.
 * What went wrong:
-Execution failed for task ':app:processReleaseResources'.
-> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
-   > Android resource linking failed
-     ERROR: /home/runner/work/Droplet-web/Droplet-web/android/app/src/main/AndroidManifest.xml:442:13-444:62: AAPT: error: resource xml/widget_droplet_info (aka com.droplet.droplet:xml/widget_droplet_info) not found.
-
+Execution failed for task ':app:minifyReleaseWithR8'.
+> A failure occurred while executing com.android.build.gradle.internal.tasks.R8Task$R8Runnable
+   > Compilation failed to complete
 
 * Try:
-ls: cannot access 'build/app/outputs/flutter-apk/': No such file or directory
+total 489448
+drwxr-xr-x 2 runner runner      4096 Nov 10 11:46 .
+drwxr-xr-x 7 runner runner      4096 Nov 10 12:02 ..
+-rw-r--r-- 1 runner runner 501175193 Nov 10 11:45 app-debug.apk
+-rw-r--r-- 1 runner runner        40 Nov 10 11:46 app-debug.apk.sha1
