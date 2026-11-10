@@ -38,3 +38,15 @@ for e in entrees:
         else:
             open(e, "wb").close()
     print(f"⚠️ absent du dépôt (bouche-trou) : {e}")
+
+# Icônes de l'application déclarées dans le manifeste mais absentes du dépôt
+# (ic_launcher, variantes v1…v12) : un PNG 1×1, seulement pour compiler.
+import re
+res = "android/app/src/main/res"
+manifeste = open("android/app/src/main/AndroidManifest.xml").read()
+for nom in sorted(set(re.findall(r"@mipmap/([A-Za-z0-9_]+)", manifeste))):
+    if glob.glob(f"{res}/mipmap-*/{nom}.*"):
+        continue
+    os.makedirs(f"{res}/mipmap-mdpi", exist_ok=True)
+    open(f"{res}/mipmap-mdpi/{nom}.png", "wb").write(PNG)
+    print(f"⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/{nom}")

@@ -8,6 +8,10 @@ sed -i -E 's/id\("com.android.application"\) version "[^"]+"/id("com.android.app
 sed -i -E 's/id\("org.jetbrains.kotlin.android"\) version "[^"]+" apply false/id("org.jetbrains.kotlin.android") version "2.4.21" apply false\n    id("org.jetbrains.kotlin.plugin.compose") version "2.4.21" apply false/' settings.gradle.kts
 sed -i -E 's#distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-9.6.0-bin.zip#' gradle/wrapper/gradle-wrapper.properties
 grep -q builtInKotlin gradle.properties || printf '\nandroid.builtInKotlin=false\nandroid.newDsl=false\n' >> gradle.properties
+# Java 21 : certains greffons (receive_sharing_intent) compilent leur Java en
+# 17 et leur Kotlin en 21. Sans effet à l'exécution sur Android (D8) :
+# on avertit au lieu d'arrêter la compilation.
+grep -q jvm.target.validation gradle.properties || printf 'kotlin.jvm.target.validation.mode=warning\n' >> gradle.properties
 A=app/build.gradle.kts
 # Kotlin 2.4 refuse l'ancien bloc `kotlinOptions` : même réglage (Java 17),
 # écrit avec `kotlin { compilerOptions }` — forme qui marche aussi en 2.2.
@@ -36,14 +40,30 @@ cat >> build.gradle.kts <<'K'
 // fichier de cargokit du cache de paquets, cette conversion par une
 // lecture qui ignore la partie « .0 ». Idempotent : ne fait rien si déjà
 // corrigé, et marche aussi avec l'ancien plugin (« android-36 »).
+//
+// Et Gradle 9 a retiré `project.exec { }`, qu'utilise cargokit 0.1.x pour
+// compiler Tor : on le remplace par `ExecOperations` injecté — exactement ce
+// que fait cargokit dans les versions plus récentes du paquet `tor`.
 gradle.beforeProject {
     if (name == "tor") {
         val f = projectDir.resolve("../cargokit/gradle/plugin.gradle")
         if (f.exists()) {
-            val avant = "compileSdkVersion.substring(8) as int"
-            val apres = "compileSdkVersion.substring(8).tokenize('.')[0] as int"
-            val texte = f.readText()
-            if (texte.contains(avant)) f.writeText(texte.replace(avant, apres))
+            var texte = f.readText()
+            val avant = texte
+            texte = texte.replace(
+                "compileSdkVersion.substring(8) as int",
+                "compileSdkVersion.substring(8).tokenize('.')[0] as int",
+            )
+            if (texte.contains("project.exec {")) {
+                texte = "import javax.inject.Inject\nimport org.gradle.process.ExecOperations\n" +
+                    texte
+                        .replace(
+                            "abstract class CargoKitBuildTask extends DefaultTask {",
+                            "abstract class CargoKitBuildTask extends DefaultTask {\n\n    @Inject\n    abstract ExecOperations getExecOperations()\n",
+                        )
+                        .replace("project.exec {", "execOperations.exec {")
+            }
+            if (texte != avant) f.writeText(texte)
         }
     }
 }

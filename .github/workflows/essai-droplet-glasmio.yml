@@ -53,7 +53,8 @@ jobs:
           fi
           flutter pub get > /dev/null 2>&1
           echo "=== ANALYSE (fichiers Glasmio)" >> $J
-          flutter analyze --no-fatal-infos lib/core/services/pont_glasmio.dart lib/features/settings/ lib/main.dart 2>&1 | grep -E " error | warning |issues found|No issues" | head -40 >> $J
+          flutter analyze --no-fatal-infos lib/core/services/pont_glasmio.dart lib/features/settings/ lib/main.dart > /tmp/a.txt 2>&1; echo "code $?" >> $J
+          grep -E "error|warning" /tmp/a.txt | head -40 >> $J; tail -3 /tmp/a.txt >> $J
           flutter build apk --debug > /tmp/d.txt 2>&1
           echo "=== DEBUG : $?" >> $J
           grep -E "^e: |error:|Error:|Error |lib/.*dart:[0-9]+|What went wrong|FAILURE|requires|incompatible|Could not|not found|Unresolved|No file|BUILD (SUCCESSFUL|FAILED)" /tmp/d.txt | head -60 >> $J
