@@ -1,0 +1,151 @@
+name: Essai Glasmio
+# Banc d'essai : un projet Flutter neuf, configuré comme Droplet (AGP, Kotlin,
+# JDK), auquel on ajoute Glasmio et un petit écran Compose. On compile un APK
+# pour savoir, preuve à l'appui, quelle configuration accepte Glasmio.
+on:
+  push:
+    branches: [essai-glasmio]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  essai:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nom: actuelle
+            agp: 8.11.1
+            kotlin: 2.2.20
+            gradle: 8.14.3
+            jdk: 17
+            sdk: 36
+            nouveau_dsl: ""
+          - nom: kotlin24
+            agp: 8.13.0
+            kotlin: 2.4.21
+            gradle: 8.14.3
+            jdk: 21
+            sdk: 37
+            nouveau_dsl: ""
+          - nom: agp9
+            agp: 9.4.1
+            kotlin: 2.4.21
+            gradle: 9.6.0
+            jdk: 21
+            sdk: 37
+            nouveau_dsl: "agp9"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Projet d'essai
+        run: |
+          set +e
+          mkdir -p /tmp/res
+          J=/tmp/res/${{ matrix.nom }}.txt
+          flutter --version > $J 2>&1
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-${{ matrix.sdk }}" >/dev/null 2>&1
+          echo "plateforme ${{ matrix.sdk }}: $?" >> $J
+          cd /tmp && flutter create --org com.droplet --platforms android essai >/dev/null
+          cd /tmp/essai/android
+          # Versions de la matrice.
+          sed -i -E 's/id\("com.android.application"\) version "[^"]+"/id("com.android.application") version "${{ matrix.agp }}"/' settings.gradle.kts
+          sed -i -E 's/id\("org.jetbrains.kotlin.android"\) version "[^"]+"/id("org.jetbrains.kotlin.android") version "${{ matrix.kotlin }}"/' settings.gradle.kts
+          sed -i -E 's#(id\("org.jetbrains.kotlin.android"\) version "[^"]+" apply false)#\1\n    id("org.jetbrains.kotlin.plugin.compose") version "${{ matrix.kotlin }}" apply false#' settings.gradle.kts
+          sed -i -E "s#distributionUrl=.*#distributionUrl=https\\\\://services.gradle.org/distributions/gradle-${{ matrix.gradle }}-bin.zip#" gradle/wrapper/gradle-wrapper.properties
+          echo "android.suppressUnsupportedCompileSdk=37" >> gradle.properties
+          if [ "${{ matrix.nouveau_dsl }}" = "agp9" ]; then
+            echo "android.builtInKotlin=false" >> gradle.properties
+            echo "android.newDsl=false" >> gradle.properties
+          fi
+          # L'app : Compose + Glasmio.
+          A=app/build.gradle.kts
+          sed -i -E 's#(id\("kotlin-android"\))#\1\n    id("org.jetbrains.kotlin.plugin.compose")#' $A
+          sed -i -E 's/compileSdk = flutter.compileSdkVersion/compileSdk = ${{ matrix.sdk }}/' $A
+          sed -i -E 's/minSdk = flutter.minSdkVersion/minSdk = 24/' $A
+          sed -i -E 's/JavaVersion.VERSION_[0-9_]+/JavaVersion.VERSION_17/g; s/JvmTarget.JVM_[0-9_]+/JvmTarget.JVM_17/g' $A
+          sed -i -E 's/jvmTarget = JavaVersion.VERSION_17.toString\(\)/jvmTarget = "17"/' $A
+          cat >> $A <<'G'
+
+          android { buildFeatures { compose = true } }
+          dependencies {
+              implementation("io.github.neoruaa.glasmio:glasmio-scaffold:0.1.2")
+              implementation("io.github.neoruaa.glasmio:glasmio-preference:0.1.2")
+              implementation("androidx.activity:activity-compose:1.13.0")
+          }
+          G
+          sed -i 's/^          //' $A
+          # Glasmio exige l'API 33 : on le déclare, l'écran ne s'ouvre que sur 33+.
+          sed -i 's#<manifest xmlns:android="http://schemas.android.com/apk/res/android">#<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">\n    <uses-sdk tools:overrideLibrary="io.github.neoruaa.glasmio.core,io.github.neoruaa.glasmio.glass,io.github.neoruaa.glasmio.ui,io.github.neoruaa.glasmio.scaffold,io.github.neoruaa.glasmio.preference,io.github.neoruaa.glasmio.icons"/>#' app/src/main/AndroidManifest.xml
+          D=$(dirname $(find app/src/main -name MainActivity.kt))
+          cat > $D/EssaiGlasmio.kt <<'K'
+          package com.droplet.essai
+
+          import android.os.Bundle
+          import androidx.activity.ComponentActivity
+          import androidx.activity.compose.setContent
+          import androidx.compose.foundation.layout.*
+          import androidx.compose.material3.Text
+          import androidx.compose.runtime.*
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.unit.dp
+          import io.github.neoruaa.glasmio.core.*
+          import io.github.neoruaa.glasmio.glass.*
+          import io.github.neoruaa.glasmio.ui.*
+
+          class EssaiGlasmio : ComponentActivity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  setContent {
+                      GlasmioTheme {
+                          GlasmioBackdropHost(
+                              sampledColor = GlasmioTheme.colors.groupedBackground,
+                              modifier = Modifier.fillMaxSize(),
+                          ) {
+                              var actif by remember { mutableStateOf(true) }
+                              Column(Modifier.safeDrawingPadding().padding(24.dp)) {
+                                  Text("Droplet × Glasmio")
+                                  GlasmioSwitch(checked = actif, onCheckedChange = { actif = it })
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+          K
+          sed -i 's/^          //' $D/EssaiGlasmio.kt
+          echo "--- settings.gradle.kts" >> $J; cat settings.gradle.kts >> $J
+          echo "--- app/build.gradle.kts" >> $J; cat $A >> $J
+          cd /tmp/essai
+          flutter build apk --debug > /tmp/build.txt 2>&1
+          R=$?
+          echo "=== RESULTAT ${{ matrix.nom }} : $R" >> $J
+          grep -E "^e: |error:|FAILURE|What went wrong|incompatible|metadata|requires|minCompileSdk|BUILD (SUCCESSFUL|FAILED)|Unsupported class file|compileSdk" /tmp/build.txt | head -60 >> $J
+          tail -40 /tmp/build.txt >> $J
+          ls -la build/app/outputs/flutter-apk/ >> $J 2>&1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resultat-${{ matrix.nom }}
+          path: /tmp/res/
+  journal:
+    needs: essai
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: res
+      - name: Publier
+        run: |
+          git init -q j && cd j
+          git config user.name "verif" && git config user.email "verif@users.noreply.github.com"
+          git checkout -q -b journal-glasmio
+          cp ../res/*/*.txt . && git add . && git commit -qm "Essai Glasmio ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" journal-glasmio
