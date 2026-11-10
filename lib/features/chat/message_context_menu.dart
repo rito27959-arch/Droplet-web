@@ -40,6 +40,7 @@ import '../../design_system/ouro_typography.dart';
 import '../../design_system/glassmorphism.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../design_system/flou.dart';
+import '../../core/services/superposition_glasmio.dart';
 
 /// Une action proposée sous le message.
 class MessageAction {
@@ -112,14 +113,47 @@ Future<void> showMessageContextMenu({
   /// Appui sur l'aperçu lui-même : chez Apple, l'aperçu est un coup d'œil
   /// dans la destination, et le toucher y emmène.
   VoidCallback? onPreviewTap,
-}) {
+}) async {
   final box = anchorKey.currentContext?.findRenderObject() as RenderBox?;
-  if (box == null || !box.hasSize) return Future<void>.value();
+  if (box == null || !box.hasSize) return;
   final origin = box.localToGlobal(Offset.zero) & box.size;
 
   HapticFeedback.mediumImpact();
 
-  return Navigator.of(context, rootNavigator: true).push<void>(
+  // Android 13+ : le menu en vrai verre Glasmio. L'élément touché se
+  // soulève tel quel (image de l'écran) ; les mêmes actions, les mêmes
+  // réactions, les mêmes rappels.
+  final glasmio = await _menuGlasmio(
+    origin: origin,
+    actions: actions,
+    reactions: avecReactions ? _ContextMenuOverlay._emojis : const [],
+    current: current,
+    mine: mine,
+    apercuTouchable: onPreviewTap != null,
+  );
+  if (glasmio != null) {
+    final id = glasmio.id;
+    if (id == 'reaction' && glasmio.texte != null) {
+      onReact(glasmio.texte!);
+    } else if (id == 'apercu') {
+      onPreviewTap?.call();
+    } else if (id != null && id.startsWith('a')) {
+      var action = actions[int.parse(id.substring(1))];
+      // Un sous-menu (le « Plus » d'iOS) : un second menu, au même endroit.
+      while (action.sousActions != null) {
+        final sous = action.sousActions!;
+        final r = await _menuGlasmio(origin: origin, actions: sous, reactions: const [], current: const [], mine: mine, apercuTouchable: false);
+        final sid = r?.id;
+        if (sid == null || !sid.startsWith('a')) return;
+        action = sous[int.parse(sid.substring(1))];
+      }
+      action.onTap?.call();
+    }
+    return;
+  }
+  if (!context.mounted) return;
+
+  await Navigator.of(context, rootNavigator: true).push<void>(
     PageRouteBuilder<void>(
       opaque: false,
       barrierColor: Colors.transparent,
@@ -154,6 +188,27 @@ Future<void> showMessageContextMenu({
     ),
   );
 }
+
+/// Le menu Glasmio d'un appui long ; `null` si Glasmio n'est pas disponible.
+Future<ChoixGlasmio?> _menuGlasmio({
+  required Rect origin,
+  required List<MessageAction> actions,
+  required List<String> reactions,
+  required List<String> current,
+  required bool mine,
+  required bool apercuTouchable,
+}) =>
+    SuperpositionGlasmio.menu(
+      zone: origin,
+      elements: [
+        for (var i = 0; i < actions.length; i++)
+          ElementMenuGlasmio('a$i', actions[i].label, icone: actions[i].icon, destructif: actions[i].destructive),
+      ],
+      reactions: reactions,
+      actuelles: current,
+      aDroite: mine,
+      apercuTouchable: apercuTouchable,
+    );
 
 class _ContextMenuOverlay extends StatelessWidget {
   const _ContextMenuOverlay({

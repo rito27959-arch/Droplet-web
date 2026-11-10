@@ -88,6 +88,21 @@ object PontGlasmio {
                     }
                     resultat.success(null)
                 }
+                // Alerte, feuille d'actions ou menu d'appui long, par-dessus
+                // l'écran Flutter (voir SuperpositionGlasmio.kt).
+                "superposition" -> {
+                    val act = activiteFlutter?.get()
+                    val desc = appel.argument<String>("description")
+                    if (!disponible || act == null || desc == null) {
+                        resultat.success(mapOf("indisponible" to true))
+                        return@setMethodCallHandler
+                    }
+                    try {
+                        SuperpositionGlasmio.afficher(act, JSONObject(desc)) { r -> resultat.success(r ?: emptyMap<String, Any?>()) }
+                    } catch (e: Exception) {
+                        resultat.success(mapOf("indisponible" to true))
+                    }
+                }
                 "fermer" -> {
                     ecranOuvert?.get()?.finish()
                     resultat.success(null)

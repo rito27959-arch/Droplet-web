@@ -35,6 +35,7 @@ import 'ouro_colors.dart';
 import 'ouro_haptics.dart';
 import 'liquid_bridge_native.dart';
 import '../l10n/generated/app_localizations.dart';
+import '../core/services/superposition_glasmio.dart';
 
 /// Une question fermée, posée à la manière d'iOS.
 ///
@@ -53,11 +54,26 @@ Future<bool?> ouroConfirm(
   String? confirmLabel,
   String? cancelLabel,
   bool destructive = false,
-}) {
+}) async {
   // Les libellés par défaut viennent de la langue de l'app, pas du
   // français : un bouton « Annuler » en chinois, c'est un bug visible.
   final l10n = AppLocalizations.of(context);
   OuroHaptics.light();
+
+  // Android 13+ : l'alerte en vrai verre Glasmio, par-dessus l'écran figé.
+  final glasmio = await SuperpositionGlasmio.alerte(
+    titre: title,
+    message: message,
+    boutons: [
+      BoutonGlasmio('cancel', cancelLabel ?? l10n.actionCancel, annuler: true),
+      BoutonGlasmio('confirm', confirmLabel ?? l10n.obContinue, destructif: destructive),
+    ],
+  );
+  if (glasmio != null) {
+    if (glasmio.id == 'confirm' && destructive) OuroHaptics.warning();
+    return glasmio.id == 'confirm';
+  }
+  if (!context.mounted) return null;
 
   if (isNativeGlassAvailable) {
     return showNativeGlassAlert<bool>(
@@ -117,11 +133,28 @@ Future<T?> ouroChoice<T>(
   String? message,
   required List<OuroChoiceOption<T>> options,
   String? cancelLabel,
-}) {
+}) async {
   // Les libellés par défaut viennent de la langue de l'app, pas du
   // français : un bouton « Annuler » en chinois, c'est un bug visible.
   final l10n = AppLocalizations.of(context);
   OuroHaptics.light();
+
+  final glasmio = await SuperpositionGlasmio.alerte(
+    titre: title,
+    message: message,
+    boutons: [
+      for (var i = 0; i < options.length; i++)
+        BoutonGlasmio('o$i', options[i].label, destructif: options[i].destructive),
+      BoutonGlasmio('cancel', cancelLabel ?? l10n.actionCancel, annuler: true),
+    ],
+  );
+  if (glasmio != null) {
+    final id = glasmio.id;
+    if (id == null || !id.startsWith('o')) return null;
+    final i = int.tryParse(id.substring(1));
+    return (i == null || i >= options.length) ? null : options[i].value;
+  }
+  if (!context.mounted) return null;
 
   if (isNativeGlassAvailable) {
     return showNativeGlassAlert<T>(
@@ -185,10 +218,26 @@ Future<String?> ouroPrompt(
   String? cancelLabel,
   bool obscure = false,
   int? maxLength,
-}) {
+}) async {
   final l10n = AppLocalizations.of(context);
-  final controller = TextEditingController(text: initialValue);
   OuroHaptics.light();
+
+  // Glasmio n'a pas de saisie masquée : les mots de passe gardent la boîte
+  // Flutter.
+  if (!obscure) {
+    final glasmio = await SuperpositionGlasmio.alerte(
+      titre: title,
+      message: message,
+      champ: (texte: initialValue, indice: placeholder, max: maxLength),
+      boutons: [
+        BoutonGlasmio('cancel', cancelLabel ?? l10n.actionCancel, annuler: true),
+        BoutonGlasmio('ok', confirmLabel ?? l10n.actionSave),
+      ],
+    );
+    if (glasmio != null) return glasmio.id == 'ok' ? (glasmio.texte ?? '') : null;
+    if (!context.mounted) return null;
+  }
+  final controller = TextEditingController(text: initialValue);
 
   if (isNativeGlassAvailable) {
     // Sur iOS 26+, on utilise un UITextField natif dans un alert controller
