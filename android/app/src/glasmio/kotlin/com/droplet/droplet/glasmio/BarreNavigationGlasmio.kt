@@ -245,10 +245,11 @@ object BarreNavigationGlasmio {
         val cadres = remember { mutableStateMapOf<Int, RectCompose>() }
         var origine by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
 
-        val transition = rememberGlasmioSearchTransition(enRecherche)
-        val morph = transition.progressState.value.coerceIn(0f, 1f)
-        val couvre = enRecherche || morph > 0.001f
-        LaunchedEffect(couvre) { pleinEcran(couvre) }
+        // ESSAI DE BISSECTION : sans l'horloge de la transformation ni l'effet
+        // de plein écran (la recherche ne s'ouvre pas dans cet essai).
+        val transition = null as io.github.neoruaa.glasmio.scaffold.GlasmioSearchTransition?
+        val morph = 0f
+        val couvre = false
 
         GlasmioIconProvider(resolver = RESOLVEUR_BARRE) {
             GlasmioTheme(isDark = sombre, colorScheme = glasmioColorScheme(sombre, accent)) {
