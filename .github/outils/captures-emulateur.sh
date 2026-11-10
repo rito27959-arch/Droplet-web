@@ -18,9 +18,8 @@ adb shell pm grant $P android.permission.POST_NOTIFICATIONS 2>/dev/null
 adb logcat -c
 adb shell am start -n $P/com.droplet.droplet.MainActivity >> $J 2>&1
 # Diagnostic : tout le journal dès le lancement, écrit au fil de l'eau (il
-# reste même si l'émulateur se fige), et l'état du processeur à 15, 30, 60 s.
+# reste même si l'émulateur se fige).
 ( timeout 240 adb logcat -v time > $C/logcat_complet.txt 2>&1 ) &
-( for t in 15 15 30; do sleep $t; echo "== $(date +%T)" >> $C/top.txt; timeout 15 adb shell top -b -n 1 -m 12 >> $C/top.txt 2>&1; done ) &
 # Filet : une image au bout de 45 s, quoi qu'il arrive.
 ( sleep 45; timeout 20 adb exec-out screencap -p > $C/00-demarrage.png ) &
 i=1
