@@ -24,6 +24,7 @@
 
 import 'package:flutter/cupertino.dart' show CupertinoSliverRefreshControl;
 import 'package:flutter/material.dart';
+import 'flou_glasmio.dart';
 import 'package:go_router/go_router.dart';
 import 'ouro_colors.dart';
 import 'ouro_haptics.dart';
@@ -229,7 +230,27 @@ class _OuroLargeTitleScaffoldState extends State<OuroLargeTitleScaffold> {
       floatingActionButton: widget.floatingActionButton,
       body: Stack(
         children: [
-          content,
+          // Le contenu s'estompe sous la barre en défilant, et le flou
+          // progressif de Glasmio apparaît par-dessus (voir flou_glasmio.dart).
+          ValueListenableBuilder<double>(
+            valueListenable: _progression,
+            builder: (context, t, child) => EstompeDefilementGlasmio(
+              progression: t,
+              haut: topPadding,
+              bas: topPadding + navBarHeight,
+              child: child!,
+            ),
+            child: content,
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ValueListenableBuilder<double>(
+              valueListenable: _progression,
+              builder: (context, t, _) => FlouDefilementGlasmio(progression: (t / 0.55).clamp(0.0, 1.0)),
+            ),
+          ),
           // La barre de navigation flottante.
           Positioned(
             top: 0,
@@ -325,22 +346,11 @@ class _NavigationBar extends StatelessWidget {
     final opaciteTitre =
         Curves.easeOut.transform(((progression - 0.55) / 0.45).clamp(0.0, 1.0));
 
-    return OuroBlurSurface(
-      material: OuroMaterial.thin,
-      intensite: opaciteFond,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _bar(context, opaciteTitre),
-          SizedBox(
-            height: 0.5,
-            child: ColoredBox(
-              color: OuroColors.separator.withValues(alpha: opaciteTrait),
-            ),
-          ),
-        ],
-      ),
-    );
+    // ⚠️ PLUS DE VOILE TEINTÉ NI DE TRAIT : comme chez Glasmio, la barre est
+    // le flou progressif seul (posé dessous par l'écran), sans couleur
+    // ajoutée ni séparateur.
+    assert(opaciteFond >= 0 && opaciteTrait >= 0);
+    return _bar(context, opaciteTitre);
   }
 
   Widget _bar(BuildContext context, double opaciteTitre) {

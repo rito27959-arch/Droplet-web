@@ -158,6 +158,7 @@ import '../lecteur/lecteur_pdf.dart';
 import '../group/reglages_groupe.dart';
 import '../call/salon_vocal.dart';
 import '../../design_system/flou.dart';
+import '../../design_system/flou_glasmio.dart';
 import '../../core/config/compte_droplet.dart';
 import '../../shared/widgets/avatar_officiel.dart';
 import '../../core/services/raccourcis_conversation.dart';
@@ -4056,9 +4057,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               // Le voile ne disparaît pas pour autant : c'est lui qui garantit
               // que le nom du contact reste lisible quand une photo sombre
               // passe dessous.
-              flexibleSpace: const OuroBlurSurface(
-                material: OuroMaterial.ultraThin,
-                child: SizedBox.expand(),
+              // Le flou progressif de Glasmio (voir flou_glasmio.dart) : la
+              // conversation passe toujours dessous, il est donc toujours là.
+              flexibleSpace: LayoutBuilder(
+                builder: (context, c) => FlouDefilementGlasmio(progression: 1, hauteur: c.maxHeight),
               ),
               // ⚠️ AUCUN BOUTON RETOUR DANS UNE BULLE. Il n'y a rien
               // derrière : la bulle est une fenêtre posée sur une autre

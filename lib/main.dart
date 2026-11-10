@@ -47,6 +47,7 @@ import 'core/services/reponses_differees.dart';
 import 'features/premium/pro_glasmio.dart';
 import 'core/services/barre_glasmio.dart';
 import 'captures_glasmio.dart';
+import 'design_system/flou_glasmio.dart';
 import 'features/notifications/notifs_glasmio.dart';
 import 'features/appareils/appareils_glasmio.dart';
 import 'features/aide/aide_glasmio.dart';
@@ -260,6 +261,8 @@ Future<void> main() async {
   // compiler quand même un programme graphique qu'on n'affichera jamais,
   // c'est payer le coût sans le bénéfice.
   if (!DeviceProfile.sansShader) unawaited(LiquidShader.load());
+  // Le flou de défilement de Glasmio des écrans Flutter (flou_glasmio.dart).
+  unawaited(FlouGlasmio.charger());
   // ⚠️ PLUS DE PRÉCOMPILATION DE SHADER POUR NEXUS (connexion entre
   // appareils) — la séquence de connexion ne s'appuie plus sur un
   // fragment shader GLSL. Voir l'en-tête de

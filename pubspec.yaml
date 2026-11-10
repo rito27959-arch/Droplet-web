@@ -303,6 +303,7 @@ flutter:
   # voir `lib/design_system/ouro_liquid.dart` pour leur utilisation.
   shaders:
     - shaders/liquid.frag
+    - shaders/flou_progressif_glasmio.frag
     - shaders/nexus.frag
     - shaders/fond_prisme.frag
     - shaders/lentille_ios.frag
