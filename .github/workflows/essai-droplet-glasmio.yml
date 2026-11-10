@@ -51,7 +51,7 @@ jobs:
           flutter pub get > /dev/null 2>&1
           flutter build apk --debug > /tmp/d.txt 2>&1
           echo "=== DEBUG : $?" >> $J
-          grep -E "^e: |error:|What went wrong|FAILURE|requires|incompatible|Could not|not found|Unresolved|BUILD (SUCCESSFUL|FAILED)" /tmp/d.txt | head -50 >> $J
+          grep -E "^e: |error:|Error:|Error |lib/.*dart:[0-9]+|What went wrong|FAILURE|requires|incompatible|Could not|not found|Unresolved|No file|BUILD (SUCCESSFUL|FAILED)" /tmp/d.txt | head -60 >> $J
           sed -n '/What went wrong/,/Try:/p' /tmp/d.txt | head -40 >> $J
           flutter build apk --release --split-per-abi > /tmp/r.txt 2>&1
           echo "=== RELEASE (R8) : $?" >> $J

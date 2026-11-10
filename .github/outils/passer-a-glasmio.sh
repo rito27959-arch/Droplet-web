@@ -9,6 +9,15 @@ sed -i -E 's/id\("org.jetbrains.kotlin.android"\) version "[^"]+" apply false/id
 sed -i -E 's#distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-9.6.0-bin.zip#' gradle/wrapper/gradle-wrapper.properties
 grep -q builtInKotlin gradle.properties || printf '\nandroid.builtInKotlin=false\nandroid.newDsl=false\n' >> gradle.properties
 A=app/build.gradle.kts
+# Kotlin 2.4 refuse l'ancien bloc `kotlinOptions` : même réglage (Java 17),
+# écrit avec `kotlin { compilerOptions }` — forme qui marche aussi en 2.2.
+python3 - "$A" <<'PY'
+import re, sys
+p = sys.argv[1]; s = open(p).read()
+s = re.sub(r"\n    kotlinOptions \{\n        jvmTarget = JavaVersion\.VERSION_17\.toString\(\)\n    \}\n", "\n", s)
+s = s.replace("\nflutter {", "\nkotlin {\n    compilerOptions {\n        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17\n    }\n}\n\nflutter {", 1)
+open(p, "w").write(s)
+PY
 sed -i -E 's#^(    id\("kotlin-android"\))#\1\n    id("org.jetbrains.kotlin.plugin.compose")#' $A
 sed -i -E 's/compileSdk = flutter.compileSdkVersion/compileSdk = 37/' $A
 cat >> $A <<'G'
