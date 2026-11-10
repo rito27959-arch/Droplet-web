@@ -115,6 +115,9 @@ import androidx.compose.material.icons.rounded.Key
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Archive
+import androidx.compose.material.icons.rounded.ForwardToInbox
+import androidx.compose.material.icons.rounded.Podcasts
+import androidx.compose.material.icons.rounded.PersonSearch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -210,6 +213,9 @@ internal val ICONES: Map<String, ImageVector> = mapOf(
     "flag" to Icons.Rounded.Flag,
     "play_circle" to Icons.Rounded.PlayCircle,
     "image" to Icons.Rounded.Image,
+    "person_search" to Icons.Rounded.PersonSearch,
+    "podcasts" to Icons.Rounded.Podcasts,
+    "forward_to_inbox" to Icons.Rounded.ForwardToInbox,
     "stop_circle" to Icons.Rounded.StopCircle,
     "alternate_email" to Icons.Rounded.AlternateEmail,
     "view_day" to Icons.Rounded.ViewDay,
@@ -418,9 +424,15 @@ internal fun Ligne(l: JSONObject, premiere: Boolean, provisoire: MutableMap<Stri
                 .then(if (l.optBoolean("cliquable")) Modifier.clickable { PontGlasmio.evenement(id) } else Modifier)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
-            Text(l.optString("titre"), style = IosTypography.body, fontWeight = FontWeight.SemiBold, color = couleurs.content)
+            val titre = l.texte("titre")
+            titre?.let { Text(it, style = IosTypography.body, fontWeight = FontWeight.SemiBold, color = couleurs.content) }
             l.texte("sous")?.let {
-                Text(it, style = IosTypography.subheadline, color = couleurs.secondaryContent, modifier = Modifier.padding(top = 4.dp))
+                Text(
+                    it,
+                    style = if (titre == null) IosTypography.body else IosTypography.subheadline,
+                    color = if (titre == null) couleurs.content else couleurs.secondaryContent,
+                    modifier = Modifier.padding(top = if (titre == null) 0.dp else 4.dp),
+                )
             }
         }
         // Une ligne d'information, sans geste.
@@ -620,8 +632,9 @@ internal fun Vitrine(v: JSONObject) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // L'emblème : l'icône de Droplet Pro sur l'accent, comme une icône d'app.
+        val teinte = couleur(v, "teinte", couleurs.accent)
         Box(
-            Modifier.size(84.dp).clip(RoundedCornerShape(22.dp)).background(couleurs.accent),
+            Modifier.size(84.dp).clip(RoundedCornerShape(22.dp)).background(teinte),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -630,6 +643,29 @@ internal fun Vitrine(v: JSONObject) {
                 tint = Color.White,
                 modifier = Modifier.size(46.dp),
             )
+        }
+        v.texte("titre")?.let {
+            Text(it, style = IosTypography.title2, fontWeight = FontWeight.Bold, color = teinte, modifier = Modifier.padding(top = 14.dp))
+        }
+        v.texte("sous")?.let {
+            Text(it, style = IosTypography.subheadline, color = couleurs.secondaryContent, modifier = Modifier.padding(top = 2.dp))
+        }
+        // Une jauge (progression vers le palier suivant).
+        if (v.has("progression")) {
+            val p = v.optDouble("progression", 0.0).toFloat().coerceIn(0f, 1f)
+            Box(
+                Modifier
+                    .padding(top = 16.dp)
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(couleurs.elevatedBackground),
+            ) {
+                Box(Modifier.fillMaxWidth(p).height(8.dp).clip(RoundedCornerShape(50)).background(teinte))
+            }
+            v.texte("legende")?.let {
+                Text(it, fontSize = 12.sp, color = couleurs.secondaryContent, modifier = Modifier.padding(top = 6.dp))
+            }
         }
         v.texte("texte")?.let {
             Text(

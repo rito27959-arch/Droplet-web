@@ -50,6 +50,9 @@ import 'captures_glasmio.dart';
 import 'features/notifications/notifs_glasmio.dart';
 import 'features/appareils/appareils_glasmio.dart';
 import 'features/aide/aide_glasmio.dart';
+import 'features/contribution/contribution_glasmio.dart';
+import 'features/tor/tor_glasmio.dart';
+import 'features/aide/donnees_glasmio.dart';
 import 'core/services/raccourcis_conversation.dart';
 import 'features/settings/stockage_screen.dart';
 import 'features/autoriser/autoriser_app.dart';
@@ -886,7 +889,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/contribution',
-      pageBuilder: (context, state) => _pushPage(const ContributionScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserelleContribution()),
     ),
     GoRoute(
       path: '/map',
@@ -945,11 +948,11 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/aide/confidentialite',
-      pageBuilder: (context, state) => _pushPage(const PolitiqueScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserellePolitique()),
     ),
     GoRoute(
       path: '/aide/donnees',
-      pageBuilder: (context, state) => _pushPage(const DonneesScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserelleDonnees()),
     ),
     // ⚠️ APRÈS SES ENFANTS. `go_router` prend la PREMIÈRE route qui
     // correspond : déclarée avant, `/aide` ne capterait pas
@@ -969,7 +972,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/tor',
-      pageBuilder: (context, state) => _pushPage(const TorSettingsScreen()),
+      pageBuilder: (context, state) => _pushPage(const PasserelleTor()),
     ),
     GoRoute(
       path: '/tor/qr',
