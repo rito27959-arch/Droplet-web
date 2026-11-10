@@ -55,43 +55,17 @@ gradle/wrapper/gradle-wrapper.properties:distributionUrl=https\://services.gradl
 517:        <activity android:name="com.droplet.droplet.glasmio.EcranGlasmioActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode|density" />
 === ANALYSE (fichiers Glasmio)
 code 1
-warning • Returning a 'Future' without 'await' inside a try block. Try adding an 'await' • lib/core/services/annonces_droplet.dart:372:7 • unawaited_return_in_try_block
-warning • The value of the field '_torService' isn't used. Try removing the field, or using it • lib/core/services/mesh_transport_service.dart:337:21 • unused_field
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:569:22 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:570:22 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:587:51 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:701:47 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:1778:51 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:1789:51 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:1943:20 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:1944:20 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:1959:25 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:1968:25 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:1983:25 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:1992:25 • unnecessary_non_null_assertion
-warning • The '!' will have no effect because the receiver can't be null. Try removing the '!' operator • lib/core/services/mesh_transport_service.dart:1998:25 • unnecessary_non_null_assertion
-warning • The value of the local variable 'lignes' isn't used. Try removing the variable or using it • lib/core/services/outils_assistant.dart:468:11 • unused_local_variable
-warning • Dead code. Try removing the code, or fixing the code before it so that it can be reached • lib/core/services/production_fichiers.dart:233:64 • dead_code
-warning • The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand • lib/core/services/production_fichiers.dart:233:67 • dead_null_aware_expression
-warning • Dead code. Try removing the code, or fixing the code before it so that it can be reached • lib/core/services/production_fichiers.dart:263:39 • dead_code
-warning • The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand • lib/core/services/production_fichiers.dart:263:42 • dead_null_aware_expression
-warning • Dead code. Try removing the code, or fixing the code before it so that it can be reached • lib/core/services/production_fichiers.dart:354:39 • dead_code
-warning • The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand • lib/core/services/production_fichiers.dart:354:42 • dead_null_aware_expression
-warning • Returning a 'Future' without 'await' inside a try block. Try adding an 'await' • lib/core/services/sauvegarde_en_ligne.dart:163:7 • unawaited_return_in_try_block
-warning • The value of the field '_roomId' isn't used. Try removing the field, or using it • lib/core/services/signaling_client.dart:99:11 • unused_field
-warning • Unused import: '../../design_system/glassmorphism.dart'. Try removing the import directive • lib/features/chat/chat_info_screen.dart:32:8 • unused_import
-warning • Unused import: '../../shared/widgets/peer_avatar.dart'. Try removing the import directive • lib/features/chat/chat_info_screen.dart:36:8 • unused_import
-warning • Unused import: 'messages_ephemeres.dart'. Try removing the import directive • lib/features/chat/chat_info_screen.dart:51:8 • unused_import
   error • Undefined class 'ConnectedPeer'. Try changing the name to the name of an existing class, or creating a class with the name 'ConnectedPeer' • lib/features/chat/infos_contact_glasmio.dart:222:5 • undefined_class
-   info • The import of 'package:flutter/scheduler.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart'. Try removing the import directive • lib/features/settings/settings_screen.dart:24:8 • unnecessary_import
+0
+warning • The declaration '_hold' isn't referenced. Try removing the declaration of '_hold' • lib/features/status/status_viewer_screen.dart:544:8 • unused_element
 
-30 issues found. (ran in 27.1s)
+53 issues found. (ran in 23.7s)
 === DEBUG : 1
 an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
 lib/features/chat/infos_contact_glasmio.dart:222:5: Error: 'ConnectedPeer' isn't a type.
 FAILURE: Build failed with an exception.
 * What went wrong:
-BUILD FAILED in 4m 59s
+BUILD FAILED in 5m 5s
 * What went wrong:
 Execution failed for task ':app:compileFlutterBuildDebug' (registered by plugin 'dev.flutter.flutter-gradle-plugin').
 > Process 'command '/opt/hostedtoolcache/flutter/stable-3.47.9-x64/flutter/bin/flutter'' finished with non-zero exit value 1
