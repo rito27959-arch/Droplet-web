@@ -427,8 +427,41 @@ class _FondSalon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // SANS EFFET (demandé) : un fond uni, ni dégradé ni respiration.
-    return const ColoredBox(color: OuroColors.callBackground, child: SizedBox.expand());
+    final base = const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment(0, -0.35),
+          radius: 1.15,
+          colors: [OuroColors.callGlow, OuroColors.callBackground],
+        ),
+      ),
+      child: SizedBox.expand(),
+    );
+    // Les appareils modestes n'ont pas besoin d'un deuxième dégradé plein
+    // écran redessiné à chaque image.
+    if (!anime || DeviceProfile.menager) return base;
+    return Stack(
+      children: [
+        Positioned.fill(child: base),
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: respiration,
+            builder: (context, _) => DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0, -0.55),
+                  radius: 1.0,
+                  colors: [
+                    teinte.withValues(alpha: 0.05 + respiration.value * 0.05),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -751,8 +784,19 @@ class _TuileOccupant extends StatelessWidget {
           curve: DesignTokens.curveEnter,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(26),
-            // SANS EFFET (demandé) : une couleur unie, pas de dégradé.
-            color: o.parle ? o.couleur.withValues(alpha: 0.14) : Colors.white.withValues(alpha: 0.07),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: o.parle
+                  ? [
+                      o.couleur.withValues(alpha: 0.18),
+                      o.couleur.withValues(alpha: 0.05),
+                    ]
+                  : [
+                      Colors.white.withValues(alpha: 0.10),
+                      Colors.white.withValues(alpha: 0.04),
+                    ],
+            ),
             border: Border.all(
               color: o.parle
                   ? o.couleur.withValues(alpha: 0.6)
@@ -763,8 +807,9 @@ class _TuileOccupant extends StatelessWidget {
             // une ombre noire sobre, voulue telle quelle dans le système.
             // Ce qui désigne vraiment celui qui parle, c'est le dégradé, le
             // trait, les ondes et le demi-point d'échelle — pas ça.
-            // SANS EFFET (demandé) : pas d'ombre lumineuse.
-            boxShadow: null,
+            boxShadow: o.parle
+                ? DesignTokens.glow(o.couleur, radius: 26, spread: 0)
+                : null,
           ),
           child: Stack(
             children: [
@@ -960,8 +1005,16 @@ class _AvatarOccupantState extends State<_AvatarOccupant>
       animation: _pulse,
       builder: (context, child) {
         if (!widget.actif) return child!;
-        // SANS EFFET (demandé) : pas de lueur qui pulse autour de l'avatar.
-        return child!;
+        final glowRadius =
+            widget.parle ? 12 + _pulse.value * 14 : 8 + _pulse.value * 8;
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: DesignTokens.glow(widget.couleur,
+                radius: glowRadius, spread: widget.parle ? 2 : 1),
+          ),
+          child: child,
+        );
       },
       child: SizedBox(
         // Assez large pour que les ondes ne soient pas rognées.
@@ -974,9 +1027,7 @@ class _AvatarOccupantState extends State<_AvatarOccupant>
             // décalées d'un demi-temps : on repère la voix avant même de
             // lire le nom. Elles ne tournent que pour lui, sinon quatre
             // avatars pulseraient ensemble et plus rien ne se distinguerait.
-            // SANS EFFET (demandé) : plus d'ondes ; celui qui parle se repère
-            // au trait plus épais de sa tuile.
-            if (false)
+            if (widget.parle)
               AnimatedBuilder(
                 animation: _pulse,
                 builder: (context, _) => SizedBox.expand(
@@ -1083,9 +1134,16 @@ class _BarreReactions extends StatelessWidget {
       borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
       border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
     );
-    // SANS EFFET (demandé) : ni flou ni verre.
     return Center(
-      child: DecoratedBox(decoration: decor, child: contenu),
+      child: DeviceProfile.menager
+          ? DecoratedBox(decoration: decor, child: contenu)
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
+              child: Flou(repli: const Color(0x66000000), 
+                filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: DecoratedBox(decoration: decor, child: contenu),
+              ),
+            ),
     )
         .animate()
         .fadeIn(duration: DesignTokens.durationStandard)
@@ -1411,10 +1469,49 @@ class _BarreControlesSalon extends StatelessWidget {
       borderRadius: BorderRadius.circular(30),
       border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
     );
-    // SANS EFFET (demandé) : ni flou, ni verre — une barre sombre unie.
+    // Flou d'arrière-plan seulement là où l'appareil peut se le permettre.
+    final repli = DeviceProfile.menager
+        ? DecoratedBox(decoration: decor, child: contenu)
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: Flou(repli: const Color(0x66000000),
+              filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: DecoratedBox(decoration: decor, child: contenu),
+            ),
+          );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: DecoratedBox(decoration: decor, child: contenu),
+      // Avec Glasmio : la même barre, en vrai verre natif, posée par-dessus.
+      child: BarreAppelGlasmio(
+        visible: true,
+        repli: repli,
+        boutons: [
+          BoutonBarreAppel(
+            id: 'haut_parleur',
+            icone: hautParleur ? 'haut_parleur_on' : 'haut_parleur_off',
+            legende: l10n.clLabelSpeaker,
+            semantique: hautParleur ? l10n.clDisableSpeaker : l10n.clEnableSpeaker,
+            actif: hautParleur,
+            onTap: onHautParleur,
+          ),
+          BoutonBarreAppel(
+            id: 'micro',
+            icone: muet ? 'micro_off' : 'micro',
+            legende: l10n.clLabelMic,
+            semantique: muet ? l10n.clEnableMic : l10n.clMuteMic,
+            actif: muet,
+            onTap: onMicro,
+          ),
+          BoutonBarreAppel(
+            id: 'raccrocher',
+            icone: 'raccrocher',
+            legende: l10n.clHangUp,
+            semantique: l10n.clHangUp,
+            destructif: true,
+            onTap: onRaccrocher,
+          ),
+        ],
+      ),
     );
   }
 }

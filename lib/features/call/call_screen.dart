@@ -579,8 +579,15 @@ class _FondAppel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // SANS EFFET (demandé) : un fond uni, ni halo ni dégradé.
-    return const ColoredBox(color: OuroColors.callBackground);
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment(0, -0.3),
+          radius: 1.15,
+          colors: [OuroColors.callGlow, OuroColors.callBackground],
+        ),
+      ),
+    );
   }
 }
 
@@ -660,13 +667,55 @@ class _AvatarVocal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // SANS EFFET (demandé) : la photo, nette — ni halo qui respire, ni
-    // anneau qui suit la voix.
     final photo = AvatarService.cheminPair(peerId);
-    return SizedBox(
-      width: 250,
-      height: 250,
-      child: Center(
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: aura,
+        builder: (context, enfant) {
+          final b = Curves.easeInOut.transform(aura.value);
+          final voix = niveauVoix.clamp(0.0, 1.0);
+          final teinte = connecte ? OuroColors.successGreen : OuroColors.meshBlueBright;
+          final halo = sonne ? 1.0 + 0.12 * b : 1.0 + 0.05 * b + 0.22 * voix;
+          return SizedBox(
+            width: 250,
+            height: 250,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Transform.scale(
+                  scale: halo,
+                  child: Container(
+                    width: 210,
+                    height: 210,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          teinte.withValues(alpha: sonne ? 0.30 : 0.20 + 0.20 * voix),
+                          teinte.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 148 + 16 * voix,
+                  height: 148 + 16 * voix,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      width: 2,
+                      color: teinte.withValues(
+                        alpha: sonne ? 0.25 + 0.30 * b : 0.18 + 0.55 * voix,
+                      ),
+                    ),
+                  ),
+                ),
+                enfant!,
+              ],
+            ),
+          );
+        },
         child: Hero(
           tag: 'avatar-$peerId',
           child: PeerAvatar(pseudo: pseudo, radius: 64, imagePath: photo),
@@ -905,8 +954,63 @@ class _BarreControles extends StatelessWidget {
       borderRadius: BorderRadius.circular(30),
       border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
     );
-    // SANS EFFET (demandé) : ni flou, ni verre — une barre sombre unie.
-    return DecoratedBox(decoration: decor, child: contenu);
+    // Flou d'arrière-plan seulement là où l'appareil peut se le permettre.
+    final repli = DeviceProfile.menager
+        ? DecoratedBox(decoration: decor, child: contenu)
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: Flou(repli: const Color(0x66000000),
+              filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: DecoratedBox(decoration: decor, child: contenu),
+            ),
+          );
+    // Avec Glasmio : la même barre, en vrai verre natif, posée par-dessus.
+    return BarreAppelGlasmio(
+      visible: visible,
+      repli: repli,
+      boutons: [
+        BoutonBarreAppel(
+          id: 'haut_parleur',
+          icone: call.isSpeakerOn ? 'haut_parleur_on' : 'haut_parleur_off',
+          legende: l10n.clLabelSpeaker,
+          semantique: call.isSpeakerOn ? l10n.clDisableSpeaker : l10n.clEnableSpeaker,
+          actif: call.isSpeakerOn,
+          onTap: onSpeaker,
+        ),
+        BoutonBarreAppel(
+          id: 'camera',
+          icone: call.isVideoEnabled ? 'camera_on' : 'camera_off',
+          legende: l10n.clLabelCamera,
+          semantique: call.isVideoEnabled ? l10n.clDisableCamera : l10n.clEnableCamera,
+          actif: call.isVideoEnabled,
+          onTap: onVideo,
+        ),
+        if (call.isVideoEnabled)
+          BoutonBarreAppel(
+            id: 'retourner',
+            icone: 'retourner',
+            legende: l10n.clLabelFlip,
+            semantique: l10n.clSwitchCamera,
+            onTap: onFlip,
+          ),
+        BoutonBarreAppel(
+          id: 'micro',
+          icone: call.isMuted ? 'micro_off' : 'micro',
+          legende: l10n.clLabelMic,
+          semantique: call.isMuted ? l10n.clEnableMic : l10n.clMuteMic,
+          actif: call.isMuted,
+          onTap: onMute,
+        ),
+        BoutonBarreAppel(
+          id: 'raccrocher',
+          icone: 'raccrocher',
+          legende: l10n.clHangUp,
+          semantique: l10n.clHangUp,
+          destructif: true,
+          onTap: onHangUp,
+        ),
+      ],
+    );
   }
 }
 
