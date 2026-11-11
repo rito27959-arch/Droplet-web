@@ -23,7 +23,6 @@
 // `webrtc_call_service.dart`, `mesh_provider.dart`) : ce fichier n'affiche.
 // ============================================================================
 
-import 'barre_appel_glasmio.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -964,53 +963,8 @@ class _BarreControles extends StatelessWidget {
               child: DecoratedBox(decoration: decor, child: contenu),
             ),
           );
-    // Avec Glasmio : la même barre, en vrai verre natif, posée par-dessus.
-    return BarreAppelGlasmio(
-      visible: visible,
-      repli: repli,
-      boutons: [
-        BoutonBarreAppel(
-          id: 'haut_parleur',
-          icone: call.isSpeakerOn ? 'haut_parleur_on' : 'haut_parleur_off',
-          legende: l10n.clLabelSpeaker,
-          semantique: call.isSpeakerOn ? l10n.clDisableSpeaker : l10n.clEnableSpeaker,
-          actif: call.isSpeakerOn,
-          onTap: onSpeaker,
-        ),
-        BoutonBarreAppel(
-          id: 'camera',
-          icone: call.isVideoEnabled ? 'camera_on' : 'camera_off',
-          legende: l10n.clLabelCamera,
-          semantique: call.isVideoEnabled ? l10n.clDisableCamera : l10n.clEnableCamera,
-          actif: call.isVideoEnabled,
-          onTap: onVideo,
-        ),
-        if (call.isVideoEnabled)
-          BoutonBarreAppel(
-            id: 'retourner',
-            icone: 'retourner',
-            legende: l10n.clLabelFlip,
-            semantique: l10n.clSwitchCamera,
-            onTap: onFlip,
-          ),
-        BoutonBarreAppel(
-          id: 'micro',
-          icone: call.isMuted ? 'micro_off' : 'micro',
-          legende: l10n.clLabelMic,
-          semantique: call.isMuted ? l10n.clEnableMic : l10n.clMuteMic,
-          actif: call.isMuted,
-          onTap: onMute,
-        ),
-        BoutonBarreAppel(
-          id: 'raccrocher',
-          icone: 'raccrocher',
-          legende: l10n.clHangUp,
-          semantique: l10n.clHangUp,
-          destructif: true,
-          onTap: onHangUp,
-        ),
-      ],
-    );
+    // Sans la barre Glasmio native (demandé) : la barre floutée d'origine.
+    return repli;
   }
 }
 
