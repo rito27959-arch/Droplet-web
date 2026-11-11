@@ -58,7 +58,7 @@ code 0
 0
 warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:136:8 • unused_import
 
-69 issues found. (ran in 24.0s)
+69 issues found. (ran in 28.9s)
 === DEBUG : 1
 an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
@@ -77,7 +77,7 @@ e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/
 e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:154:14 Conflicting overloads:
 FAILURE: Build failed with an exception.
 * What went wrong:
-BUILD FAILED in 7m 52s
+BUILD FAILED in 10m 18s
 * What went wrong:
 Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'kotlin-android').
 > A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
