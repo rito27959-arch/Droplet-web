@@ -1,6 +1,5 @@
 package com.droplet.droplet
 
-import android.content.ComponentName
 import android.app.PictureInPictureParams
 import android.content.Intent
 import android.content.res.Configuration
@@ -10,7 +9,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.ContactsContract
 import android.view.WindowManager
-import android.content.pm.PackageManager
 import androidx.core.app.Person
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -37,8 +35,9 @@ import io.flutter.plugin.common.MethodChannel
  * 1. Le changement ferme l'application sur la plupart des lanceurs.
  *    Désactiver le composant par lequel l'app a été lancée revient à
  *    couper la branche sur laquelle on est assis : Android termine le
- *    processus. C'est le comportement normal, y compris chez les grandes
- *    applications — l'interface prévient donc l'utilisateur avant.
+ *    processus. D'où IconeApp.kt : le choix est noté tout de suite et la
+ *    bascule n'a lieu qu'en QUITTANT Droplet — l'app ne se ferme plus
+ *    sous les doigts.
  *
  * 2. L'ordre compte. On ACTIVE la nouvelle icône AVANT de désactiver
  *    l'ancienne : si l'on faisait l'inverse et que le processus était
@@ -54,7 +53,14 @@ class MainActivity : FlutterFragmentActivity() {
         super.onPause()
     }
 
+    // L'icône choisie s'applique quand on QUITTE Droplet (voir IconeApp.kt).
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        IconeApp.appliquerEnAttente(applicationContext)
+    }
+
     override fun onDestroy() {
+        if (isFinishing) IconeApp.appliquerEnAttente(applicationContext)
         contactDrop?.dispose()
         contactDrop = null
         // ⚠️ SANS CETTE LIGNE, ON GARDE UNE RÉFÉRENCE SUR UN MOTEUR MORT.
@@ -74,8 +80,6 @@ class MainActivity : FlutterFragmentActivity() {
     private val channel = "com.droplet.droplet/app_icon"
     private val mediaChannel = "com.droplet.droplet/media"
 
-    /** Le nom de l'alias par défaut, celui déclaré dans le manifeste. */
-    private val defaultAlias = "Default"
 
     private val appelChannel = "com.droplet.droplet/appel"
     private val raccourcisChannel = "com.droplet.droplet/raccourcis"
@@ -179,6 +183,8 @@ class MainActivity : FlutterFragmentActivity() {
     // le reste de Droplet ne doit jamais être lisible sans déverrouiller.
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Les plantages Android dans le Journal d'erreurs (JournalNatif.kt).
+        JournalNatif.installer(this)
         super.onCreate(savedInstanceState)
         siAppelEntrant(intent)
         retenirCibleDePartage(intent)
@@ -362,7 +368,9 @@ class MainActivity : FlutterFragmentActivity() {
                             result.error("ARG", "alias manquant", null)
                         } else {
                             try {
-                                applyIcon(alias)
+                                // Noté maintenant, appliqué en quittant l'app
+                                // (sinon le lanceur ferme Droplet) — IconeApp.kt.
+                                IconeApp.choisir(this, alias)
                                 result.success(true)
                             } catch (e: Exception) {
                                 result.error("FAIL", e.message, null)
@@ -370,7 +378,7 @@ class MainActivity : FlutterFragmentActivity() {
                         }
                     }
 
-                    "currentIcon" -> result.success(currentAlias())
+                    "currentIcon" -> result.success(IconeApp.actuelle(this))
 
                     else -> result.notImplemented()
                 }
@@ -513,49 +521,5 @@ class MainActivity : FlutterFragmentActivity() {
             .setMethodCallHandler { call, result ->
                 intelligence.handle(call.method, call.arguments, result)
             }
-    }
-
-    /** Tous les alias déclarés au manifeste. */
-    private fun aliases(): List<String> =
-        listOf(defaultAlias) + (1..13).map { "V$it" }
-
-    /** Active [target] et désactive tous les autres. */
-    private fun applyIcon(target: String) {
-        val pm = packageManager
-        val prefix = "$packageName.Launcher"
-
-        // On active D'ABORD — voir le point 2 en tête de classe.
-        pm.setComponentEnabledSetting(
-            ComponentName(packageName, "$prefix$target"),
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            PackageManager.DONT_KILL_APP,
-        )
-
-        for (alias in aliases()) {
-            if (alias == target) continue
-            pm.setComponentEnabledSetting(
-                ComponentName(packageName, "$prefix$alias"),
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                PackageManager.DONT_KILL_APP,
-            )
-        }
-    }
-
-    /** L'alias actuellement actif. */
-    private fun currentAlias(): String {
-        val pm = packageManager
-        val prefix = "$packageName.Launcher"
-
-        for (alias in aliases()) {
-            val state = pm.getComponentEnabledSetting(
-                ComponentName(packageName, "$prefix$alias")
-            )
-            if (state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
-                return alias
-            }
-        }
-        // Aucun n'est explicitement activé : c'est que l'app n'a jamais
-        // changé d'icône, et que le défaut du manifeste s'applique.
-        return defaultAlias
     }
 }

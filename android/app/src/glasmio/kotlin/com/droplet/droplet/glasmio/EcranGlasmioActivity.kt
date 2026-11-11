@@ -110,6 +110,13 @@ class EcranGlasmioActivity : ComponentActivity() {
         }
     }
 
+    // On quitte Droplet depuis un écran Glasmio : l'icône choisie s'applique
+    // maintenant (voir IconeApp.kt).
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        com.droplet.droplet.IconeApp.appliquerEnAttente(applicationContext)
+    }
+
     override fun onDestroy() {
         if (isFinishing && PontGlasmio.ecranOuvert?.get() === this) {
             PontGlasmio.ecranOuvert = null

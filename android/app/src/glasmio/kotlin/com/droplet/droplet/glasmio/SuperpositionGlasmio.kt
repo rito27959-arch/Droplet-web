@@ -99,32 +99,71 @@ object SuperpositionGlasmio {
     /** Une superposition à la fois : un second appui long attend la fin. */
     private var ouverte: View? = null
 
+    /** Une capture est en cours (la superposition s'ouvre juste après). */
+    private var enCapture = false
+
     fun afficher(activite: Activity, d: JSONObject, fini: (Map<String, Any?>?) -> Unit) {
         val racine = activite.findViewById<ViewGroup>(android.R.id.content)
-        if (racine == null || ouverte != null) {
+        if (racine == null || ouverte != null || enCapture) {
             fini(null)
             return
         }
-        val capture = capturer(activite)
-        val vue = ComposeView(activite)
-        var termine = false
-        val fermer: (Map<String, Any?>?) -> Unit = { r ->
-            if (!termine) {
-                termine = true
-                racine.removeView(vue)
-                ouverte = null
-                fini(r)
+        enCapture = true
+        // ⚠️ LA CAPTURE PASSE PAR PixelCopy (comme la barre du bas), plus par
+        // `renderer.bitmap` : sur de vrais téléphones (Impeller), cette
+        // dernière rendait une image abîmée — textes et icônes brouillés
+        // derrière les alertes, et la bulle « soulevée » découpée au mauvais
+        // endroit. PixelCopy recopie les pixels réellement affichés.
+        capturer(activite) { capture ->
+            enCapture = false
+            if (activite.isFinishing || activite.isDestroyed || ouverte != null) {
+                fini(null)
+                return@capturer
             }
+            val vue = ComposeView(activite)
+            var termine = false
+            val fermer: (Map<String, Any?>?) -> Unit = { r ->
+                if (!termine) {
+                    termine = true
+                    racine.removeView(vue)
+                    ouverte = null
+                    fini(r)
+                }
+            }
+            vue.setContent { Superposition(d, capture, fermer) }
+            ouverte = vue
+            racine.addView(vue, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         }
-        vue.setContent { Superposition(d, capture, fermer) }
-        ouverte = vue
-        racine.addView(vue, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     }
 
-    /** La dernière image dessinée par Flutter. */
-    private fun capturer(activite: Activity): ImageBitmap? = runCatching {
-        trouverFlutterView(activite.window.decorView)?.attachedFlutterEngine?.renderer?.bitmap?.asImageBitmap()
-    }.getOrNull()
+    /** L'image affichée par Flutter, recopiée de sa surface. */
+    private fun capturer(activite: Activity, ensuite: (ImageBitmap?) -> Unit) {
+        val principal = android.os.Handler(android.os.Looper.getMainLooper())
+        val fv = trouverFlutterView(activite.window.decorView)
+        val surface = fv?.let { trouver(it, android.view.SurfaceView::class.java) }
+        val secours = {
+            runCatching { fv?.attachedFlutterEngine?.renderer?.bitmap?.asImageBitmap() }.getOrNull()
+        }
+        if (surface != null && surface.width > 0 && surface.height > 0) {
+            val ok = runCatching {
+                val image = android.graphics.Bitmap.createBitmap(surface.width, surface.height, android.graphics.Bitmap.Config.ARGB_8888)
+                android.view.PixelCopy.request(surface, image, { r ->
+                    ensuite(if (r == android.view.PixelCopy.SUCCESS) image.asImageBitmap() else secours())
+                }, principal)
+            }.isSuccess
+            if (ok) return
+        }
+        val texture = fv?.let { trouver(it, android.view.TextureView::class.java) }
+        ensuite(runCatching { texture?.bitmap?.asImageBitmap() }.getOrNull() ?: secours())
+    }
+
+    private fun <T : View> trouver(v: View, classe: Class<T>): T? {
+        if (classe.isInstance(v)) return classe.cast(v)
+        if (v is ViewGroup) {
+            for (i in 0 until v.childCount) trouver(v.getChildAt(i), classe)?.let { return it }
+        }
+        return null
+    }
 
     private fun trouverFlutterView(v: View): FlutterView? {
         if (v is FlutterView) return v
@@ -396,6 +435,11 @@ private fun MenuSuperpose(d: JSONObject, capture: ImageBitmap?, fini: (Map<Strin
             animationProgress = apparition.value,
             opensAbove = !dessous,
             itemCount = elements.size,
+            // ⚠️ COMPACT ET LARGEUR DONNÉE : sans cela, Glasmio entoure le menu
+            // d'une grande marge (pour son ombre) et le menu visible tombait
+            // ~100 dp trop à droite — coupé par le bord de l'écran.
+            compact = true,
+            menuWidth = 250.dp,
         ) { _ ->
             elements.forEach { e ->
                 val police = SuperpositionGlasmio.police(contexte, e.texte("police"), e.texte("paquet"))
