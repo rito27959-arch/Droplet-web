@@ -84,6 +84,15 @@ jobs:
         with:
           name: droplet-${{ matrix.mode }}
           path: /tmp/res/
+      # ⚠️ LE VERDICT. L'étape de compilation finit toujours par `true` (pour que
+      # le journal soit publié même en cas d'échec) : sans cette étape, une
+      # compilation RATÉE s'affichait en vert sur GitHub.
+      - name: Verdict
+        if: always()
+        run: |
+          if grep -qE "=== (DEBUG|RELEASE \(R8\)) : [1-9]" /tmp/res/droplet-${{ matrix.mode }}.txt; then
+            echo "La compilation a échoué (voir le journal)"; exit 1
+          fi
   journal:
     needs: build
     if: always()

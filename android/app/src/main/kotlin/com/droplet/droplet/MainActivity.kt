@@ -53,12 +53,6 @@ class MainActivity : FlutterFragmentActivity() {
         super.onPause()
     }
 
-    // L'icône choisie s'applique quand on QUITTE Droplet (voir IconeApp.kt).
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-        IconeApp.appliquerEnAttente(applicationContext)
-    }
-
     override fun onDestroy() {
         if (isFinishing) IconeApp.appliquerEnAttente(applicationContext)
         contactDrop?.dispose()
@@ -153,6 +147,10 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
+        // L'icône choisie s'applique quand on QUITTE Droplet (voir IconeApp.kt)
+        // — jamais pendant un appel qui passe en vignette : la bascule peut
+        // fermer l'app.
+        if (!vignetteAutorisee) IconeApp.appliquerEnAttente(applicationContext)
         // Android 12+ entre tout seul en vignette (`setAutoEnterEnabled`).
         if (vignetteAutorisee && Build.VERSION.SDK_INT in 26..30) {
             try {
