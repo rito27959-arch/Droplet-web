@@ -16,6 +16,7 @@
 //      suffit de viser à nouveau.
 // ============================================================================
 
+import '../../shared/widgets/erreur_camera.dart';
 import 'dart:math';
 import 'dart:ui' as ui;
 
@@ -131,7 +132,11 @@ class _LierAppareilScreenState extends State<LierAppareilScreen> with TickerProv
       body: Stack(
         fit: StackFit.expand,
         children: [
-          MobileScanner(controller: _camera, onDetect: _detecte),
+          MobileScanner(
+            controller: _camera,
+            onDetect: _detecte,
+            errorBuilder: (context, erreur, _) => ErreurCamera(erreur: erreur, controleur: _camera),
+          ),
 
           // Le voile : il assombrit tout sauf le viseur, puis tout quand
           // le code est reconnu.

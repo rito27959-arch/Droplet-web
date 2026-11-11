@@ -14,6 +14,7 @@
 // précédent, qui décidera si c'est le bon code ou non.
 // ============================================================================
 
+import '../../shared/widgets/erreur_camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -87,7 +88,11 @@ class _QrScanScreenState extends State<QrScanScreen> with SingleTickerProviderSt
       body: Stack(
         fit: StackFit.expand,
         children: [
-          MobileScanner(controller: _controller, onDetect: _onDetect),
+          MobileScanner(
+            controller: _controller,
+            onDetect: _onDetect,
+            errorBuilder: (context, erreur, _) => ErreurCamera(erreur: erreur, controleur: _controller),
+          ),
           IgnorePointer(
             child: Center(
               child: SizedBox(
