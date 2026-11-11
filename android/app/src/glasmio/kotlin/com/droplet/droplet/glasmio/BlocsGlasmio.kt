@@ -33,6 +33,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.WaterDrop
+import androidx.compose.material.icons.rounded.SportsEsports
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.LocalFlorist
+import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.AllInclusive
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -207,7 +212,6 @@ internal val ICONES: Map<String, ImageVector> = mapOf(
     "check" to Icons.Rounded.Check,
     "graphic_eq" to Icons.Rounded.GraphicEq,
     "text_fields" to Icons.Rounded.TextFields,
-    "wallpaper" to Icons.Rounded.Wallpaper,
     "all_inclusive" to Icons.Rounded.AllInclusive,
     "event_busy" to Icons.Rounded.EventBusy,
     "wifi_off" to Icons.Rounded.WifiOff,
@@ -265,6 +269,12 @@ internal val ICONES: Map<String, ImageVector> = mapOf(
     "group" to Icons.Rounded.Group,
     "person_add" to Icons.Rounded.PersonAdd,
     "edit" to Icons.Rounded.Edit,
+    "water_drop" to Icons.Rounded.WaterDrop,
+    "sports_esports" to Icons.Rounded.SportsEsports,
+    "home" to Icons.Rounded.Home,
+    "local_florist" to Icons.Rounded.LocalFlorist,
+    "photo_camera" to Icons.Rounded.PhotoCamera,
+    "wallpaper" to Icons.Rounded.Wallpaper,
     "logout" to Icons.Rounded.Logout,
     "download" to Icons.Rounded.Download,
     "upload" to Icons.Rounded.Upload,

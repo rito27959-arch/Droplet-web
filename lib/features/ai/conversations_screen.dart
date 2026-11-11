@@ -29,6 +29,7 @@
 // la personne reconnaîtra, et ça ne coûte aucun appel de modèle.
 // ============================================================================
 
+import '../../design_system/ouro_alert.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -128,37 +129,14 @@ class _ConversationsIaScreenState extends State<ConversationsIaScreen> {
     final champ = TextEditingController(
       text: c.titre.isEmpty ? _libelle(c, l10n) : c.titre,
     );
-    final titre = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: OuroColors.secondarySystemGroupedBackground,
-        title: Text(l10n.cvRename, style: OuroTypography.headline),
-        content: TextField(
-          controller: champ,
-          autofocus: true,
-          maxLength: 60,
-          textCapitalization: TextCapitalization.sentences,
-          style: OuroTypography.body.copyWith(color: OuroColors.label),
-          decoration: InputDecoration(
-            counterText: '',
-            hintText: l10n.cvRenameHint,
-            hintStyle: OuroTypography.body.copyWith(
-              color: OuroColors.tertiaryLabel,
-            ),
-          ),
-          onSubmitted: (v) => Navigator.pop(ctx, v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.actionCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, champ.text),
-            child: Text(l10n.actionSave),
-          ),
-        ],
-      ),
+    final titre = await ouroPrompt(
+      context,
+      title: l10n.cvRename,
+      initialValue: champ.text,
+      placeholder: l10n.cvRenameHint,
+      cancelLabel: l10n.actionCancel,
+      confirmLabel: l10n.actionSave,
+      maxLength: 60,
     );
     champ.dispose();
     final t = titre?.trim();
@@ -169,32 +147,13 @@ class _ConversationsIaScreenState extends State<ConversationsIaScreen> {
     // ⚠️ ON DEMANDE. Une conversation supprimée ne revient pas : il n'y a
     // pas de corbeille, et il n'y en aura pas — un assistant local ne
     // garde rien ailleurs d'où le récupérer.
-    final r = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: OuroColors.secondarySystemGroupedBackground,
-        title: Text(l10n.cvDeleteTitle, style: OuroTypography.headline),
-        content: Text(
-          l10n.cvDeleteBody,
-          style: OuroTypography.subheadline.copyWith(
-            color: OuroColors.secondaryLabel,
-            height: 1.4,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.actionCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(
-              l10n.actionDelete,
-              style: TextStyle(color: OuroColors.systemRed),
-            ),
-          ),
-        ],
-      ),
+    final r = await ouroConfirm(
+      context,
+      title: l10n.cvDeleteTitle,
+      message: l10n.cvDeleteBody,
+      cancelLabel: l10n.actionCancel,
+      confirmLabel: l10n.actionDelete,
+      destructive: true,
     );
     return r ?? false;
   }

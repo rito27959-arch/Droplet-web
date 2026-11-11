@@ -437,54 +437,13 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
   String? _nom = StorageService.currentUser?.avatarUrl;
 
   Future<void> _changerLaPhoto() async {
-    final octets = await choisirUnePhoto(context);
-    if (octets == null || !mounted) return;
-    final nom = await AvatarService.enregistrer(octets);
-    if (nom == null || !mounted) return;
-    await _enregistrer(nom);
+    final nom = await changerMaPhoto(context, ref);
+    if (nom != null && mounted) setState(() => _nom = nom);
   }
 
   Future<void> _retirerLaPhoto() async {
-    OuroHaptics.light();
-    await AvatarService.supprimer();
-    if (!mounted) return;
-    await _enregistrer(null);
-  }
-
-  Future<void> _enregistrer(String? nom) async {
-    final me = StorageService.currentUser;
-    if (me == null) return;
-    await StorageService.saveUser(
-      DropletUserModel(
-        id: me.id,
-        pseudo: me.pseudo,
-        publicKey: me.publicKey,
-        avatarUrl: nom,
-      ),
-    );
-    // ⚠️ PRÉVENIR MES CONTACTS. Le « hello » porte l'empreinte de ma photo :
-    // en le renvoyant, chaque contact voit qu'elle a changé (ou disparu) et
-    // redemande la nouvelle. Sans ça, ils garderaient l'ancienne jusqu'au
-    // prochain « hello » ordinaire.
-    AvatarService.oublierMonEmpreinte();
-    unawaited(ref.read(meshRepositoryProvider).sendHello().then<void>((_) {}, onError: (Object e) {
-      debugPrint('[Réglages] annonce du profil non envoyée: $e');
-    }));
-    // ⚠️ LE « HELLO » NE FRANCHIT PAS INTERNET. Un contact joint seulement
-    // par la boîte aux lettres .onion ne voit donc jamais l'empreinte
-    // changer : on lui pousse la photo directement.
-    unawaited(ref
-        .read(meshRepositoryProvider)
-        .diffuserMaPhotoAuxContacts()
-        .then<void>((_) {}, onError: (Object e) {
-      debugPrint('[Réglages] photo non poussée par Internet: $e');
-    }));
-    // Et Droplet Web, s'il est lié, affiche la même photo.
-    final miroir = MiroirAppareils.actuel;
-    if (miroir != null) unawaited(miroir.annoncerMaPhoto());
-    if (!mounted) return;
-    if (nom != null) OuroHaptics.success();
-    setState(() => _nom = nom);
+    await retirerMaPhoto(ref);
+    if (mounted) setState(() => _nom = null);
   }
 
   @override
@@ -1261,4 +1220,57 @@ class _SectionIntelligenceEnLigneState
       ],
     );
   }
+}
+
+
+// ── MA PHOTO (partagé avec l'écran Réglages en Glasmio) ─────────────────
+
+/// Choisit, enregistre et annonce ma nouvelle photo. Rend son nom de
+/// fichier, ou `null` si rien n'a changé.
+Future<String?> changerMaPhoto(BuildContext context, WidgetRef ref) async {
+  final octets = await choisirUnePhoto(context);
+  if (octets == null) return null;
+  final nom = await AvatarService.enregistrer(octets);
+  if (nom == null) return null;
+  await _enregistrerMaPhoto(ref, nom);
+  OuroHaptics.success();
+  return nom;
+}
+
+/// Retire ma photo et l'annonce.
+Future<void> retirerMaPhoto(WidgetRef ref) async {
+  OuroHaptics.light();
+  await AvatarService.supprimer();
+  await _enregistrerMaPhoto(ref, null);
+}
+
+Future<void> _enregistrerMaPhoto(WidgetRef ref, String? nom) async {
+  final me = StorageService.currentUser;
+  if (me == null) return;
+  await StorageService.saveUser(
+    DropletUserModel(
+      id: me.id,
+      pseudo: me.pseudo,
+      publicKey: me.publicKey,
+      avatarUrl: nom,
+    ),
+  );
+  // ⚠️ PRÉVENIR MES CONTACTS. Le « hello » porte l'empreinte de ma photo :
+  // en le renvoyant, chaque contact voit qu'elle a changé (ou disparu) et
+  // redemande la nouvelle.
+  AvatarService.oublierMonEmpreinte();
+  unawaited(ref.read(meshRepositoryProvider).sendHello().then<void>((_) {}, onError: (Object e) {
+    debugPrint('[Réglages] annonce du profil non envoyée: $e');
+  }));
+  // ⚠️ LE « HELLO » NE FRANCHIT PAS INTERNET : on pousse aussi la photo
+  // aux contacts joints par la boîte aux lettres .onion.
+  unawaited(ref
+      .read(meshRepositoryProvider)
+      .diffuserMaPhotoAuxContacts()
+      .then<void>((_) {}, onError: (Object e) {
+    debugPrint('[Réglages] photo non poussée par Internet: $e');
+  }));
+  // Et Droplet Web, s'il est lié, affiche la même photo.
+  final miroir = MiroirAppareils.actuel;
+  if (miroir != null) unawaited(miroir.annoncerMaPhoto());
 }

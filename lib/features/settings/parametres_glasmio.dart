@@ -108,9 +108,29 @@ class _PasserelleParametresState extends EtatPasserelleGlasmio<PasserelleParamet
 
     switch (id) {
       case 'profil':
-        // Changer sa photo demande l'interface de Droplet : on montre les
-        // réglages Flutter (le profil y est en tête).
-        return basculerVersFlutter();
+        // Ma photo, en Glasmio : une alerte native (ajouter / changer /
+        // retirer) — on ne bascule plus vers les Réglages Flutter, qui ne
+        // ressemblaient pas au reste.
+        final aUnePhoto = StorageService.currentUser?.avatarUrl != null;
+        final titre = aUnePhoto ? textes.stChangePhotoSemantics : textes.stAddPhotoSemantics;
+        return ReponseGlasmio.alerte({
+          'titre': titre,
+          'annuler': MaterialLocalizations.of(context).cancelButtonLabel,
+          'choix': [
+            {'id': 'photo:changer', 'titre': titre},
+            if (aUnePhoto) {'id': 'photo:retirer', 'titre': MaterialLocalizations.of(context).deleteButtonTooltip, 'destructif': true},
+          ],
+        });
+      case 'photo:changer':
+        // Le choix de la photo (galerie, appareil photo) est l'interface
+        // Flutter de Droplet : elle s'ouvre par-dessus, puis on revient ici.
+        return feuille((c) async {
+          await changerMaPhoto(c, ref);
+        });
+      case 'photo:retirer':
+        await retirerMaPhoto(ref);
+        if (!mounted) return ReponseGlasmio.rien;
+        return ReponseGlasmio.maj(await decrire());
       case 'bloques':
         return pousser(MaterialPageRoute<void>(builder: (_) => const ContactsBloquesScreen()));
       case 'journal':

@@ -193,7 +193,62 @@ object PontGlasmio {
             description = d
         } }
         (reponse["alerte"] as? String)?.let { runCatching { alerte = JSONObject(it) } }
-        if (reponse["fermer"] == true) ecranOuvert?.get()?.finish()
+        if (reponse["fermer"] == true) fermerAvecPhoto()
+    }
+
+    /**
+     * Fermer l'écran natif pour ouvrir une page ou une feuille Flutter.
+     *
+     * ⚠️ SANS ÉCRAN D'UNE AUTRE APP ENTRE LES DEUX. On photographie d'abord
+     * l'écran Glasmio ; Dart pose cette photo sous lui (dans la route
+     * transparente) ; PUIS l'écran natif disparaît, sans animation. La page
+     * Flutter glisse alors par-dessus la photo, la feuille monte par-dessus :
+     * on croit rester dans le même écran — jamais l'écran Flutter de repli,
+     * qui ne lui ressemblait pas.
+     */
+    private fun fermerAvecPhoto() {
+        val ouvert = ecranOuvert?.get() ?: return
+        val ecran = ouvert as? EcranGlasmioActivity
+        if (ecran == null) {
+            ouvert.finish()
+            return
+        }
+        if (ecran.isFinishing) return
+        val fin = {
+            ecran.fermerSansAnimation()
+        }
+        val l = ecran.window.decorView.width
+        val h = ecran.window.decorView.height
+        if (l <= 0 || h <= 0) {
+            fin()
+            return
+        }
+        val image = android.graphics.Bitmap.createBitmap(l, h, android.graphics.Bitmap.Config.ARGB_8888)
+        runCatching {
+            android.view.PixelCopy.request(ecran.window, image, { r ->
+                if (r != android.view.PixelCopy.SUCCESS) {
+                    fin()
+                    return@request
+                }
+                Thread {
+                    val flux = java.io.ByteArrayOutputStream()
+                    image.compress(android.graphics.Bitmap.CompressFormat.JPEG, 88, flux)
+                    val octets = flux.toByteArray()
+                    principal {
+                        val c = canal
+                        if (c == null) {
+                            fin()
+                        } else {
+                            c.invokeMethod("photo", octets, object : MethodChannel.Result {
+                                override fun success(result: Any?) = fin()
+                                override fun error(code: String, message: String?, details: Any?) = fin()
+                                override fun notImplemented() = fin()
+                            })
+                        }
+                    }
+                }.start()
+            }, Handler(Looper.getMainLooper()))
+        }.onFailure { fin() }
     }
 
     /** L'alerte est fermée sans confirmer : on revient à l'état réel. */

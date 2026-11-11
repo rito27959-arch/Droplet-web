@@ -4,9 +4,9 @@
 // (curseurs de verre), thème, couleur d'accent, lignes de la liste, effets,
 // icône, réinitialisation.
 //
-// L'APERÇU DES BULLES, LES MOTIFS ET LES FONDS DE DISCUSSION sont dessinés par
-// Flutter (ce sont de vraies bulles, avec les vrais fonds animés) : la ligne
-// « Aperçu, motifs et fonds » ouvre l'écran Flutter, où ils sont tous.
+// Les motifs du fond se choisissent ici aussi, en Glasmio (une ligne cochée
+// par jeu de motifs). Les fonds propres à une discussion se règlent dans
+// les infos de cette discussion.
 // ============================================================================
 
 import 'package:flutter/material.dart';
@@ -44,8 +44,6 @@ class _PasserelleApparenceState extends EtatPasserelleGlasmio<PasserelleApparenc
         await notifier.modifier(perso.copyWith(tailleTexte: (valeur as num).toDouble()));
       case 'rayon':
         await notifier.modifier(perso.copyWith(rayonBulles: (valeur as num).toDouble()));
-      case 'apercu':
-        return basculerVersFlutter();
       case 'icone':
         return allerA('/settings/icon');
       case 'reinitialiser':
@@ -59,6 +57,8 @@ class _PasserelleApparenceState extends EtatPasserelleGlasmio<PasserelleApparenc
           await notifier.modifier(perso.copyWith(accent: id.substring(7)));
         } else if (id.startsWith('lignes:')) {
           await notifier.modifier(perso.copyWith(lignesListe: int.parse(id.substring(7))));
+        } else if (id.startsWith('motifs:')) {
+          await notifier.modifier(perso.copyWith(packMotifs: int.parse(id.substring(7))));
         } else if (id.startsWith('effets:')) {
           await DeviceProfile.changerModeEffets(id.substring(7));
         }
@@ -91,9 +91,19 @@ class _PasserelleApparenceState extends EtatPasserelleGlasmio<PasserelleApparenc
       'sombre': sombre,
       'accent': _c(accent),
       'sections': [
+        // Les motifs du fond, choisis ICI, en Glasmio : on ne bascule plus
+        // vers l'écran Flutter (qui ne ressemblait pas au reste).
         {
+          'entete': t.apPatternsHeader,
+          'pied': t.apPatternsFooter,
           'lignes': [
-            {'id': 'apercu', 'type': 'nav', 'icone': 'chat_bubble', 'teinte': _c(OuroColors.accent), 'titre': t.apPatternsHeader, 'sous': t.apPatternsFooter},
+            for (final (i, icone, titre, teinte) in [
+              (0, 'water_drop', t.apPatternDroplet, OuroColors.accent),
+              (1, 'sports_esports', t.apPatternGames, OuroColors.systemPurple),
+              (2, 'home', t.apPatternHome, OuroColors.systemOrange),
+              (3, 'local_florist', t.apPatternGarden, OuroColors.systemGreen),
+            ])
+              {'id': 'motifs:$i', 'type': 'choix', 'icone': icone, 'teinte': _c(teinte), 'titre': titre, 'coche': perso.packMotifs == i},
           ],
         },
         {

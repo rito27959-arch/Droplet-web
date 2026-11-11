@@ -90,9 +90,21 @@ class EcranGlasmioActivity : ComponentActivity() {
         }
     }
 
+    private var sansAnimation = false
+
+    /** Fermer d'un coup (Dart a posé la photo de cet écran dessous). */
+    fun fermerSansAnimation() {
+        sansAnimation = true
+        if (Build.VERSION.SDK_INT >= 34) overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+        finish()
+    }
+
     override fun finish() {
         super.finish()
-        if (Build.VERSION.SDK_INT < 34) {
+        if (sansAnimation) {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+        } else if (Build.VERSION.SDK_INT < 34) {
             @Suppress("DEPRECATION")
             overridePendingTransition(com.droplet.droplet.R.anim.glasmio_immobile, com.droplet.droplet.R.anim.glasmio_sortie)
         }

@@ -20,6 +20,7 @@
 // ============================================================================
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +33,11 @@ enum EtatGlasmio { attente, natif, flutter }
 
 abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends ConsumerState<W> {
   EtatGlasmio _etat = EtatGlasmio.attente;
+
+  /// La photo de l'écran natif, posée sous lui juste avant qu'il se ferme
+  /// pour une page ou une feuille Flutter : la page glisse par-dessus, la
+  /// feuille monte par-dessus — on ne voit jamais l'écran de repli.
+  Uint8List? _photo;
 
   /// Ce qu'il faut faire côté Flutter une fois l'écran natif fermé.
   Future<void> Function()? _apres;
@@ -82,6 +88,7 @@ abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends C
       return;
     }
     if (!mounted) return;
+    PontGlasmio.surPhoto = _poserPhoto;
     final ok = await PontGlasmio.ouvrir(
       ecran: ecran,
       description: await decrire(),
@@ -96,9 +103,27 @@ abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends C
     }
     setState(() => _etat = EtatGlasmio.natif);
     surOuvert();
+    // L'écran natif est revenu par-dessus : la photo n'a plus lieu d'être
+    // (au retour final, la page d'avant doit se voir à travers la route).
+    if (_photo != null) {
+      Future<void>.delayed(const Duration(milliseconds: 450), () {
+        if (mounted && _etat == EtatGlasmio.natif) setState(() => _photo = null);
+      });
+    }
+  }
+
+  Future<void> _poserPhoto(Uint8List photo) async {
+    if (!mounted) return;
+    final image = MemoryImage(photo);
+    // Décodée AVANT d'être montrée : pas d'image vide pendant une image.
+    await precacheImage(image, context).catchError((Object _) {});
+    if (!mounted) return;
+    setState(() => _photo = photo);
+    await WidgetsBinding.instance.endOfFrame;
   }
 
   void _surFermeture() {
+    if (PontGlasmio.surPhoto == _poserPhoto) PontGlasmio.surPhoto = null;
     surFerme();
     textesForces = null;
     if (!mounted) return;
@@ -107,6 +132,7 @@ abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends C
     if (apres != null) {
       unawaited(apres());
     } else {
+      _photo = null;
       quitter();
     }
   }
@@ -152,9 +178,8 @@ abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends C
   ReponseGlasmio feuille(Future<void> Function(BuildContext) ouvrir) {
     _apres = () async {
       if (!mounted) return;
-      setState(() => _etat = EtatGlasmio.flutter);
-      await WidgetsBinding.instance.endOfFrame;
-      if (!mounted) return;
+      // ⚠️ PLUS D'ÉCRAN DE REPLI SOUS LA FEUILLE : elle monte par-dessus la
+      // photo de l'écran Glasmio, comme si elle s'ouvrait dans celui-ci.
       await ouvrir(context);
       if (mounted) await _ouvrir(sansAnimation: true);
     };
@@ -166,7 +191,10 @@ abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends C
   ReponseGlasmio basculerVersFlutter([Future<void> Function()? ensuite]) {
     _apres = () async {
       if (!mounted) return;
-      setState(() => _etat = EtatGlasmio.flutter);
+      setState(() {
+        _etat = EtatGlasmio.flutter;
+        _photo = null;
+      });
       if (ensuite != null) {
         await WidgetsBinding.instance.endOfFrame;
         if (mounted) await ensuite();
@@ -183,7 +211,9 @@ abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends C
       // transparente (voir _pagePasserelle dans main.dart) : sous l'écran
       // natif, c'est la page d'où l'on vient qui reste visible — jamais une
       // page vide, blanche ou noire, aux transitions.
-      _ => const SizedBox.expand(),
+      _ => _photo == null
+          ? const SizedBox.expand()
+          : Image.memory(_photo!, fit: BoxFit.fill, gaplessPlayback: true, width: double.infinity, height: double.infinity),
     };
   }
 }

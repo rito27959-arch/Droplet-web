@@ -23,6 +23,7 @@
 //   • une recherche en haut, dès qu'il y a de quoi chercher.
 // ============================================================================
 
+import '../../design_system/ouro_alert.dart';
 import 'dart:io';
 import 'dart:ui' show FontFeature;
 
@@ -152,23 +153,13 @@ class _MessagesImportantsScreenState
   }
 
   Future<void> _toutRetirer(BuildContext context, AppLocalizations l10n) async {
-    final ok = await showCupertinoDialog<bool>(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text(l10n.imClearAll),
-        content: Text(l10n.imClearAllBody),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.actionCancel),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.imClear),
-          ),
-        ],
-      ),
+    final ok = await ouroConfirm(
+      context,
+      title: l10n.imClearAll,
+      message: l10n.imClearAllBody,
+      cancelLabel: l10n.actionCancel,
+      confirmLabel: l10n.imClear,
+      destructive: true,
     );
     if (ok == true) {
       OuroHaptics.light();

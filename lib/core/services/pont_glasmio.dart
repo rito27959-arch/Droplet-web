@@ -22,6 +22,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
@@ -92,6 +93,11 @@ class PontGlasmio {
   /// Les gestes de la barre de navigation Glasmio (voir `barre_glasmio.dart`).
   static void Function(String id, Object? valeur)? surBarre;
 
+  /// La photo de l'écran natif qui se ferme pour une page ou une feuille
+  /// Flutter (voir `fermerAvecPhoto` dans PontGlasmio.kt) : la passerelle la
+  /// pose sous lui avant qu'il disparaisse.
+  static Future<void> Function(Uint8List photo)? surPhoto;
+
   /// Un bouton de la barre d'appel native (BarreAppelGlasmio.kt).
   static void Function(String id)? surBarreAppel;
 
@@ -117,6 +123,10 @@ class PontGlasmio {
             debugPrint('[PontGlasmio] événement ${args['id']} : $e');
             return const <String, Object?>{};
           }
+        case 'photo':
+          final octets = appel.arguments;
+          if (octets is Uint8List) await surPhoto?.call(octets);
+          return true;
         case 'barre_appel':
           final args = Map<String, Object?>.from(appel.arguments as Map);
           surBarreAppel?.call(args['id'] as String? ?? '');

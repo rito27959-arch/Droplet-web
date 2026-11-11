@@ -56,6 +56,7 @@
 // un grand modèle en ligne.
 // ============================================================================
 
+import '../../design_system/ouro_alert.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -1016,29 +1017,12 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   Future<bool> _confirmerTelechargement() async {
     final l10n = AppLocalizations.of(context);
     OuroHaptics.light();
-    final r = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: OuroColors.secondarySystemGroupedBackground,
-        title: Text(l10n.aiDownloadTitle, style: OuroTypography.headline),
-        content: Text(
-          l10n.aiDownloadBody(kAiModelTailleMo),
-          style: OuroTypography.subheadline.copyWith(
-            color: OuroColors.secondaryLabel,
-            height: 1.45,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.actionCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.aiDownloadConfirm),
-          ),
-        ],
-      ),
+    final r = await ouroConfirm(
+      context,
+      title: l10n.aiDownloadTitle,
+      message: l10n.aiDownloadBody(kAiModelTailleMo),
+      cancelLabel: l10n.actionCancel,
+      confirmLabel: l10n.aiDownloadConfirm,
     );
     return r ?? false;
   }

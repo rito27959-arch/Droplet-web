@@ -31,6 +31,7 @@
 // code, et c'est ce qui transforme l'idée en outil.
 // ============================================================================
 
+import '../../design_system/ouro_alert.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -195,29 +196,12 @@ class _MenuMessage extends StatelessWidget {
 Future<bool> confirmerModification(BuildContext context, int aEffacer) async {
   final l10n = AppLocalizations.of(context);
   if (aEffacer <= 0) return true;
-  final r = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: OuroColors.secondarySystemGroupedBackground,
-      title: Text(l10n.amEditTitle, style: OuroTypography.headline),
-      content: Text(
-        l10n.amEditBody(aEffacer),
-        style: OuroTypography.subheadline.copyWith(
-          color: OuroColors.secondaryLabel,
-          height: 1.4,
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: Text(l10n.actionCancel),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(l10n.amEditConfirm),
-        ),
-      ],
-    ),
+  final r = await ouroConfirm(
+    context,
+    title: l10n.amEditTitle,
+    message: l10n.amEditBody(aEffacer),
+    cancelLabel: l10n.actionCancel,
+    confirmLabel: l10n.amEditConfirm,
   );
   return r ?? false;
 }

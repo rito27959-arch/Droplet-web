@@ -1542,25 +1542,13 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
   Future<void> _confirmerSuppression() async {
     final l10n = AppLocalizations.of(context);
     final c = widget.conversation;
-    final ok = await showCupertinoDialog<bool>(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text(
-          l10n.chatsDeleteTitle(ApercuSysteme.localiser(c.pseudo, l10n)),
-        ),
-        content: Text(l10n.chatsDeleteBody),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.actionCancel),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.chatsDeleteConfirm),
-          ),
-        ],
-      ),
+    final ok = await ouroConfirm(
+      context,
+      title: l10n.chatsDeleteTitle(ApercuSysteme.localiser(c.pseudo, l10n)),
+      message: l10n.chatsDeleteBody,
+      cancelLabel: l10n.actionCancel,
+      confirmLabel: l10n.chatsDeleteConfirm,
+      destructive: true,
     );
     if (ok != true || !mounted) return;
     OuroHaptics.light();
