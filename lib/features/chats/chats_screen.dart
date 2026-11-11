@@ -1583,6 +1583,7 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
     final c = widget.conversation;
     final l10n = AppLocalizations.of(context);
     showMessageContextMenu(
+      glasmio: true,
       context: context,
       anchorKey: _cleLigne,
       // ⚠️ L'APERÇU EST UN COUP D'ŒIL DANS LA CONVERSATION, PLUS LA

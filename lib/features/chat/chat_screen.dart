@@ -63,7 +63,6 @@ import 'package:photo_manager/photo_manager.dart';
 
 import 'attach_sheet.dart';
 import '../../core/services/notifs_conversation.dart';
-import '../../core/services/superposition_glasmio.dart';
 import '../../shared/widgets/explications.dart';
 import '../../core/services/journal_notifs.dart';
 import '../../core/services/brouillons.dart';
@@ -159,7 +158,6 @@ import '../lecteur/lecteur_pdf.dart';
 import '../group/reglages_groupe.dart';
 import '../call/salon_vocal.dart';
 import '../../design_system/flou.dart';
-import '../../design_system/flou_glasmio.dart';
 import '../../core/config/compte_droplet.dart';
 import '../../shared/widgets/avatar_officiel.dart';
 import '../../core/services/raccourcis_conversation.dart';
@@ -4058,10 +4056,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               // Le voile ne disparaît pas pour autant : c'est lui qui garantit
               // que le nom du contact reste lisible quand une photo sombre
               // passe dessous.
-              // Le flou progressif de Glasmio (voir flou_glasmio.dart) : la
-              // conversation passe toujours dessous, il est donc toujours là.
-              flexibleSpace: LayoutBuilder(
-                builder: (context, c) => FlouDefilementGlasmio(progression: 1, hauteur: c.maxHeight),
+              flexibleSpace: const OuroBlurSurface(
+                material: OuroMaterial.ultraThin,
+                child: SizedBox.expand(),
               ),
               // ⚠️ AUCUN BOUTON RETOUR DANS UNE BULLE. Il n'y a rien
               // derrière : la bulle est une fenêtre posée sur une autre
@@ -9337,21 +9334,13 @@ class _InputBarState extends State<_InputBar>
       // Telegram les met dans le menu de sélection, à côté de Copier et
       // Coller : c'est là que le doigt est déjà quand on vient de
       // sélectionner un mot. Même endroit ici, avec les mêmes styles.
-      //
-      // Avec Glasmio (Android 13+) : le menu d'édition d'Apple, en verre —
-      // Couper · Copier · Coller · Tout sélectionner, et « Plus » qui ouvre
-      // les styles. Sinon, la barre de Flutter, avec les mêmes boutons.
-      contextMenuBuilder: (context, etat) => MenuSelectionGlasmio(
-        etat: etat,
-        principaux: etat.contextMenuButtonItems,
-        autres: _boutonsMiseEnForme(context, etat),
-        repli: (context) => AdaptiveTextSelectionToolbar.buttonItems(
-          anchors: etat.contextMenuAnchors,
-          buttonItems: [
-            ...etat.contextMenuButtonItems,
-            ..._boutonsMiseEnForme(context, etat),
-          ],
-        ),
+      contextMenuBuilder: (context, etat) =>
+          AdaptiveTextSelectionToolbar.buttonItems(
+        anchors: etat.contextMenuAnchors,
+        buttonItems: [
+          ...etat.contextMenuButtonItems,
+          ..._boutonsMiseEnForme(context, etat),
+        ],
       ),
       magnifierConfiguration: TextMagnifier.adaptiveMagnifierConfiguration,
       decoration: InputDecoration(
@@ -9927,31 +9916,6 @@ class _AnimatedSendButtonState extends State<_AnimatedSendButton> {
   Future<void> _openEffectPicker() async {
     if (!widget.active) return;
     HapticFeedback.selectionClick();
-    // Avec Glasmio : un menu d'appui long de verre qui sort du bouton
-    // d'envoi (le clavier reste ouvert, comme dans Messages).
-    final boite = context.findRenderObject() as RenderBox?;
-    if (boite != null && boite.hasSize) {
-      final l10n = AppLocalizations.of(context);
-      final options = [
-        ..._EffectPicker._bubbleOptions(l10n),
-        ..._EffectPicker._fullscreenOptions(l10n),
-      ];
-      final r = await SuperpositionGlasmio.menu(
-        zone: boite.localToGlobal(Offset.zero) & boite.size,
-        elements: [
-          for (var i = 0; i < options.length; i++)
-            ElementMenuGlasmio('e$i', options[i].$3, icone: options[i].$2),
-        ],
-      );
-      if (r != null) {
-        final i = int.tryParse(r.id?.substring(1) ?? '');
-        if (i != null && i < options.length) _handleTap(options[i].$1);
-        return;
-      }
-      if (!mounted) return;
-      if (await SuperpositionGlasmio.disponible()) return; // fermé sans choix
-      if (!mounted) return;
-    }
     FocusScope.of(context).unfocus();
     final effect = await showModalBottomSheet<String>(
       context: context,

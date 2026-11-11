@@ -113,6 +113,10 @@ Future<void> showMessageContextMenu({
   /// Appui sur l'aperçu lui-même : chez Apple, l'aperçu est un coup d'œil
   /// dans la destination, et le toucher y emmène.
   VoidCallback? onPreviewTap,
+
+  /// Le menu de verre Glasmio (Android 13+). `false` : toujours le menu
+  /// Flutter d'origine — c'est le cas dans une conversation, à la demande.
+  bool glasmio = false,
 }) async {
   final box = anchorKey.currentContext?.findRenderObject() as RenderBox?;
   if (box == null || !box.hasSize) return;
@@ -123,7 +127,7 @@ Future<void> showMessageContextMenu({
   // Android 13+ : le menu en vrai verre Glasmio. L'élément touché se
   // soulève tel quel (image de l'écran) ; les mêmes actions, les mêmes
   // réactions, les mêmes rappels.
-  final glasmio = await _menuGlasmio(
+  final choixGlasmio = !glasmio ? null : await _menuGlasmio(
     origin: origin,
     actions: actions,
     reactions: avecReactions ? _ContextMenuOverlay._emojis : const [],
@@ -131,10 +135,10 @@ Future<void> showMessageContextMenu({
     mine: mine,
     apercuTouchable: onPreviewTap != null,
   );
-  if (glasmio != null) {
-    final id = glasmio.id;
-    if (id == 'reaction' && glasmio.texte != null) {
-      onReact(glasmio.texte!);
+  if (choixGlasmio != null) {
+    final id = choixGlasmio.id;
+    if (id == 'reaction' && choixGlasmio.texte != null) {
+      onReact(choixGlasmio.texte!);
     } else if (id == 'apercu') {
       onPreviewTap?.call();
     } else if (id != null && id.startsWith('a')) {
