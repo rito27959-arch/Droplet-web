@@ -43,12 +43,8 @@ code 0
 0
 warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:136:8 • unused_import
 
-69 issues found. (ran in 28.7s)
-=== DEBUG : 0
-warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
-SkSL Error:
-        error: 111: initializers are not permitted on arrays (or structs containing arrays)
-        error: 112: unknown identifier 'param_2'
+69 issues found. (ran in 29.0s)
+=== DEBUG : 1
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 58: loop index initializer must be a constant expression
@@ -57,16 +53,30 @@ warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.
 SkSL Error:
         error: 121: initializers are not permitted on arrays (or structs containing arrays)
         error: 122: unknown identifier 'param_2'
-15 packages have newer versions incompatible with dependency constraints.
-=== RELEASE (R8) : 0
-total 904880
-drwxr-xr-x 2 runner runner      4096 Nov 11 07:22 .
-drwxr-xr-x 8 runner runner      4096 Nov 11 07:18 ..
--rw-r--r-- 1 runner runner 158388593 Nov 11 07:22 app-arm64-v8a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 11 07:22 app-arm64-v8a-release.apk.sha1
--rw-r--r-- 1 runner runner  92278137 Nov 11 07:22 app-armeabi-v7a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 11 07:22 app-armeabi-v7a-release.apk.sha1
--rw-r--r-- 1 runner runner 501352545 Nov 11 06:59 app-debug.apk
--rw-r--r-- 1 runner runner        40 Nov 11 06:59 app-debug.apk.sha1
--rw-r--r-- 1 runner runner 174537951 Nov 11 07:22 app-x86_64-release.apk
--rw-r--r-- 1 runner runner        40 Nov 11 07:22 app-x86_64-release.apk.sha1
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 111: initializers are not permitted on arrays (or structs containing arrays)
+        error: 112: unknown identifier 'param_2'
+e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:57:14 Conflicting overloads:
+e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:154:14 Conflicting overloads:
+FAILURE: Build failed with an exception.
+* What went wrong:
+BUILD FAILED in 6m 51s
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+=== RELEASE (R8) : 1
+e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:57:14 Conflicting overloads:
+e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:154:14 Conflicting overloads:
+FAILURE: Build failed with an exception.
+* What went wrong:
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+ls: cannot access 'build/app/outputs/flutter-apk/': No such file or directory
