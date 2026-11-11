@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'core/services/pont_glasmio.dart';
 import 'core/models/mesh_message.dart';
 import 'core/models/voice_note_meta.dart';
 import 'core/providers/appearance_provider.dart';
@@ -263,6 +264,7 @@ Future<void> main() async {
   if (!DeviceProfile.sansShader) unawaited(LiquidShader.load());
   // Le flou de défilement de Glasmio des écrans Flutter (flou_glasmio.dart).
   unawaited(FlouGlasmio.charger());
+  unawaited(PontGlasmio.disponible());
   // ⚠️ PLUS DE PRÉCOMPILATION DE SHADER POUR NEXUS (connexion entre
   // appareils) — la séquence de connexion ne s'appuie plus sur un
   // fragment shader GLSL. Voir l'en-tête de
@@ -873,7 +875,7 @@ final _router = GoRouter(
       path: '/chat/:peerId/info',
       // Android 13+ : les infos du contact en Glasmio (natif) ; sinon
       // l'écran Flutter.
-      pageBuilder: (context, state) => _pushPage(
+      pageBuilder: (context, state) => _pagePasserelle(
         PasserelleInfosContact(peerId: state.pathParameters['peerId'] ?? ''),
       ),
     ),
@@ -893,11 +895,11 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/backup/export',
-      pageBuilder: (context, state) => _pushPage(const PasserelleSauvegarde()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleSauvegarde()),
     ),
     GoRoute(
       path: '/contribution',
-      pageBuilder: (context, state) => _pushPage(const PasserelleContribution()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleContribution()),
     ),
     GoRoute(
       path: '/map',
@@ -911,11 +913,11 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/settings/apparence',
-      pageBuilder: (context, state) => _pushPage(const PasserelleApparence()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleApparence()),
     ),
     GoRoute(
       path: '/settings/icon',
-      pageBuilder: (context, state) => _pushPage(const PasserelleIcone()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleIcone()),
     ),
     GoRoute(
       path: '/maps/offline',
@@ -932,11 +934,11 @@ final _router = GoRouter(
     GoRoute(
       path: '/settings',
       // Android 13+ : les réglages en Glasmio (natif) ; sinon l'écran Flutter.
-      pageBuilder: (context, state) => _pushPage(const PasserelleParametres()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleParametres()),
     ),
     GoRoute(
       path: '/settings/notifications',
-      pageBuilder: (context, state) => _pushPage(const PasserelleNotifs()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleNotifs()),
     ),
     GoRoute(
       path: '/notifications',
@@ -956,11 +958,11 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/aide/confidentialite',
-      pageBuilder: (context, state) => _pushPage(const PasserellePolitique()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserellePolitique()),
     ),
     GoRoute(
       path: '/aide/donnees',
-      pageBuilder: (context, state) => _pushPage(const PasserelleDonnees()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleDonnees()),
     ),
     // ⚠️ APRÈS SES ENFANTS. `go_router` prend la PREMIÈRE route qui
     // correspond : déclarée avant, `/aide` ne capterait pas
@@ -968,19 +970,19 @@ final _router = GoRouter(
     // règle sûre quand les chemins se préfixent.
     GoRoute(
       path: '/aide',
-      pageBuilder: (context, state) => _pushPage(const PasserelleAide()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleAide()),
     ),
     GoRoute(
       path: '/settings/appareils',
-      pageBuilder: (context, state) => _pushPage(const PasserelleAppareils()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleAppareils()),
     ),
     GoRoute(
       path: '/settings/storage',
-      pageBuilder: (context, state) => _pushPage(const PasserelleStockage()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleStockage()),
     ),
     GoRoute(
       path: '/tor',
-      pageBuilder: (context, state) => _pushPage(const PasserelleTor()),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserelleTor()),
     ),
     GoRoute(
       path: '/tor/qr',
@@ -1028,7 +1030,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/group/:groupId/info',
-      pageBuilder: (context, state) => _pushPage(
+      pageBuilder: (context, state) => _pagePasserelle(
         PasserelleInfosGroupe(groupId: state.pathParameters['groupId'] ?? ''),
       ),
     ),
@@ -1146,6 +1148,26 @@ class _DeuxVolets extends StatelessWidget {
 
 CupertinoPage<void> _pushPage(Widget child) =>
     CupertinoPage<void>(child: child);
+
+/// UNE PAGE GLASMIO — l'écran natif s'ouvre PAR-DESSUS cette route.
+///
+/// Avec Glasmio, la route Flutter est transparente et sans transition :
+/// l'écran natif glisse seul au-dessus de la page d'où l'on vient (comme sur
+/// iOS), sans page vide qui s'anime d'abord — c'était le « double écran » et
+/// l'éclair blanc ou noir. Au retour, il glisse en sens inverse et laisse
+/// voir la page d'avant, puis la route disparaît sans animation.
+/// Sans Glasmio, c'est une page poussée normale (l'écran Flutter d'origine).
+Page<void> _pagePasserelle(Widget child) {
+  if (PontGlasmio.connu != true) return _pushPage(child);
+  return CustomTransitionPage<void>(
+    child: child,
+    opaque: false,
+    barrierColor: null,
+    transitionDuration: Duration.zero,
+    reverseTransitionDuration: Duration.zero,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) => child,
+  );
+}
 
 /// PRÉSENTER PAR-DESSUS — la feuille modale d'iOS.
 ///

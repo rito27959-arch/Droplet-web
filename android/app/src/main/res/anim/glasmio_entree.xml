@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- L'écran Glasmio arrive de la droite, comme une page poussée sur iOS. -->
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="380"
+    android:fromXDelta="100%"
+    android:toXDelta="0%"
+    android:interpolator="@android:interpolator/decelerate_cubic" />

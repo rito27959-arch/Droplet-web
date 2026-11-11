@@ -355,8 +355,7 @@ object BarreNavigationGlasmio {
                 selectedKey = d.optInt("index", 0),
                 onSelected = { k ->
                     if (k == -1) {
-                        // La loupe : la barre se change en champ de recherche.
-                        enRecherche = true
+                        // Le bouton de droite ouvre la page « Nouveau message » (Dart).
                         PontGlasmio.barre("recherche", k)
                     } else {
                         PontGlasmio.barre("onglet", k)

@@ -25,7 +25,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../design_system/ouro_colors.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'pont_glasmio.dart';
 
@@ -180,9 +179,11 @@ abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends C
   Widget build(BuildContext context) {
     return switch (_etat) {
       EtatGlasmio.flutter => construireRepli(context),
-      // Pendant que l'écran natif est ouvert (ou s'ouvre), un simple fond :
-      // c'est lui qu'on aperçoit une fraction de seconde aux transitions.
-      _ => ColoredBox(color: OuroColors.systemGroupedBackground, child: const SizedBox.expand()),
+      // Pendant que l'écran natif est ouvert (ou s'ouvre) : RIEN. La route est
+      // transparente (voir _pagePasserelle dans main.dart) : sous l'écran
+      // natif, c'est la page d'où l'on vient qui reste visible — jamais une
+      // page vide, blanche ou noire, aux transitions.
+      _ => const SizedBox.expand(),
     };
   }
 }

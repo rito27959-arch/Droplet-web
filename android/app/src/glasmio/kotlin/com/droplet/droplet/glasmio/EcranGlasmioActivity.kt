@@ -72,6 +72,11 @@ class EcranGlasmioActivity : ComponentActivity() {
             return
         }
         PontGlasmio.ecranOuvert = WeakReference(this)
+        // Le retour : l'écran repart vers la droite et laisse voir la page d'en
+        // dessous (thème translucide, voir styles_ecran_glasmio.xml).
+        if (Build.VERSION.SDK_INT >= 34) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, com.droplet.droplet.R.anim.glasmio_immobile, com.droplet.droplet.R.anim.glasmio_sortie)
+        }
         val sombre = desc.optBoolean("sombre", true)
         val barres = if (sombre) {
             SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
@@ -82,6 +87,14 @@ class EcranGlasmioActivity : ComponentActivity() {
         setContent {
             val d = PontGlasmio.description
             if (d != null) EcranGlasmio(d, onRetour = { finish() })
+        }
+    }
+
+    override fun finish() {
+        super.finish()
+        if (Build.VERSION.SDK_INT < 34) {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(com.droplet.droplet.R.anim.glasmio_immobile, com.droplet.droplet.R.anim.glasmio_sortie)
         }
     }
 

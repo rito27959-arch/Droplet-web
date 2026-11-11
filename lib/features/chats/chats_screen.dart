@@ -699,6 +699,8 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
               (_filtre == FiltreChats.toutes || _filtre == FiltreChats.epinglees))
             SliverToBoxAdapter(
               child: _AssistantPinnedRow(
+                // Comme sur iOS : pas de trait sous la DERNIÈRE ligne.
+                dernier: visibles.isEmpty,
                 onTap: () async {
                   OuroHaptics.selection();
                   await context.push('/ai-chat');
@@ -745,6 +747,7 @@ class _ChatsScreenState extends ConsumerState<ChatsScreen> {
                 final c = visibles[i];
                 return _ConversationRow(
                   key: ValueKey(c.key),
+                  dernier: i == visibles.length - 1,
                   conversation: c,
                   onArchive: () => _archiveConversation(c),
                   onPin: () => _pinConversation(c),
@@ -1128,6 +1131,7 @@ class _SearchField extends StatelessWidget {
 class _ConversationRow extends ConsumerStatefulWidget {
   const _ConversationRow({
     super.key,
+    this.dernier = false,
     required this.conversation,
     required this.onArchive,
     required this.onPin,
@@ -1138,6 +1142,9 @@ class _ConversationRow extends ConsumerStatefulWidget {
   final VoidCallback onArchive;
   final VoidCallback onPin;
   final VoidCallback onMute;
+
+  /// La dernière ligne de la liste : pas de séparateur dessous (iOS).
+  final bool dernier;
 
   @override
   ConsumerState<_ConversationRow> createState() => _ConversationRowState();
@@ -1509,10 +1516,13 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
               onLongPress: _showContextMenu,
               child: row,
             ),
-            Padding(
-              padding: EdgeInsets.only(left: _textInset),
-              child: Divider(height: 0.5, thickness: 0.5, color: OuroColors.separator),
-            ),
+            if (!widget.dernier)
+              Padding(
+                padding: EdgeInsets.only(left: _textInset),
+                child: Divider(height: 0.5, thickness: 0.5, color: OuroColors.separator),
+              )
+            else
+              const SizedBox(height: 0.5),
           ],
         ),
       ),
@@ -1667,9 +1677,12 @@ class _ConversationRowState extends ConsumerState<_ConversationRow>
 /// l'assistant (`ai_chat_screen.dart`, clé `ai_chat_historique`) ; à défaut,
 /// une invitation à poser une question.
 class _AssistantPinnedRow extends StatelessWidget {
-  const _AssistantPinnedRow({required this.onTap});
+  const _AssistantPinnedRow({required this.onTap, this.dernier = false});
 
   final VoidCallback onTap;
+
+  /// La dernière ligne de la liste : pas de séparateur dessous.
+  final bool dernier;
 
   /// Même diamètre que l'avatar d'une vraie discussion.
   static const double _taille = 52;
@@ -1811,12 +1824,15 @@ class _AssistantPinnedRow extends StatelessWidget {
               ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsetsDirectional.only(
-                start: DesignTokens.screenMargin + _taille + DesignTokens.space3,
-              ),
-              child: Divider(height: 0.5, thickness: 0.5, color: OuroColors.separator),
-            ),
+            if (!dernier)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(
+                  start: DesignTokens.screenMargin + _taille + DesignTokens.space3,
+                ),
+                child: Divider(height: 0.5, thickness: 0.5, color: OuroColors.separator),
+              )
+            else
+              const SizedBox(height: 0.5),
           ],
         ),
       ),

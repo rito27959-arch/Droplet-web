@@ -481,9 +481,31 @@ private fun MessageSuperpose(d: JSONObject, capture: ImageBitmap?, fini: (Map<St
             },
         )
     }
+    // Le fond : la conversation figée, FLOUTÉE et assombrie, comme dans
+    // Messages — seule la bulle touchée reste nette, soulevée au-dessus.
+    val couleursFond = LocalGlassColors.current
+    val voile = remember { Animatable(0f) }
+    LaunchedEffect(ouvert) { voile.animateTo(if (ouvert) 1f else 0f, tween(if (ouvert) 260 else 220)) }
     androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
         val ecranL = constraints.maxWidth.toFloat().coerceAtLeast(1f)
         val ecranH = constraints.maxHeight.toFloat().coerceAtLeast(1f)
+        if (capture != null) {
+            Image(
+                capture,
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.fillMaxSize().blur(28.dp * voile.value),
+            )
+        }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = (if (couleursFond.isDark) 0.4f else 0.2f) * voile.value))
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                    ouvert = false
+                    terminer()
+                },
+        )
         Box(
             Modifier
                 .offset { IntOffset(zx.toInt(), zy.toInt()) }

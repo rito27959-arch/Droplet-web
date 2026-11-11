@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Le thème des écrans Glasmio (EcranGlasmioActivity).
+
+  TRANSLUCIDE : la fenêtre n'a pas de fond à elle. Avant que Compose ait
+  dessiné sa première image, on voit donc la page Flutter d'où l'on vient —
+  jamais l'éclair noir (ancien thème Material sombre) ou blanc. Et Flutter,
+  dessous, n'est pas mis à l'arrêt : au retour, sa surface est intacte (pas
+  d'écran noir le temps qu'elle se recrée).
+-->
+<resources>
+    <style name="EcranGlasmio" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowAnimationStyle">@style/EcranGlasmio.Animation</item>
+    </style>
+
+    <style name="EcranGlasmio.Animation" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/glasmio_entree</item>
+        <item name="android:activityOpenExitAnimation">@anim/glasmio_immobile</item>
+        <item name="android:activityCloseEnterAnimation">@anim/glasmio_immobile</item>
+        <item name="android:activityCloseExitAnimation">@anim/glasmio_sortie</item>
+        <item name="android:windowEnterAnimation">@anim/glasmio_entree</item>
+        <item name="android:windowExitAnimation">@anim/glasmio_sortie</item>
+    </style>
+</resources>

@@ -101,7 +101,7 @@ M=app/src/main/AndroidManifest.xml
 grep -q 'xmlns:tools' $M || sed -i '0,/<manifest /s#<manifest #<manifest xmlns:tools="http://schemas.android.com/tools" #' $M
 sed -i '0,/<application/s#<application#<uses-sdk tools:overrideLibrary="io.github.neoruaa.glasmio.core,io.github.neoruaa.glasmio.glass,io.github.neoruaa.glasmio.ui,io.github.neoruaa.glasmio.scaffold,io.github.neoruaa.glasmio.preference,io.github.neoruaa.glasmio.icons,top.yukonga.miuix.kmp.navigation3.ui,top.yukonga.miuix.kmp.ui,top.yukonga.miuix.kmp.core,top.yukonga.miuix.kmp.squircle,top.yukonga.miuix.kmp.shader"/>\n    <application#' $M
 # L'activité des réglages Glasmio (même thème que l'app, sans barre).
-grep -q EcranGlasmioActivity $M || sed -i '0,/<\/application>/s#</application>#    <activity android:name="com.droplet.droplet.glasmio.EcranGlasmioActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode|density" />\n    </application>#' $M
+grep -q EcranGlasmioActivity $M || sed -i '0,/<\/application>/s#</application>#    <activity android:name="com.droplet.droplet.glasmio.EcranGlasmioActivity" android:exported="false" android:theme="@style/EcranGlasmio" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode|density" />\n    </application>#' $M
 echo "--- configuration passée à Glasmio :"
 grep -E 'version "|distributionUrl' settings.gradle.kts gradle/wrapper/gradle-wrapper.properties
 grep -nE 'compileSdk|plugin.compose|glasmio' $A

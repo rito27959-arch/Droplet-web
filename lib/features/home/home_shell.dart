@@ -1,6 +1,8 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../../design_system/ouro_colors.dart';
 import '../../design_system/ouro_tab_bar.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -67,14 +69,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           _scrollRun = 0;
         });
       case 'recherche':
-        // La loupe : la barre native devient un champ de recherche de verre ;
-        // la liste des discussions, dessous, se filtre à chaque lettre.
-        setState(() {
-          _currentIndex = 0;
-          _tabBarMinimized = false;
-          _scrollRun = 0;
-        });
-        requeteGlasmio.value = '';
+        // Le bouton de droite de la barre (loupe) : la page « Nouveau
+        // message », où l'on cherche un contact à qui écrire.
+        HapticFeedback.selectionClick();
+        context.push('/new-message');
       case 'requete':
         requeteGlasmio.value = (g.$2 as String?) ?? '';
       case 'recherche_fin':

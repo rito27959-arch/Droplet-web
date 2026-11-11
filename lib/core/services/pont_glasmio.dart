@@ -72,6 +72,10 @@ class PontGlasmio {
   static bool _installe = false;
 
   /// Vrai sur Android 13+ quand la couche native Glasmio est présente.
+  /// Glasmio est-il là ? `null` tant que la question n'a pas été posée
+  /// (on la pose au démarrage, voir main.dart).
+  static bool? get connu => _disponible;
+
   static Future<bool> disponible() async {
     if (_disponible != null) return _disponible!;
     if (kIsWeb || !Platform.isAndroid) return _disponible = false;

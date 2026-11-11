@@ -74,14 +74,25 @@ object PontGlasmio {
                         description = JSONObject(desc)
                         alerte = null
                         champs.clear()
-                        val intention = Intent(act, EcranGlasmioActivity::class.java)
-                        // Au retour d'une page Flutter, l'écran revient sans glisser :
-                        // on a l'impression de ne l'avoir jamais quitté.
-                        if (sansAnimation) {
-                            act.startActivity(intention, ActivityOptions.makeCustomAnimation(act, 0, 0).toBundle())
-                        } else {
-                            act.startActivity(intention)
+                        // UN SEUL ÉCRAN NATIF à la fois : s'il y en a déjà un ouvert
+                        // (double toucher, route reconstruite…), on le met à jour au
+                        // lieu d'en empiler un second — c'était le « double écran ».
+                        val deja = ecranOuvert?.get()
+                        if (deja != null && !deja.isFinishing && !deja.isDestroyed) {
+                            resultat.success(true)
+                            return@setMethodCallHandler
                         }
+                        val intention = Intent(act, EcranGlasmioActivity::class.java)
+                            .putExtra("sansAnimation", sansAnimation)
+                        // L'écran glisse depuis la droite par-dessus la page d'où l'on
+                        // vient ; au retour d'une page Flutter, il revient sans glisser :
+                        // on a l'impression de ne l'avoir jamais quitté.
+                        val options = if (sansAnimation) {
+                            ActivityOptions.makeCustomAnimation(act, 0, 0)
+                        } else {
+                            ActivityOptions.makeCustomAnimation(act, com.droplet.droplet.R.anim.glasmio_entree, com.droplet.droplet.R.anim.glasmio_immobile)
+                        }
+                        act.startActivity(intention, options.toBundle())
                         resultat.success(true)
                     } catch (e: Exception) {
                         resultat.error("glasmio", e.message, null)

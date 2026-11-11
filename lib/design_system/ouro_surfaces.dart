@@ -130,25 +130,11 @@ class FondAvecLueur extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(color: OuroSurfaces.fond),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: OuroSurfaces.hauteurLueur,
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(gradient: OuroSurfaces.lueur),
-              ),
-            ),
-          ),
-          Positioned.fill(child: child),
-        ],
-      ),
-    );
+    // ⚠️ PLUS DE LUEUR ROUGE. Tous les écrans de Droplet ont maintenant le
+    // fond uni des écrans Glasmio (noir en sombre, blanc en clair) : la lueur
+    // teintait le haut de la liste des discussions en rose, et cet écran ne
+    // ressemblait plus aux autres.
+    return ColoredBox(color: OuroSurfaces.fond, child: child);
   }
 }
 
