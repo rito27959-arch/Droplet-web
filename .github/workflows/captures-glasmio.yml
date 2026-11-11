@@ -64,7 +64,7 @@ jobs:
           target: google_apis
           ram-size: 4096M
           disk-size: 6000M
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back emulated -skin 1080x2340
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -skin 1080x2340
           disable-animations: false
           script: bash .github/outils/captures-emulateur.sh
       - name: Publier

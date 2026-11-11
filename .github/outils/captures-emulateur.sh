@@ -47,6 +47,8 @@ timeout 480 adb logcat -v raw -s flutter:I | while read -r l; do
   esac
 done
 timeout 30 adb logcat -d | grep -iE "glasmio|AndroidRuntime|FATAL|flutter" | tail -150 > $C/logcat.txt
-# La caméra des scanners : l'exception Android complète, s'il y en a une.
+# Les classes créées par réflexion que R8 aurait abîmées (ML Kit, Firebase…),
+# et l'exception de la caméra des scanners, s'il y en a une.
+timeout 30 adb logcat -d | grep -E "ComponentDiscovery|NoSuchMethodException" | head -40 > $C/reflexion.txt
 timeout 30 adb logcat -d | grep -iE -B3 -A45 "Failed to handle method call|getClass\(\)|mobile_scanner|CameraX|Caméra" | tail -400 > $C/camera.txt
 true
