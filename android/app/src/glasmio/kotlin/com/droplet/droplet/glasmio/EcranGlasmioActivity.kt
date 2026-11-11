@@ -28,6 +28,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -51,10 +62,10 @@ import io.github.neoruaa.glasmio.core.glasmioColorScheme
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
 import io.github.neoruaa.glasmio.icons.GlasmioIconProvider
 import io.github.neoruaa.glasmio.scaffold.GlasmioPinnedListPage
-import io.github.neoruaa.glasmio.ui.GlasmioAlertButtonLayout
 import io.github.neoruaa.glasmio.ui.GlasmioAlertButtonRole
 import io.github.neoruaa.glasmio.ui.GlasmioAlertButtonSpec
-import io.github.neoruaa.glasmio.ui.GlasmioAlertDialog
+import io.github.neoruaa.glasmio.ui.GlasmioAlertButton
+import io.github.neoruaa.glasmio.ui.GlasmioAlertSurface
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedTableFooter
 import io.github.neoruaa.glasmio.ui.GlasmioSectionTitle
@@ -171,10 +182,10 @@ private fun EcranGlasmio(d: JSONObject, onRetour: () -> Unit) {
                     if (bas != null) {
                         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) { BarreDuBas(bas) }
                     }
+                    // Dans le verre : l'alerte échantillonne l'écran qu'elle recouvre.
+                    PontGlasmio.alerte?.let { a -> Alerte(a) }
                 },
             )
-
-            PontGlasmio.alerte?.let { a -> Alerte(a) }
         }
     }
 }
@@ -222,11 +233,61 @@ private fun Alerte(a: JSONObject) {
             ),
         )
     }
-    GlasmioAlertDialog(
-        onDismissRequest = { PontGlasmio.annulerAlerte() },
-        title = a.optString("titre"),
-        message = a.texte("message"),
-        buttonLayout = if (boutons.size > 2) GlasmioAlertButtonLayout.Stacked else GlasmioAlertButtonLayout.SideBySide,
-        buttons = boutons,
-    )
+    // ⚠️ DESSINÉE DANS LA FENÊTRE DE L'ÉCRAN, PAS DANS UNE FENÊTRE DE DIALOGUE.
+    // `GlasmioAlertDialog` ouvre une fenêtre Android à part (Dialog) qui
+    // échantillonne l'écran à travers les fenêtres. Dans cette activité
+    // translucide, l'ouvrir FERMAIT L'APP (bloquer, signaler, photo de
+    // profil, icône : tous passaient par ici). On compose donc la même alerte
+    // — même surface de verre et mêmes boutons Glasmio — directement par-
+    // dessus l'écran : plus de seconde fenêtre.
+    val apparition = remember { Animatable(0f) }
+    LaunchedEffect(a) {
+        apparition.snapTo(0f)
+        apparition.animateTo(1f, tween(260))
+    }
+    BackHandler { PontGlasmio.annulerAlerte() }
+    val sombre = LocalGlassColors.current.isDark
+    Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = apparition.value }
+                .background(Color.Black.copy(alpha = if (sombre) 0.35f else 0.2f))
+                .clickable(interactionSource = null, indication = null) { PontGlasmio.annulerAlerte() },
+        )
+        Box(
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = 40.dp)
+                .graphicsLayer {
+                    val e = 1.12f - 0.12f * apparition.value
+                    scaleX = e
+                    scaleY = e
+                    alpha = apparition.value
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            GlasmioAlertSurface(
+                modifier = Modifier.widthIn(max = 320.dp),
+                title = a.optString("titre"),
+                message = a.texte("message"),
+                dimAmount = 0f,
+            ) {
+                if (boutons.size > 2) {
+                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        boutons.forEach { b ->
+                            GlasmioAlertButton(text = b.label, onClick = b.onClick, modifier = Modifier.fillMaxWidth(), role = b.role)
+                        }
+                    }
+                } else {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        boutons.forEach { b ->
+                            GlasmioAlertButton(text = b.label, onClick = b.onClick, modifier = Modifier.weight(1f), role = b.role)
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
