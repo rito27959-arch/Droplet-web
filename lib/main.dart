@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'core/services/barre_glasmio.dart';
 import 'core/services/pont_glasmio.dart';
 import 'core/models/mesh_message.dart';
 import 'core/models/voice_note_meta.dart';
@@ -329,7 +330,23 @@ class DropletApp extends ConsumerWidget {
     // mode on se trouve AVANT de construire le moindre widget qui
     // l'interroge — d'où cet appel juste ici, à la racine, avant le
     // `return`.
+    // Clair ↔ sombre (choisi dans Apparence, ou suivi du téléphone en mode
+    // Automatique) : les écrans lisent `OuroColors` en statique, donc sans
+    // reconstruction complète seul l'écran Apparence changeait et le reste
+    // attendait un redémarrage. On reconstruit tout, une fois, et la barre
+    // native Glasmio est renvoyée avec ses nouvelles couleurs.
+    final changement = OuroColors.isDark != (brightness == Brightness.dark);
     OuroColors.setBrightness(brightness);
+    if (changement) {
+      BarreGlasmio.oublier();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        void reconstruire(Element e) {
+          e.markNeedsBuild();
+          e.visitChildren(reconstruire);
+        }
+        if (context.mounted) (context as Element).visitChildren(reconstruire);
+      });
+    }
     // Idem pour les barres système d'Android (heure, batterie, boutons de
     // navigation) : elles doivent s'inverser avec le mode.
     OuroTheme.applySystemOverlay(brightness);

@@ -135,7 +135,7 @@ class _LierAppareilScreenState extends State<LierAppareilScreen> with TickerProv
           MobileScanner(
             controller: _camera,
             onDetect: _detecte,
-            errorBuilder: (context, erreur, _) => ErreurCamera(erreur: erreur, controleur: _camera),
+            errorBuilder: fondErreurCamera,
           ),
 
           // Le voile : il assombrit tout sauf le viseur, puis tout quand
@@ -194,6 +194,9 @@ class _LierAppareilScreenState extends State<LierAppareilScreen> with TickerProv
               ),
             ),
           ),
+
+          // L'erreur de la caméra, au-dessus du viseur (pas dessous).
+          CoucheErreurCamera(controleur: _camera),
 
           // La barre du haut : fermer, titre, lampe.
           SafeArea(

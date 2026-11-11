@@ -91,7 +91,7 @@ class _QrScanScreenState extends State<QrScanScreen> with SingleTickerProviderSt
           MobileScanner(
             controller: _controller,
             onDetect: _onDetect,
-            errorBuilder: (context, erreur, _) => ErreurCamera(erreur: erreur, controleur: _controller),
+            errorBuilder: fondErreurCamera,
           ),
           IgnorePointer(
             child: Center(
@@ -147,6 +147,7 @@ class _QrScanScreenState extends State<QrScanScreen> with SingleTickerProviderSt
               style: TextStyle(color: OuroColors.textPrimary.withValues(alpha: 0.85), fontSize: 13),
             ),
           ),
+          CoucheErreurCamera(controleur: _controller),
         ],
       ),
     );

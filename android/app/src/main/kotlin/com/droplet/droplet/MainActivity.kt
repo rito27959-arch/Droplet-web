@@ -491,6 +491,18 @@ class MainActivity : FlutterFragmentActivity() {
                     result.notImplemented()
                 }
             }
+        // Le journal Android de l'app (avertissements et erreurs, avec leur
+        // pile) : pour « Copier le détail » quand la caméra refuse de
+        // démarrer. Seulement les lignes de CE processus ; lu sur un fil à
+        // part (logcat peut prendre une seconde).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.droplet.droplet/journal")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "logcat") { result.notImplemented(); return@setMethodCallHandler }
+                Thread {
+                    val texte = JournalNatif.logcat()
+                    runOnUiThread { result.success(texte) }
+                }.start()
+            }
         val canalMedia = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, mediaChannel)
         media.canal = canalMedia
         canalMedia.setMethodCallHandler { call, result ->

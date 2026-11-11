@@ -178,7 +178,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
             MobileScanner(
               controller: _scannerController!,
               onDetect: _onDetect,
-              errorBuilder: (context, erreur, _) => ErreurCamera(erreur: erreur, controleur: _scannerController!),
+              errorBuilder: fondErreurCamera,
             ),
 
           // ── Fond noir plein une fois le code traité ─────────────
@@ -198,6 +198,9 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
 
           // ── Success overlay ──────────────────────────────────
           if (_processed && _scannedPeer != null) _buildSuccessOverlay(),
+
+          // ── L'erreur de la caméra, au-dessus du viseur ───────
+          if (_scannerController != null && !_processed) CoucheErreurCamera(controleur: _scannerController!),
 
           // ── Top bar (blur glass) ─────────────────────────────
           Positioned(

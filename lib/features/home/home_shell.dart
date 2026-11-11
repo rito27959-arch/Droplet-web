@@ -14,6 +14,7 @@ import '../tor/tor_status_indicator.dart';
 import '../../core/providers/mesh_provider.dart';
 import '../../design_system/flou.dart';
 import '../../core/services/barre_glasmio.dart';
+import '../onboarding/ouverture_droplet.dart';
 import 'dart:async';
 
 class HomeShell extends ConsumerStatefulWidget {
@@ -45,6 +46,7 @@ class _HomeShellState extends ConsumerState<HomeShell> with WidgetsBindingObserv
       barreGlasmioActive.value = true;
       _gestes = BarreGlasmio.gestes.listen(_surGeste);
       observateurRoutesGlasmio.sommet.addListener(_majBarre);
+      OuvertureDroplet.active.addListener(_majBarre);
     });
   }
 
@@ -53,6 +55,7 @@ class _HomeShellState extends ConsumerState<HomeShell> with WidgetsBindingObserv
     WidgetsBinding.instance.removeObserver(this);
     _gestes?.cancel();
     observateurRoutesGlasmio.sommet.removeListener(_majBarre);
+    OuvertureDroplet.active.removeListener(_majBarre);
     if (_natif) {
       barreGlasmioActive.value = false;
       BarreGlasmio.afficher(visible: false, onglets: const [], index: 0, compact: false, recherche: '');
@@ -108,7 +111,9 @@ class _HomeShellState extends ConsumerState<HomeShell> with WidgetsBindingObserv
     final enRecherche = requeteGlasmio.value != null;
     if (!dessus && enRecherche) requeteGlasmio.value = null;
     BarreGlasmio.afficher(
-      visible: dessus && (!clavier || enRecherche),
+      // Pas pendant l'ouverture (la marque à l'écran) : la barre native
+      // passait par-dessus, seule sur un écran noir.
+      visible: dessus && !OuvertureDroplet.active.value && (!clavier || enRecherche),
       onglets: [for (final it in items) OngletGlasmio(it.label, badge: it.badge)],
       index: _currentIndex,
       compact: _tabBarMinimized,

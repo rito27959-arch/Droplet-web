@@ -42,6 +42,17 @@ object JournalNatif {
         }
     }
 
+    /** Les 150 dernières lignes d'avertissement ou d'erreur de l'app. */
+    fun logcat(): String = runCatching {
+        val p = ProcessBuilder(
+            "logcat", "-d", "-t", "600", "-v", "brief",
+            "--pid=${android.os.Process.myPid()}", "*:W",
+        ).redirectErrorStream(true).start()
+        val lignes = p.inputStream.bufferedReader().readLines()
+        p.waitFor()
+        lignes.takeLast(150).joinToString("\n")
+    }.getOrDefault("")
+
     private fun ecrire(context: Context, fil: Thread, erreur: Throwable) {
         // Le dossier de path_provider (getApplicationDocumentsDirectory).
         val dossier = context.getDir("flutter", Context.MODE_PRIVATE)

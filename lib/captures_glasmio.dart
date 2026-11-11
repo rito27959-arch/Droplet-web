@@ -16,6 +16,7 @@ import 'core/services/crypto_service.dart';
 import 'core/services/pont_glasmio.dart';
 import 'core/services/storage_service.dart';
 import 'design_system/ouro_alert.dart';
+import 'features/appareils/lier_appareil_screen.dart';
 import 'features/navigateur/navigateur_integre.dart';
 
 const bool kCapturesGlasmio = bool.fromEnvironment('DROPLET_CAPTURES');
@@ -54,6 +55,23 @@ Future<void> lancerCaptures(GoRouter routeur) async {
     _capture(nom);
     await _attendre(3);
     await PontGlasmio.fermer();
+    await _attendre(3);
+  }
+  // Les scanners QR (la caméra de l'émulateur est « emulated ») : l'écran,
+  // et la pile Android exacte si la caméra refuse de démarrer.
+  routeur.push('/tor/scan');
+  await _attendre(10);
+  _capture('scanner_tor');
+  await _attendre(3);
+  routeur.pop();
+  await _attendre(3);
+  final nav = cleNavigateurRacine.currentState;
+  if (nav != null) {
+    nav.push(MaterialPageRoute<void>(fullscreenDialog: true, builder: (_) => const LierAppareilScreen()));
+    await _attendre(10);
+    _capture('scanner_lier');
+    await _attendre(3);
+    nav.pop();
     await _attendre(3);
   }
   // La recherche flottante : le script touche la loupe de la barre native
