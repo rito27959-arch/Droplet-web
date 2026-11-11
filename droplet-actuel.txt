@@ -43,8 +43,12 @@ code 0
 0
 warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:136:8 • unused_import
 
-69 issues found. (ran in 26.2s)
+69 issues found. (ran in 31.8s)
 === DEBUG : 1
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 58: loop index initializer must be a constant expression
+        error: 55: loop index initializer must be a constant expression
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 111: initializers are not permitted on arrays (or structs containing arrays)
@@ -53,15 +57,11 @@ warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.
 SkSL Error:
         error: 121: initializers are not permitted on arrays (or structs containing arrays)
         error: 122: unknown identifier 'param_2'
-warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
-SkSL Error:
-        error: 58: loop index initializer must be a constant expression
-        error: 55: loop index initializer must be a constant expression
 e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:57:14 Conflicting overloads:
 e: file:///home/runner/work/Droplet-web/Droplet-web/android/app/src/main/kotlin/com/droplet/droplet/MainActivity.kt:154:14 Conflicting overloads:
 FAILURE: Build failed with an exception.
 * What went wrong:
-BUILD FAILED in 6m 17s
+BUILD FAILED in 7m 45s
 * What went wrong:
 Execution failed for task ':app:compileDebugKotlin'.
 > A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
