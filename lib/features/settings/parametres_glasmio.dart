@@ -18,6 +18,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/models/mesh_message.dart' show ContributionRank;
@@ -27,6 +28,7 @@ import '../../core/providers/tor_providers.dart';
 import '../../core/services/ai_knowledge_packs.dart';
 import '../../core/services/appareils_lies.dart';
 import '../../core/services/avatar_service.dart';
+import '../../core/services/crash_journal.dart';
 import '../../core/services/mesh_foreground_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/passerelle_glasmio.dart';
@@ -133,10 +135,28 @@ class _PasserelleParametresState extends EtatPasserelleGlasmio<PasserelleParamet
         return ReponseGlasmio.maj(await decrire());
       case 'bloques':
         return pousser(MaterialPageRoute<void>(builder: (_) => const ContactsBloquesScreen()));
+      // ⚠️ LE JOURNAL ET « À PROPOS » SONT DES SOUS-NIVEAUX GLASMIO de cet
+      // écran (le retour remonte aux Réglages) : plus de feuille Flutter
+      // d'un autre style.
       case 'journal':
-        return feuille(afficherJournal);
+        _journal = await CrashJournal.lire();
+        _niveau = 'journal';
       case 'a_propos':
-        return feuille(afficherAPropos);
+        _niveau = 'a_propos';
+      case 'remonter':
+        _niveau = null;
+        _journal = null;
+      case 'journal:envoyer':
+        final texte = _journal;
+        if (texte != null && mounted) await envoyerJournal(context, texte);
+        return ReponseGlasmio.rien;
+      case 'journal:copier':
+        final texte = _journal;
+        if (texte != null) await Clipboard.setData(ClipboardData(text: texte));
+        return ReponseGlasmio.rien;
+      case 'journal:effacer':
+        await CrashJournal.vider();
+        _journal = null;
       case 'sons':
         final on = valeur == true;
         await SoundService.setEnabled(on);
@@ -233,8 +253,72 @@ class _PasserelleParametresState extends EtatPasserelleGlasmio<PasserelleParamet
         'lignes': lignes,
       };
 
+  /// Le sous-niveau ouvert : `null` (les Réglages), `journal` ou `a_propos`.
+  String? _niveau;
+  String? _journal;
+
+  Map<String, Object?> _sousNiveau(AppLocalizations textes) {
+    final base = {
+      'retour': MaterialLocalizations.of(context).backButtonTooltip,
+      'retourId': 'remonter',
+      'sombre': OuroColors.isDark,
+      'accent': _c(OuroColors.accent),
+    };
+    if (_niveau == 'journal') {
+      final texte = _journal;
+      final vide = texte == null || texte.trim().isEmpty;
+      return {
+        ...base,
+        'titre': textes.jsErrorJournalTitle,
+        'sections': [
+          {
+            if (!vide) 'pied': textes.jsLinesStayOnDevice,
+            'lignes': [
+              {'id': 'texte', 'type': 'paragraphe', 'sous': vide ? textes.jsNoErrorsRecorded : texte},
+            ],
+          },
+          if (!vide)
+            {
+              'lignes': [
+                {'id': 'journal:envoyer', 'type': 'bouton', 'titre': textes.actionSend},
+                {'id': 'journal:copier', 'type': 'bouton', 'titre': textes.chCopy},
+                {'id': 'journal:effacer', 'type': 'bouton', 'titre': textes.jsErase, 'destructif': true},
+              ],
+            },
+        ],
+      };
+    }
+    // À propos de Droplet.
+    return {
+      ...base,
+      'titre': 'Droplet',
+      'sections': [
+        {
+          'lignes': [
+            {'id': 'slogan', 'type': 'paragraphe', 'titre': 'Droplet', 'sous': textes.stAboutTagline},
+          ],
+        },
+        {
+          'lignes': [
+            {'id': 'p1', 'type': 'info', 'icone': 'wifi_tethering', 'teinte': _c(OuroColors.accent), 'titre': textes.stAboutDirect},
+            {'id': 'p2', 'type': 'info', 'icone': 'lock', 'teinte': _c(OuroColors.systemGreen), 'titre': textes.stAboutE2E},
+            {'id': 'p3', 'type': 'info', 'icone': 'visibility_off', 'teinte': _c(OuroColors.systemPurple), 'titre': textes.stAboutNoThirdParty},
+          ],
+        },
+        // ⚠️ MENTIONS OBLIGATOIRES (licences des ressources tierces).
+        {
+          'lignes': [
+            {'id': 'a1', 'type': 'paragraphe', 'sous': textes.stAttributionEmoji},
+            {'id': 'a2', 'type': 'paragraphe', 'sous': textes.stAttributionGemma},
+          ],
+        },
+      ],
+    };
+  }
+
   Future<Map<String, Object?>> _description({AppLocalizations? l10n}) async {
     final textes = l10n ?? this.textes;
+    if (_niveau != null) return _sousNiveau(textes);
     final me = StorageService.currentUser;
     final pseudo = me?.pseudo ?? '—';
     final myId = ref.read(meshRepositoryProvider).myId;

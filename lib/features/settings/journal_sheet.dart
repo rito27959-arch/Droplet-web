@@ -177,6 +177,13 @@ class _JournalSheet extends StatelessWidget {
   Future<void> _envoyer(BuildContext context) async {
     final texte = contenu;
     if (texte == null) return;
+    await envoyerJournal(context, texte);
+  }
+}
+
+/// Ouvre le partage du système avec le journal en pièce jointe (aussi
+/// utilisé par l'écran Réglages en Glasmio).
+Future<void> envoyerJournal(BuildContext context, String texte) async {
     final l10n = AppLocalizations.of(context);
     OuroHaptics.light();
     try {
@@ -201,5 +208,4 @@ class _JournalSheet extends StatelessWidget {
       Clipboard.setData(ClipboardData(text: texte));
       afficherToast(context, l10n.jsShareUnavailable, type: DropletToastType.warning);
     }
-  }
 }

@@ -142,9 +142,33 @@ object BarreNavigationGlasmio {
             requete = TextFieldValue()
             pleinEcran(false)
         }
+        // ⚠️ L'ACTIVITÉ A PU ÊTRE RECRÉÉE (thème, langue, retour d'arrière-plan
+        // après que le système l'a tuée) : l'ancienne vue appartenait à
+        // l'ancienne fenêtre, invisible. C'est ce qui faisait « disparaître »
+        // la barre. On la recrée dans la bonne.
+        val v0 = vue
+        if (v0 != null && (v0.context !== act || !v0.isAttachedToWindow)) {
+            (v0.parent as? ViewGroup)?.removeView(v0)
+            vue = null
+            bande = null
+        }
         if (vue == null && visible) creer(act)
-        vue?.visibility = if (visible) View.VISIBLE else View.GONE
-        if (visible) demarrerBoucle() else boucle = false
+        val v = vue
+        val etaitVisible = v?.visibility == View.VISIBLE
+        v?.visibility = if (visible) View.VISIBLE else View.GONE
+        if (visible) {
+            if (!etaitVisible) {
+                // ⚠️ PAS D'ANCIENNE IMAGE SOUS LE VERRE : la bande recopiée datait
+                // de l'écran d'avant (la conversation, son champ « Message »…).
+                // On l'oublie, et on recopie très souvent pendant que la page
+                // revient en glissant.
+                bande = null
+                rapideJusqua = System.currentTimeMillis() + 1200
+            }
+            demarrerBoucle()
+        } else {
+            boucle = false
+        }
     }
 
     /** Un défilement dans Flutter : la bande se recopie souvent pendant 600 ms. */

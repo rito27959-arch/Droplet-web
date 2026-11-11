@@ -208,8 +208,10 @@ Future<ChoixGlasmio?> _menuGlasmio({
       actuelles: current,
       aDroite: mine,
       apercuTouchable: apercuTouchable,
-      // Un message (avec réactions) : le menu des messages de Glasmio.
-      message: reactions.isNotEmpty,
+      // ⚠️ L'ANCIEN MENU D'APPUI LONG, à la demande : fond flouté, bulle
+      // soulevée, barre de réactions et menu Glasmio (type « menu »). Le
+      // menu « messages » de Glasmio (GlasmioMessageContextMenu) reste
+      // disponible dans superposition_glasmio.dart (`message: true`).
     );
 
 class _ContextMenuOverlay extends StatelessWidget {

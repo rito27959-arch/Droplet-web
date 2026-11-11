@@ -180,7 +180,12 @@ const List<Operateur> kOperateurs = [
 ];
 
 class PremiumScreen extends ConsumerStatefulWidget {
-  const PremiumScreen({super.key, this.actionInitiale, this.proChoisi = true});
+  const PremiumScreen({super.key, this.actionInitiale, this.proChoisi = true, this.surActionFinie});
+
+  /// Avec Glasmio : l'écran ne se montre PAS — seule sa feuille (paiement,
+  /// code, avantages) s'ouvre, par-dessus la vitrine Glasmio figée ; quand
+  /// elle se referme (et après la célébration d'un achat), on y revient.
+  final VoidCallback? surActionFinie;
 
   /// Ce que l'écran fait dès qu'il s'affiche — utilisé quand on arrive de
   /// la vitrine Glasmio (Android 13+) : `paiement`, `code`, ou
@@ -223,24 +228,36 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     _proChoisi = widget.proChoisi;
     final action = widget.actionInitiale;
     if (action != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
         if (action == 'paiement') {
-          _ouvrirPaiement();
+          await _ouvrirPaiement();
         } else if (action == 'code') {
-          _ouvrirCode();
+          await _ouvrirCode();
         } else if (action.startsWith('avantage:')) {
           final l10n = AppLocalizations.of(context);
-          ouvrirAvantagesPro(
+          var acheter = false;
+          await ouvrirAvantagesPro(
             context,
             depart: int.tryParse(action.substring(9)) ?? 0,
             libelleAchat: l10n.avUnlock,
-            onAcheter: _allerAuPaiement,
+            onAcheter: widget.surActionFinie == null ? _allerAuPaiement : () => acheter = true,
           );
+          if (acheter && mounted) {
+            await WidgetsBinding.instance.endOfFrame;
+            if (mounted) await _ouvrirPaiement();
+          }
         }
+        // Un achat réussi : la célébration d'abord, puis le retour.
+        final fete = _celebration;
+        if (fete != null) await fete;
+        widget.surActionFinie?.call();
       });
     }
   }
+
+  /// La célébration d'un achat en cours (voir `_payer`).
+  Future<void>? _celebration;
 
   @override
   void setState(VoidCallback fn) {
@@ -339,13 +356,15 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
       return;
     }
 
-    await SuccessSeal.show(
+    final fete = SuccessSeal.show(
       context,
       icon: Icons.auto_awesome_rounded,
       message: niveau.estPro ? l10n.pmProActivated : l10n.pmPackUnlocked,
       color: OuroColors.accent,
       emoji: AnimatedEmojis.starStruck,
     );
+    _celebration = fete;
+    await fete;
   }
 
   /// ⚠️ LE BOUTON DE L'ÉCRAN D'EXPLICATIONS NE FAISAIT RIEN : il était
@@ -394,7 +413,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     _codeCtrl.clear();
     if (!mounted) return;
     _fermerFeuille();
-    await SuccessSeal.show(
+    final fete = SuccessSeal.show(
       context,
       icon: Icons.auto_awesome_rounded,
       message: niveau.estPro ? l10n.pmProActivated : l10n.pmPackUnlocked,
@@ -402,6 +421,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
       // L'étoile de Noto, déjà embarquée par l'application.
       emoji: AnimatedEmojis.starStruck,
     );
+    _celebration = fete;
+    await fete;
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -529,6 +550,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Avec Glasmio, l'écran reste invisible : seules ses feuilles comptent.
+    if (widget.surActionFinie != null) return const SizedBox.shrink();
+    return _construire(context);
+  }
+
+  Widget _construire(BuildContext context) {
     final niveau = ref.watch(premiumProvider);
     final l10n = AppLocalizations.of(context);
     final haut = MediaQuery.paddingOf(context).top;

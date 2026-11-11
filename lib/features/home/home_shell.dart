@@ -23,7 +23,7 @@ class HomeShell extends ConsumerStatefulWidget {
   ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends ConsumerState<HomeShell> {
+class _HomeShellState extends ConsumerState<HomeShell> with WidgetsBindingObserver {
   int _currentIndex = 0;
   bool _tabBarMinimized = false;
   double _scrollRun = 0;
@@ -38,6 +38,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     BarreGlasmio.disponible().then((ok) {
       if (!ok || !mounted) return;
       setState(() => _natif = true);
@@ -49,6 +50,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _gestes?.cancel();
     observateurRoutesGlasmio.sommet.removeListener(_majBarre);
     if (_natif) {
@@ -84,6 +86,16 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   /// Décrit la barre native : visible seulement si l'accueil est la page
   /// du dessus et que le clavier est fermé.
+  /// Retour au premier plan : la barre est renvoyée telle quelle (l'activité
+  /// Android a pu être recréée entre-temps, et sa barre perdue).
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState etat) {
+    if (etat == AppLifecycleState.resumed && _natif) {
+      BarreGlasmio.oublier();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _majBarre());
+    }
+  }
+
   void _majBarre() {
     if (!_natif || !mounted) return;
     final route = ModalRoute.of(context);

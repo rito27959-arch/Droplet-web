@@ -39,6 +39,10 @@ abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends C
   /// feuille monte par-dessus — on ne voit jamais l'écran de repli.
   Uint8List? _photo;
 
+  /// Un écran Flutter INVISIBLE, monté sous la photo le temps d'une de ses
+  /// feuilles (le paiement de Pro) — voir `parcoursFlutterCache`.
+  Widget? _hote;
+
   /// Ce qu'il faut faire côté Flutter une fois l'écran natif fermé.
   Future<void> Function()? _apres;
 
@@ -186,6 +190,24 @@ abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends C
     return const ReponseGlasmio.fermer();
   }
 
+  /// Ferme l'écran natif et monte [construire] INVISIBLE sous la photo de
+  /// l'écran Glasmio : seules ses feuilles se voient (le parcours de
+  /// paiement de Pro, inchangé). Il appelle `fini` quand elles sont
+  /// refermées ; l'écran Glasmio revient alors.
+  ReponseGlasmio parcoursFlutterCache(Widget Function(VoidCallback fini) construire) {
+    _apres = () async {
+      if (!mounted) return;
+      var termine = false;
+      setState(() => _hote = construire(() {
+            if (termine || !mounted) return;
+            termine = true;
+            setState(() => _hote = null);
+            unawaited(_ouvrir(sansAnimation: true));
+          }));
+    };
+    return const ReponseGlasmio.fermer();
+  }
+
   /// Ferme l'écran natif et reste dans l'écran Flutter d'origine — puis,
   /// s'il y en a une, lance [ensuite] (une fois cet écran affiché).
   ReponseGlasmio basculerVersFlutter([Future<void> Function()? ensuite]) {
@@ -211,9 +233,14 @@ abstract class EtatPasserelleGlasmio<W extends ConsumerStatefulWidget> extends C
       // transparente (voir _pagePasserelle dans main.dart) : sous l'écran
       // natif, c'est la page d'où l'on vient qui reste visible — jamais une
       // page vide, blanche ou noire, aux transitions.
-      _ => _photo == null
-          ? const SizedBox.expand()
-          : Image.memory(_photo!, fit: BoxFit.fill, gaplessPlayback: true, width: double.infinity, height: double.infinity),
+      _ => Stack(
+          fit: StackFit.expand,
+          children: [
+            if (_photo != null)
+              Image.memory(_photo!, fit: BoxFit.fill, gaplessPlayback: true, width: double.infinity, height: double.infinity),
+            if (_hote != null) Positioned.fill(child: _hote!),
+          ],
+        ),
     };
   }
 }

@@ -909,7 +909,7 @@ final _router = GoRouter(
       path: '/premium',
       // Android 13+ : la vitrine en Glasmio (natif) ; sinon l'écran Flutter.
       // Le paiement reste celui de PremiumScreen dans les deux cas.
-      builder: (context, state) => const PasserellePro(),
+      pageBuilder: (context, state) => _pagePasserelle(const PasserellePro()),
     ),
     GoRoute(
       path: '/settings/apparence',

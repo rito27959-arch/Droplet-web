@@ -34,6 +34,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.WaterDrop
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LocalFlorist
@@ -270,6 +271,7 @@ internal val ICONES: Map<String, ImageVector> = mapOf(
     "person_add" to Icons.Rounded.PersonAdd,
     "edit" to Icons.Rounded.Edit,
     "water_drop" to Icons.Rounded.WaterDrop,
+    "visibility_off" to Icons.Rounded.VisibilityOff,
     "sports_esports" to Icons.Rounded.SportsEsports,
     "home" to Icons.Rounded.Home,
     "local_florist" to Icons.Rounded.LocalFlorist,

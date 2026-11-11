@@ -67,6 +67,10 @@ class BarreGlasmio {
 
   static const _canal = MethodChannel('droplet/glasmio');
   static String? _derniere;
+
+  /// Oublie la dernière barre envoyée : la prochaine sera renvoyée même
+  /// identique.
+  static void oublier() => _derniere = null;
   static DateTime _derniereActivite = DateTime(0);
 
   /// Les gestes : `onglet` (valeur = index), `recherche` (la barre devient

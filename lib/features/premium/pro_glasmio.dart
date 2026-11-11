@@ -70,9 +70,14 @@ class _PasserelleProState extends EtatPasserelleGlasmio<PasserellePro> {
     _ecouteNiveau = null;
   }
 
+  /// Le paiement, le code et les avantages : les FEUILLES de PremiumScreen
+  /// (le parcours de paiement n'est pas réécrit), ouvertes par-dessus la
+  /// vitrine Glasmio figée — plus jamais l'écran Pro Flutter lui-même.
   ReponseGlasmio _versLeParcoursFlutter(String action) {
     _action = action;
-    return basculerVersFlutter();
+    return parcoursFlutterCache(
+      (fini) => PremiumScreen(actionInitiale: action, proChoisi: _proChoisi, surActionFinie: fini),
+    );
   }
 
   @override
