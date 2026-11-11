@@ -58,7 +58,7 @@ code 0
 0
 warning • Unused import: 'features/notifications/reglages_notifs_screen.dart'. Try removing the import directive • lib/main.dart:136:8 • unused_import
 
-67 issues found. (ran in 25.1s)
+69 issues found. (ran in 27.9s)
 === DEBUG : 0
 an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
@@ -75,15 +75,15 @@ SkSL Error:
         error: 122: unknown identifier 'param_2'
 15 packages have newer versions incompatible with dependency constraints.
 === RELEASE (R8) : 0
-total 939024
-drwxr-xr-x 2 runner runner      4096 Nov 11 06:47 .
-drwxr-xr-x 8 runner runner      4096 Nov 11 06:44 ..
--rw-r--r-- 1 runner runner 162504146 Nov 11 06:47 app-arm64-v8a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 11 06:47 app-arm64-v8a-release.apk.sha1
--rw-r--r-- 1 runner runner  96229850 Nov 11 06:47 app-armeabi-v7a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 11 06:47 app-armeabi-v7a-release.apk.sha1
--rw-r--r-- 1 runner runner 524216716 Nov 11 06:29 app-debug.apk
--rw-r--r-- 1 runner runner        40 Nov 11 06:29 app-debug.apk.sha1
--rw-r--r-- 1 runner runner 178571578 Nov 11 06:47 app-x86_64-release.apk
--rw-r--r-- 1 runner runner        40 Nov 11 06:47 app-x86_64-release.apk.sha1
-=== APK publié : f6ed337f4242dc0d255cfcec7b4637046c7dbee0
+total 938912
+drwxr-xr-x 2 runner runner      4096 Nov 11 07:03 .
+drwxr-xr-x 8 runner runner      4096 Nov 11 06:59 ..
+-rw-r--r-- 1 runner runner 162438610 Nov 11 07:03 app-arm64-v8a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 11 07:03 app-arm64-v8a-release.apk.sha1
+-rw-r--r-- 1 runner runner  96180698 Nov 11 07:03 app-armeabi-v7a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 11 07:03 app-armeabi-v7a-release.apk.sha1
+-rw-r--r-- 1 runner runner 524218548 Nov 11 06:40 app-debug.apk
+-rw-r--r-- 1 runner runner        40 Nov 11 06:40 app-debug.apk.sha1
+-rw-r--r-- 1 runner runner 178571578 Nov 11 07:03 app-x86_64-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 11 07:03 app-x86_64-release.apk.sha1
+=== APK publié : a8576901a57df8dc575313767f11a0eee58cd418
