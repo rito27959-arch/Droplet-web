@@ -42,12 +42,12 @@ code 0
 0
    info • 'package:flutter/material.dart' is deprecated and shouldn't be used. Use package:material_ui/material_ui.dart instead. This feature was deprecated after v3.47.0-0.0.pre. Try replacing the use of the deprecated member with the replacement • lib/shared/widgets/typing_indicator.dart:14:1 • deprecated_member_use
 
-303 issues found. (ran in 17.4s)
+303 issues found. (ran in 15.9s)
 === DEBUG : 1
 FAILURE: Build failed with an exception.
 * What went wrong:
    > Error: Your project's Gradle version (8.14.0) is lower than Flutter's minimum supported version of 9.3.1. Please upgrade your Gradle version. 
-BUILD FAILED in 1m 15s
+BUILD FAILED in 1m 24s
 * What went wrong:
 An exception occurred applying plugin request [id: 'dev.flutter.flutter-gradle-plugin']
 > Failed to apply plugin 'dev.flutter.flutter-gradle-plugin'.
