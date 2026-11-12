@@ -29,9 +29,9 @@ def aller(o, url, data=None, accept='text/html'):
     req = urllib.request.Request(url, data=data, headers={'accept': accept})
     try:
         r = o.open(req, timeout=20)
-        return r.status, dict(r.headers), r.read().decode('utf-8', 'replace')
+        return r.status, {k.lower(): v for k, v in r.headers.items()}, r.read().decode('utf-8', 'replace')
     except urllib.error.HTTPError as e:
-        return e.code, dict(e.headers), e.read().decode('utf-8', 'replace')
+        return e.code, {k.lower(): v for k, v in e.headers.items()}, e.read().decode('utf-8', 'replace')
 
 def commencer(dossier):
     os.makedirs(dossier, exist_ok=True)
@@ -43,7 +43,7 @@ def commencer(dossier):
                                 'code_challenge': defi, 'code_challenge_method': 'S256', 'state': etat, 'nonce': secrets.token_urlsafe(16)})
     s, h, _ = aller(o, f'{EMETTEUR}/oauth2/auth?{q}')
     assert s in (302, 303), f'autorisation : HTTP {s}'
-    interaction = urllib.parse.urljoin(EMETTEUR, h['Location'])
+    interaction = urllib.parse.urljoin(EMETTEUR, h['location'])
     s, h, page = aller(o, interaction)
     assert s == 200, f'page de connexion : HTTP {s}'
     demande = re.search(r'/a/([A-Za-z0-9_-]{16,})', page).group(1)
@@ -71,7 +71,7 @@ def terminer(dossier):
     url = urllib.parse.urljoin(EMETTEUR, json.loads(corps)['redirection'])
     for _ in range(6):
         s, h, _ = aller(o, url)
-        url = urllib.parse.urljoin(url, h.get('Location', ''))
+        url = urllib.parse.urljoin(url, h.get('location', ''))
         if url.startswith(RETOUR):
             break
     p = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
