@@ -1,0 +1,95 @@
+⚠️ absent du dépôt (bouche-trou de shader) : shaders/liquid.frag
+⚠️ absent du dépôt (bouche-trou de shader) : shaders/nexus.frag
+⚠️ absent du dépôt (bouche-trou de shader) : shaders/fond_prisme.frag
+⚠️ absent du dépôt (bouche-trou) : assets/icon/droplet_icon.png
+⚠️ absent du dépôt (bouche-trou) : assets/icon/premuim/
+⚠️ absent du dépôt (bouche-trou) : assets/stickers/
+⚠️ absent du dépôt (bouche-trou) : assets/fonts/Inter-Variable.ttf
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v1
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v10
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v10_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v11
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v11_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v12
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v12_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v1_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v2
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v2_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v3
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v3_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v4
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v4_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v5
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v5_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v6
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v6_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v7
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v7_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v8
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v8_round
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v9
+⚠️ absent du dépôt (bouche-trou d'icône) : mipmap/ic_launcher_v9_round
+⚠️ absent du dépôt (bouche-trou Android) : drawable/ic_stat_droplet
+⚠️ absent du dépôt (bouche-trou Android) : xml/widget_droplet_info
+⚠️ absent du dépôt (bouche-trou Android) : ContactDropBridge.kt
+⚠️ absent du dépôt (bouche-trou Android) : MediaBridge.kt
+⚠️ absent du dépôt (bouche-trou Android) : WidgetDroplet.kt
+--- configuration passée à Glasmio :
+settings.gradle.kts:    id("dev.flutter.flutter-plugin-loader") version "1.0.0"
+settings.gradle.kts:    id("com.android.application") version "9.4.1" apply false
+settings.gradle.kts:    id("org.jetbrains.kotlin.android") version "2.4.21" apply false
+settings.gradle.kts:    id("org.jetbrains.kotlin.plugin.compose") version "2.4.21" apply false
+settings.gradle.kts:    id("com.google.gms.google-services") version "4.4.2" apply false
+gradle/wrapper/gradle-wrapper.properties:distributionUrl=https\://services.gradle.org/distributions/gradle-9.6.0-bin.zip
+6:    id("org.jetbrains.kotlin.plugin.compose")
+65:    compileSdk = 37
+195:// Le code Kotlin qui utilise Glasmio vit dans src/glasmio/kotlin : il n'est
+199:    sourceSets["main"].java.srcDir("src/glasmio/kotlin")
+202:    implementation("io.github.neoruaa.glasmio:glasmio-scaffold:0.1.2")
+203:    implementation("io.github.neoruaa.glasmio:glasmio-preference:0.1.2")
+1
+566:        <activity android:name="com.droplet.droplet.glasmio.EcranGlasmioActivity" android:exported="false" android:theme="@style/EcranGlasmio" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode|density" />
+=== APK : 0
+SkSL Error:
+        error: 58: loop index initializer must be a constant expression
+        error: 55: loop index initializer must be a constant expression
+│ SkSL Error:                                                                                      │
+│         error: 58: loop index initializer must be a constant expression                          │
+│         error: 55: loop index initializer must be a constant expression                          │
+SkSL Error:
+        error: 121: initializers are not permitted on arrays (or structs containing arrays)
+        error: 122: unknown identifier 'param_2'
+│ SkSL Error:                                                                                      │
+│         error: 121: initializers are not permitted on arrays (or structs containing arrays)      │
+│         error: 122: unknown identifier 'param_2'                                                 │
+SkSL Error:
+        error: 111: initializers are not permitted on arrays (or structs containing arrays)
+        error: 112: unknown identifier 'param_2'
+│ SkSL Error:                                                                                      │
+│         error: 111: initializers are not permitted on arrays (or structs containing arrays)      │
+│         error: 112: unknown identifier 'param_2'                                                 │
+total 280260
+drwxr-xr-x 2 runner runner      4096 Nov 12 15:36 .
+drwxr-xr-x 8 runner runner      4096 Nov 12 15:36 ..
+-rw-r--r-- 1 runner runner 286972372 Nov 12 15:36 app-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 12 15:36 app-release.apk.sha1
+démarré après 1 essais
+Performing Streamed Install
+Success
+Starting: Intent { cmp=com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity }
+capture 01-accueil.png
+capture 02-reglages.png
+capture 03-pro.png
+capture 04-notifications.png
+capture 05-appareils.png
+capture 06-aide.png
+capture 07-contact.png
+capture 08-stockage.png
+capture 09-apparence.png
+capture 10-icone.png
+capture 11-sauvegarde.png
+capture 12-droplet_id.png
+capture 13-loupe.png
+capture 17-alerte.png

@@ -1,0 +1,10 @@
+=== DROPLET ID
+{"demande": "CeYuC-oIsMIBFz0K9Nj1Yw", "code": "96", "android": "intent://droplet/a/CeYuC-oIsMIBFz0K9Nj1Yw?e=id-test.dropletmesh.app#Intent;scheme=droplet;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;S.browser_fallback_url=https%3A%2F%2Fid-test.dropletmesh.app%2Fa%2FCeYuC-oIsMIBFz0K9Nj1Yw;end"}
+lien : intent://droplet/a/CeYuC-oIsMIBFz0K9Nj1Yw?e=id-test.dropletmesh.app#Intent;scheme=droplet;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;S.browser_fallback_url=https%3A%2F%2Fid-test.dropletmesh.app%2Fa%2FCeYuC-oIsMIBFz0K9Nj1Yw;end
+Starting: Intent { act=android.intent.action.VIEW cat=[android.intent.category.BROWSABLE] dat=droplet://droplet/... (has extras) }
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+bouton Approuver : 540 1683
+au premier plan après approbation :       topResumedActivity=ActivityRecord{1c71077 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t7}
+état vu par le site : approuvee
+CONNECTÉ : sub=eNTQJE7xLO… pseudo=None iss=https://id-test.dropletmesh.app
+11-12 15:41:45.502  4231  4231 I flutter : CAPTURE:droplet_id

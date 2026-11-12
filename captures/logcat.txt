@@ -1,0 +1,150 @@
+11-12 15:47:16.339   523  1692 D CoreBackPreview: Window{4ff8745 u0 com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@81d2fca, mPriority=0, mIsAnimationCallback=false}
+11-12 15:47:16.392  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:16.430   523  1941 I ImeTracker: com.droplet.droplet.glasmio:2673f1ef: onFailed at PHASE_WM_SHOW_IME_RUNNER
+11-12 15:47:17.046  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:17.259  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:17.377  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:17.377  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:17.697  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:17.790  4231  4231 I ImeTracker: com.droplet.droplet.glasmio:144c8ce8: onShown
+11-12 15:47:17.876  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:18.149  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 80, 141459, 0, CUJ=J<IME_INSETS_ANIMATION::0@1@com.droplet.droplet.glasmio>
+11-12 15:47:18.149  4231  4231 W FrameTracker: Missed App frame:UNKNOWN: 74, 141466, 0, CUJ=J<IME_INSETS_ANIMATION::0@1@com.droplet.droplet.glasmio>
+11-12 15:47:18.150  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 74, 141466, 0, CUJ=J<IME_INSETS_ANIMATION::0@1@com.droplet.droplet.glasmio>
+11-12 15:47:18.150  4231  4231 W FrameTracker: Missed App frame:UNKNOWN: 72, 141497, 0, CUJ=J<IME_INSETS_ANIMATION::0@1@com.droplet.droplet.glasmio>
+11-12 15:47:18.150  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 66, 141513, 0, CUJ=J<IME_INSETS_ANIMATION::0@1@com.droplet.droplet.glasmio>
+11-12 15:47:18.150  4231  4231 W FrameTracker: Missed App frame:UNKNOWN: 74, 141542, 0, CUJ=J<IME_INSETS_ANIMATION::0@1@com.droplet.droplet.glasmio>
+11-12 15:47:18.150  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 74, 141542, 0, CUJ=J<IME_INSETS_ANIMATION::0@1@com.droplet.droplet.glasmio>
+11-12 15:47:18.150  4231  4231 W FrameTracker: Missed App frame:UNKNOWN: 72, 141556, 0, CUJ=J<IME_INSETS_ANIMATION::0@1@com.droplet.droplet.glasmio>
+11-12 15:47:18.260  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:18.522  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:19.153  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:19.259  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:19.784  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:19.915  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:19.915  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:20.068  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:20.260  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:20.417  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:21.064  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:21.262  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:21.714  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:22.262  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:22.342  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:22.478  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:22.478  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:22.618  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:22.974  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:23.263  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:23.612  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:24.253  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:24.263  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:24.877  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:24.877  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:24.884  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:25.009  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:25.264  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:25.528  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:26.166  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:26.264  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:26.790  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:26.844  4231  4231 I flutter : [MeshService] adapt beacon: 5s grâce=80s peers=0 bg=false bat=100
+11-12 15:47:27.219  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:27.219  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:27.265  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:27.350  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:27.422  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:28.059  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:28.265  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:28.692  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:29.272  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:29.336  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:29.585  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:29.585  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:29.752  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:29.872  4231  4231 I flutter : [MeshService] net event: Instance of 'HealthReportEvent'
+11-12 15:47:29.901  4231  4231 I flutter : [CallNotifier] Boîte d'appels déconnectée — reconnexion
+11-12 15:47:29.961  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:30.089  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:30.224  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:30.267  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:30.595  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:31.217  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:31.267  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:31.856  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:32.127   523  2330 I ImeTracker: com.droplet.droplet.glasmio:1e6be0af: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_SOFT_INPUT_BY_BACK_KEY
+11-12 15:47:32.297  4231  4231 I flutter : [Média] état thermique indisponible: MissingPluginException(No implementation found for method thermalStatus on channel com.droplet.droplet/media)
+11-12 15:47:32.313   523  1987 D CoreBackPreview: Window{4ff8745 u0 com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@b24f3f3, mPriority=0, mIsAnimationCallback=false}
+11-12 15:47:32.375  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:32.764  4231  4231 I ImeTracker: com.droplet.droplet.glasmio:886645f: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
+11-12 15:47:32.766   523  2011 I ImeTracker: com.droplet.droplet.glasmio:886645f: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-12 15:47:32.767  4231  4231 I ImeTracker: com.droplet.droplet.glasmio:1e6be0af: onHidden
+11-12 15:47:32.796  1520  1520 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x2(Number) imeOptions=0x2000006 privateImeOptions=null actionName=DONE actionLabel=null actionId=0 initialSelStart=2 initialSelEnd=2 initialCapsMode=0x0 hintText=null label=null packageName=com.droplet.droplet.glasmio fieldId=2 fieldName=null extras=Bundle[mParcelledData.dataSize=168]}, true)
+11-12 15:47:32.821  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 66, 142478, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed App frame:UNKNOWN: 74, 142517, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 74, 142517, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed App frame:UNKNOWN: 74, 142539, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 74, 142539, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 66, 142554, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed App frame:UNKNOWN: 74, 142568, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 74, 142568, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 66, 142590, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed App frame:UNKNOWN: 74, 142599, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:32.985  4231  4231 W FrameTracker: Missed SF frame:UNKNOWN: 74, 142599, 0, CUJ=J<IME_INSETS_ANIMATION::1@1@com.droplet.droplet.glasmio>
+11-12 15:47:33.356  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:33.460  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:34.101  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:34.301  7831  7831 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-12 15:47:34.310  7831  7831 I AndroidRuntime: Using default boot image
+11-12 15:47:34.310  7831  7831 I AndroidRuntime: Leaving lock profiling enabled
+11-12 15:47:34.357  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:34.427  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:34.427  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:34.494  7831  7831 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-12 15:47:34.601  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:34.778  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:35.359  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:35.410  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:35.773  7831  7831 D AndroidRuntime: Shutting down VM
+11-12 15:47:36.044  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:36.360  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:36.686  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:36.837   523  2631 D BiometricService/PreAuthInfo: Package: com.droplet.droplet.glasmio Sensor ID: 4 Modality: 8 Status: 7
+11-12 15:47:36.838   523  2631 D BiometricService/PreAuthInfo: Package: com.droplet.droplet.glasmio Sensor ID: 0 Modality: 2 Status: 7
+11-12 15:47:37.023  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:37.023  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:37.221  1520  1520 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x0(NULL) imeOptions=0x0 privateImeOptions=null actionName=UNSPECIFIED actionLabel=null actionId=0 initialSelStart=-1 initialSelEnd=-1 initialCapsMode=0x0 hintText=null label=null packageName=com.droplet.droplet.glasmio fieldId=0 fieldName=null extras=null}, true)
+11-12 15:47:37.271  4231  4231 I ImeTracker: com.droplet.droplet.glasmio:110a938b: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT
+11-12 15:47:37.272   523  2631 I ImeTracker: com.droplet.droplet.glasmio:110a938b: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-12 15:47:37.283  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:37.370  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:37.423  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:38.062  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:38.245   523  2010 I ActivityTaskManager: moveTaskToBack: Task{59ac43c #8 type=standard I=com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity}
+11-12 15:47:38.248   851   885 V WindowManagerShell: Transition requested: android.os.BinderProxy@42727aa TransitionRequestInfo { type = TO_BACK, triggerTask = TaskInfo{userId=0 taskId=8 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity } baseActivity=ComponentInfo{com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity} topActivity=ComponentInfo{com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity} origActivity=null realActivity=ComponentInfo{com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity} numActivities=1 lastActiveTime=234163 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@a3ddf9b} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{35b9f38 com.droplet.droplet.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-12 15:47:38.985   523   545 V WindowManager: Sent Transition #31 createdAt=11-12 15:47:38.245 via request=TransitionRequestInfo { type = TO_BACK, triggerTask = TaskInfo{userId=0 taskId=8 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity } baseActivity=ComponentInfo{com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity} topActivity=ComponentInfo{com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity} origActivity=null realActivity=ComponentInfo{com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity} numActivities=1 lastActiveTime=234163 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{31a2af9 Task{59ac43c #8 type=standard I=com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{d25a3e com.droplet.droplet.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-12 15:47:39.003   523   545 V WindowManager:     info={id=31 t=TO_BACK f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{b03809f Task{63db362 #1 type=home}}} m=TO_FRONT f=SHOW_WALLPAPER|MOVE_TO_TOP leash=Surface(name=Task=1)/@0x7be7db7 sb=Rect(0, 0 - 1080, 2340) eb=Rect(0, 0 - 1080, 2340) d=0},{WCT{RemoteToken{31a2af9 Task{59ac43c #8 type=standard I=com.droplet.droplet.glasmio/com.droplet.droplet.MainActivity}}} m=TO_BACK f=NONE leash=Surface(name=Task=8)/@0xcf77192 sb=Rect(0, 0 - 1080, 2340) eb=Rect(0, 0 - 1080, 2340) d=0},{null m=TO_FRONT f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{7abbf57 token=android.os.Binder@3be00d6})/@0xbe0291a sb=Rect(0, 0 - 1080, 2340) eb=Rect(0, 0 - 1080, 2340) d=0}]}
+11-12 15:47:39.230   523  2310 E ClipboardService: Denying clipboard access to com.droplet.droplet.glasmio, application is not in focus nor is it a system service for user 0
+11-12 15:47:39.239  4231  4231 I flutter : [Média] widget non mis à jour: MissingPluginException(No implementation found for method majWidget on channel com.droplet.droplet/media)
+11-12 15:47:39.261  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:39.265  4231  4231 I flutter : [Signature] refusée par droplet-mailbox-production.up.railway.app : inconnu
+11-12 15:47:42.041  4231  4231 I flutter : [MeshService] adapt beacon: 5s grâce=80s peers=0 bg=false bat=100
+11-12 15:47:43.482  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:43.482  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:43.486  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:43.610  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:44.295  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:45.295  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:45.806  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:45.806  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:45.937  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:46.294  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:46.880  4231  4231 I flutter : [LocalWifi] beacon #100 sent
+11-12 15:47:47.295  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:48.296  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:48.368  4231  4231 I flutter : [Signaling] Rejoint la salle inbox_1848d4286f5431c5cb5c3c6105b7f8baaa8f5f47382b187f336a3500d28c59e2
+11-12 15:47:48.368  4231  4231 I flutter : [CallNotifier] Boîte d'appels reconnectée
+11-12 15:47:48.502  4231  4231 I flutter : [Signaling] Connexion fermée
+11-12 15:47:49.295  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices
+11-12 15:47:50.296  4231  4231 I flutter : [NativeP2P] peers updated: 0 devices

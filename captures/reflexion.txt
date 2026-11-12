@@ -1,0 +1,5 @@
+11-12 15:39:27.668  1068  1101 W SliceDataConverter: Caused by: java.lang.NoSuchMethodException: com.android.settings.network.telephony.CallsDefaultSubscriptionController.<init> [class android.content.Context, class java.lang.String]
+11-12 15:39:27.927  1068  1101 W SliceDataConverter: Caused by: java.lang.NoSuchMethodException: com.android.settings.fuelgauge.batteryusage.BatteryChartPreferenceController.<init> [class android.content.Context, class java.lang.String]
+11-12 15:39:28.003  1068  1101 W SliceDataConverter: Caused by: java.lang.NoSuchMethodException: com.android.settings.network.NetworkProviderSimsCategoryController.<init> [class android.content.Context, class java.lang.String]
+11-12 15:39:28.021  1068  1101 W SliceDataConverter: Caused by: java.lang.NoSuchMethodException: com.android.settings.network.telephony.CallsDefaultSubscriptionController.<init> [class android.content.Context, class java.lang.String]
+11-12 15:42:46.233  1685  1685 E VS.BluetoothShim: java.lang.NoSuchMethodException: android.bluetooth.BluetoothHeadset.startScoUsingVirtualVoiceCall [class android.bluetooth.BluetoothDevice]
