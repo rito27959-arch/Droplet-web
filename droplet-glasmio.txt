@@ -51,22 +51,15 @@ gradle/wrapper/gradle-wrapper.properties:distributionUrl=https\://services.gradl
 202:    implementation("io.github.neoruaa.glasmio:glasmio-scaffold:0.1.2")
 203:    implementation("io.github.neoruaa.glasmio:glasmio-preference:0.1.2")
 1
-553:        <activity android:name="com.droplet.droplet.glasmio.EcranGlasmioActivity" android:exported="false" android:theme="@style/EcranGlasmio" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode|density" />
+566:        <activity android:name="com.droplet.droplet.glasmio.EcranGlasmioActivity" android:exported="false" android:theme="@style/EcranGlasmio" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode|density" />
 === ANALYSE (fichiers Glasmio)
 code 0
 0
    info • 'package:flutter/material.dart' is deprecated and shouldn't be used. Use package:material_ui/material_ui.dart instead. This feature was deprecated after v3.47.0-0.0.pre. Try replacing the use of the deprecated member with the replacement • lib/shared/widgets/typing_indicator.dart:14:1 • deprecated_member_use
 
-303 issues found. (ran in 22.7s)
+306 issues found. (ran in 14.3s)
 === DEBUG : 0
 an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
-warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
-SkSL Error:
-        error: 111: initializers are not permitted on arrays (or structs containing arrays)
-        error: 112: unknown identifier 'param_2'
-│ SkSL Error:                                                                                      │
-│         error: 111: initializers are not permitted on arrays (or structs containing arrays)      │
-│         error: 112: unknown identifier 'param_2'                                                 │
 warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_arbitrary.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
 SkSL Error:
         error: 58: loop index initializer must be a constant expression
@@ -81,17 +74,24 @@ SkSL Error:
 │ SkSL Error:                                                                                      │
 │         error: 121: initializers are not permitted on arrays (or structs containing arrays)      │
 │         error: 122: unknown identifier 'param_2'                                                 │
+warning: Shader `/home/runner/.pub-cache/hosted/pub.dev/liquid_glass_renderer-0.2.0-dev.4/lib/assets/shaders/liquid_glass_geometry_blended.frag` is incompatible with SkSL. This shader will not load when running with the Skia backend.
+SkSL Error:
+        error: 111: initializers are not permitted on arrays (or structs containing arrays)
+        error: 112: unknown identifier 'param_2'
+│ SkSL Error:                                                                                      │
+│         error: 111: initializers are not permitted on arrays (or structs containing arrays)      │
+│         error: 112: unknown identifier 'param_2'                                                 │
 15 packages have newer versions incompatible with dependency constraints.
 === RELEASE (R8) : 0
-total 936952
-drwxr-xr-x 2 runner runner      4096 Nov 12 01:29 .
-drwxr-xr-x 8 runner runner      4096 Nov 12 01:28 ..
--rw-r--r-- 1 runner runner 162325938 Nov 12 01:28 app-arm64-v8a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 12 01:29 app-arm64-v8a-release.apk.sha1
--rw-r--r-- 1 runner runner  96379322 Nov 12 01:28 app-armeabi-v7a-release.apk
--rw-r--r-- 1 runner runner        40 Nov 12 01:29 app-armeabi-v7a-release.apk.sha1
--rw-r--r-- 1 runner runner 522379304 Nov 12 01:06 app-debug.apk
--rw-r--r-- 1 runner runner        40 Nov 12 01:06 app-debug.apk.sha1
--rw-r--r-- 1 runner runner 178311450 Nov 12 01:28 app-x86_64-release.apk
--rw-r--r-- 1 runner runner        40 Nov 12 01:29 app-x86_64-release.apk.sha1
-=== APK publié : c2ce210fdf9c6f6ade46086fefd37991f950fbfd
+total 937196
+drwxr-xr-x 2 runner runner      4096 Nov 12 15:13 .
+drwxr-xr-x 8 runner runner      4096 Nov 12 15:13 ..
+-rw-r--r-- 1 runner runner 162457218 Nov 12 15:13 app-arm64-v8a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 12 15:13 app-arm64-v8a-release.apk.sha1
+-rw-r--r-- 1 runner runner  96461454 Nov 12 15:13 app-armeabi-v7a-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 12 15:13 app-armeabi-v7a-release.apk.sha1
+-rw-r--r-- 1 runner runner 522417700 Nov 12 14:58 app-debug.apk
+-rw-r--r-- 1 runner runner        40 Nov 12 14:58 app-debug.apk.sha1
+-rw-r--r-- 1 runner runner 178311658 Nov 12 15:13 app-x86_64-release.apk
+-rw-r--r-- 1 runner runner        40 Nov 12 15:13 app-x86_64-release.apk.sha1
+=== APK publié : bb2ae97e6473e1359250b5c59d0e4456c622ef43
