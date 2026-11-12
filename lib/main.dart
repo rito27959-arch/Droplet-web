@@ -100,6 +100,9 @@ import 'features/call/group_call_screen.dart';
 import 'features/safety/emergency_mode_screen.dart';
 import 'features/group/group_create_screen.dart';
 import 'features/group/group_info_screen.dart';
+import 'features/droplet_id/approbation_screen.dart';
+import 'features/droplet_id/droplet_id_screen.dart';
+import 'features/droplet_id/droplet_id_service.dart';
 import 'features/settings/backup_export_screen.dart';
 import 'features/settings/app_icon_screen.dart';
 import 'features/settings/apparence_screen.dart';
@@ -947,6 +950,25 @@ final _router = GoRouter(
     GoRoute(
       path: '/share-target',
       pageBuilder: (context, state) => _modalPage(const ShareTargetScreen()),
+    ),
+    // DROPLET ID : les réglages, et l'approbation d'une connexion. Le bouton
+    // « Ouvrir dans Droplet » de la page de connexion ouvre
+    // `droplet://droplet/a/<demande>?e=<hôte du service>` (lien profond
+    // Flutter, comme les invitations) ; le lien https
+    // `https://id.dropletmesh.app/a/<demande>` y mène aussi une fois l'app
+    // vérifiée (assetlinks).
+    GoRoute(
+      path: '/droplet-id',
+      pageBuilder: (context, state) => _pushPage(const DropletIdScreen()),
+    ),
+    GoRoute(
+      path: '/a/:demande',
+      pageBuilder: (context, state) => _pushPage(ApprobationScreen(
+        key: ValueKey('droplet-id-${state.pathParameters['demande']}'),
+        demandeId: state.pathParameters['demande'] ?? '',
+        service: DropletIdService.pourHote(state.uri.queryParameters['e'] ?? state.uri.host),
+        depuisLien: true,
+      )),
     ),
     GoRoute(
       path: '/settings',

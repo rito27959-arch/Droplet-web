@@ -53,6 +53,7 @@ const Map<String, String> _routes = {
   'apparence': '/settings/apparence',
   'notifications': '/settings/notifications',
   'icone': '/settings/icon',
+  'droplet_id': '/droplet-id',
   'maillage': '/mesh-network',
   'cartes': '/maps/offline',
   'stockage': '/settings/storage',
@@ -420,6 +421,15 @@ class _PasserelleParametresState extends EtatPasserelleGlasmio<PasserelleParamet
             _ligne('icone', 'nav',
                 icone: 'apps', teinte: OuroColors.systemPink,
                 titre: textes.stAppIcon, sous: textes.stVariants13),
+          ],
+        ),
+        _section(
+          entete: 'Identité',
+          pied: 'Se connecter à des sites et des apps sans numéro, sans e-mail, sans nom.',
+          [
+            _ligne('droplet_id', 'nav',
+                icone: 'water_drop', teinte: OuroColors.accent,
+                titre: 'Droplet ID', sous: 'Approuver une connexion, sites connectés'),
           ],
         ),
         _section(

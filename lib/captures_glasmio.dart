@@ -48,6 +48,7 @@ Future<void> lancerCaptures(GoRouter routeur) async {
     ('apparence', '/settings/apparence'),
     ('icone', '/settings/icon'),
     ('sauvegarde', '/backup/export'),
+    ('droplet_id', '/droplet-id'),
   ]) {
     routeur.push(route);
     await _attendre(6);

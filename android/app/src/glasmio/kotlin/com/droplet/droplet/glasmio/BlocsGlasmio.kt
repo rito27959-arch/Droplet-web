@@ -188,6 +188,7 @@ internal val ICONES: Map<String, ImageVector> = mapOf(
     "nightlight" to Icons.Rounded.Nightlight,
     "menu_book" to Icons.Rounded.MenuBook,
     "apps" to Icons.Rounded.Apps,
+    "water_drop" to Icons.Rounded.WaterDrop,
     "wifi_tethering" to Icons.Rounded.WifiTethering,
     "autorenew" to Icons.Rounded.Autorenew,
     "battery_alert" to Icons.Rounded.BatteryAlert,

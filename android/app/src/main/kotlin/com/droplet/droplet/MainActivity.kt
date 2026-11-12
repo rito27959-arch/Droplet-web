@@ -357,6 +357,17 @@ class MainActivity : FlutterFragmentActivity() {
         // partage de l'application elle-même (voir `PartageDroplet.kt`).
         PartageDroplet.brancher(this, flutterEngine.dartExecutor.binaryMessenger)
 
+        // Droplet ID : après une approbation ouverte par « Ouvrir dans
+        // Droplet », l'app passe en arrière-plan et le navigateur (qui
+        // attend la réponse) revient au premier plan. Rien n'est fermé.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.droplet.droplet/droplet_id")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "revenirAuNavigateur" -> result.success(moveTaskToBack(true))
+                    else -> result.notImplemented()
+                }
+            }
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channel)
             .setMethodCallHandler { call, result ->
                 when (call.method) {

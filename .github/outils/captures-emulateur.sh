@@ -46,6 +46,46 @@ timeout 480 adb logcat -v raw -s flutter:I | while read -r l; do
       ;;
   esac
 done
+# ── DROPLET ID, DE BOUT EN BOUT ─────────────────────────────────────────
+# Une vraie connexion au bac à sable sur id-test.dropletmesh.app (le
+# « navigateur » est droplet_id_e2e.py) ; l'émulateur fait le téléphone :
+# il est ouvert par LE lien d'intention de la page (« Ouvrir dans Droplet »),
+# on y tape le nombre, on approuve, et le site reçoit ses jetons.
+R=$C/droplet_id.txt; D=/tmp/did
+echo "=== DROPLET ID" > $R
+python3 .github/outils/droplet_id_e2e.py commencer $D >> $R 2>&1
+if [ -f $D/demande.json ]; then
+  A=$(python3 -c "import json;print(json.load(open('$D/demande.json'))['android'])")
+  CODE=$(python3 -c "import json;print(json.load(open('$D/demande.json'))['code'])")
+  echo "lien : $A" >> $R
+  adb shell "am start '$A'" >> $R 2>&1
+  sleep 14
+  timeout 20 adb exec-out screencap -p > $C/90-droplet_id_ouvert.png
+  adb shell input text "$CODE"; sleep 2
+  timeout 20 adb exec-out screencap -p > $C/91-droplet_id_nombre.png
+  adb shell input keyevent 4; sleep 2   # ferme le clavier
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml > $C/droplet_id_ui.xml 2>/dev/null
+  B=$(python3 - "$C/droplet_id_ui.xml" <<'PY'
+import re, sys
+x = open(sys.argv[1], encoding='utf-8', errors='replace').read()
+for n in re.findall(r'<node [^>]*>', x):
+    if re.search(r'(text|content-desc)="Approuver"', n):
+        a, b, c, d = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n).groups())
+        print((a + c) // 2, (b + d) // 2); break
+PY
+)
+  echo "bouton Approuver : ${B:-introuvable}" >> $R
+  [ -n "$B" ] && adb shell input tap $B
+  sleep 3
+  timeout 20 adb exec-out screencap -p > $C/92-droplet_id_approuvee.png
+  sleep 4
+  echo "au premier plan après approbation : $(adb shell dumpsys activity activities | grep -m1 -E 'topResumedActivity|mResumedActivity')" >> $R
+  timeout 20 adb exec-out screencap -p > $C/93-droplet_id_retour.png
+  echo "état vu par le site : $(python3 .github/outils/droplet_id_e2e.py etat $D 2>&1)" >> $R
+  python3 .github/outils/droplet_id_e2e.py terminer $D >> $R 2>&1
+fi
+timeout 30 adb logcat -d | grep -iE "droplet.?id|ErreurDropletId" | tail -40 >> $R
+
 timeout 30 adb logcat -d | grep -iE "glasmio|AndroidRuntime|FATAL|flutter" | tail -150 > $C/logcat.txt
 # Les classes créées par réflexion que R8 aurait abîmées (ML Kit, Firebase…),
 # et l'exception de la caméra des scanners, s'il y en a une.

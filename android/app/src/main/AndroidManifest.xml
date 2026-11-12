@@ -139,6 +139,19 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="droplet" android:host="droplet"/>
             </intent-filter>
+            <!-- Droplet ID : le lien https d'une demande de connexion
+                 (https://id[-test].dropletmesh.app/a/<demande>) ouvre
+                 l'approbation dès que le service publie l'empreinte du
+                 certificat de l'app (/.well-known/assetlinks.json). Le
+                 bouton « Ouvrir dans Droplet » n'en dépend pas : il passe
+                 par droplet://droplet/a/<demande> (filtre ci-dessus). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="id.dropletmesh.app" android:pathPrefix="/a/"/>
+                <data android:scheme="https" android:host="id-test.dropletmesh.app" android:pathPrefix="/a/"/>
+            </intent-filter>
             <!-- Cible de partage : Droplet apparaît dans « Partager vers… »
                  des autres apps Android, pour du texte comme n'importe quel
                  fichier (voir receive_sharing_intent + ShareTargetScreen). -->
