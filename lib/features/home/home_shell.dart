@@ -167,10 +167,10 @@ class _HomeShellState extends ConsumerState<HomeShell> with WidgetsBindingObserv
   List<OuroTabItem> _items(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     // Ce qui attend derrière l'onglet : on le dit sur l'icône plutôt que de
-    // laisser la personne ouvrir pour vérifier.
-    final nonLus = ref
-        .watch(conversationsProvider)
-        .fold<int>(0, (t, c) => t + c.unreadCount);
+    // laisser la personne ouvrir pour vérifier. On compte les CONVERSATIONS
+    // à lire (comme WhatsApp), pas les messages : le même nombre que le
+    // filtre « Non lues » de l'écran, sinon l'onglet disait 2 et le filtre 1.
+    final nonLus = ref.watch(conversationsProvider).where((c) => c.aLire).length;
     return [
       OuroTabItem(
         icon: Icons.chat_bubble_outline_rounded,
