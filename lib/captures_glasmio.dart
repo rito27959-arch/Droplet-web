@@ -44,6 +44,7 @@ Future<void> lancerCaptures(GoRouter routeur) async {
     ('appareils', '/settings/appareils'),
     ('aide', '/aide'),
     ('discussion', '/chat/demo'),
+    ('assistant', '/ai-chat'),
     ('contact', '/chat/demo/info'),
     ('stockage', '/settings/storage'),
     ('apparence', '/settings/apparence'),
