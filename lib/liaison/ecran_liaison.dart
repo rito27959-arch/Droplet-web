@@ -130,7 +130,7 @@ class _EcranLiaisonState extends State<EcranLiaison> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(20, etroit ? 76 : 84, 20, 32),
+                padding: EdgeInsets.fromLTRB(20, etroit ? 76 : 64, 20, 28),
                 child: _Apparition(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 940),
@@ -138,7 +138,7 @@ class _EcranLiaisonState extends State<EcranLiaison> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: etroit ? 560 : 620),
+                          constraints: BoxConstraints(maxWidth: etroit ? 560 : 430),
                           child: SceneAccueil(
                             etat: EtatConnexion.connexion,
                             accent: OuroColors.accent,
@@ -147,7 +147,7 @@ class _EcranLiaisonState extends State<EcranLiaison> {
                             sombre: OuroColors.isDark,
                           ),
                         ),
-                        SizedBox(height: etroit ? 24 : 32),
+                        SizedBox(height: etroit ? 24 : 26),
                         if (etroit)
                           _GrandEcran(
                             textes: t,
@@ -309,7 +309,7 @@ class _Contenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = textes;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(48, 44, 44, 40),
+      padding: const EdgeInsets.fromLTRB(48, 38, 44, 34),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -326,11 +326,11 @@ class _Contenu extends StatelessWidget {
                   t.sousTitre,
                   style: OuroTypography.body.copyWith(color: OuroColors.secondaryLabel),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 26),
                 _Etape(icone: const _IconeApp(), texte: t.etape1, fil: true),
                 _Etape(icone: const _IconeReglages(), texte: t.etape2, fil: true),
                 _Etape(icone: const _IconeViseur(), texte: t.etape3, fil: false),
-                const SizedBox(height: 26),
+                const SizedBox(height: 20),
                 Container(height: 0.5, color: OuroColors.separator),
                 const SizedBox(height: 18),
                 _Rester(textes: t, valeur: rester, onChanged: onRester),
