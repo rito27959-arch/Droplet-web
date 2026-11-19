@@ -835,15 +835,12 @@ class _Accueil extends StatelessWidget {
         child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (onglet == Onglet.discussions)
-            ValueListenableBuilder<EtatConnexion>(
-              valueListenable: etat,
-              builder: (context, e, _) => _Scene(etat: e),
-            )
-          else ...[
-            _Illustration(onglet: onglet),
-            const SizedBox(height: 14),
-          ],
+          // La même rue sur chaque onglet : l'identité de Droplet Web,
+          // comme l'illustration unique de WhatsApp Web.
+          ValueListenableBuilder<EtatConnexion>(
+            valueListenable: etat,
+            builder: (context, e, _) => _Scene(etat: e),
+          ),
           Text(titre, style: OuroTypography.title1.copyWith(color: OuroColors.label)),
           const SizedBox(height: 10),
           ConstrainedBox(
@@ -931,68 +928,6 @@ class _Scene extends StatelessWidget {
         ),
         const SizedBox(height: 22),
       ],
-    );
-  }
-}
-
-/// La goutte au centre d'un halo de la couleur choisie, entourée de
-/// l'onde du maillage : l'accueil a la présence d'une icône d'app, pas
-/// d'un pictogramme gris. L'icône change avec l'onglet.
-class _Illustration extends StatelessWidget {
-  const _Illustration({required this.onglet});
-
-  final Onglet onglet;
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = OuroColors.accent;
-    final icone = switch (onglet) {
-      Onglet.discussions => null,
-      Onglet.actus => Icons.podcasts_rounded,
-      Onglet.appels => Icons.phone_rounded,
-      Onglet.reglages => Icons.settings_rounded,
-    };
-    final fonce = Color.lerp(accent, Colors.black, 0.22)!;
-    return SizedBox(
-      width: 220,
-      height: 220,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Le halo.
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [accent.withValues(alpha: 0.20), accent.withValues(alpha: 0)]),
-            ),
-          ),
-          // L'onde du maillage : trois cercles qui s'effacent.
-          for (final (taille, alpha) in const [(196.0, 0.10), (156.0, 0.16), (122.0, 0.24)])
-            Container(
-              width: taille,
-              height: taille,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: accent.withValues(alpha: alpha), width: 1),
-              ),
-            ),
-          // L'icône, comme sur l'écran d'accueil d'un téléphone.
-          Container(
-            width: 92,
-            height: 92,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(26),
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [accent, fonce]),
-              boxShadow: [
-                BoxShadow(color: accent.withValues(alpha: 0.38), blurRadius: 30, offset: const Offset(0, 14)),
-                BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 4, offset: const Offset(0, 2)),
-              ],
-            ),
-            alignment: Alignment.center,
-            child: icone == null ? const Goutte(taille: 52, couleur: Colors.white) : Icon(icone, size: 44, color: Colors.white),
-          ),
-        ],
-      ),
     );
   }
 }

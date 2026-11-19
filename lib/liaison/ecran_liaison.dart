@@ -2,11 +2,15 @@
 //
 // La grammaire de WhatsApp Web et de l'app Messages sur Mac, à la finition
 // d'iOS :
-//   • une carte de verre au centre, posée sur le maillage qui respire ;
-//   • à gauche, trois étapes numérotées — on sait quoi faire sans lire ;
-//   • à droite, le code QR sur son carré blanc (toujours blanc, même en mode
-//     sombre : un scanner lit mal un code clair sur fond noir), la goutte au
-//     centre, et un fin anneau d'accent qui se vide jusqu'au renouvellement.
+//   • en haut, la rue de Droplet (`scene_accueil.dart`) en attente : la
+//     fenêtre de cet ordinateur clignote, les messages s'arrêtent chez le
+//     voisin — elle s'allumera une fois le téléphone lié ;
+//   • dessous, une seule carte de verre : à gauche les trois étapes, chacune
+//     avec l'icône de ce qu'on touche (l'app, Réglages, le viseur), reliées
+//     par un fil comme les écrans de configuration d'iOS ; à droite le code
+//     QR sur son carré blanc (toujours blanc, même en sombre : un scanner lit
+//     mal un code clair sur fond noir), encadré par les coins d'un viseur ;
+//   • le temps qui reste, dans une petite capsule sous le code.
 //
 // Sur un écran étroit (un téléphone qui ouvre le site), on ne montre PAS de
 // code : il ne pourrait pas se scanner lui-même. On explique, simplement.
@@ -22,7 +26,8 @@ import 'package:web/web.dart' as web;
 import '../design_system/ouro_colors.dart';
 import '../design_system/ouro_typography.dart';
 import '../fond/goutte.dart';
-import '../fond/maillage.dart';
+import '../donnees/transport.dart' show EtatConnexion;
+import '../fond/scene_accueil.dart';
 import '../textes.dart';
 import 'compte_lie.dart';
 import 'invitation_liaison.dart';
@@ -105,81 +110,85 @@ class _EcranLiaisonState extends State<EcranLiaison> {
       backgroundColor: OuroColors.systemGroupedBackground,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: FondMaillage(
-              couleurPoint: OuroColors.label,
-              couleurAccent: OuroColors.accent,
-            ),
-          ),
-          // Un voile radial : le maillage s'efface sous la carte, et le
-          // regard va au centre.
+          // Un léger dégradé d'accent en haut : la page a une lumière.
           Positioned.fill(
             child: IgnorePointer(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
-                    radius: 0.9,
+                    center: const Alignment(0, -1.1),
+                    radius: 1.2,
                     colors: [
-                      OuroColors.systemGroupedBackground.withValues(alpha: 0.92),
-                      OuroColors.systemGroupedBackground.withValues(alpha: 0),
+                      OuroColors.accent.withValues(alpha: OuroColors.isDark ? 0.16 : 0.10),
+                      OuroColors.accent.withValues(alpha: 0),
                     ],
                   ),
                 ),
               ),
             ),
-          ),
-          // La marque en haut à gauche, comme WhatsApp Web.
-          Positioned(
-            top: 22,
-            left: 28,
-            child: SafeArea(child: _Marque(textes: t)),
           ),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                padding: EdgeInsets.fromLTRB(20, etroit ? 76 : 84, 20, 32),
                 child: _Apparition(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 36),
-                      _CarteVerre(
-                        child: etroit
-                            ? _GrandEcran(textes: t, onTelecharger: () => _ouvrir('https://dropletmesh.app/'))
-                            : _Contenu(
-                                textes: t,
-                                invitation: _invitation,
-                                restant: _restant,
-                                duree: _duree,
-                                rester: _rester,
-                                onRester: (v) => setState(() => _rester = v),
-                                onRenouveler: _renouveler,
-                              ),
-                      ),
-                      if (!etroit) ...[
-                        const SizedBox(height: 16),
-                        _CarteVerre(
-                          child: _CarteAndroid(
-                            textes: t,
-                            onTelecharger: () => _ouvrir('https://dropletmesh.app/'),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 940),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: etroit ? 560 : 620),
+                          child: SceneAccueil(
+                            etat: EtatConnexion.connexion,
+                            accent: OuroColors.accent,
+                            encre: OuroColors.label,
+                            carte: OuroColors.secondarySystemGroupedBackground,
+                            sombre: OuroColors.isDark,
                           ),
                         ),
+                        SizedBox(height: etroit ? 24 : 32),
+                        if (etroit)
+                          _GrandEcran(
+                            textes: t,
+                            onTelecharger: () => _ouvrir('https://dropletmesh.app/'),
+                            onDemo: widget.onDemo,
+                          )
+                        else
+                          _CarteVerre(
+                            child: _Contenu(
+                              textes: t,
+                              invitation: _invitation,
+                              restant: _restant,
+                              duree: _duree,
+                              rester: _rester,
+                              onRester: (v) => setState(() => _rester = v),
+                              onRenouveler: _renouveler,
+                            ),
+                          ),
+                        const SizedBox(height: 22),
+                        _PiedDePage(
+                          textes: t,
+                          onAide: () => _ouvrir('https://dropletmesh.app/support/'),
+                          onTelecharger: () => _ouvrir('https://dropletmesh.app/'),
+                        ),
+                        if (widget.onDemo != null && !etroit) ...[
+                          const SizedBox(height: 14),
+                          _LienDemo(texte: t.essayerDemo, onTap: widget.onDemo!),
+                        ],
                       ],
-                      const SizedBox(height: 22),
-                      _PiedDePage(
-                        textes: t,
-                        onAide: () => _ouvrir('https://dropletmesh.app/support/'),
-                        onTelecharger: () => _ouvrir('https://dropletmesh.app/'),
-                      ),
-                      if (widget.onDemo != null) ...[
-                        const SizedBox(height: 14),
-                        _LienDemo(texte: t.essayerDemo, onTap: widget.onDemo!),
-                      ],
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
+          ),
+          // La marque en haut à gauche, comme WhatsApp Web, sur une barre
+          // de verre quand la page défile dessous.
+          Positioned(
+            top: 22,
+            left: 28,
+            child: SafeArea(child: _Marque(textes: t)),
           ),
         ],
       ),
@@ -300,7 +309,7 @@ class _Contenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = textes;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(48, 48, 48, 44),
+      padding: const EdgeInsets.fromLTRB(48, 44, 44, 40),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -310,25 +319,25 @@ class _Contenu extends StatelessWidget {
               children: [
                 Text(
                   t.connexion,
-                  style: OuroTypography.title1.copyWith(color: OuroColors.label),
+                  style: OuroTypography.largeTitle.copyWith(color: OuroColors.label, height: 1.1),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
                   t.sousTitre,
                   style: OuroTypography.body.copyWith(color: OuroColors.secondaryLabel),
                 ),
                 const SizedBox(height: 30),
-                _Etape(numero: 1, texte: t.etape1),
+                _Etape(icone: const _IconeApp(), texte: t.etape1, fil: true),
+                _Etape(icone: const _IconeReglages(), texte: t.etape2, fil: true),
+                _Etape(icone: const _IconeViseur(), texte: t.etape3, fil: false),
+                const SizedBox(height: 26),
+                Container(height: 0.5, color: OuroColors.separator),
                 const SizedBox(height: 18),
-                _Etape(numero: 2, texte: t.etape2),
-                const SizedBox(height: 18),
-                _Etape(numero: 3, texte: t.etape3),
-                const SizedBox(height: 36),
                 _Rester(textes: t, valeur: rester, onChanged: onRester),
               ],
             ),
           ),
-          const SizedBox(width: 56),
+          const SizedBox(width: 52),
           _BlocQr(
             textes: t,
             invitation: invitation,
@@ -342,45 +351,111 @@ class _Contenu extends StatelessWidget {
   }
 }
 
+/// Une étape : l'icône de ce qu'on touche, à la manière de l'écran
+/// d'accueil d'iOS, reliée à la suivante par un fil fin.
 class _Etape extends StatelessWidget {
-  const _Etape({required this.numero, required this.texte});
+  const _Etape({required this.icone, required this.texte, required this.fil});
 
-  final int numero;
+  final Widget icone;
   final String texte;
+  final bool fil;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 28,
-          height: 28,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: OuroColors.accent.withValues(alpha: 0.14),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Column(
+            children: [
+              icone,
+              if (fil)
+                Expanded(
+                  child: Container(
+                    width: 1.5,
+                    margin: const EdgeInsets.symmetric(vertical: 5),
+                    decoration: BoxDecoration(
+                      color: OuroColors.separator,
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          child: Text(
-            '$numero',
-            style: OuroTypography.subheadline.copyWith(
-              color: OuroColors.accent,
-              fontWeight: FontWeight.w600,
-              fontVariations: const [FontVariation('wght', 600)],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(top: 7, bottom: fil ? 22 : 0),
+              child: Text(
+                texte,
+                style: OuroTypography.body.copyWith(color: OuroColors.label, height: 1.35),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 3),
-            child: Text(
-              texte,
-              style: OuroTypography.body.copyWith(color: OuroColors.label),
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Le carré arrondi d'une icône d'app iOS, à la taille d'une ligne.
+class _Tuile extends StatelessWidget {
+  const _Tuile({required this.couleurs, required this.child});
+
+  final List<Color> couleurs;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(9),
+        gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: couleurs),
+        boxShadow: [
+          BoxShadow(color: couleurs.last.withValues(alpha: 0.30), blurRadius: 8, offset: const Offset(0, 3)),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _IconeApp extends StatelessWidget {
+  const _IconeApp();
+
+  @override
+  Widget build(BuildContext context) {
+    final a = OuroColors.accent;
+    return _Tuile(
+      couleurs: [Color.lerp(a, Colors.white, 0.12)!, Color.lerp(a, Colors.black, 0.18)!],
+      child: const Goutte(taille: 24, couleur: Colors.white),
+    );
+  }
+}
+
+class _IconeReglages extends StatelessWidget {
+  const _IconeReglages();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _Tuile(
+      couleurs: [Color(0xFFA2A2A8), Color(0xFF6C6C72)],
+      child: Icon(Icons.settings_rounded, size: 23, color: Colors.white),
+    );
+  }
+}
+
+class _IconeViseur extends StatelessWidget {
+  const _IconeViseur();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _Tuile(
+      couleurs: [Color(0xFF3A3A3C), Color(0xFF1C1C1E)],
+      child: Icon(Icons.qr_code_scanner_rounded, size: 21, color: Colors.white),
     );
   }
 }
@@ -434,99 +509,125 @@ class _BlocQr extends StatelessWidget {
   final int duree;
   final VoidCallback onRenouveler;
 
-  static const double _cote = 264;
+  static const double _cote = 248;
 
   @override
   Widget build(BuildContext context) {
     final inv = invitation;
+    final reduit = MediaQuery.disableAnimationsOf(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // L'anneau se vide en douceur entre deux secondes, au lieu de
-        // sauter d'un cran à chaque tic.
-        TweenAnimationBuilder<double>(
-          tween: Tween(end: restant / duree),
-          duration: const Duration(milliseconds: 950),
-          curve: Curves.linear,
-          builder: (context, progres, enfant) => CustomPaint(
-            painter: _Anneau(progres: progres, couleur: OuroColors.accent, fond: OuroColors.separator),
-            child: enfant,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Container(
-              width: _cote,
-              height: _cote,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                switchInCurve: kSortie,
-                transitionBuilder: (enfant, a) => FadeTransition(
-                  opacity: a,
-                  child: ScaleTransition(scale: Tween(begin: 0.94, end: 1.0).animate(a), child: enfant),
+        // Les coins d'un viseur, comme l'appareil photo d'iOS quand il
+        // repère un code : ils respirent à peine.
+        _Respire(
+          actif: !reduit,
+          builder: (context, v) => CustomPaint(
+            foregroundPainter: _Coins(couleur: OuroColors.accent, ecart: 2 + 3 * v),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Container(
+                width: _cote,
+                height: _cote,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: OuroColors.isDark ? 0.35 : 0.08),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-                child: inv == null
-                    ? const Center(key: ValueKey('attente'), child: CupertinoActivityIndicator())
-                    : Stack(
-                        key: ValueKey(inv.canal),
-                        alignment: Alignment.center,
-                        children: [
-                          Semantics(
-                            label: textes.codeLiaison,
-                            image: true,
-                            child: QrImageView(
-                              data: inv.contenuQr,
-                              version: QrVersions.auto,
-                              errorCorrectionLevel: QrErrorCorrectLevel.H,
-                              padding: EdgeInsets.zero,
-                              backgroundColor: Colors.white,
-                              eyeStyle: const QrEyeStyle(
-                                eyeShape: QrEyeShape.circle,
-                                color: Color(0xFF1C1C1E),
-                              ),
-                              dataModuleStyle: const QrDataModuleStyle(
-                                dataModuleShape: QrDataModuleShape.circle,
-                                color: Color(0xFF1C1C1E),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 600),
+                  switchInCurve: kSortie,
+                  transitionBuilder: (enfant, a) => FadeTransition(
+                    opacity: a,
+                    child: ScaleTransition(scale: Tween(begin: 0.94, end: 1.0).animate(a), child: enfant),
+                  ),
+                  child: inv == null
+                      ? const Center(key: ValueKey('attente'), child: CupertinoActivityIndicator(color: Color(0xFF8E8E93)))
+                      : Stack(
+                          key: ValueKey(inv.canal),
+                          alignment: Alignment.center,
+                          children: [
+                            Semantics(
+                              label: textes.codeLiaison,
+                              image: true,
+                              child: QrImageView(
+                                data: inv.contenuQr,
+                                version: QrVersions.auto,
+                                errorCorrectionLevel: QrErrorCorrectLevel.H,
+                                padding: EdgeInsets.zero,
+                                backgroundColor: Colors.white,
+                                eyeStyle: const QrEyeStyle(
+                                  eyeShape: QrEyeShape.circle,
+                                  color: Color(0xFF1C1C1E),
+                                ),
+                                dataModuleStyle: const QrDataModuleStyle(
+                                  dataModuleShape: QrDataModuleShape.circle,
+                                  color: Color(0xFF1C1C1E),
+                                ),
                               ),
                             ),
-                          ),
-                          // La goutte au centre, sur sa pastille blanche.
-                          Container(
-                            width: 52,
-                            height: 52,
-                            alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
+                            // Le logo au centre, sur sa pastille blanche.
+                            Container(
+                              width: 50,
+                              height: 50,
+                              alignment: Alignment.center,
+                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                              child: Goutte(taille: 32, couleur: OuroColors.accent),
                             ),
-                            child: Goutte(taille: 34, couleur: OuroColors.accent),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                ),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          textes.renouvele(restant),
-          style: OuroTypography.footnote.copyWith(
-            color: OuroColors.secondaryLabel,
-            fontFeatures: const [FontFeature.tabularFigures()],
+        const SizedBox(height: 14),
+        // Le temps qui reste : une capsule avec un petit cadran qui se vide,
+        // et le renouvellement à portée de main.
+        Container(
+          padding: const EdgeInsets.fromLTRB(10, 5, 4, 5),
+          decoration: BoxDecoration(
+            color: OuroColors.tertiarySystemFill,
+            borderRadius: BorderRadius.circular(999),
           ),
-        ),
-        const SizedBox(height: 4),
-        CupertinoButton(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          minimumSize: const Size(0, 30),
-          onPressed: onRenouveler,
-          child: Text(
-            textes.nouveauCode,
-            style: OuroTypography.footnote.copyWith(color: OuroColors.accent),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween(end: restant / duree),
+                duration: const Duration(milliseconds: 950),
+                builder: (context, p, _) => SizedBox.square(
+                  dimension: 14,
+                  child: CustomPaint(painter: _Cadran(progres: p, couleur: OuroColors.accent, fond: OuroColors.separator)),
+                ),
+              ),
+              const SizedBox(width: 7),
+              Text(
+                textes.renouvele(restant),
+                style: OuroTypography.footnote.copyWith(
+                  color: OuroColors.secondaryLabel,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              const SizedBox(width: 2),
+              Semantics(
+                button: true,
+                label: textes.nouveauCode,
+                child: CupertinoButton(
+                  padding: const EdgeInsets.all(6),
+                  minimumSize: const Size(28, 28),
+                  onPressed: onRenouveler,
+                  child: Icon(Icons.refresh_rounded, size: 17, color: OuroColors.accent),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -534,10 +635,77 @@ class _BlocQr extends StatelessWidget {
   }
 }
 
-/// L'anneau du temps qui reste : une piste discrète, et l'arc d'accent qui
-/// part de midi et se vide dans le sens des aiguilles d'une montre.
-class _Anneau extends CustomPainter {
-  _Anneau({required this.progres, required this.couleur, required this.fond});
+/// Une valeur qui va et vient entre 0 et 1, doucement (2,4 s l'aller).
+class _Respire extends StatefulWidget {
+  const _Respire({required this.actif, required this.builder});
+
+  final bool actif;
+  final Widget Function(BuildContext, double) builder;
+
+  @override
+  State<_Respire> createState() => _RespireState();
+}
+
+class _RespireState extends State<_Respire> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400));
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.actif) _c.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) => widget.builder(context, Curves.easeInOut.transform(_c.value)),
+      );
+}
+
+/// Les quatre coins du viseur, autour du carré blanc.
+class _Coins extends CustomPainter {
+  _Coins({required this.couleur, required this.ecart});
+
+  final Color couleur;
+  final double ecart;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = (Offset.zero & size).deflate(ecart);
+    const l = 30.0, rayon = 18.0;
+    final p = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.2
+      ..strokeCap = StrokeCap.round
+      ..color = couleur;
+    for (final (x, y, sx, sy) in [
+      (r.left, r.top, 1.0, 1.0),
+      (r.right, r.top, -1.0, 1.0),
+      (r.left, r.bottom, 1.0, -1.0),
+      (r.right, r.bottom, -1.0, -1.0),
+    ]) {
+      final chemin = Path()
+        ..moveTo(x, y + sy * l)
+        ..lineTo(x, y + sy * rayon)
+        ..quadraticBezierTo(x, y, x + sx * rayon, y)
+        ..lineTo(x + sx * l, y);
+      canvas.drawPath(chemin, p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_Coins a) => a.ecart != ecart || a.couleur != couleur;
+}
+
+/// Le petit cadran du temps qui reste : un disque qui se vide.
+class _Cadran extends CustomPainter {
+  _Cadran({required this.progres, required this.couleur, required this.fond});
 
   final double progres;
   final Color couleur;
@@ -545,127 +713,78 @@ class _Anneau extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final r = RRect.fromRectAndRadius(
-      Offset.zero & size,
-      const Radius.circular(30),
-    ).deflate(1.5);
-    final piste = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..color = fond;
-    canvas.drawRRect(r, piste);
-
-    // L'arc suit le contour arrondi : on mesure le tracé et on n'en dessine
-    // que la part restante, à partir du haut, au centre.
-    final chemin = Path()..addRRect(r);
-    final mesure = chemin.computeMetrics().first;
-    final total = mesure.length;
-    // `addRRect` commence en haut à gauche, après l'arrondi : on décale le
-    // départ au milieu du bord du haut.
-    final depart = (size.width / 2 - 30);
-    final longueur = total * progres.clamp(0.0, 1.0);
-    final arc = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..color = couleur;
-    final fin = depart + longueur;
-    if (fin <= total) {
-      canvas.drawPath(mesure.extractPath(depart, fin), arc);
-    } else {
-      canvas.drawPath(mesure.extractPath(depart, total), arc);
-      canvas.drawPath(mesure.extractPath(0, fin - total), arc);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_Anneau ancien) =>
-      ancien.progres != progres || ancien.couleur != couleur || ancien.fond != fond;
-}
-
-/// La seconde carte, sous celle du code : pour qui n'a pas encore l'app.
-class _CarteAndroid extends StatelessWidget {
-  const _CarteAndroid({required this.textes, required this.onTelecharger});
-
-  final Textes textes;
-  final VoidCallback onTelecharger;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 22),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: OuroColors.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Goutte(taille: 30, couleur: OuroColors.accent),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(textes.androidTitre,
-                    style: OuroTypography.headline.copyWith(color: OuroColors.label)),
-                const SizedBox(height: 2),
-                Text(textes.androidTexte,
-                    style: OuroTypography.subheadline.copyWith(color: OuroColors.secondaryLabel)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          CupertinoButton(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            color: OuroColors.accent,
-            borderRadius: BorderRadius.circular(999),
-            onPressed: onTelecharger,
-            child: Text(
-              textes.telecharger,
-              style: OuroTypography.subheadline.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+    final c = size.center(Offset.zero);
+    final r = size.width / 2;
+    canvas.drawCircle(c, r, Paint()..color = fond);
+    canvas.drawArc(
+      Rect.fromCircle(center: c, radius: r),
+      -1.5708,
+      6.28318 * progres.clamp(0.0, 1.0),
+      true,
+      Paint()..color = couleur,
     );
   }
+
+  @override
+  bool shouldRepaint(_Cadran a) => a.progres != progres || a.couleur != couleur || a.fond != fond;
 }
 
-/// Sur un téléphone : pas de code à scanner, une explication.
+/// Sur un téléphone : pas de code à scanner, une explication et l'app.
 class _GrandEcran extends StatelessWidget {
-  const _GrandEcran({required this.textes, required this.onTelecharger});
+  const _GrandEcran({required this.textes, required this.onTelecharger, this.onDemo});
 
   final Textes textes;
   final VoidCallback onTelecharger;
+  final VoidCallback? onDemo;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.desktop_mac_rounded, size: 44, color: OuroColors.accent),
-          const SizedBox(height: 18),
           Text(
             textes.sousTitre,
             textAlign: TextAlign.center,
-            style: OuroTypography.title3.copyWith(color: OuroColors.label),
+            style: OuroTypography.title1.copyWith(color: OuroColors.label),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             textes.grandEcran,
             textAlign: TextAlign.center,
-            style: OuroTypography.body.copyWith(color: OuroColors.secondaryLabel),
+            style: OuroTypography.body.copyWith(color: OuroColors.secondaryLabel, height: 1.4),
           ),
+          const SizedBox(height: 26),
+          SizedBox(
+            width: double.infinity,
+            child: CupertinoButton(
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              color: OuroColors.accentRempli,
+              borderRadius: BorderRadius.circular(14),
+              onPressed: onTelecharger,
+              child: Text(
+                textes.telecharger,
+                style: OuroTypography.headline.copyWith(color: OuroColors.texteSurAccent),
+              ),
+            ),
+          ),
+          if (onDemo != null) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: CupertinoButton(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                color: OuroColors.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+                onPressed: onDemo,
+                child: Text(
+                  textes.essayerDemo,
+                  style: OuroTypography.headline.copyWith(color: OuroColors.accent),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
