@@ -128,6 +128,7 @@ class Textes {
   String get essayerDemo => _('essayerDemo');
   String get fermer => _('fermer');
   String get horsLigne => _('horsLigne');
+  String get telephoneRelie => _('telephoneRelie');
   String get infosDiscussion => _('infosDiscussion');
   String get lierTelephone => _('lierTelephone');
   String get marquerLue => _('marquerLue');

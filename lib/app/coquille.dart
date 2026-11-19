@@ -27,6 +27,7 @@ import '../design_system/ouro_typography.dart';
 import '../donnees/modeles.dart';
 import '../donnees/transport.dart';
 import '../fond/goutte.dart';
+import '../fond/scene_accueil.dart';
 import '../web/navigateur.dart';
 import 'actus.dart';
 import 'appels.dart';
@@ -829,12 +830,20 @@ class _Accueil extends StatelessWidget {
     final t = context.t;
     return Container(
       alignment: Alignment.center,
-      padding: const EdgeInsets.all(40),
-      child: Column(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(40),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _Illustration(onglet: onglet),
-          const SizedBox(height: 14),
+          if (onglet == Onglet.discussions)
+            ValueListenableBuilder<EtatConnexion>(
+              valueListenable: etat,
+              builder: (context, e, _) => _Scene(etat: e),
+            )
+          else ...[
+            _Illustration(onglet: onglet),
+            const SizedBox(height: 14),
+          ],
           Text(titre, style: OuroTypography.title1.copyWith(color: OuroColors.label)),
           const SizedBox(height: 10),
           ConstrainedBox(
@@ -863,6 +872,65 @@ class _Accueil extends StatelessWidget {
           ),
         ],
       ),
+      ),
+    );
+  }
+}
+
+/// L'accueil des discussions : la scène vivante du maillage (voir
+/// `scene_accueil.dart`) et, dessous, l'état de la liaison avec le
+/// téléphone, comme une pastille.
+class _Scene extends StatelessWidget {
+  const _Scene({required this.etat});
+
+  final EtatConnexion etat;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    final (couleur, texte) = switch (etat) {
+      EtatConnexion.connecte => (OuroColors.systemGreen, t.telephoneRelie),
+      EtatConnexion.connexion => (OuroColors.systemOrange, t.connexionEnCours),
+      EtatConnexion.horsLigne => (OuroColors.systemGray, t.horsLigne),
+    };
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: SceneAccueil(
+            etat: etat,
+            accent: OuroColors.accent,
+            encre: OuroColors.label,
+            carte: OuroColors.secondarySystemGroupedBackground,
+            sombre: OuroColors.isDark,
+          ),
+        ),
+        const SizedBox(height: 10),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          child: Container(
+            key: ValueKey(etat),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: OuroColors.secondarySystemGroupedBackground.withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: OuroColors.separator.withValues(alpha: 0.5), width: 0.5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(width: 7, height: 7, decoration: BoxDecoration(color: couleur, shape: BoxShape.circle)),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(texte, style: OuroTypography.footnote.copyWith(color: OuroColors.secondaryLabel)),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 22),
+      ],
     );
   }
 }
