@@ -191,10 +191,16 @@ Future<void> confirmerDeconnexion(BuildContext context, VoidCallback onDeconnexi
 
 /// Le fond d'un panneau de réglages : gris groupé, en-tête avec retour.
 class _Page extends StatelessWidget {
-  const _Page({required this.titre, required this.enfants});
+  const _Page({required this.titre, required this.enfants, this.icone, this.couleur, this.texte});
 
   final String titre;
   final List<Widget> enfants;
+
+  /// L'icône de la section, en grand en tête du panneau, comme les pages
+  /// des Réglages d'iOS : on sait où l'on est d'un coup d'œil.
+  final IconData? icone;
+  final Color? couleur;
+  final String? texte;
 
   @override
   Widget build(BuildContext context) {
@@ -204,9 +210,61 @@ class _Page extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           EntetePanneau(titre: titre, retour: () => Navigator.of(context).pop()),
-          Expanded(child: ListView(padding: const EdgeInsets.fromLTRB(14, 4, 14, 30), children: enfants)),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 30),
+              children: [
+                if (icone != null) ...[
+                  const SizedBox(height: 8),
+                  Center(child: _TuileHeros(icone: icone!, couleur: couleur ?? OuroColors.accent)),
+                  const SizedBox(height: 14),
+                  if (texte != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+                      child: Text(
+                        texte!,
+                        textAlign: TextAlign.center,
+                        style: OuroTypography.subheadline.copyWith(color: OuroColors.secondaryLabel, height: 1.4),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 8),
+                ],
+                ...enfants,
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// L'icône d'une section en grand : un carré arrondi en dégradé, avec
+/// son ombre colorée, comme une icône d'app.
+class _TuileHeros extends StatelessWidget {
+  const _TuileHeros({required this.icone, required this.couleur});
+
+  final IconData icone;
+  final Color couleur;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color.lerp(couleur, Colors.white, 0.14)!, Color.lerp(couleur, Colors.black, 0.12)!],
+        ),
+        boxShadow: [
+          BoxShadow(color: couleur.withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: Icon(icone, size: 38, color: Colors.white),
     );
   }
 }
@@ -378,18 +436,10 @@ class PanneauAppareils extends StatelessWidget {
     final depot = context.depot;
     return _Page(
       titre: t.appareilsLies,
+      icone: Icons.devices_rounded,
+      couleur: OuroColors.systemGreen,
+      texte: t.appareilsTexte,
       enfants: [
-        const SizedBox(height: 6),
-        Center(
-          child: Container(
-            width: 84,
-            height: 84,
-            decoration: BoxDecoration(color: OuroColors.accent.withValues(alpha: 0.12), shape: BoxShape.circle),
-            child: Icon(Icons.devices_rounded, size: 40, color: OuroColors.accent),
-          ),
-        ),
-        const SizedBox(height: 14),
-        _Note(t.appareilsTexte),
         TitreIlot(t.cetAppareil),
         Ilot(
           fond: OuroColors.systemGroupedBackground,
@@ -445,6 +495,8 @@ class _PanneauConfidentialite extends StatelessWidget {
     final bloques = depot.contacts.values.where((c) => c.bloque).toList();
     return _Page(
       titre: t.confidentialite,
+      icone: Icons.lock_rounded,
+      couleur: const Color(0xFF0A84FF),
       enfants: [
         Ilot(
           fond: OuroColors.systemGroupedBackground,
@@ -515,6 +567,8 @@ class _PanneauDiscussions extends StatelessWidget {
     final r = depot.reglages;
     return _Page(
       titre: l.tabChats,
+      icone: Icons.chat_bubble_rounded,
+      couleur: OuroColors.accent,
       enfants: [
         TitreIlot(l.sectionAppearance),
         Padding(
@@ -747,6 +801,8 @@ class _PanneauNotificationsState extends State<_PanneauNotifications> {
     final actives = depot.reglages.notifications && permission == 'granted';
     return _Page(
       titre: l.stNotificationsHeader,
+      icone: Icons.notifications_rounded,
+      couleur: OuroColors.systemRed,
       enfants: [
         Ilot(
           fond: OuroColors.systemGroupedBackground,
@@ -799,6 +855,8 @@ class _PanneauLangue extends StatelessWidget {
     final actuelle = Textes.langueStockee;
     return _Page(
       titre: l.sectionLanguage,
+      icone: Icons.language_rounded,
+      couleur: OuroColors.systemIndigo,
       enfants: [
         Ilot(
           fond: OuroColors.systemGroupedBackground,
@@ -832,6 +890,8 @@ class _PanneauRaccourcis extends StatelessWidget {
     final raccourcis = listeRaccourcis(context);
     return _Page(
       titre: context.t.raccourcis,
+      icone: Icons.keyboard_rounded,
+      couleur: OuroColors.systemGray,
       enfants: [
         Ilot(
           fond: OuroColors.systemGroupedBackground,
@@ -873,6 +933,8 @@ class _PanneauAide extends StatelessWidget {
     final t = context.t;
     return _Page(
       titre: t.aideTitre,
+      icone: Icons.help_rounded,
+      couleur: OuroColors.systemTeal,
       enfants: [
         Ilot(
           fond: OuroColors.systemGroupedBackground,
