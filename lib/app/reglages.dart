@@ -677,55 +677,6 @@ class _PanneauDiscussions extends StatelessWidget {
             ],
           ),
         ),
-        TitreIlot(l.stChatBgHeader),
-        Container(
-          padding: const EdgeInsets.all(12),
-          margin: const EdgeInsets.only(bottom: 18),
-          decoration: BoxDecoration(color: OuroColors.systemGroupedBackground, borderRadius: BorderRadius.circular(14)),
-          child: GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 0.7,
-            children: [
-              for (var i = 0; i < fondsDiscussion.length; i++)
-                Survol(
-                  onTap: () => depot.majReglages((x) => x.fond = i),
-                  builder: (context, survol) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: r.fond == i ? OuroColors.accent : OuroColors.separator, width: r.fond == i ? 2.5 : 0.5),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      children: [
-                        Positioned.fill(child: Fond(index: i)),
-                        Positioned(
-                          left: 6,
-                          top: 10,
-                          child: Container(width: 30, height: 10, decoration: BoxDecoration(color: OuroColors.bubbleIncoming, borderRadius: BorderRadius.circular(5))),
-                        ),
-                        Positioned(
-                          right: 6,
-                          top: 26,
-                          child: Container(width: 26, height: 10, decoration: BoxDecoration(color: OuroColors.accent, borderRadius: BorderRadius.circular(5))),
-                        ),
-                        if (r.fond == i)
-                          Positioned(
-                            right: 6,
-                            bottom: 6,
-                            child: Icon(Icons.check_circle_rounded, color: OuroColors.accent, size: 18),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
         Ilot(
           fond: OuroColors.systemGroupedBackground,
           enfants: [
@@ -746,7 +697,6 @@ class _PanneauDiscussions extends StatelessWidget {
                 x.theme = ThemeChoisi.systeme;
                 x.accent = DDAccents.defaut;
                 x.tailleTexte = ReglagesApparence.tailleTexteDefaut;
-                x.fond = 0;
               }),
             ),
           ],

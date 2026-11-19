@@ -1085,232 +1085,50 @@ void annoncer(BuildContext context, String texte, {IconData icone = Icons.check_
 
 // ══ LE FOND DES DISCUSSIONS ════════════════════════════════════════════════
 
-/// Les fonds proposés dans Réglages › Discussions. Le premier est celui de
-/// l'app : de très petites gouttes en quinconce, à peine visibles.
+/// Un seul fond : les petits dessins au trait de l'app sur un dégradé doux
+/// à trois points de couleur (voir `Fond`). Les anciens fonds (unis,
+/// dégradés, semis de gouttes) ont été retirés.
 class FondDiscussion {
-  const FondDiscussion(this.clair, this.sombre, {this.motif = true, this.dessins = false});
+  const FondDiscussion();
 
-  final List<Color> clair;
-  final List<Color> sombre;
-  final bool motif;
-
-  /// Le semis de dessins du fond Droplet, à la place des petites gouttes.
-  final bool dessins;
-
-  /// Un fond teinté ou dessiné : en clair, les bulles reçues y sont
-  /// blanches (le gris de Messages s'y salirait), comme dans WhatsApp.
-  bool get bullesBlanches => motif || dessins;
-
-  List<Color> couleurs() => OuroColors.isDark ? sombre : clair;
+  /// En clair, les bulles reçues y sont blanches, comme dans WhatsApp.
+  bool get bullesBlanches => true;
 }
 
-const List<FondDiscussion> fondsDiscussion = [
-  // LE FOND DROPLET, par défaut : un presque-noir bleuté (un presque-blanc
-  // chaud en clair) et un semis de petits dessins au trait — gouttes,
-  // ondes, bulles, éclats — à peine visibles. Comme le papier peint de
-  // WhatsApp : l'œil ne le regarde jamais, mais sans lui la discussion
-  // flotte dans un vide noir.
-  FondDiscussion([Color(0xFFF3F0EB), Color(0xFFECEEF3)], [Color(0xFF0C0E13), Color(0xFF12151C)], dessins: true),
-  FondDiscussion([Color(0xFFF2F2F7), Color(0xFFF2F2F7)], [Color(0xFF1C1C1E), Color(0xFF1C1C1E)], motif: false),
-  FondDiscussion([Color(0xFFFFF1E6), Color(0xFFFFE3EC)], [Color(0xFF2A1A12), Color(0xFF2A1220)]),
-  FondDiscussion([Color(0xFFE6F4FF), Color(0xFFEDE7FF)], [Color(0xFF0E1A2B), Color(0xFF1A1430)]),
-  FondDiscussion([Color(0xFFE8F8EE), Color(0xFFE3F6F5)], [Color(0xFF0F2117), Color(0xFF0E2222)]),
-  FondDiscussion([Color(0xFFFFF8DC), Color(0xFFFFEFD5)], [Color(0xFF26200E), Color(0xFF2A1E0E)]),
-  // Uni, comme Messages : blanc pur en clair, noir pur en sombre.
-  FondDiscussion([Color(0xFFFFFFFF), Color(0xFFFFFFFF)], [Color(0xFF000000), Color(0xFF000000)], motif: false),
-  FondDiscussion([Color(0xFFFCE4EC), Color(0xFFE1F5FE)], [Color(0xFF2B1220), Color(0xFF0E1E2B)]),
-];
-
-class PeintreMotif extends CustomPainter {
-  PeintreMotif(this.encre);
-
-  final Color encre;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()..color = encre.withValues(alpha: 0.04);
-    const pas = 38.0;
-    var ligne = 0;
-    for (var y = 0.0; y < size.height + pas; y += pas, ligne++) {
-      final decalage = ligne.isOdd ? pas / 2 : 0.0;
-      for (var x = decalage; x < size.width + pas; x += pas) {
-        // Une goutte minuscule : un rond et sa pointe.
-        canvas.drawCircle(Offset(x, y + 1), 1.7, p);
-        canvas.drawPath(
-          Path()
-            ..moveTo(x - 1.4, y)
-            ..lineTo(x, y - 3)
-            ..lineTo(x + 1.4, y)
-            ..close(),
-          p,
-        );
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(PeintreMotif ancien) => ancien.encre != encre;
-}
-
-/// Le semis du fond Droplet : un dessin au trait par case d'une grille
-/// décalée, choisi, tourné et déplacé par un hachage de la case — le même
-/// dessin au même endroit à chaque fois, quelle que soit la taille de la
-/// fenêtre (rien ne « saute » quand on l'agrandit).
-class PeintreDessins extends CustomPainter {
-  PeintreDessins(this.encre);
-
-  final Color encre;
-
-  static const double _pas = 76;
-
-  static int _hache(int a, int b) {
-    var h = a * 374761393 + b * 668265263;
-    h = (h ^ (h >> 13)) * 1274126177;
-    return (h ^ (h >> 16)) & 0x7fffffff;
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final trait = Paint()
-      ..color = encre
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final plein = Paint()..color = encre;
-    final lignes = (size.height / _pas).ceil() + 1;
-    final colonnes = (size.width / _pas).ceil() + 1;
-    for (var j = 0; j < lignes; j++) {
-      for (var i = 0; i < colonnes; i++) {
-        final h = _hache(i, j);
-        final x = (i + (j.isOdd ? 0.5 : 0)) * _pas + ((h >> 3) % 22 - 11);
-        final y = j * _pas + ((h >> 8) % 22 - 11);
-        final angle = ((h >> 13) % 60 - 30) * math.pi / 180;
-        final echelle = 0.85 + ((h >> 19) % 30) / 100;
-        canvas.save();
-        canvas.translate(x, y);
-        canvas.rotate(angle);
-        canvas.scale(echelle);
-        switch (h % 7) {
-          case 0 || 1 || 2:
-            _goutte(canvas, trait);
-          case 3:
-            _ondes(canvas, trait);
-          case 4:
-            _bulle(canvas, trait, plein);
-          case 5:
-            _eclat(canvas, trait);
-          default:
-            // Trois petites gouttes de pluie.
-            for (final (dx, dy, r) in const [(-6.0, -4.0, 1.6), (3.0, 1.0, 2.0), (-1.0, 8.0, 1.3)]) {
-              canvas.drawCircle(Offset(dx, dy), r, plein);
-            }
-        }
-        canvas.restore();
-      }
-    }
-  }
-
-  void _goutte(Canvas c, Paint p) {
-    c.drawPath(
-      Path()
-        ..moveTo(0, -10)
-        ..cubicTo(4, -4, 7.5, 0, 7.5, 3.5)
-        ..arcToPoint(const Offset(-7.5, 3.5), radius: const Radius.circular(7.5))
-        ..cubicTo(-7.5, 0, -4, -4, 0, -10)
-        ..close(),
-      p,
-    );
-    // Le reflet.
-    c.drawArc(Rect.fromCircle(center: const Offset(0, 3.5), radius: 4), math.pi * 0.95, math.pi * 0.35, false, p);
-  }
-
-  void _ondes(Canvas c, Paint p) {
-    c.drawOval(Rect.fromCenter(center: Offset.zero, width: 10, height: 4), p);
-    c.drawArc(Rect.fromCenter(center: Offset.zero, width: 22, height: 9), math.pi * 0.1, math.pi * 0.8, false, p);
-    c.drawArc(Rect.fromCenter(center: Offset.zero, width: 22, height: 9), math.pi * 1.1, math.pi * 0.8, false, p);
-  }
-
-  void _bulle(Canvas c, Paint p, Paint plein) {
-    c.drawPath(
-      Path()
-        ..addRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset.zero, width: 22, height: 15), const Radius.circular(7.5)))
-        ..moveTo(-6, 7.5)
-        ..lineTo(-9, 11.5)
-        ..lineTo(-2, 7.5),
-      p,
-    );
-    for (final dx in const [-5.0, 0.0, 5.0]) {
-      c.drawCircle(Offset(dx, 0), 1.25, plein);
-    }
-  }
-
-  void _eclat(Canvas c, Paint p) {
-    final chemin = Path();
-    for (var k = 0; k < 4; k++) {
-      final a = k * math.pi / 2;
-      final b = a + math.pi / 4;
-      final pt = Offset(math.cos(a) * 8, math.sin(a) * 8);
-      final creux = Offset(math.cos(b) * 2.4, math.sin(b) * 2.4);
-      if (k == 0) {
-        chemin.moveTo(pt.dx, pt.dy);
-      } else {
-        chemin.lineTo(pt.dx, pt.dy);
-      }
-      chemin.lineTo(creux.dx, creux.dy);
-    }
-    chemin.close();
-    c.drawPath(chemin, p);
-  }
-
-  @override
-  bool shouldRepaint(PeintreDessins ancien) => ancien.encre != encre;
-}
+const List<FondDiscussion> fondsDiscussion = [FondDiscussion()];
 
 class Fond extends StatelessWidget {
-  const Fond({super.key, required this.index});
+  // [index] reste accepté (il est enregistré dans les réglages) mais il n'y
+  // a plus qu'un fond.
+  const Fond({super.key, this.index = 0});
 
   final int index;
 
   @override
   Widget build(BuildContext context) {
-    final f = fondsDiscussion[index % fondsDiscussion.length];
-    final c = f.couleurs();
     final sombre = OuroColors.isDark;
-    if (f.dessins) {
-      // Le fond dessiné, comme Telegram : un dégradé à plusieurs points de
-      // couleur très doux (un bleu, un vert d'eau, une lumière chaude), et
-      // par-dessus les petits dessins au trait de l'app, à peine visibles.
-      final taches = sombre
-          ? const [(Alignment(-0.9, -0.9), Color(0xFF16253F)), (Alignment(1, -0.6), Color(0xFF0F2A27)), (Alignment(0.8, 1), Color(0xFF231936))]
-          : const [(Alignment(-0.9, -0.9), Color(0xFFD5E5F6)), (Alignment(1, -0.6), Color(0xFFDCEFE3)), (Alignment(0.8, 1), Color(0xFFF4E6D3))];
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          ColoredBox(color: sombre ? const Color(0xFF0D1017) : const Color(0xFFEAEFF4)),
-          for (final (centre, couleur) in taches)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: centre,
-                  radius: 1.1,
-                  colors: [couleur.withValues(alpha: sombre ? 0.9 : 0.95), couleur.withValues(alpha: 0)],
-                ),
+    // Comme Telegram : un dégradé à plusieurs points de couleur très doux
+    // (un bleu, un vert d'eau, une lumière chaude), et par-dessus les petits
+    // dessins au trait de l'app, à peine visibles.
+    final taches = sombre
+        ? const [(Alignment(-0.9, -0.9), Color(0xFF16253F)), (Alignment(1, -0.6), Color(0xFF0F2A27)), (Alignment(0.8, 1), Color(0xFF231936))]
+        : const [(Alignment(-0.9, -0.9), Color(0xFFD5E5F6)), (Alignment(1, -0.6), Color(0xFFDCEFE3)), (Alignment(0.8, 1), Color(0xFFF4E6D3))];
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ColoredBox(color: sombre ? const Color(0xFF0D1017) : const Color(0xFFEAEFF4)),
+        for (final (centre, couleur) in taches)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: centre,
+                radius: 1.1,
+                colors: [couleur.withValues(alpha: sombre ? 0.9 : 0.95), couleur.withValues(alpha: 0)],
               ),
             ),
-          CalqueDoodle(
-            couleur: sombre ? const Color(0x14FFFFFF) : const Color(0x1A123F5C),
           ),
-        ],
-      );
-    }
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: c),
-      ),
-      child: f.motif
-          ? CustomPaint(painter: PeintreMotif(OuroColors.label), size: Size.infinite)
-          : const SizedBox.expand(),
+        CalqueDoodle(couleur: sombre ? const Color(0x14FFFFFF) : const Color(0x1A123F5C)),
+      ],
     );
   }
 }
