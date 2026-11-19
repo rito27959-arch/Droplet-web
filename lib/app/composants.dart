@@ -8,7 +8,6 @@
 // a sa bulle d'aide.
 import 'dart:async';
 import 'dart:ui' as ui;
-import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
