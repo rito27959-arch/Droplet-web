@@ -71,6 +71,9 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 
 import '../../core/providers/mesh_provider.dart'
     show toastProvider, DropletToastType, meshRepositoryProvider;
@@ -104,6 +107,9 @@ import 'artefact_screen.dart';
 import '../../core/services/superposition_glasmio.dart';
 import 'assistant_tiroir.dart';
 import 'competences_assistant.dart';
+import 'mascotte_assistant.dart';
+import 'selecteur_moteur.dart';
+import '../../core/providers/premium_provider.dart' show estProProvider;
 import 'composeur_assistant.dart';
 import 'conversations_screen.dart';
 import 'journal_activite.dart';
@@ -190,6 +196,21 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
 
   /// La synthèse vocale du système — hors ligne, comme le reste.
   final FlutterTts _voix = FlutterTts();
+
+  // ── Le composeur « maintenez appuyé pour parler » (à la manière de Kimi)
+  //
+  // Vocal par défaut, comme Kimi ; le clavier est à un appui. Le choix
+  // est retenu d'une visite à l'autre.
+  bool _composeurVocal = StorageService.getString('ia_composeur_vocal') != '0';
+  final AudioRecorder _microParole = AudioRecorder();
+  StreamSubscription<Amplitude>? _ampParole;
+  bool _enregistre = false;
+  bool _transcrit = false;
+  double _niveauParole = 0;
+
+  /// Lire chaque réponse à voix haute dès qu'elle est finie (le bouton
+  /// haut-parleur en haut à droite).
+  bool _lectureAuto = StorageService.getString('ia_lecture_auto') == '1';
 
   /// L'index de la réponse lue à voix haute, s'il y en a une.
   int? _enLecture;
@@ -410,6 +431,8 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
 
   @override
   void dispose() {
+    unawaited(_ampParole?.cancel());
+    unawaited(_microParole.dispose());
     unawaited(_voix.stop());
     _groq.dispose();
     _inputCtrl.dispose();
@@ -603,6 +626,10 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
         _detecterArtefacts(reponse);
         _enregistrer(texte, reponse, jointes);
         unawaited(_proposerSuites(reponse));
+        if (_lectureAuto && !reponse.erreur && reponse.texte.trim().isNotEmpty) {
+          final i = _messages.indexOf(reponse);
+          if (i >= 0) unawaited(_lire(i));
+        }
       }
       unawaited(_sauvegarderHistorique());
     }
@@ -1401,6 +1428,98 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     }
   }
 
+  // ── Parler en gardant le doigt posé ─────────────────────────────────
+
+  void _basculerComposeur() {
+    OuroHaptics.selection();
+    setState(() => _composeurVocal = !_composeurVocal);
+    unawaited(StorageService.setString('ia_composeur_vocal', _composeurVocal ? '1' : '0'));
+  }
+
+  Future<void> _parlerDebut() async {
+    // La transcription passe par Whisper, donc en ligne : sans clé, on va
+    // la mettre, comme la pastille du moteur.
+    if (!_enLigneDisponible) {
+      await _allerA(DestinationAssistant.reglages);
+      return;
+    }
+    if (!await _microParole.hasPermission()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).mvNoMic)),
+        );
+      }
+      return;
+    }
+    await _voix.stop();
+    final dossier = await getTemporaryDirectory();
+    final chemin = p.join(dossier.path, 'parole_${DateTime.now().millisecondsSinceEpoch}.m4a');
+    await _microParole.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: chemin);
+    if (!mounted) return;
+    setState(() {
+      _enregistre = true;
+      _niveauParole = 0;
+    });
+    _ampParole = _microParole.onAmplitudeChanged(const Duration(milliseconds: 110)).listen((a) {
+      if (!mounted) return;
+      final brut = ((a.current + 45) / 45).clamp(0.0, 1.0);
+      setState(() => _niveauParole = _niveauParole * 0.55 + brut * 0.45);
+    });
+  }
+
+  Future<void> _parlerFin(bool annule) async {
+    if (!_enregistre) return;
+    await _ampParole?.cancel();
+    _ampParole = null;
+    final chemin = await _microParole.stop();
+    if (!mounted) return;
+    setState(() {
+      _enregistre = false;
+      _niveauParole = 0;
+    });
+    if (chemin == null) return;
+    final fichier = File(chemin);
+    // Annulé, ou moins d'un demi-Ko (un souffle, pas une phrase).
+    if (annule || !fichier.existsSync() || await fichier.length() < 512) {
+      if (fichier.existsSync()) unawaited(fichier.delete());
+      return;
+    }
+    setState(() => _transcrit = true);
+    try {
+      final dit = await _groq.transcrire(fichier, langue: Localizations.localeOf(context).languageCode);
+      if (!mounted) return;
+      setState(() => _transcrit = false);
+      if (dit.trim().isEmpty) return;
+      // Ce qui est déjà écrit (une carte de compétence touchée) reste en
+      // tête : on dit le sujet, il complète la demande.
+      final avant = _inputCtrl.text;
+      _inputCtrl.text = avant.isEmpty ? dit.trim() : '$avant${dit.trim()}';
+      unawaited(_envoyer());
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _transcrit = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).aiGenericError)),
+      );
+    } finally {
+      if (fichier.existsSync()) unawaited(fichier.delete());
+    }
+  }
+
+  void _basculerLectureAuto() {
+    OuroHaptics.selection();
+    setState(() => _lectureAuto = !_lectureAuto);
+    unawaited(StorageService.setString('ia_lecture_auto', _lectureAuto ? '1' : '0'));
+    if (!_lectureAuto) unawaited(_voix.stop());
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        duration: const Duration(seconds: 2),
+        content: Text(texteAccueil(l10n.localeName, _lectureAuto ? 'lectureOui' : 'lectureNon')),
+      ));
+  }
+
   /// Une carte de compétence touchée, à la manière de Kimi : le début de
   /// la demande s'écrit dans le champ, et le moteur passe en ligne (ces
   /// outils n'existent qu'en ligne ; sans clé, on va la mettre).
@@ -1409,6 +1528,9 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     final debut = c.debut(l10n.localeName);
     _inputCtrl.text = debut;
     _inputCtrl.selection = TextSelection.collapsed(offset: debut.length);
+    // Le début de la demande doit se voir : on passe au clavier pour
+    // cette fois (sans changer le choix retenu).
+    if (_composeurVocal) setState(() => _composeurVocal = false);
     if (_moteur != OrigineReponse.enLigne || !_enLigneDisponible) {
       await _changerMoteur(OrigineReponse.enLigne);
     }
@@ -1484,73 +1606,83 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
                 },
               ),
             ),
+      // ── LA BARRE DU HAUT, À LA MANIÈRE DE KIMI ──────────────────────
+      //
+      // Trois éléments, pas plus : le menu (le tiroir) dans un rond, la
+      // pastille du moteur (« Assistant  En ligne ») qui ouvre son choix,
+      // et à droite le haut-parleur qui fait lire chaque réponse à voix
+      // haute. La mémoire et « nouvelle session » vivent dans le tiroir.
       appBar: AppBar(
         backgroundColor: OuroColors.systemBackground,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: store == null
-            ? null
-            : OuroIconButton(
-                tooltip: l10n.cvTitle,
-                onPressed: () => _cleScaffold.currentState?.openDrawer(),
-                icon: Icon(Icons.menu_rounded, color: OuroColors.label),
-              ),
+        automaticallyImplyLeading: false,
+        titleSpacing: DesignTokens.space3,
         title: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            EtincelleGemini(
-              taille: 22,
-              anime: _genereEnCours || _vocalOuvert,
-            ),
+            if (store != null)
+              _RondHaut(
+                tooltip: l10n.cvTitle,
+                icone: Icons.menu_rounded,
+                onTap: () => _cleScaffold.currentState?.openDrawer(),
+              )
+            else
+              _RondHaut(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                icone: Icons.arrow_back_ios_new_rounded,
+                onTap: () => Navigator.of(context).maybePop(),
+              ),
             const SizedBox(width: DesignTokens.space2),
-            Text(
-              // ⚠️ LE TITRE DIT QU'ON EST EN DIRECT. Sans lui, la seule
-              // différence visible entre les deux modes serait la barre
-              // du bas — et quelqu'un qui revient à l'écran après un
-              // moment ne saurait pas que le micro l'attend.
-              _vocalOuvert ? l10n.mvLive : l10n.chatsAssistant,
-              style: OuroTypography.headline.copyWith(color: OuroColors.label),
+            Flexible(
+              child: _PastilleMoteur(
+                titre: _vocalOuvert ? l10n.mvLive : l10n.chatsAssistant,
+                detail: _moteur == OrigineReponse.enLigne ? l10n.moOnline : l10n.moLocal,
+                anime: _genereEnCours || _vocalOuvert,
+                onTap: _vocalOuvert
+                    ? null
+                    : () => SelecteurMoteur.ouvrirFeuille(
+                          context,
+                          moteur: _moteur,
+                          enLigneDisponible: _enLigneDisponible,
+                          localInstalle: _localInstalle,
+                          onChanger: _changerMoteur,
+                        ),
+              ),
             ),
           ],
         ),
         actions: [
           // En direct, la barre ne porte qu'une chose : les sous-titres.
-          // Mémoire et nouvelle conversation n'ont rien à y faire tant
-          // qu'on parle, et les laisser donnerait trois cibles pour un
-          // pouce qui tient déjà le téléphone à une main.
           if (_vocalOuvert)
-            OuroIconButton(
-              tooltip: l10n.mvCaptions,
-              onPressed: () {
-                OuroHaptics.selection();
-                setState(() => _sousTitresVocal = !_sousTitresVocal);
-              },
-              icon: Icon(
-                _sousTitresVocal
-                    ? Icons.closed_caption_rounded
-                    : Icons.closed_caption_off_rounded,
-                color: _sousTitresVocal
-                    ? OuroColors.accent
-                    : OuroColors.secondaryLabel,
+            Padding(
+              padding: const EdgeInsets.only(right: DesignTokens.space3),
+              child: _RondHaut(
+                tooltip: l10n.mvCaptions,
+                icone: _sousTitresVocal ? Icons.closed_caption_rounded : Icons.closed_caption_off_rounded,
+                actif: _sousTitresVocal,
+                onTap: () {
+                  OuroHaptics.selection();
+                  setState(() => _sousTitresVocal = !_sousTitresVocal);
+                },
+              ),
+            )
+          else ...[
+            if (store == null && _messages.isNotEmpty && etat is AiReady)
+              _RondHaut(
+                tooltip: l10n.aiNewConversation,
+                icone: Icons.add_comment_outlined,
+                onTap: _nouvelleConversation,
+              ),
+            Padding(
+              padding: const EdgeInsets.only(left: DesignTokens.space2, right: DesignTokens.space3),
+              child: _RondHaut(
+                tooltip: texteAccueil(l10n.localeName, _lectureAuto ? 'lectureOui' : 'lectureNon'),
+                icone: _lectureAuto ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                actif: _lectureAuto,
+                onTap: _basculerLectureAuto,
               ),
             ),
-          if (!_vocalOuvert && etat is AiReady)
-            OuroIconButton(
-              tooltip: l10n.aiMemoryTitle,
-              onPressed: _ouvrirMemoire,
-              icon: Icon(
-                Icons.psychology_outlined,
-                color: OuroColors.secondaryLabel,
-              ),
-            ),
-          if (!_vocalOuvert && etat is AiReady && _messages.isNotEmpty)
-            OuroIconButton(
-              tooltip: l10n.aiNewConversation,
-              onPressed: _nouvelleConversation,
-              icon: Icon(
-                Icons.add_comment_outlined,
-                color: OuroColors.secondaryLabel,
-              ),
-            ),
+          ],
         ],
       ),
       // ⚠️ L'ÉTAT DU MODÈLE LOCAL NE COMMANDE PLUS L'ÉCRAN ENTIER.
@@ -1596,7 +1728,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
               ? _AccueilVide(
                   pseudo: ref.read(meshRepositoryProvider).myPseudo,
                   basLibre: _hauteurComposeur,
-                  onCompetence: _choisirCompetence,
+                  onPro: ref.watch(estProProvider) ? null : () => context.push('/premium'),
                 )
               : NotificationListener<ScrollNotification>(
                   onNotification: (_) {
@@ -1685,6 +1817,16 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
                             .ensureDownloaded(),
                       ),
                     ),
+                  // La rangée de compétences, comme chez Kimi : sur une
+                  // conversation vierge seulement, juste au-dessus du champ.
+                  if (_messages.isEmpty && !_vocalOuvert && !_enregistre && !_transcrit)
+                    Padding(
+                      padding: const EdgeInsets.only(top: DesignTokens.space2),
+                      child: RangeeCompetences(
+                        langue: l10n.localeName,
+                        onChoisir: _choisirCompetence,
+                      ),
+                    ),
                   SafeArea(
                     top: false,
                     // ⚠️ L'UN OU L'AUTRE, JAMAIS LES DEUX. Garder le
@@ -1716,14 +1858,17 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
                           // suggestions qui reviennent entre deux réponses
                           // ne sont plus une aide mais une distraction : on
                           // sait très bien quoi demander une fois lancé.
-                          suggestions: _messages.isEmpty
-                              ? [
-                                  l10n.aiChipExplain,
-                                  l10n.aiChipWrite,
-                                  l10n.aiChipSummarize,
-                                  l10n.aiChipTranslate,
-                                ]
-                              : const [],
+                          // Les pastilles de départ ont laissé la place à la
+                          // rangée de compétences, au-dessus du champ.
+                          suggestions: const [],
+                          afficherMoteur: false,
+                          modeVocal: _composeurVocal,
+                          onBasculerMode: _basculerComposeur,
+                          onParlerDebut: _parlerDebut,
+                          onParlerFin: _parlerFin,
+                          enregistre: _enregistre,
+                          transcrit: _transcrit,
+                          niveau: _niveauParole,
                           onSuggestion: (s) {
                             _inputCtrl.text = s;
                             _inputCtrl.selection = TextSelection.collapsed(
@@ -2710,102 +2855,115 @@ class _CurseurClignotantState extends State<_CurseurClignotant>
 /// à quelqu'un qui ne sait pas quoi demander ne l'aide pas. Les pastilles
 /// de départ vivent dans le composeur, au plus près du champ.
 class _AccueilVide extends StatelessWidget {
-  const _AccueilVide({this.pseudo, this.basLibre = 96, this.onCompetence});
+  const _AccueilVide({this.pseudo, this.basLibre = 96, this.onPro});
 
-  /// Le prénom ou pseudo, quand on le connaît. Saluer quelqu'un par son
-  /// nom coûte une ligne et change le ton de tout l'écran.
+  /// Le prénom ou pseudo, quand on le connaît.
   final String? pseudo;
 
   /// La hauteur du composeur posé par-dessus : l'accueil ne passe pas
   /// dessous.
   final double basLibre;
 
-  /// Les cartes de compétences, à la manière de Kimi : sous la salutation,
-  /// ce que l'assistant sait produire. Voir `competences_assistant.dart`.
-  final void Function(Competence)? onCompetence;
+  /// La pastille « Droplet Pro » sous la phrase, comme le « Upgrade Plan »
+  /// de Kimi. `null` (déjà Pro) : pas de pastille.
+  final VoidCallback? onPro;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final nom = pseudo?.trim();
-    // ⚠️ « RÉDUIRE LES ANIMATIONS » VAUT AUSSI POUR L'ACCUEIL. Ce réglage
-    // existe pour des gens que le mouvement met mal à l'aise — leur
-    // épargner les transitions puis leur faire glisser le premier écran
-    // du haut en bas serait exactement rater le point.
+    final nom = pseudo?.trim() ?? '';
     final calme = MediaQuery.disableAnimationsOf(context);
 
-    final salutation = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        calme
-            ? const AvatarAssistant(taille: 60)
-            : const AvatarAssistant(taille: 60)
-                .animate()
-                .fadeIn(duration: DesignTokens.durationSheet)
-                .scaleXY(
-                  begin: 0.88,
-                  curve: DesignTokens.curveEnter,
-                  duration: DesignTokens.durationSheet,
-                ),
-        const SizedBox(height: DesignTokens.space4),
-        Text(
-          nom == null || nom.isEmpty ? l10n.aiGreetingPlain : l10n.aiGreeting(nom),
-          textAlign: TextAlign.center,
-          style: OuroTypography.title1.copyWith(
-            color: OuroColors.label,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: DesignTokens.space2),
-        Text(
-          l10n.aiGreetingHint,
-          textAlign: TextAlign.center,
-          style: OuroTypography.subheadline.copyWith(
-            color: OuroColors.secondaryLabel,
-            height: 1.4,
-          ),
-        ),
-      ],
-    );
-    final animee = calme
-        ? salutation
-        : salutation
-            .animate()
-            .fadeIn(duration: DesignTokens.durationSheet, delay: 60.ms)
-            .slideY(begin: 0.06, curve: DesignTokens.curveEnter);
+    // ── L'ACCUEIL À LA MANIÈRE DE KIMI ───────────────────────────────
+    //
+    // Au centre, la mascotte qui flotte, regarde à gauche et à droite et
+    // cligne des yeux (voir `mascotte_assistant.dart`) ; dessous, UNE
+    // phrase en caractères fins qui s'écrit lettre après lettre ; et une
+    // seule pastille. Les compétences sont en bas, au-dessus du champ.
+    final phrase = nom.isEmpty
+        ? texteAccueil(l10n.localeName, 'bonjourSansNom')
+        : texteAccueil(l10n.localeName, 'bonjour', nom: nom);
 
-    // Défilable : avec le clavier ouvert, l'accueil et ses cartes ne
-    // tiennent plus, et rien ne doit passer sous le composeur.
+    final pro = onPro == null
+        ? null
+        : GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              OuroHaptics.selection();
+              onPro!();
+            },
+            child: Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              decoration: BoxDecoration(
+                color: OuroColors.secondarySystemBackground,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.diamond_outlined, size: 19, color: OuroColors.accent),
+                  const SizedBox(width: 8),
+                  Text(
+                    texteAccueil(l10n.localeName, 'pro'),
+                    style: OuroTypography.headline.copyWith(
+                      color: OuroColors.accent,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+
     return LayoutBuilder(
       builder: (context, c) => SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
+          DesignTokens.space6,
           DesignTokens.space4,
-          DesignTokens.space4,
-          DesignTokens.space4,
+          DesignTokens.space6,
           basLibre + DesignTokens.space3,
         ),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             minHeight: (c.maxHeight - basLibre - DesignTokens.space3 - DesignTokens.space4).clamp(0, double.infinity),
           ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  animee,
-                  if (onCompetence != null) ...[
-                    const SizedBox(height: DesignTokens.space6),
-                    GrilleCompetences(
-                      langue: l10n.localeName,
-                      onChoisir: onCompetence!,
-                    ),
-                  ],
-                ],
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Le bloc remonté d'un dixième : centré sur toute la hauteur,
+              // il paraîtrait « collé au clavier ».
+              SizedBox(height: MediaQuery.sizeOf(context).height * 0.04),
+              calme
+                  ? const MascotteAssistant(taille: 84)
+                  : const MascotteAssistant(taille: 84)
+                      .animate()
+                      .fadeIn(duration: 420.ms)
+                      .scaleXY(begin: 0.6, curve: Curves.elasticOut, duration: 900.ms),
+              const SizedBox(height: DesignTokens.space6),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: PhraseProgressive(
+                  texte: phrase,
+                  delai: calme ? Duration.zero : const Duration(milliseconds: 380),
+                  style: OuroTypography.title1.copyWith(
+                    color: OuroColors.label,
+                    fontWeight: FontWeight.w300,
+                    height: 1.3,
+                    letterSpacing: -0.3,
+                  ),
+                ),
               ),
-            ),
+              if (pro != null) ...[
+                const SizedBox(height: DesignTokens.space5),
+                calme
+                    ? pro
+                    : pro
+                        .animate()
+                        .fadeIn(duration: 300.ms, delay: 1500.ms)
+                        .slideY(begin: 0.2, curve: DesignTokens.curveEnter, delay: 1500.ms),
+              ],
+            ],
           ),
         ),
       ),
@@ -3029,6 +3187,99 @@ class _IconeAction extends StatelessWidget {
             icone,
             size: 18,
             color: actif ? OuroColors.accent : OuroColors.secondaryLabel,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// ══ LA BARRE DU HAUT : LES RONDS ET LA PASTILLE DU MOTEUR ══════════════
+
+class _RondHaut extends StatelessWidget {
+  const _RondHaut({required this.tooltip, required this.icone, required this.onTap, this.actif = false});
+
+  final String tooltip;
+  final IconData icone;
+  final VoidCallback? onTap;
+  final bool actif;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: OuroColors.secondarySystemBackground,
+              border: Border.all(color: OuroColors.separator.withValues(alpha: 0.6), width: 0.5),
+            ),
+            child: Icon(icone, size: 22, color: actif ? OuroColors.accent : OuroColors.label),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PastilleMoteur extends StatelessWidget {
+  const _PastilleMoteur({required this.titre, required this.detail, required this.onTap, this.anime = false});
+
+  final String titre;
+  final String detail;
+  final VoidCallback? onTap;
+  final bool anime;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: onTap != null,
+      label: '$titre, $detail',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: OuroColors.secondarySystemBackground,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: OuroColors.separator.withValues(alpha: 0.6), width: 0.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              EtincelleGemini(taille: 16, anime: anime),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: titre,
+                        style: OuroTypography.headline.copyWith(color: OuroColors.label),
+                      ),
+                      const TextSpan(text: '  '),
+                      TextSpan(
+                        text: detail,
+                        style: OuroTypography.body.copyWith(color: OuroColors.secondaryLabel),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ),
       ),

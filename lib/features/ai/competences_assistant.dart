@@ -317,3 +317,207 @@ class _CarteState extends State<_Carte> {
     );
   }
 }
+
+// ══ LES PETITS TEXTES DE L'ACCUEIL ET DU COMPOSEUR VOCAL ════════════════
+
+/// Les textes de l'accueil à la manière de Kimi, dans les 10 langues.
+/// Clés : `bonjour` (avec {nom}), `bonjourSansNom`, `maintenir`,
+/// `relacher`, `annuler`, `transcription`, `lectureOui`, `lectureNon`,
+/// `clavier`, `voix`, `pro`.
+String texteAccueil(String langue, String cle, {String nom = ''}) {
+  final t = switch (langue.split('_').first) {
+    'en' => const {
+        'bonjour': 'Hi {nom}, what shall we do today?',
+        'bonjourSansNom': 'Hi, what shall we do today?',
+        'maintenir': 'Hold to talk',
+        'relacher': 'Release to send',
+        'annuler': 'Slide up to cancel',
+        'transcription': 'Transcribing…',
+        'lectureOui': 'Read replies aloud: on',
+        'lectureNon': 'Read replies aloud: off',
+        'clavier': 'Keyboard',
+        'voix': 'Voice',
+        'pro': 'Droplet Pro',
+      },
+    'de' => const {
+        'bonjour': 'Hallo {nom}, was machen wir heute?',
+        'bonjourSansNom': 'Hallo, was machen wir heute?',
+        'maintenir': 'Zum Sprechen gedrückt halten',
+        'relacher': 'Loslassen zum Senden',
+        'annuler': 'Zum Abbrechen nach oben wischen',
+        'transcription': 'Wird umgewandelt…',
+        'lectureOui': 'Antworten vorlesen: an',
+        'lectureNon': 'Antworten vorlesen: aus',
+        'clavier': 'Tastatur',
+        'voix': 'Sprache',
+        'pro': 'Droplet Pro',
+      },
+    'es' => const {
+        'bonjour': 'Hola {nom}, ¿qué hacemos hoy?',
+        'bonjourSansNom': 'Hola, ¿qué hacemos hoy?',
+        'maintenir': 'Mantén pulsado para hablar',
+        'relacher': 'Suelta para enviar',
+        'annuler': 'Desliza hacia arriba para cancelar',
+        'transcription': 'Transcribiendo…',
+        'lectureOui': 'Leer respuestas en voz alta: sí',
+        'lectureNon': 'Leer respuestas en voz alta: no',
+        'clavier': 'Teclado',
+        'voix': 'Voz',
+        'pro': 'Droplet Pro',
+      },
+    'it' => const {
+        'bonjour': 'Ciao {nom}, cosa facciamo oggi?',
+        'bonjourSansNom': 'Ciao, cosa facciamo oggi?',
+        'maintenir': 'Tieni premuto per parlare',
+        'relacher': 'Rilascia per inviare',
+        'annuler': 'Scorri in alto per annullare',
+        'transcription': 'Trascrizione…',
+        'lectureOui': 'Leggi le risposte ad alta voce: sì',
+        'lectureNon': 'Leggi le risposte ad alta voce: no',
+        'clavier': 'Tastiera',
+        'voix': 'Voce',
+        'pro': 'Droplet Pro',
+      },
+    'pt' => const {
+        'bonjour': 'Olá {nom}, o que fazemos hoje?',
+        'bonjourSansNom': 'Olá, o que fazemos hoje?',
+        'maintenir': 'Segure para falar',
+        'relacher': 'Solte para enviar',
+        'annuler': 'Deslize para cima para cancelar',
+        'transcription': 'Transcrevendo…',
+        'lectureOui': 'Ler respostas em voz alta: sim',
+        'lectureNon': 'Ler respostas em voz alta: não',
+        'clavier': 'Teclado',
+        'voix': 'Voz',
+        'pro': 'Droplet Pro',
+      },
+    'ru' => const {
+        'bonjour': 'Привет, {nom}! Чем займёмся сегодня?',
+        'bonjourSansNom': 'Привет! Чем займёмся сегодня?',
+        'maintenir': 'Удерживайте, чтобы говорить',
+        'relacher': 'Отпустите, чтобы отправить',
+        'annuler': 'Проведите вверх для отмены',
+        'transcription': 'Распознаю…',
+        'lectureOui': 'Читать ответы вслух: вкл.',
+        'lectureNon': 'Читать ответы вслух: выкл.',
+        'clavier': 'Клавиатура',
+        'voix': 'Голос',
+        'pro': 'Droplet Pro',
+      },
+    'zh' => const {
+        'bonjour': '你好 {nom}，今天做点什么？',
+        'bonjourSansNom': '你好，今天做点什么？',
+        'maintenir': '按住说话',
+        'relacher': '松开发送',
+        'annuler': '上滑取消',
+        'transcription': '正在转写…',
+        'lectureOui': '朗读回复：开',
+        'lectureNon': '朗读回复：关',
+        'clavier': '键盘',
+        'voix': '语音',
+        'pro': 'Droplet Pro',
+      },
+    'ar' => const {
+        'bonjour': 'مرحبًا {nom}، ماذا نفعل اليوم؟',
+        'bonjourSansNom': 'مرحبًا، ماذا نفعل اليوم؟',
+        'maintenir': 'اضغط مطولًا للتحدث',
+        'relacher': 'ارفع إصبعك للإرسال',
+        'annuler': 'اسحب للأعلى للإلغاء',
+        'transcription': 'جارٍ التحويل إلى نص…',
+        'lectureOui': 'قراءة الردود بصوت عالٍ: تشغيل',
+        'lectureNon': 'قراءة الردود بصوت عالٍ: إيقاف',
+        'clavier': 'لوحة المفاتيح',
+        'voix': 'الصوت',
+        'pro': 'Droplet Pro',
+      },
+    'hi' => const {
+        'bonjour': 'नमस्ते {nom}, आज क्या करें?',
+        'bonjourSansNom': 'नमस्ते, आज क्या करें?',
+        'maintenir': 'बोलने के लिए दबाकर रखें',
+        'relacher': 'भेजने के लिए छोड़ें',
+        'annuler': 'रद्द करने के लिए ऊपर खिसकाएँ',
+        'transcription': 'लिखा जा रहा है…',
+        'lectureOui': 'जवाब ज़ोर से पढ़ें: चालू',
+        'lectureNon': 'जवाब ज़ोर से पढ़ें: बंद',
+        'clavier': 'कीबोर्ड',
+        'voix': 'आवाज़',
+        'pro': 'Droplet Pro',
+      },
+    _ => const {
+        'bonjour': 'Bonjour {nom}, que fait-on aujourd’hui ?',
+        'bonjourSansNom': 'Bonjour, que fait-on aujourd’hui ?',
+        'maintenir': 'Maintenez appuyé pour parler',
+        'relacher': 'Relâchez pour envoyer',
+        'annuler': 'Glissez vers le haut pour annuler',
+        'transcription': 'Transcription…',
+        'lectureOui': 'Lecture des réponses à voix haute : activée',
+        'lectureNon': 'Lecture des réponses à voix haute : désactivée',
+        'clavier': 'Clavier',
+        'voix': 'Voix',
+        'pro': 'Droplet Pro',
+      },
+  };
+  return (t[cle] ?? cle).replaceAll('{nom}', nom);
+}
+
+/// La rangée de pastilles de compétences, au-dessus du composeur, comme
+/// chez Kimi : icône et nom, qu'on fait défiler du doigt.
+class RangeeCompetences extends StatelessWidget {
+  const RangeeCompetences({super.key, required this.langue, required this.onChoisir});
+
+  final String langue;
+  final void Function(Competence) onChoisir;
+
+  @override
+  Widget build(BuildContext context) {
+    final calme = MediaQuery.disableAnimationsOf(context);
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space3),
+        itemCount: Competence.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: DesignTokens.space2),
+        itemBuilder: (context, i) {
+          final c = Competence.values[i];
+          final pastille = Semantics(
+            button: true,
+            label: '${c.titre(langue)}. ${c.detail(langue)}',
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                OuroHaptics.selection();
+                onChoisir(c);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: OuroColors.secondarySystemBackground,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: OuroColors.separator.withValues(alpha: 0.6), width: 0.5),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(c.icone, size: 18, color: OuroColors.secondaryLabel),
+                    const SizedBox(width: 7),
+                    Text(
+                      c.titre(langue),
+                      style: OuroTypography.subheadline.copyWith(color: OuroColors.label),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+          return calme
+              ? pastille
+              : pastille
+                  .animate()
+                  .fadeIn(duration: 240.ms, delay: (300 + 50 * i).ms)
+                  .slideX(begin: 0.15, curve: DesignTokens.curveEnter, duration: 320.ms, delay: (300 + 50 * i).ms);
+        },
+      ),
+    );
+  }
+}

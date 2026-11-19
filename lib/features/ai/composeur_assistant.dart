@@ -53,6 +53,7 @@ import '../../design_system/ouro_spinner.dart';
 import '../../design_system/ouro_typography.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'selecteur_moteur.dart';
+import 'competences_assistant.dart' show texteAccueil;
 import '../../core/services/superposition_glasmio.dart';
 
 /// Ce que le « + » propose.
@@ -82,7 +83,37 @@ class ComposeurAssistant extends StatefulWidget {
     this.onSuggestion,
     this.onDicter,
     this.onVocal,
+    this.afficherMoteur = true,
+    this.modeVocal = false,
+    this.onBasculerMode,
+    this.onParlerDebut,
+    this.onParlerFin,
+    this.enregistre = false,
+    this.transcrit = false,
+    this.niveau = 0,
   });
+
+  /// Faux quand le moteur est choisi ailleurs (la pastille du haut, comme
+  /// chez Kimi) : le composeur ne le montre pas deux fois.
+  final bool afficherMoteur;
+
+  /// LE COMPOSEUR « MAINTENEZ APPUYÉ POUR PARLER », à la manière de Kimi :
+  /// « + » à gauche, la grande zone où l'on garde le doigt pour parler, et
+  /// le clavier à droite pour revenir au texte. On relâche : la phrase est
+  /// transcrite et envoyée. On glisse vers le haut : on annule.
+  final bool modeVocal;
+  final VoidCallback? onBasculerMode;
+  final VoidCallback? onParlerDebut;
+  final void Function(bool annule)? onParlerFin;
+
+  /// Le micro écoute (le doigt est posé).
+  final bool enregistre;
+
+  /// La phrase part en transcription.
+  final bool transcrit;
+
+  /// Le niveau de la voix, de 0 à 1, pour les barres.
+  final double niveau;
 
   final TextEditingController controller;
   final VoidCallback onEnvoyer;
@@ -169,6 +200,27 @@ class _ComposeurAssistantState extends State<ComposeurAssistant> {
         final vide = valeur.text.trim().isEmpty;
         final peutEnvoyer = !vide || widget.piecesJointes.isNotEmpty;
 
+        if (widget.modeVocal && !widget.genereEnCours) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space3,
+              DesignTokens.space2,
+              DesignTokens.space3,
+              DesignTokens.space2,
+            ),
+            child: _BarreVocale(
+              langue: l10n.localeName,
+              onPlus: _menuPlus,
+              onClavier: widget.onBasculerMode,
+              onDebut: widget.onParlerDebut,
+              onFin: widget.onParlerFin,
+              enregistre: widget.enregistre,
+              transcrit: widget.transcrit,
+              niveau: widget.niveau,
+            ),
+          );
+        }
+
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,13 +305,20 @@ class _ComposeurAssistantState extends State<ComposeurAssistant> {
                           onTap: widget.genereEnCours ? null : _menuPlus,
                         ),
                         const SizedBox(width: 2),
-                        SelecteurMoteur(
-                          moteur: widget.moteur,
-                          enLigneDisponible: widget.enLigneDisponible,
-                          localInstalle: widget.localInstalle,
-                          onChanger: widget.onChangerMoteur,
-                        ),
+                        if (widget.afficherMoteur)
+                          SelecteurMoteur(
+                            moteur: widget.moteur,
+                            enLigneDisponible: widget.enLigneDisponible,
+                            localInstalle: widget.localInstalle,
+                            onChanger: widget.onChangerMoteur,
+                          ),
                         const Spacer(),
+                        if (widget.onBasculerMode != null && vide && widget.piecesJointes.isEmpty)
+                          _BoutonRond(
+                            icone: Icons.mic_none_rounded,
+                            libelle: texteAccueil(l10n.localeName, 'voix'),
+                            onTap: widget.genereEnCours ? null : widget.onBasculerMode,
+                          ),
                         if (widget.onDicter != null)
                           _BoutonRond(
                             icone: Icons.mic_none_rounded,
@@ -622,6 +681,212 @@ class AttenteReponse extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+// ══ LA BARRE « MAINTENEZ APPUYÉ POUR PARLER » ══════════════════════════
+
+class _BarreVocale extends StatefulWidget {
+  const _BarreVocale({
+    required this.langue,
+    required this.onPlus,
+    required this.onClavier,
+    required this.onDebut,
+    required this.onFin,
+    required this.enregistre,
+    required this.transcrit,
+    required this.niveau,
+  });
+
+  final String langue;
+  final VoidCallback onPlus;
+  final VoidCallback? onClavier;
+  final VoidCallback? onDebut;
+  final void Function(bool annule)? onFin;
+  final bool enregistre;
+  final bool transcrit;
+  final double niveau;
+
+  @override
+  State<_BarreVocale> createState() => _BarreVocaleState();
+}
+
+class _BarreVocaleState extends State<_BarreVocale> {
+  /// Le doigt est monté assez haut : relâcher annulera.
+  bool _annuler = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final ecoute = widget.enregistre;
+    final fond = ecoute
+        ? (_annuler ? OuroColors.systemRed : OuroColors.accent)
+        : OuroColors.secondarySystemBackground;
+    final encre = ecoute ? Colors.white : OuroColors.label;
+    final texte = widget.transcrit
+        ? texteAccueil(widget.langue, 'transcription')
+        : ecoute
+            ? (_annuler ? texteAccueil(widget.langue, 'annuler') : texteAccueil(widget.langue, 'relacher'))
+            : texteAccueil(widget.langue, 'maintenir');
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: fond,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: OuroColors.separator.withValues(alpha: ecoute ? 0 : 0.7), width: 0.5),
+        boxShadow: [
+          if (ecoute)
+            BoxShadow(color: fond.withValues(alpha: 0.35), blurRadius: 22, offset: const Offset(0, 6)),
+        ],
+      ),
+      child: Row(
+        children: [
+          _Rond(
+            icone: Icons.add_rounded,
+            libelle: AppLocalizations.of(context).cpAdd,
+            couleur: encre,
+            onTap: ecoute || widget.transcrit ? null : widget.onPlus,
+          ),
+          Expanded(
+            child: Semantics(
+              button: true,
+              label: texte,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onLongPressStart: widget.transcrit
+                    ? null
+                    : (_) {
+                        OuroHaptics.medium();
+                        setState(() => _annuler = false);
+                        widget.onDebut?.call();
+                      },
+                onLongPressMoveUpdate: (d) {
+                  final a = d.offsetFromOrigin.dy < -70;
+                  if (a != _annuler) {
+                    OuroHaptics.selection();
+                    setState(() => _annuler = a);
+                  }
+                },
+                onLongPressEnd: (_) {
+                  widget.onFin?.call(_annuler);
+                  setState(() => _annuler = false);
+                },
+                onLongPressCancel: () {
+                  if (widget.enregistre) widget.onFin?.call(true);
+                },
+                child: SizedBox(
+                  height: 64,
+                  child: Center(
+                    child: ecoute && !_annuler
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _Ondes(niveau: widget.niveau, couleur: encre),
+                              const SizedBox(width: 10),
+                              Flexible(
+                                child: Text(
+                                  texte,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: OuroTypography.headline.copyWith(color: encre),
+                                ),
+                              ),
+                            ],
+                          )
+                        : widget.transcrit
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const OuroSpinner(radius: 8),
+                                  const SizedBox(width: 10),
+                                  Text(texte, style: OuroTypography.headline.copyWith(color: OuroColors.secondaryLabel)),
+                                ],
+                              )
+                            : Text(
+                                texte,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: OuroTypography.headline.copyWith(color: encre),
+                              ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          _Rond(
+            icone: Icons.keyboard_alt_outlined,
+            libelle: texteAccueil(widget.langue, 'clavier'),
+            couleur: encre,
+            onTap: ecoute || widget.transcrit ? null : widget.onClavier,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Un bouton rond de la barre vocale, sur un disque légèrement plus clair.
+class _Rond extends StatelessWidget {
+  const _Rond({required this.icone, required this.libelle, required this.couleur, this.onTap});
+
+  final IconData icone;
+  final String libelle;
+  final Color couleur;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: libelle,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap == null
+            ? null
+            : () {
+                OuroHaptics.light();
+                onTap!();
+              },
+        child: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: OuroColors.tertiarySystemFill,
+          ),
+          child: Icon(icone, size: 26, color: couleur.withValues(alpha: onTap == null ? 0.4 : 1)),
+        ),
+      ),
+    );
+  }
+}
+
+/// Cinq barres qui suivent la voix.
+class _Ondes extends StatelessWidget {
+  const _Ondes({required this.niveau, required this.couleur});
+
+  final double niveau;
+  final Color couleur;
+
+  @override
+  Widget build(BuildContext context) {
+    const formes = [0.45, 0.8, 1.0, 0.7, 0.4];
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final f in formes)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            margin: const EdgeInsets.symmetric(horizontal: 1.5),
+            width: 3.5,
+            height: 6 + 20 * f * niveau.clamp(0.08, 1.0),
+            decoration: BoxDecoration(color: couleur, borderRadius: BorderRadius.circular(2)),
+          ),
+      ],
     );
   }
 }
