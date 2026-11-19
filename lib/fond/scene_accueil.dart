@@ -309,13 +309,13 @@ class _PeintreVille extends CustomPainter {
     _lointain(canvas, pal, regard);
     _route(canvas, pal);
     _lampadaires(canvas);
-    _arbres(canvas, pal, t);
     final lumiere = _lumieres(t, relie, horsLigne);
     for (var i = 0; i < _batiments.length; i++) {
       _batiment(canvas, pal, i);
     }
     _vitres(canvas, pal, t, lumiere, relie, horsLigne);
     _etal(canvas, pal);
+    _arbres(canvas, pal, t);
     _moto(canvas, t);
     if (!horsLigne) _messages(canvas, t, relie);
 
@@ -342,7 +342,7 @@ class _PeintreVille extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: pal.ciel,
-          stops: const [0, 0.55, 0.85],
+          stops: const [0, 0.4, 0.7],
         ).createShader(r),
     );
     final d = -regard * 0.012;
@@ -371,7 +371,7 @@ class _PeintreVille extends CustomPainter {
   void _lointain(Canvas canvas, _Palette pal, Offset regard) {
     final d = -regard * 0.025;
     final hasard = Random(5);
-    final mur = Paint()..color = pal.lointain;
+    final mur = Paint()..color = pal.lointain.withValues(alpha: w.sombre ? 1 : 0.7);
     final petite = Paint();
     var x = -20.0;
     while (x < _l + 20) {
@@ -458,11 +458,17 @@ class _PeintreVille extends CustomPainter {
       );
     }
     // Le manguier : un feuillage rond et dense.
+    // Devant la rue, entre l'immeuble et la dernière maison, sans
+    // cacher la fenêtre de l'ordinateur ; ses mangues mûres en points.
     tronc.strokeWidth = 5;
-    canvas.drawLine(const Offset(470, _sol + 2), const Offset(470, _sol - 30), tronc);
-    final m = Paint()..color = pal.feuillage;
-    for (final (dx, dy, r) in const [(-12.0, -40.0, 15.0), (6.0, -46.0, 17.0), (16.0, -34.0, 12.0), (-2.0, -30.0, 14.0)]) {
-      canvas.drawCircle(Offset(470 + dx, _sol + dy), r, m);
+    canvas.drawLine(const Offset(468, _sol + 2), const Offset(468, _sol - 24), tronc);
+    final m = Paint()..color = Color.lerp(pal.feuillage, const Color(0xFF2F6B4A), w.sombre ? 0.35 : 0.5)!;
+    for (final (dx, dy, r) in const [(-14.0, -34.0, 13.0), (2.0, -42.0, 15.0), (12.0, -30.0, 11.0), (-4.0, -24.0, 12.0)]) {
+      canvas.drawCircle(Offset(468 + dx, _sol + dy), r, m);
+    }
+    final mangue = Paint()..color = const Color(0xFFF2A93B).withValues(alpha: w.sombre ? 0.7 : 0.9);
+    for (final (dx, dy) in const [(-12.0, -30.0), (6.0, -36.0), (10.0, -24.0), (-2.0, -20.0)]) {
+      canvas.drawOval(Rect.fromCenter(center: Offset(468 + dx, _sol + dy), width: 3.4, height: 4.4), mangue);
     }
   }
 
@@ -654,18 +660,39 @@ class _PeintreVille extends CustomPainter {
       );
       canvas.drawRRect(vitre, Paint()..color = Color.lerp(w.accent, _blanc, 0.15)!.withValues(alpha: 0.75 * fond));
     }
-    // L'ordinateur posé sur la table, vu de dos.
+    // La table, le portable ouvert face à nous, et quelqu'un qui écrit.
     final sombre = Paint()..color = const Color(0xFF0B0E1E).withValues(alpha: 0.85);
-    canvas.drawRect(Rect.fromLTWH(f.left + 3, f.bottom - 5, f.width - 6, 2.5), sombre);
+    canvas.drawRect(Rect.fromLTWH(f.left + 2, f.bottom - 4, f.width - 4, 2), sombre);
+    final ecran = Rect.fromLTWH(f.center.dx - 2, f.bottom - 19, 17, 12);
+    canvas.drawRRect(RRect.fromRectAndRadius(ecran.inflate(1.2), const Radius.circular(2)), sombre);
+    final allume = horsLigne ? 0.15 : 1.0;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(f.center.dx - 9, f.bottom - 18, 18, 12), const Radius.circular(1.5)),
-      sombre,
+      RRect.fromRectAndRadius(ecran, const Radius.circular(1)),
+      Paint()..color = Color.lerp(_blanc, w.accent, 0.25)!.withValues(alpha: 0.95 * allume),
     );
-    canvas.drawRect(Rect.fromLTWH(f.center.dx - 12, f.bottom - 6.5, 24, 1.8), sombre);
+    // Deux lignes de messages sur l'écran.
+    final ligne = Paint()
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round
+      ..color = w.accent.withValues(alpha: 0.8 * allume);
+    canvas.drawLine(Offset(ecran.left + 3, ecran.top + 4), Offset(ecran.left + 10, ecran.top + 4), ligne);
+    canvas.drawLine(Offset(ecran.left + 6, ecran.top + 8), Offset(ecran.right - 3, ecran.top + 8), ligne);
+    canvas.drawRect(Rect.fromLTWH(ecran.left - 3, ecran.bottom + 1, ecran.width + 6, 2), sombre);
+    // La personne, de profil, tournée vers l'écran.
+    final personne = Paint()..color = const Color(0xFF0B0E1E).withValues(alpha: 0.9);
+    canvas.drawCircle(Offset(f.left + 9, f.bottom - 19), 4, personne);
+    canvas.drawRRect(
+      RRect.fromRectAndCorners(
+        Rect.fromLTWH(f.left + 3.5, f.bottom - 14, 11, 10),
+        topLeft: const Radius.circular(5),
+        topRight: const Radius.circular(5),
+      ),
+      personne,
+    );
     // Le croisillon et le cadre.
     canvas.drawLine(
-      Offset(f.left, f.top + 9),
-      Offset(f.right, f.top + 9),
+      Offset(f.left, f.top + 6),
+      Offset(f.right, f.top + 6),
       Paint()
         ..strokeWidth = 1.2
         ..color = pal.murs[3],
