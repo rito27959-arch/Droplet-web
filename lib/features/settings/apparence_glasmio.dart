@@ -102,6 +102,7 @@ class _PasserelleApparenceState extends EtatPasserelleGlasmio<PasserelleApparenc
               (1, 'sports_esports', t.apPatternGames, OuroColors.systemPurple),
               (2, 'home', t.apPatternHome, OuroColors.systemOrange),
               (3, 'local_florist', t.apPatternGarden, OuroColors.systemGreen),
+              (4, 'public', libelleCameroun(t.localeName), OuroColors.systemYellow),
             ])
               {'id': 'motifs:$i', 'type': 'choix', 'icone': icone, 'teinte': _c(teinte), 'titre': titre, 'coche': perso.packMotifs == i},
           ],

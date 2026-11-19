@@ -459,6 +459,7 @@ class _SectionMotifs extends StatelessWidget {
         PackMotifs.maison => l10n.apPatternHome,
         PackMotifs.jardin => l10n.apPatternGarden,
         PackMotifs.droplet => l10n.apPatternDroplet,
+        PackMotifs.cameroun => libelleCameroun(l10n.localeName),
       };
 
   @override
@@ -738,3 +739,18 @@ class _SectionEffets extends StatelessWidget {
     );
   }
 }
+
+/// Le nom du pack « Cameroun » (fruits, marché, musique) dans la langue de
+/// l'app : un nom propre, presque le même partout.
+String libelleCameroun(String langue) => switch (langue.split('_').first) {
+      'ar' => 'الكاميرون',
+      'zh' => '喀麦隆',
+      'hi' => 'कैमरून',
+      'ru' => 'Камерун',
+      'de' => 'Kamerun',
+      'es' => 'Camerún',
+      'pt' => 'Camarões',
+      'it' => 'Camerun',
+      'en' => 'Cameroon',
+      _ => 'Cameroun',
+    };

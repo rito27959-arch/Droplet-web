@@ -27,6 +27,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+part 'motifs_doodle.g.dart';
+
 /// Un dessin posé dans la tuile.
 class PlacementMotif {
   const PlacementMotif({
@@ -168,6 +170,9 @@ class MotifsDroplet {
         PackMotifs.jeux => tracesJeux,
         PackMotifs.maison => tracesMaison,
         PackMotifs.jardin => tracesJardin,
+        // Le pack Cameroun n'existe qu'en dessins « doodle » (voir
+        // [image]) ; l'ancien tracé ne sert plus qu'aux vignettes.
+        PackMotifs.cameroun => traces,
       };
 
   static int get nombreDeMotifs => traces.length + _petits.length;
@@ -241,31 +246,99 @@ class MotifsDroplet {
 
   static final Map<String, Future<ui.Image>> _images = {};
 
+  /// Côté de la tuile répétée, en pixels logiques.
+  static double get tuileDoodle => _tuileDoodle;
+
+  /// Épaisseur du trait des grands dessins et des petits, en pixels
+  /// logiques — la même partout, quelle que soit la taille du dessin :
+  /// c'est ce qui donne au fond l'air d'avoir été dessiné d'une seule main.
+  static const double traitDoodle = 1.7;
+  static const double traitDoodleFin = 1.25;
+
+  /// Les tracés d'un dessin « doodle » (boîte 64 × 64), lus une fois.
+  static final Map<String, List<(List<Path>, List<Path>, List<Path>)>> _dessins = {};
+
+  static List<(List<Path>, List<Path>, List<Path>)> _dessinsDe(PackMotifs pack) =>
+      _dessins.putIfAbsent(pack.name, () => [
+            for (final d in _dessinsDoodle[pack.name]!)
+              (
+                [for (final t in d[0]) cheminSvg(t)],
+                [for (final t in d[1]) cheminSvg(t)],
+                [for (final t in d[2]) cheminSvg(t)],
+              ),
+          ]);
+
   /// L'image de la tuile (motifs blancs sur transparent) pour cette densité
-  /// d'écran — calculée une fois par densité.
+  /// d'écran — calculée une fois par densité et par pack.
+  ///
+  /// Les dessins sont de petites illustrations au trait rond, avec des
+  /// visages et des détails, serrées comme sur le papier peint de Telegram
+  /// et séparées par de petits motifs (étincelles, cœurs, notes, points).
+  /// Ceux qui dépassent un bord sont répétés de l'autre côté : la tuile se
+  /// répète sans raccord visible.
   static Future<ui.Image> image(double densite, [PackMotifs pack = PackMotifs.droplet]) {
-    // ⚠️ LES DOLLARS NE SONT PAS ÉCHAPPÉS. Avec `\$`, la clé valait
-    // littéralement « $densite:${pack.index} » pour TOUTES les densités
-    // et TOUS les packs : le premier motif rendu était ensuite servi à
-    // tout le monde, flou sur un écran plus dense et jamais changé quand
-    // on changeait de pack. Le cache marchait — il cachait la mauvaise
-    // chose.
+    // ⚠️ LES DOLLARS NE SONT PAS ÉCHAPPÉS (voir l'historique) : une clé par
+    // densité ET par pack.
     return _images.putIfAbsent('$densite:${pack.index}', () {
-      final cote = (tuileTaille * densite).round();
+      final cote = (_tuileDoodle * densite).round();
       final enregistreur = ui.PictureRecorder();
-      final canvas = Canvas(enregistreur)..scale(densite);
-      Paint plume(double epaisseur) => Paint()
+      final canvas = Canvas(enregistreur)
+        ..clipRect(Rect.fromLTWH(0, 0, cote.toDouble(), cote.toDouble()))
+        ..scale(densite);
+      final dessins = _dessinsDe(pack);
+      final nGrands = dessins.length - _petitsDoodle;
+      final trait = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = epaisseur
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round
         ..isAntiAlias = true
         ..color = Colors.white;
-      canvas
-        ..drawPath(tuileDe(grands: true, pack: pack), plume(trait))
-        ..drawPath(tuileDe(grands: false, pack: pack), plume(traitFin));
+      final plein = Paint()
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true
+        ..color = Colors.white;
+      final p = _placementsDoodle[pack.name]!;
+      for (var k = 0; k + 4 < p.length; k += 5) {
+        final i = p[k].toInt();
+        final echelle = p[k + 3];
+        canvas
+          ..save()
+          ..translate(p[k + 1], p[k + 2])
+          ..rotate(p[k + 4])
+          ..scale(echelle)
+          ..translate(-32, -32);
+        // Le trait est donné en pixels de la tuile : on le divise par
+        // l'échelle du dessin pour qu'il reste le même partout.
+        trait.strokeWidth = (i < nGrands ? traitDoodle : traitDoodleFin) / echelle;
+        final (traits, pleins, pointilles) = dessins[i];
+        for (final c in traits) {
+          canvas.drawPath(c, trait);
+        }
+        for (final c in pleins) {
+          canvas.drawPath(c, plein);
+        }
+        for (final c in pointilles) {
+          canvas.drawPath(_pointille(c, 1 / echelle, 5 / echelle), trait);
+        }
+        canvas.restore();
+      }
       return enregistreur.endRecording().toImage(cote, cote);
     });
+  }
+
+  static int get _petitsDoodle => 9;
+
+  /// Un tracé en pointillés (tirets de `plein`, espaces de `vide`).
+  static Path _pointille(Path source, double plein, double vide) {
+    final out = Path();
+    for (final m in source.computeMetrics()) {
+      var d = 0.0;
+      while (d < m.length) {
+        out.addPath(m.extractPath(d, math.min(d + plein, m.length)), Offset.zero);
+        d += plein + vide;
+      }
+    }
+    return out;
   }
 
   /// Couleur des motifs : discrète, pour ne jamais gêner la lecture.
@@ -276,8 +349,11 @@ class MotifsDroplet {
       // avions et ondes se lisaient ENTRE les bulles et attiraient l'œil
       // à chaque espace. WhatsApp garde son papier peint autour de 5 % ;
       // au-dessous de 4 %, il ne se devine plus.
-      ? Colors.white.withValues(alpha: 0.042)
-      : const Color(0xFF123F5C).withValues(alpha: 0.048);
+      // ⚠️ REMONTÉ avec les dessins « doodle » (19/11/2026) : de vraies
+      // petites illustrations se lisent comme un papier peint, au niveau de
+      // Telegram, sans disputer le regard aux bulles.
+      ? Colors.white.withValues(alpha: 0.075)
+      : const Color(0xFF123F5C).withValues(alpha: 0.085);
 
   // ── Les dessins ──────────────────────────────────────────────────────
 
@@ -1123,7 +1199,8 @@ class MotifsDroplet {
 
 /// Le calque de motifs, à poser au-dessus du fond et sous la conversation.
 /// Les jeux de motifs disponibles pour le fond des discussions.
-enum PackMotifs { droplet, jeux, maison, jardin }
+/// ⚠️ L'ORDRE COMPTE : le réglage garde l'index. On n'ajoute qu'à la fin.
+enum PackMotifs { droplet, jeux, maison, jardin, cameroun }
 
 class CalqueMotifsDroplet extends StatefulWidget {
   const CalqueMotifsDroplet({
@@ -1207,4 +1284,98 @@ class _PeintreMotifs extends CustomPainter {
   @override
   bool shouldRepaint(_PeintreMotifs ancien) =>
       ancien.image != image || ancien.couleur != couleur || ancien.densite != densite;
+}
+
+// ── Lecture des tracés SVG (« path data ») ─────────────────────────────
+// M L H V C S Q T A Z, absolus et relatifs, commandes implicites répétées.
+
+/// Un [Path] à partir d'un attribut `d` SVG.
+Path cheminSvg(String d) {
+  final chemin = Path();
+  final jetons = RegExp(r'[MmLlHhVvCcSsQqTtAaZz]|-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?')
+      .allMatches(d)
+      .map((m) => m.group(0)!)
+      .toList();
+  var i = 0;
+  var x = 0.0, y = 0.0, debutX = 0.0, debutY = 0.0;
+  var ctrlX = 0.0, ctrlY = 0.0; // dernier point de contrôle (S, T)
+  var cmd = 'M';
+  var precedente = '';
+  bool estNombre(int k) => k < jetons.length && !RegExp(r'^[A-Za-z]$').hasMatch(jetons[k]);
+  double n() => double.parse(jetons[i++]);
+  while (i < jetons.length) {
+    if (!estNombre(i)) {
+      cmd = jetons[i++];
+    } else if (cmd == 'M') {
+      cmd = 'L';
+    } else if (cmd == 'm') {
+      cmd = 'l';
+    }
+    final rel = cmd == cmd.toLowerCase();
+    final ox = rel ? x : 0.0, oy = rel ? y : 0.0;
+    switch (cmd.toUpperCase()) {
+      case 'M':
+        x = ox + n();
+        y = oy + n();
+        chemin.moveTo(x, y);
+        debutX = x;
+        debutY = y;
+      case 'L':
+        x = ox + n();
+        y = oy + n();
+        chemin.lineTo(x, y);
+      case 'H':
+        x = (rel ? x : 0) + n();
+        chemin.lineTo(x, y);
+      case 'V':
+        y = (rel ? y : 0) + n();
+        chemin.lineTo(x, y);
+      case 'C':
+        final x1 = ox + n(), y1 = oy + n(), x2 = ox + n(), y2 = oy + n();
+        x = ox + n();
+        y = oy + n();
+        chemin.cubicTo(x1, y1, x2, y2, x, y);
+        ctrlX = x2;
+        ctrlY = y2;
+      case 'S':
+        final p = precedente.toUpperCase();
+        final x1 = (p == 'C' || p == 'S') ? 2 * x - ctrlX : x;
+        final y1 = (p == 'C' || p == 'S') ? 2 * y - ctrlY : y;
+        final x2 = ox + n(), y2 = oy + n();
+        x = ox + n();
+        y = oy + n();
+        chemin.cubicTo(x1, y1, x2, y2, x, y);
+        ctrlX = x2;
+        ctrlY = y2;
+      case 'Q':
+        final x1 = ox + n(), y1 = oy + n();
+        x = ox + n();
+        y = oy + n();
+        chemin.quadraticBezierTo(x1, y1, x, y);
+        ctrlX = x1;
+        ctrlY = y1;
+      case 'T':
+        final p = precedente.toUpperCase();
+        final x1 = (p == 'Q' || p == 'T') ? 2 * x - ctrlX : x;
+        final y1 = (p == 'Q' || p == 'T') ? 2 * y - ctrlY : y;
+        x = ox + n();
+        y = oy + n();
+        chemin.quadraticBezierTo(x1, y1, x, y);
+        ctrlX = x1;
+        ctrlY = y1;
+      case 'A':
+        final rx = n(), ry = n(), angle = n();
+        final grand = n() != 0, horaire = n() != 0;
+        x = ox + n();
+        y = oy + n();
+        chemin.arcToPoint(Offset(x, y),
+            radius: Radius.elliptical(rx, ry), rotation: angle, largeArc: grand, clockwise: horaire);
+      case 'Z':
+        chemin.close();
+        x = debutX;
+        y = debutY;
+    }
+    precedente = cmd;
+  }
+  return chemin;
 }

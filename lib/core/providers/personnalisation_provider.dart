@@ -78,7 +78,7 @@ class Personnalisation {
             ? 'bleu'
             : ReglagesApparence.accentParCle(j['accent'] as String?).cle,
         lignesListe: (j['lignes'] as num?)?.toInt() == 2 ? 2 : 3,
-        packMotifs: ((j['motifs'] as num?)?.toInt() ?? 0).clamp(0, 3),
+        packMotifs: ((j['motifs'] as num?)?.toInt() ?? 0).clamp(0, 4),
       );
     } catch (_) {
       return const Personnalisation();
