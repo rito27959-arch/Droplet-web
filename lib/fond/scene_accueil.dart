@@ -1,25 +1,25 @@
-// LA SCÈNE DE L'ACCUEIL — ce qu'on voit quand aucune discussion n'est ouverte.
+// LA SCÈNE DE L'ACCUEIL — « la ville la nuit ».
 //
-// WhatsApp Web montre une seule illustration calme ; Droplet raconte son
-// principe sans un mot de technique : des téléphones dessinés au trait
-// (le même style que les fonds de discussion), reliés entre eux, et de
-// petites gouttes qui sautent de l'un à l'autre jusqu'à votre téléphone,
-// puis jusqu'à cet ordinateur. Au centre, la goutte de Droplet, en verre,
-// qui vous suit des yeux.
+// Ce qu'on voit quand aucune discussion n'est ouverte : une petite rue
+// dessinée au crépuscule (en sombre : en pleine nuit). Maisons à toit de
+// tôle, immeubles à balcons, un étal de marché, un palmier, un manguier,
+// des lampadaires, et une moto-taxi qui passe de temps en temps.
+//
+// Le principe de Droplet, sans un mot de technique : un message saute de
+// fenêtre en fenêtre, de voisin en voisin, et chaque fenêtre s'allume à son
+// passage, jusqu'à la dernière maison, celle où brille cet ordinateur.
+// Pas d'antenne dans le décor : c'est voulu.
 //
 // Elle vit avec l'état réel de la liaison :
-//   connecté   → le lien téléphone ↔ ordinateur est plein, les gouttes arrivent ;
-//   connexion  → le lien est en pointillés qui défilent, les gouttes
-//                s'arrêtent à votre téléphone ;
-//   hors ligne → les liens pâlissent, votre téléphone dort, plus de gouttes.
+//   connecté   → la fenêtre de l'ordinateur brille de la couleur d'accent ;
+//   connexion  → les messages s'arrêtent chez le voisin, la fenêtre clignote ;
+//   hors ligne → plus de messages, la fenêtre de l'ordinateur est éteinte.
 //
-// Souris : les téléphones s'écartent doucement du pointeur. Clic sur un
-// téléphone : une goutte part de lui. Clic sur la grande goutte : elle
-// rebondit.
+// Souris : le ciel et les toits du fond glissent un peu (parallaxe), la
+// fenêtre survolée s'éclaire. Clic sur une fenêtre : un message part de là.
 //
-// Dessin natif (CustomPainter), pas de moteur de jeu : une quinzaine
-// d'objets, rien à simuler. Tout est calculé à partir de l'horloge.
-// « Réduire les animations » → une image fixe.
+// Dessin natif (CustomPainter) : tout est calculé à partir de l'horloge,
+// rien ne s'accumule. « Réduire les animations » → une image fixe.
 import 'dart:math';
 
 import 'package:flutter/scheduler.dart';
@@ -28,45 +28,60 @@ import 'package:flutter/widgets.dart';
 import '../donnees/transport.dart' show EtatConnexion;
 
 /// La taille logique de la scène ; elle est mise à l'échelle de la place.
-const double _l = 520, _h = 300;
+const double _l = 560, _h = 300;
+const double _sol = 250;
 
-/// Les téléphones du maillage (0 à 4), votre téléphone (5), l'ordinateur (6).
-const List<Offset> _noeuds = [
-  Offset(70, 92),
-  Offset(178, 38),
-  Offset(346, 34),
-  Offset(454, 96),
-  Offset(84, 232),
-  Offset(300, 252),
-  Offset(448, 236),
+enum _Toit { tole, plat, aucun }
+
+class _Batiment {
+  const _Batiment(this.x, this.largeur, this.hauteur, this.toit, this.couleur, this.fenetres);
+  final double x, largeur, hauteur;
+  final _Toit toit;
+  final int couleur;
+  final List<Rect> fenetres;
+  double get haut => _sol - hauteur;
+}
+
+Rect _f(double x, double y, [double w = 14, double h = 16]) => Rect.fromLTWH(x, y, w, h);
+
+final List<_Batiment> _batiments = [
+  _Batiment(10, 72, 66, _Toit.tole, 0, [_f(22, 200), _f(54, 200)]),
+  _Batiment(94, 84, 122, _Toit.plat, 1, [
+    for (final y in [142.0, 174.0, 206.0]) ...[_f(108, y), _f(152, y)],
+  ]),
+  // L'étal du marché : pas de fenêtre.
+  const _Batiment(192, 58, 34, _Toit.aucun, 2, []),
+  _Batiment(262, 72, 88, _Toit.tole, 0, [_f(276, 196), _f(306, 196)]),
+  _Batiment(364, 96, 142, _Toit.plat, 1, [
+    for (final y in [122.0, 156.0, 190.0]) ...[_f(376, y), _f(405, y), _f(434, y)],
+  ]),
+  // La dernière maison : la grande fenêtre de cet ordinateur.
+  _Batiment(482, 70, 98, _Toit.tole, 3, [_f(496, 180, 42, 30)]),
 ];
-const int _vous = 5, _ordi = 6;
 
-/// La profondeur de chaque nœud pour la parallaxe (1 = au premier plan).
-const List<double> _profondeur = [0.55, 0.8, 0.6, 0.9, 1.0, 0.75, 0.5];
+/// Toutes les fenêtres, dans l'ordre de la rue. La dernière est l'ordinateur.
+final List<Rect> _fenetres = [for (final b in _batiments) ...b.fenetres];
+final int _ordi = _fenetres.length - 1;
 
-/// Les liens du maillage (sans celui vers l'ordinateur, dessiné à part).
-const List<(int, int)> _liens = [(0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (3, 5), (1, 5)];
+/// Le bâtiment de chaque fenêtre.
+final List<int> _batimentDe = [
+  for (var i = 0; i < _batiments.length; i++)
+    for (var k = 0; k < _batiments[i].fenetres.length; k++) i,
+];
 
-/// Les voisins de chaque nœud, pour trouver un chemin jusqu'à vous.
-final Map<int, List<int>> _voisins = () {
-  final v = <int, List<int>>{};
-  for (final (a, b) in _liens) {
-    (v[a] ??= []).add(b);
-    (v[b] ??= []).add(a);
-  }
-  return v;
-}();
+/// Les fenêtres où quelqu'un est déjà chez soi (allumées doucement).
+const Set<int> _habitees = {1, 3, 6, 9, 12, 15};
 
-/// Les trajets des gouttes qui tournent toutes seules : (chemin, décalage).
+/// Les messages qui passent tout seuls : (fenêtres, décalage en s).
 const List<(List<int>, double)> _rondes = [
-  ([2, 3, 5], 0.0),
-  ([0, 4, 5], 2.1),
-  ([1, 5], 3.9),
+  ([0, 2, 7, 10, 18], 0.0),
+  ([1, 4, 8, 13], 1.9),
+  ([6, 9, 16], 3.7),
+  ([3, 11, 17], 5.3),
 ];
 
-const double _vitesse = 110; // en points logiques par seconde
-const double _periode = 6.0; // une goutte par trajet toutes les 6 s
+const double _saut = 0.85; // secondes par saut de fenêtre en fenêtre
+const double _periode = 7.5;
 
 class SceneAccueil extends StatefulWidget {
   const SceneAccueil({
@@ -80,13 +95,9 @@ class SceneAccueil extends StatefulWidget {
 
   final EtatConnexion etat;
 
-  /// La couleur choisie dans les réglages.
+  /// La couleur choisie dans les réglages (la fenêtre de l'ordinateur).
   final Color accent;
-
-  /// Le trait des dessins (la couleur du texte).
   final Color encre;
-
-  /// Le remplissage des téléphones.
   final Color carte;
   final bool sombre;
 
@@ -102,18 +113,16 @@ class _Envoi {
 
 class _SceneAccueilState extends State<SceneAccueil> with SingleTickerProviderStateMixin {
   late final Ticker _ticker = createTicker(_tic);
-  final ValueNotifier<double> _temps = ValueNotifier(1.8);
+  final ValueNotifier<double> _temps = ValueNotifier(2.6);
   Duration _dernier = Duration.zero;
-  double _horloge = 1.8;
+  double _horloge = 2.6;
 
-  /// Le pointeur en coordonnées logiques (null : hors de la scène), et sa
-  /// position lissée, pour que tout glisse au lieu de sauter.
   Offset? _pointeur;
   Offset _lisse = const Offset(_l / 2, _h / 2);
-  double _presence = 0;
+  int _survolee = -1;
 
   final List<_Envoi> _envois = [];
-  double _rebond = -10;
+  final Random _hasard = Random(3);
   bool _fige = false;
 
   @override
@@ -122,7 +131,7 @@ class _SceneAccueilState extends State<SceneAccueil> with SingleTickerProviderSt
     _fige = MediaQuery.disableAnimationsOf(context);
     if (_fige) {
       _ticker.stop();
-      _horloge = 1.8;
+      _horloge = 2.6;
       _temps.value = _horloge;
     } else if (!_ticker.isActive) {
       _dernier = Duration.zero;
@@ -135,10 +144,8 @@ class _SceneAccueilState extends State<SceneAccueil> with SingleTickerProviderSt
     _dernier = d;
     _horloge += dt.clamp(0.0, 0.1);
     final cible = _pointeur ?? const Offset(_l / 2, _h / 2);
-    final k = 1 - exp(-dt * 6);
-    _lisse = Offset.lerp(_lisse, cible, k)!;
-    _presence += ((_pointeur == null ? 0 : 1) - _presence) * k;
-    _envois.removeWhere((e) => _horloge - e.depart > 12);
+    _lisse = Offset.lerp(_lisse, cible, 1 - exp(-dt * 5))!;
+    _envois.removeWhere((e) => _horloge - e.depart > 14);
     _temps.value = _horloge;
   }
 
@@ -155,47 +162,34 @@ class _SceneAccueilState extends State<SceneAccueil> with SingleTickerProviderSt
     return Offset((local.dx - ox) / e, (local.dy - oy) / e);
   }
 
-  void _toucher(Offset p) {
-    if (_fige) return;
-    // La grande goutte.
-    if ((p - const Offset(_l / 2, _h / 2 - 4)).distance < 52) {
-      _rebond = _horloge;
-      return;
+  int _fenetreSous(Offset p) {
+    for (var i = 0; i < _fenetres.length; i++) {
+      if (_fenetres[i].inflate(5).contains(p)) return i;
     }
-    // Le téléphone le plus proche du clic, sinon un au hasard.
-    var choisi = -1;
-    var meilleur = 40.0;
-    for (var i = 0; i < 5; i++) {
-      final d = (p - _noeuds[i]).distance;
-      if (d < meilleur) {
-        meilleur = d;
-        choisi = i;
-      }
-    }
-    if (choisi < 0) choisi = Random().nextInt(5);
-    _envois.add(_Envoi(_chemin(choisi), _horloge));
-    if (_envois.length > 8) _envois.removeAt(0);
+    return -1;
   }
 
-  /// Le plus court chemin d'un téléphone jusqu'au vôtre.
-  static List<int> _chemin(int depuis) {
-    final venu = <int, int>{depuis: -1};
-    final file = [depuis];
-    while (file.isNotEmpty) {
-      final n = file.removeAt(0);
-      if (n == _vous) break;
-      for (final v in _voisins[n]!) {
-        if (!venu.containsKey(v)) {
-          venu[v] = n;
-          file.add(v);
-        }
-      }
+  void _survol(Offset p) {
+    _pointeur = p;
+    final f = _fenetreSous(p);
+    if (f != _survolee) setState(() => _survolee = f);
+  }
+
+  void _toucher(Offset p) {
+    if (_fige) return;
+    var depuis = _fenetreSous(p);
+    if (depuis == _ordi) return;
+    if (depuis < 0) depuis = _hasard.nextInt(4);
+    // Une fenêtre au hasard dans chacun des bâtiments suivants, jusqu'à
+    // l'ordinateur : de voisin en voisin.
+    final chemin = [depuis];
+    for (var b = _batimentDe[depuis] + 1; b < _batiments.length - 1; b++) {
+      final fs = _batiments[b].fenetres;
+      if (fs.isEmpty) continue;
+      chemin.add(_fenetres.indexOf(fs[_hasard.nextInt(fs.length)]));
     }
-    final chemin = <int>[];
-    for (var n = _vous; n != -1; n = venu[n]!) {
-      chemin.insert(0, n);
-    }
-    return chemin;
+    _envois.add(_Envoi(chemin, _horloge));
+    if (_envois.length > 8) _envois.removeAt(0);
   }
 
   @override
@@ -206,17 +200,17 @@ class _SceneAccueilState extends State<SceneAccueil> with SingleTickerProviderSt
         builder: (context, c) {
           final taille = Size(c.maxWidth, c.maxHeight);
           return MouseRegion(
-            cursor: SystemMouseCursors.click,
-            onHover: (e) => _pointeur = _logique(e.localPosition, taille),
-            onExit: (_) => _pointeur = null,
+            cursor: _survolee >= 0 && _survolee != _ordi ? SystemMouseCursors.click : MouseCursor.defer,
+            onHover: (e) => _survol(_logique(e.localPosition, taille)),
+            onExit: (_) {
+              _pointeur = null;
+              if (_survolee != -1) setState(() => _survolee = -1);
+            },
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTapDown: (TapDownDetails e) => _toucher(_logique(e.localPosition, taille)),
               child: RepaintBoundary(
-                child: CustomPaint(
-                  size: taille,
-                  painter: _PeintreScene(this, widget),
-                ),
+                child: CustomPaint(size: taille, painter: _PeintreVille(this, widget)),
               ),
             ),
           );
@@ -226,399 +220,554 @@ class _SceneAccueilState extends State<SceneAccueil> with SingleTickerProviderSt
   }
 }
 
-class _PeintreScene extends CustomPainter {
-  _PeintreScene(this.s, this.w) : super(repaint: s._temps);
+// ── Les couleurs de la ville ──────────────────────────────────────────
+
+class _Palette {
+  const _Palette({
+    required this.ciel,
+    required this.lointain,
+    required this.murs,
+    required this.toit,
+    required this.route,
+    required this.vitreEteinte,
+    required this.feuillage,
+    required this.etoiles,
+  });
+
+  final List<Color> ciel;
+  final Color lointain;
+  final List<Color> murs;
+  final Color toit;
+  final Color route;
+  final Color vitreEteinte;
+  final Color feuillage;
+  final double etoiles;
+
+  /// En sombre : la nuit.
+  static const nuit = _Palette(
+    ciel: [Color(0xFF070B1C), Color(0xFF111A3A), Color(0xFF2A2C5E)],
+    lointain: Color(0xFF1A1F44),
+    murs: [Color(0xFF232849), Color(0xFF1C2140), Color(0xFF2A2547), Color(0xFF262B4F)],
+    toit: Color(0xFF353A66),
+    route: Color(0xFF12152A),
+    vitreEteinte: Color(0xFF0E1226),
+    feuillage: Color(0xFF15233A),
+    etoiles: 1,
+  );
+
+  /// En clair : le crépuscule, la ville en silhouettes sur le couchant.
+  static const crepuscule = _Palette(
+    ciel: [Color(0xFF2E3B7A), Color(0xFF8A6BB4), Color(0xFFF4A47C)],
+    lointain: Color(0xFF6B5A9A),
+    murs: [Color(0xFF3B3466), Color(0xFF332D5C), Color(0xFF45376A), Color(0xFF3E3870)],
+    toit: Color(0xFF4F4680),
+    route: Color(0xFF2B2650),
+    vitreEteinte: Color(0xFF262049),
+    feuillage: Color(0xFF2C2A58),
+    etoiles: 0.45,
+  );
+}
+
+const _chaud = Color(0xFFFFC56B);
+const _blanc = Color(0xFFFFFFFF);
+
+Paint _halo(Offset c, double r, Color couleur, double alpha) => Paint()
+  ..shader = RadialGradient(colors: [couleur.withValues(alpha: alpha), couleur.withValues(alpha: 0)])
+      .createShader(Rect.fromCircle(center: c, radius: r));
+
+class _PeintreVille extends CustomPainter {
+  _PeintreVille(this.s, this.w) : super(repaint: s._temps);
 
   final _SceneAccueilState s;
   final SceneAccueil w;
 
-  static const _joues = Color(0xFFFF8FA3);
-
   @override
   void paint(Canvas canvas, Size size) {
     final t = s._horloge;
+    final pal = w.sombre ? _Palette.nuit : _Palette.crepuscule;
     final e = min(size.width / _l, size.height / _h);
     canvas.save();
     canvas.translate((size.width - _l * e) / 2, (size.height - _h * e) / 2);
     canvas.scale(e);
 
-    final etat = w.etat;
-    final horsLigne = etat == EtatConnexion.horsLigne;
-    final relie = etat == EtatConnexion.connecte;
+    final cadre = RRect.fromRectAndRadius(const Rect.fromLTWH(0, 0, _l, _h), const Radius.circular(26));
+    // L'ombre de la carte.
+    canvas.drawRRect(
+      cadre.shift(const Offset(0, 10)),
+      Paint()
+        ..color = const Color(0xFF000000).withValues(alpha: w.sombre ? 0.45 : 0.18)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+    );
+    canvas.save();
+    canvas.clipRRect(cadre);
 
-    // Les positions vivantes : un léger balancement, la parallaxe, et
-    // l'écart autour du pointeur.
-    const centre = Offset(_l / 2, _h / 2);
-    final regard = (s._lisse - centre);
-    final p = <Offset>[];
-    for (var i = 0; i < _noeuds.length; i++) {
-      var q = _noeuds[i] + Offset(0, sin(t * 0.9 + i * 1.7) * 2.6);
-      q -= regard * (0.025 * _profondeur[i]);
-      final d = q - s._lisse;
-      final dist = d.distance;
-      if (dist < 110 && dist > 0.1) {
-        q += d / dist * (110 - dist) * 0.16 * s._presence;
-      }
-      p.add(q);
-    }
+    final regard = s._lisse - const Offset(_l / 2, _h / 2);
+    final relie = w.etat == EtatConnexion.connecte;
+    final horsLigne = w.etat == EtatConnexion.horsLigne;
 
-    // ── Les liens ──
-    final lien = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..strokeCap = StrokeCap.round
-      ..color = (horsLigne ? w.encre : w.accent).withValues(alpha: horsLigne ? 0.12 : 0.42);
-    for (final (a, b) in _liens) {
-      _pointille(canvas, p[a], p[b], lien, 1.5, 6, 0);
+    _ciel(canvas, pal, t, regard);
+    _lointain(canvas, pal, regard);
+    _route(canvas, pal);
+    _lampadaires(canvas);
+    _arbres(canvas, pal, t);
+    final lumiere = _lumieres(t, relie, horsLigne);
+    for (var i = 0; i < _batiments.length; i++) {
+      _batiment(canvas, pal, i);
     }
-    // Votre téléphone ↔ cet ordinateur.
-    final fort = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
-      ..strokeCap = StrokeCap.round;
-    if (relie) {
-      fort.color = w.accent.withValues(alpha: 0.75);
-      canvas.drawLine(p[_vous], p[_ordi], fort);
-    } else if (etat == EtatConnexion.connexion) {
-      fort.color = w.accent.withValues(alpha: 0.55);
-      _pointille(canvas, p[_vous], p[_ordi], fort, 6, 7, -t * 18);
-    } else {
-      // Le lien rompu : deux bouts et un vide au milieu.
-      fort.color = w.encre.withValues(alpha: 0.22);
-      final a = p[_vous], b = p[_ordi];
-      canvas.drawLine(a, Offset.lerp(a, b, 0.38)!, fort);
-      canvas.drawLine(Offset.lerp(a, b, 0.62)!, b, fort);
-    }
+    _vitres(canvas, pal, t, lumiere, relie, horsLigne);
+    _etal(canvas, pal);
+    _moto(canvas, t);
+    if (!horsLigne) _messages(canvas, t, relie);
 
-    // ── Les téléphones et l'ordinateur ──
-    for (var i = 0; i < 5; i++) {
-      _telephone(canvas, p[i], t, i, vous: false, dort: horsLigne);
-    }
-    _telephone(canvas, p[_vous], t, _vous, vous: true, dort: horsLigne);
-    final arrivee = _arrivee(t, relie);
-    _ordinateur(canvas, p[_ordi], t, arrivee, horsLigne);
-
-    // ── La grande goutte ──
-    _grandeGoutte(canvas, centre + regard * 0.03 + Offset(0, sin(t * 1.1) * 3 - 4), regard, t);
-
-    // ── Les gouttes qui voyagent ──
-    if (!horsLigne) {
-      for (final (chemin, decalage) in _rondes) {
-        final c = [...chemin, if (relie) _ordi];
-        final phase = (t + decalage) % _periode;
-        _gouttelette(canvas, [for (final n in c) p[n]], phase * _vitesse);
-      }
-      for (final envoi in s._envois) {
-        final c = [...envoi.chemin, if (relie) _ordi];
-        _gouttelette(canvas, [for (final n in c) p[n]], (t - envoi.depart) * _vitesse * 1.25, grosse: true);
-      }
-    }
+    canvas.restore();
+    // Le liseré de la carte.
+    canvas.drawRRect(
+      cadre,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = _blanc.withValues(alpha: w.sombre ? 0.08 : 0.25),
+    );
     canvas.restore();
   }
 
-  /// 0 → 1 → 0 pendant la demi-seconde qui suit l'arrivée d'une goutte.
-  double _arrivee(double t, bool relie) {
-    if (!relie) return 0;
-    var a = 0.0;
-    void essai(double depuis) {
-      if (depuis >= 0 && depuis < 0.7) a = max(a, sin(depuis / 0.7 * pi));
+  // ── Le ciel ──
+
+  void _ciel(Canvas canvas, _Palette pal, double t, Offset regard) {
+    const r = Rect.fromLTWH(0, 0, _l, _h);
+    canvas.drawRect(
+      r,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: pal.ciel,
+          stops: const [0, 0.55, 0.85],
+        ).createShader(r),
+    );
+    final d = -regard * 0.012;
+    // Les étoiles : des graines fixes, chacune scintille à son rythme.
+    final hasard = Random(11);
+    final point = Paint();
+    for (var i = 0; i < 46; i++) {
+      final x = hasard.nextDouble() * _l, y = hasard.nextDouble() * 150;
+      final phase = hasard.nextDouble() * 6.28, taille = 0.5 + hasard.nextDouble() * 1.1;
+      final eclat = 0.35 + 0.65 * (0.5 + 0.5 * sin(t * (0.8 + hasard.nextDouble()) + phase));
+      point.color = _blanc.withValues(alpha: eclat * pal.etoiles * (1 - y / 190));
+      canvas.drawCircle(Offset(x, y) + d, taille, point);
+    }
+    // La lune : un croissant.
+    final c = const Offset(470, 52) + d * 1.4;
+    canvas.drawCircle(c, 34, _halo(c, 34, _blanc, 0.18));
+    final lune = Path.combine(
+      PathOperation.difference,
+      Path()..addOval(Rect.fromCircle(center: c, radius: 13)),
+      Path()..addOval(Rect.fromCircle(center: c + const Offset(6, -4), radius: 11.5)),
+    );
+    canvas.drawPath(lune, Paint()..color = const Color(0xFFFFF1CF));
+  }
+
+  /// Les toits lointains, en silhouette, avec quelques fenêtres allumées.
+  void _lointain(Canvas canvas, _Palette pal, Offset regard) {
+    final d = -regard * 0.025;
+    final hasard = Random(5);
+    final mur = Paint()..color = pal.lointain;
+    final petite = Paint();
+    var x = -20.0;
+    while (x < _l + 20) {
+      final l = 26 + hasard.nextDouble() * 40, h = 40 + hasard.nextDouble() * 70;
+      final r = Rect.fromLTWH(x, _sol - h, l, h + 4).shift(d);
+      canvas.drawRect(r, mur);
+      for (var k = 0; k < 4; k++) {
+        if (hasard.nextDouble() < 0.4) {
+          petite.color = _chaud.withValues(alpha: 0.25 + hasard.nextDouble() * 0.25);
+          canvas.drawRect(
+            Rect.fromLTWH(r.left + 5 + hasard.nextDouble() * (l - 12), r.top + 6 + hasard.nextDouble() * (h - 20), 3, 4),
+            petite,
+          );
+        }
+      }
+      x += l + 2;
+    }
+  }
+
+  void _route(Canvas canvas, _Palette pal) {
+    canvas.drawRect(const Rect.fromLTWH(0, _sol, _l, _h - _sol), Paint()..color = pal.route);
+    // Le trottoir.
+    canvas.drawRect(const Rect.fromLTWH(0, _sol, _l, 5), Paint()..color = pal.toit.withValues(alpha: 0.8));
+    // La ligne du milieu.
+    final ligne = Paint()
+      ..strokeWidth = 2
+      ..color = _blanc.withValues(alpha: 0.18);
+    for (var x = 8.0; x < _l; x += 34) {
+      canvas.drawLine(Offset(x, 277), Offset(x + 16, 277), ligne);
+    }
+  }
+
+  void _lampadaires(Canvas canvas) {
+    for (final x in const [186.0, 350.0]) {
+      final tete = Offset(x + 9, _sol - 66);
+      final sol = Rect.fromCenter(center: Offset(x + 9, _sol + 14), width: 80, height: 22);
+      canvas.drawOval(
+        sol,
+        Paint()
+          ..shader = RadialGradient(colors: [_chaud.withValues(alpha: 0.22), _chaud.withValues(alpha: 0)]).createShader(sol),
+      );
+      canvas.drawCircle(tete, 26, _halo(tete, 26, _chaud, 0.32));
+      final poteau = Paint()
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke
+        ..color = const Color(0xFF0D1022);
+      canvas.drawLine(Offset(x, _sol + 2), Offset(x, _sol - 64), poteau);
+      canvas.drawArc(Rect.fromCircle(center: Offset(x + 5, _sol - 64), radius: 5), pi, pi / 2, false, poteau);
+      canvas.drawCircle(tete + const Offset(0, 1), 2.6, Paint()..color = const Color(0xFFFFE3A6));
+    }
+  }
+
+  void _arbres(Canvas canvas, _Palette pal, double t) {
+    final tronc = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 4
+      ..color = pal.feuillage;
+    // Le palmier, qui ondule à peine.
+    final vent = sin(t * 0.7) * 2;
+    const pied = Offset(346, _sol + 2);
+    final tete = Offset(340 + vent, _sol - 92);
+    canvas.drawPath(
+      Path()
+        ..moveTo(pied.dx, pied.dy)
+        ..quadraticBezierTo(352, _sol - 50, tete.dx, tete.dy),
+      tronc,
+    );
+    final palme = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 3
+      ..color = pal.feuillage;
+    for (var k = 0; k < 7; k++) {
+      final a = -pi / 2 + (k - 3) * 0.55 + sin(t * 0.9 + k) * 0.05;
+      final bout = tete + Offset(cos(a) * 30, sin(a) * 18 + 10 + (k - 3).abs() * 3.0);
+      final milieu = tete + Offset(cos(a) * 16, sin(a) * 14 - 4);
+      canvas.drawPath(
+        Path()
+          ..moveTo(tete.dx, tete.dy)
+          ..quadraticBezierTo(milieu.dx, milieu.dy, bout.dx, bout.dy),
+        palme,
+      );
+    }
+    // Le manguier : un feuillage rond et dense.
+    tronc.strokeWidth = 5;
+    canvas.drawLine(const Offset(470, _sol + 2), const Offset(470, _sol - 30), tronc);
+    final m = Paint()..color = pal.feuillage;
+    for (final (dx, dy, r) in const [(-12.0, -40.0, 15.0), (6.0, -46.0, 17.0), (16.0, -34.0, 12.0), (-2.0, -30.0, 14.0)]) {
+      canvas.drawCircle(Offset(470 + dx, _sol + dy), r, m);
+    }
+  }
+
+  // ── Les bâtiments ──
+
+  void _batiment(Canvas canvas, _Palette pal, int i) {
+    final b = _batiments[i];
+    if (b.toit == _Toit.aucun) return;
+    final mur = Rect.fromLTWH(b.x, b.haut, b.largeur, b.hauteur + 2);
+    canvas.drawRect(mur, Paint()..color = pal.murs[b.couleur]);
+    final toit = Paint()..color = pal.toit;
+    if (b.toit == _Toit.tole) {
+      // Le toit de tôle : deux pans qui dépassent, avec leurs ondulations.
+      final p = Path()
+        ..moveTo(b.x - 6, b.haut + 2)
+        ..lineTo(b.x + b.largeur * 0.5, b.haut - 18)
+        ..lineTo(b.x + b.largeur + 6, b.haut + 2)
+        ..close();
+      canvas.drawPath(p, toit);
+      final onde = Paint()
+        ..strokeWidth = 0.8
+        ..color = _blanc.withValues(alpha: 0.08);
+      for (var k = 1; k < 8; k++) {
+        canvas.drawLine(
+          Offset(b.x + b.largeur * 0.5, b.haut - 18),
+          Offset(b.x - 6 + (b.largeur + 12) * k / 8, b.haut + 2),
+          onde,
+        );
+      }
+      // La porte.
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          Rect.fromLTWH(b.x + b.largeur / 2 - 7, _sol - 26, 14, 26),
+          topLeft: const Radius.circular(7),
+          topRight: const Radius.circular(7),
+        ),
+        Paint()..color = pal.vitreEteinte,
+      );
+    } else {
+      // L'immeuble : un parapet, une citerne sur le toit, des balcons.
+      canvas.drawRect(Rect.fromLTWH(b.x - 3, b.haut - 4, b.largeur + 6, 6), toit);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(b.x + b.largeur - 26, b.haut - 18, 16, 14), const Radius.circular(3)),
+        toit,
+      );
+      final balcon = Paint()
+        ..strokeWidth = 1.4
+        ..color = _blanc.withValues(alpha: 0.12);
+      for (final f in b.fenetres) {
+        if (f.left == b.fenetres.first.left) {
+          canvas.drawLine(Offset(b.x + 4, f.bottom + 5), Offset(b.x + b.largeur - 4, f.bottom + 5), balcon);
+        }
+      }
+    }
+  }
+
+  void _etal(Canvas canvas, _Palette pal) {
+    final b = _batiments[2];
+    // Les montants et l'auvent rayé.
+    final montant = Paint()
+      ..strokeWidth = 2
+      ..color = const Color(0xFF0D1022);
+    canvas.drawLine(Offset(b.x + 4, _sol + 2), Offset(b.x + 4, _sol - 36), montant);
+    canvas.drawLine(Offset(b.x + b.largeur - 4, _sol + 2), Offset(b.x + b.largeur - 4, _sol - 36), montant);
+    const n = 6;
+    final pas = (b.largeur + 8) / n;
+    for (var k = 0; k < n; k++) {
+      final x0 = b.x - 4 + k * pas;
+      final p = Path()
+        ..moveTo(x0, _sol - 46)
+        ..lineTo(x0 + pas, _sol - 46)
+        ..lineTo(x0 + pas, _sol - 36)
+        ..arcToPoint(Offset(x0, _sol - 36), radius: Radius.circular(pas / 2))
+        ..close();
+      canvas.drawPath(p, Paint()..color = k.isEven ? const Color(0xFFE2574C) : const Color(0xFFF3E6D0));
+    }
+    // L'étal, ses fruits, et la petite lampe du marchand.
+    canvas.drawRect(Rect.fromLTWH(b.x, _sol - 14, b.largeur, 14), Paint()..color = pal.murs[2]);
+    const fruits = [Color(0xFFF6B73C), Color(0xFFE2574C), Color(0xFF7CC36A), Color(0xFFF6B73C), Color(0xFFF28C38)];
+    for (var k = 0; k < 9; k++) {
+      canvas.drawCircle(Offset(b.x + 7 + k * 5.6, _sol - 16 - (k.isOdd ? 2 : 0)), 3, Paint()..color = fruits[k % fruits.length]);
+    }
+    final lampe = Offset(b.x + b.largeur / 2, _sol - 32);
+    canvas.drawCircle(lampe, 22, _halo(lampe, 22, _chaud, 0.35));
+    canvas.drawCircle(lampe, 2.2, Paint()..color = const Color(0xFFFFE3A6));
+  }
+
+  // ── Les fenêtres et la lumière ──
+
+  /// La lumière de chaque fenêtre (0 à 1), d'après les messages passés.
+  List<double> _lumieres(double t, bool relie, bool horsLigne) {
+    final l = List<double>.filled(_fenetres.length, 0);
+    if (horsLigne) return l;
+    void passage(List<int> chemin, double depuis) {
+      final c = [...chemin, if (relie) _ordi];
+      for (var k = 0; k < c.length; k++) {
+        final ecoule = depuis - k * _saut;
+        if (ecoule < 0) continue;
+        final v = ecoule < 0.12 ? ecoule / 0.12 : exp(-(ecoule - 0.12) * 0.7);
+        l[c[k]] = max(l[c[k]], v);
+      }
     }
 
     for (final (chemin, decalage) in _rondes) {
-      final c = [for (final n in [...chemin, _ordi]) _noeuds[n]];
-      final duree = _longueur(c) / _vitesse;
-      essai((t + decalage) % _periode - duree);
+      passage(chemin, (t + decalage) % _periode);
     }
     for (final envoi in s._envois) {
-      final c = [for (final n in [...envoi.chemin, _ordi]) _noeuds[n]];
-      essai(t - envoi.depart - _longueur(c) / (_vitesse * 1.25));
-    }
-    return a;
-  }
-
-  static double _longueur(List<Offset> c) {
-    var l = 0.0;
-    for (var i = 1; i < c.length; i++) {
-      l += (c[i] - c[i - 1]).distance;
+      passage(envoi.chemin, t - envoi.depart);
     }
     return l;
   }
 
-  void _gouttelette(Canvas canvas, List<Offset> c, double parcouru, {bool grosse = false}) {
-    final total = _longueur(c);
-    if (parcouru < 0 || parcouru > total) return;
-    var reste = parcouru;
-    var pos = c.last;
-    var dir = const Offset(1, 0);
-    for (var i = 1; i < c.length; i++) {
-      final seg = c[i] - c[i - 1];
-      final l = seg.distance;
-      if (reste <= l) {
-        pos = c[i - 1] + seg * (reste / l);
-        dir = seg / l;
-        // Un petit saut au-dessus de chaque lien.
-        final f = reste / l;
-        pos += Offset(0, -sin(f * pi) * min(14.0, l * 0.08));
-        break;
+  void _vitres(Canvas canvas, _Palette pal, double t, List<double> lumiere, bool relie, bool horsLigne) {
+    for (var i = 0; i < _fenetres.length; i++) {
+      final f = _fenetres[i];
+      if (i == _ordi) {
+        _fenetreOrdi(canvas, pal, f, t, lumiere[i], relie, horsLigne);
+        continue;
       }
-      reste -= l;
-    }
-    // Apparition et disparition en douceur.
-    final alpha = (min(parcouru, total - parcouru) / 18).clamp(0.0, 1.0);
-    final r = grosse ? 6.0 : 4.6;
-    canvas.save();
-    canvas.translate(pos.dx, pos.dy);
-    canvas.rotate(atan2(dir.dy, dir.dx) + pi / 2);
-    // La traîne.
-    canvas.drawCircle(
-      Offset(0, r * 1.9),
-      r * 0.55,
-      Paint()..color = w.accent.withValues(alpha: 0.25 * alpha),
-    );
-    // La goutte, pointe vers l'arrière.
-    final g = Path()
-      ..moveTo(0, r * 1.9)
-      ..cubicTo(r * 0.5, r * 1.1, r, r * 0.6, r, 0)
-      ..arcToPoint(Offset(-r, 0), radius: Radius.circular(r), clockwise: false)
-      ..cubicTo(-r, r * 0.6, -r * 0.5, r * 1.1, 0, r * 1.9)
-      ..close();
-    canvas.drawPath(g, Paint()..color = w.accent.withValues(alpha: alpha));
-    canvas.drawCircle(
-      Offset(-r * 0.35, -r * 0.3),
-      r * 0.28,
-      Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: 0.75 * alpha),
-    );
-    canvas.restore();
-  }
-
-  void _pointille(Canvas canvas, Offset a, Offset b, Paint paint, double trait, double vide, double decalage) {
-    final d = b - a;
-    final l = d.distance;
-    if (l == 0) return;
-    final u = d / l;
-    final pas = trait + vide;
-    var x = decalage % pas;
-    if (x > 0) x -= pas;
-    for (; x < l; x += pas) {
-      final s0 = max(0.0, x), s1 = min(l, x + trait);
-      if (s1 > s0) canvas.drawLine(a + u * s0, a + u * s1, paint);
-    }
-  }
-
-  /// Les yeux qui clignent : fermés 0,12 s toutes les quelques secondes.
-  static double _paupiere(double t, int graine) {
-    final periode = 3.6 + (graine % 3) * 1.3;
-    final x = (t + graine * 0.77) % periode;
-    return x < 0.12 ? 0.15 : 1;
-  }
-
-  void _visage(Canvas canvas, Offset c, double t, int graine, {required double echelle, required bool dort, Offset regard = Offset.zero, Color? encre}) {
-    final ink = encre ?? w.encre;
-    final trait = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5 * echelle
-      ..strokeCap = StrokeCap.round
-      ..color = ink;
-    final ex = 4.6 * echelle, ey = -2.5 * echelle;
-    if (dort) {
-      for (final sgn in [-1.0, 1.0]) {
-        final o = c + Offset(sgn * ex, ey);
-        canvas.drawArc(Rect.fromCenter(center: o, width: 4 * echelle, height: 3 * echelle), 0, pi, false, trait);
+      // Les habitants : une lumière douce qui vacille à peine (une télé…).
+      final chezSoi = _habitees.contains(i) ? 0.38 + 0.06 * sin(t * 2.3 + i) : 0.0;
+      final v = max(chezSoi, lumiere[i]);
+      final vitre = RRect.fromRectAndRadius(f, const Radius.circular(2));
+      canvas.drawRRect(vitre, Paint()..color = pal.vitreEteinte);
+      if (v > 0.01) {
+        canvas.drawRRect(vitre, Paint()..color = _chaud.withValues(alpha: v));
+        // Le halo autour d'une fenêtre qui vient de recevoir un message.
+        if (lumiere[i] > 0.05) {
+          canvas.drawRRect(
+            vitre.inflate(6),
+            Paint()
+              ..color = _chaud.withValues(alpha: 0.28 * lumiere[i])
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+          );
+        }
+        // Une silhouette derrière certaines vitres.
+        if (i % 3 == 0) {
+          final ombre = Paint()..color = const Color(0xFF3A2410).withValues(alpha: 0.55 * v);
+          canvas.drawCircle(Offset(f.center.dx + 1, f.bottom - 8), 2.6, ombre);
+          canvas.drawRRect(
+            RRect.fromRectAndCorners(
+              Rect.fromLTWH(f.center.dx - 3.5, f.bottom - 5.2, 9, 5.2),
+              topLeft: const Radius.circular(4),
+              topRight: const Radius.circular(4),
+            ),
+            ombre,
+          );
+        }
       }
-    } else {
-      final p = _paupiere(t, graine);
-      for (final sgn in [-1.0, 1.0]) {
-        final o = c + Offset(sgn * ex, ey) + regard;
-        canvas.drawOval(
-          Rect.fromCenter(center: o, width: 2.8 * echelle, height: 3.6 * echelle * p),
-          Paint()..color = ink,
+      // Le croisillon.
+      canvas.drawLine(
+        Offset(f.center.dx, f.top),
+        Offset(f.center.dx, f.bottom),
+        Paint()
+          ..strokeWidth = 1
+          ..color = pal.murs[0].withValues(alpha: 0.9),
+      );
+      // La fenêtre survolée : un liseré, on peut cliquer.
+      if (i == s._survolee) {
+        canvas.drawRRect(
+          vitre.inflate(2.5),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5
+            ..color = _chaud.withValues(alpha: 0.9),
         );
       }
     }
-    // Les joues.
-    final joue = Paint()..color = _joues.withValues(alpha: w.sombre ? 0.35 : 0.45);
-    for (final sgn in [-1.0, 1.0]) {
-      canvas.drawOval(Rect.fromCenter(center: c + Offset(sgn * (ex + 3.2 * echelle), 1.6 * echelle), width: 3.6 * echelle, height: 2.2 * echelle), joue);
-    }
-    // La bouche.
-    if (dort) {
-      canvas.drawLine(c + Offset(-1.6 * echelle, 2.4 * echelle), c + Offset(1.6 * echelle, 2.4 * echelle), trait);
-    } else {
-      canvas.drawArc(Rect.fromCenter(center: c + Offset(0, 0.8 * echelle), width: 4.4 * echelle, height: 3.6 * echelle), 0.25, pi - 0.5, false, trait);
-    }
   }
 
-  void _telephone(Canvas canvas, Offset c, double t, int i, {required bool vous, required bool dort}) {
-    final corps = RRect.fromRectAndRadius(Rect.fromCenter(center: c, width: 30, height: 50), const Radius.circular(8));
-    // L'ombre portée, très légère.
-    canvas.drawRRect(corps.shift(const Offset(0, 3)), Paint()..color = const Color(0xFF000000).withValues(alpha: w.sombre ? 0.25 : 0.06));
-    canvas.drawRRect(corps, Paint()..color = w.carte);
-    if (vous && !dort) {
-      // Votre téléphone : l'écran teinté de l'accent, qui respire.
-      final souffle = 0.5 + 0.5 * sin(t * 2.2);
-      canvas.drawRRect(
-        corps.deflate(3),
-        Paint()..color = w.accent.withValues(alpha: 0.10 + 0.06 * souffle),
-      );
+  /// La fenêtre de cet ordinateur : la seule dans la couleur d'accent.
+  void _fenetreOrdi(Canvas canvas, _Palette pal, Rect f, double t, double arrivee, bool relie, bool horsLigne) {
+    final vitre = RRect.fromRectAndRadius(f, const Radius.circular(3));
+    final double fond;
+    if (relie) {
+      fond = 0.55 + 0.45 * arrivee;
+    } else if (horsLigne) {
+      fond = 0;
+    } else {
+      fond = 0.25 + 0.2 * (0.5 + 0.5 * sin(t * 4));
     }
+    canvas.drawRRect(vitre, Paint()..color = pal.vitreEteinte);
+    if (fond > 0) {
+      canvas.drawRRect(
+        vitre.inflate(8 + 6 * arrivee),
+        Paint()
+          ..color = w.accent.withValues(alpha: 0.35 * fond)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+      );
+      canvas.drawRRect(vitre, Paint()..color = Color.lerp(w.accent, _blanc, 0.15)!.withValues(alpha: 0.75 * fond));
+    }
+    // L'ordinateur posé sur la table, vu de dos.
+    final sombre = Paint()..color = const Color(0xFF0B0E1E).withValues(alpha: 0.85);
+    canvas.drawRect(Rect.fromLTWH(f.left + 3, f.bottom - 5, f.width - 6, 2.5), sombre);
     canvas.drawRRect(
-      corps,
+      RRect.fromRectAndRadius(Rect.fromLTWH(f.center.dx - 9, f.bottom - 18, 18, 12), const Radius.circular(1.5)),
+      sombre,
+    );
+    canvas.drawRect(Rect.fromLTWH(f.center.dx - 12, f.bottom - 6.5, 24, 1.8), sombre);
+    // Le croisillon et le cadre.
+    canvas.drawLine(
+      Offset(f.left, f.top + 9),
+      Offset(f.right, f.top + 9),
+      Paint()
+        ..strokeWidth = 1.2
+        ..color = pal.murs[3],
+    );
+    canvas.drawRRect(
+      vitre,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = vous ? 2.2 : 1.7
-        ..color = vous ? w.accent : w.encre.withValues(alpha: 0.85),
-    );
-    // L'écouteur.
-    canvas.drawLine(
-      c + const Offset(-4, -20),
-      c + const Offset(4, -20),
-      Paint()
-        ..strokeWidth = 1.6
-        ..strokeCap = StrokeCap.round
-        ..color = (vous ? w.accent : w.encre).withValues(alpha: 0.7),
-    );
-    _visage(canvas, c + const Offset(0, -1), t, i, echelle: 1, dort: dort);
-    if (vous && !dort) {
-      // Une petite étincelle à quatre branches.
-      final e = 0.6 + 0.4 * sin(t * 2.6);
-      final o = c + const Offset(19, -26);
-      final sp = Paint()
         ..strokeWidth = 1.5
-        ..strokeCap = StrokeCap.round
-        ..color = w.accent.withValues(alpha: e);
-      canvas.drawLine(o + Offset(0, -4 * e), o + Offset(0, 4 * e), sp);
-      canvas.drawLine(o + Offset(-4 * e, 0), o + Offset(4 * e, 0), sp);
-    }
-    if (dort) {
-      // « z z » au-dessus de votre téléphone quand il est injoignable.
-      if (vous) {
-        final f = (t * 0.6) % 1;
-        _z(canvas, c + Offset(14 + f * 6, -30 - f * 12), 5, w.encre.withValues(alpha: 0.5 * (1 - f)));
-        _z(canvas, c + Offset(22 + f * 4, -42 - f * 10), 3.6, w.encre.withValues(alpha: 0.35 * (1 - f)));
+        ..color = pal.toit,
+    );
+  }
+
+  // ── Les messages ──
+
+  void _messages(Canvas canvas, double t, bool relie) {
+    void trajet(List<int> chemin, double depuis) {
+      final c = [...chemin, if (relie) _ordi];
+      if (depuis < 0 || (depuis / _saut).floor() >= c.length - 1) return;
+      // La lueur et sa traîne : quelques positions un peu plus tôt.
+      for (var r = 5; r >= 0; r--) {
+        final u = depuis - r * 0.035;
+        if (u < 0) continue;
+        final k = (u / _saut).floor();
+        if (k >= c.length - 1) continue;
+        final p = _position(c[k], c[k + 1], (u - k * _saut) / _saut);
+        final a = 1 - r / 6;
+        if (r == 0) {
+          canvas.drawCircle(p, 11, _halo(p, 11, _chaud, 0.55));
+          canvas.drawCircle(p, 2.8, Paint()..color = const Color(0xFFFFF4D6));
+        } else {
+          canvas.drawCircle(p, 1.8 * a, Paint()..color = _chaud.withValues(alpha: 0.6 * a));
+        }
       }
     }
+
+    for (final (chemin, decalage) in _rondes) {
+      trajet(chemin, (t + decalage) % _periode);
+    }
+    for (final envoi in s._envois) {
+      trajet(envoi.chemin, t - envoi.depart);
+    }
   }
 
-  void _z(Canvas canvas, Offset o, double s, Color c) {
-    final z = Path()
-      ..moveTo(o.dx - s / 2, o.dy - s / 2)
-      ..lineTo(o.dx + s / 2, o.dy - s / 2)
-      ..lineTo(o.dx - s / 2, o.dy + s / 2)
-      ..lineTo(o.dx + s / 2, o.dy + s / 2);
+  /// D'une fenêtre à l'autre, en arc, comme une luciole.
+  Offset _position(int a, int b, double f) {
+    final p = _fenetres[a].center, q = _fenetres[b].center;
+    final x = f.clamp(0.0, 1.0);
+    final g = x * x * (3 - 2 * x);
+    final haut = 16 + (q - p).distance * 0.18;
+    return Offset.lerp(p, q, g)! + Offset(0, -sin(g * pi) * haut);
+  }
+
+  // ── La moto-taxi ──
+
+  void _moto(Canvas canvas, double t) {
+    const periode = 13.0, traversee = 5.5;
+    final u = (t + 4) % periode;
+    if (u > traversee) return;
+    final x = -50 + (_l + 100) * (u / traversee);
+    const y = 268.0;
+    final saut = sin(t * 18) * 0.5;
+    // Le phare.
+    final faisceau = Rect.fromLTWH(x + 16, y - 16, 54, 24);
     canvas.drawPath(
-      z,
+      Path()
+        ..moveTo(x + 16, y - 6)
+        ..lineTo(x + 70, y - 16)
+        ..lineTo(x + 70, y + 8)
+        ..close(),
       Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round
-        ..color = c,
+        ..shader = LinearGradient(
+          colors: [const Color(0xFFFFF2C2).withValues(alpha: 0.4), const Color(0xFFFFF2C2).withValues(alpha: 0)],
+        ).createShader(faisceau),
     );
-  }
-
-  void _ordinateur(Canvas canvas, Offset c, double t, double arrivee, bool dort) {
-    final ecran = RRect.fromRectAndRadius(Rect.fromCenter(center: c + const Offset(0, -6), width: 66, height: 44), const Radius.circular(6));
-    final trait = Paint()
+    final noir = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeJoin = StrokeJoin.round
-      ..color = w.encre.withValues(alpha: 0.85);
-    // L'onde quand une goutte arrive.
-    if (arrivee > 0) {
+      ..strokeWidth = 2.2
+      ..color = const Color(0xFF0A0C18);
+    canvas.drawCircle(Offset(x - 12, y + 6), 5.5, noir);
+    canvas.drawCircle(Offset(x + 12, y + 6), 5.5, noir);
+    // Le corps jaune.
+    final corps = Path()
+      ..moveTo(x - 14, y + 2 + saut)
+      ..quadraticBezierTo(x - 6, y - 6 + saut, x + 6, y - 3 + saut)
+      ..lineTo(x + 14, y - 5 + saut)
+      ..lineTo(x + 12, y + 3 + saut)
+      ..close();
+    canvas.drawPath(corps, Paint()..color = const Color(0xFFF2C230));
+    // Le conducteur et son passager.
+    final gens = Paint()..color = const Color(0xFF0A0C18);
+    for (final (dx, h) in const [(2.0, 0.0), (-8.0, 1.5)]) {
+      canvas.drawCircle(Offset(x + dx, y - 17 + h + saut), 3.2, gens);
       canvas.drawRRect(
-        ecran.inflate(4 + 8 * (1 - arrivee)),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
-          ..color = w.accent.withValues(alpha: 0.5 * arrivee),
+        RRect.fromRectAndRadius(Rect.fromLTWH(x + dx - 3, y - 13 + h + saut, 6, 10), const Radius.circular(3)),
+        gens,
       );
     }
-    canvas.drawRRect(ecran.shift(const Offset(0, 3)), Paint()..color = const Color(0xFF000000).withValues(alpha: w.sombre ? 0.25 : 0.06));
-    canvas.drawRRect(ecran, Paint()..color = w.carte);
-    if (arrivee > 0) {
-      canvas.drawRRect(ecran.deflate(3), Paint()..color = w.accent.withValues(alpha: 0.18 * arrivee));
-    }
-    canvas.drawRRect(ecran, trait);
-    // Le clavier.
-    final base = Path()
-      ..moveTo(c.dx - 40, c.dy + 20)
-      ..lineTo(c.dx + 40, c.dy + 20)
-      ..lineTo(c.dx + 35, c.dy + 15)
-      ..lineTo(c.dx - 35, c.dy + 15)
-      ..close();
-    canvas.drawPath(base, Paint()..color = w.carte);
-    canvas.drawPath(base, trait);
-    _visage(canvas, c + const Offset(0, -6), t, 9, echelle: 1.15, dort: dort);
-  }
-
-  void _grandeGoutte(Canvas canvas, Offset c, Offset regard, double t) {
-    // Le rebond au clic : un écrasement amorti.
-    final dr = t - s._rebond;
-    final rebond = dr >= 0 && dr < 1.2 ? sin(dr * 14) * exp(-dr * 4.2) : 0.0;
-    final souffle = 1 + sin(t * 1.3) * 0.012;
-    final sx = souffle * (1 + rebond * 0.12), sy = souffle * (1 - rebond * 0.12);
-
-    // L'ombre au sol.
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(c.dx, c.dy + 62), width: 70 * sx, height: 10),
-      Paint()
-        ..color = w.accent.withValues(alpha: w.sombre ? 0.22 : 0.16)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
-    );
-    // Le halo.
-    canvas.drawCircle(
-      c,
-      78,
-      Paint()
-        ..shader = RadialGradient(colors: [w.accent.withValues(alpha: 0.16), w.accent.withValues(alpha: 0)])
-            .createShader(Rect.fromCircle(center: c, radius: 78)),
-    );
-
-    canvas.save();
-    canvas.translate(c.dx, c.dy + 50);
-    canvas.scale(sx, sy);
-    canvas.translate(0, -50);
-    const r = 42.0;
-    final g = Path()
-      ..moveTo(0, -58)
-      ..cubicTo(12, -42, r, -18, r, 10)
-      ..arcToPoint(const Offset(-r, 10), radius: const Radius.circular(r))
-      ..cubicTo(-r, -18, -12, -42, 0, -58)
-      ..close();
-    final clair = Color.lerp(w.accent, const Color(0xFFFFFFFF), 0.55)!;
-    final fonce = Color.lerp(w.accent, const Color(0xFF000000), 0.28)!;
-    final cadre = Rect.fromLTRB(-r, -58, r, 10 + r);
-    canvas.drawPath(
-      g,
-      Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(-0.35, -0.2),
-          radius: 0.95,
-          colors: [clair, w.accent, fonce],
-          stops: const [0, 0.55, 1],
-        ).createShader(cadre),
-    );
-    // Le reflet du verre, et le liseré.
-    canvas.drawOval(
-      Rect.fromCenter(center: const Offset(-17, -6), width: 11, height: 22),
-      Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: 0.55),
-    );
-    canvas.drawCircle(const Offset(-10, -24), 3.2, Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: 0.6));
-    canvas.drawPath(
-      g,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.35),
-    );
-    // Le visage, qui regarde le pointeur.
-    final l = regard.distance;
-    final yeux = l < 0.1 ? Offset.zero : regard / l * min(3.2, l * 0.03);
-    _visage(canvas, const Offset(0, 16), t, 4, echelle: 2.1, dort: false, regard: yeux, encre: const Color(0xFF0B2545));
-    canvas.restore();
+    canvas.drawCircle(Offset(x + 15, y - 5 + saut), 1.8, Paint()..color = const Color(0xFFFFF2C2));
   }
 
   @override
-  bool shouldRepaint(_PeintreScene old) =>
-      old.w.etat != w.etat || old.w.accent != w.accent || old.w.encre != w.encre || old.w.carte != w.carte || old.w.sombre != w.sombre;
+  bool shouldRepaint(_PeintreVille old) =>
+      old.w.etat != w.etat || old.w.accent != w.accent || old.w.sombre != w.sombre;
 }

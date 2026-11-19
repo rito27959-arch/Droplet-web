@@ -897,7 +897,7 @@ class _Scene extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(maxWidth: 600),
           child: SceneAccueil(
             etat: etat,
             accent: OuroColors.accent,
@@ -906,7 +906,7 @@ class _Scene extends StatelessWidget {
             sombre: OuroColors.isDark,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 18),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
           child: Container(
