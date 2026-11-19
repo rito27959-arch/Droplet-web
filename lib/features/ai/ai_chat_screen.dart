@@ -103,6 +103,7 @@ import 'actions_message.dart';
 import 'artefact_screen.dart';
 import '../../core/services/superposition_glasmio.dart';
 import 'assistant_tiroir.dart';
+import 'competences_assistant.dart';
 import 'composeur_assistant.dart';
 import 'conversations_screen.dart';
 import 'journal_activite.dart';
@@ -1400,6 +1401,19 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     }
   }
 
+  /// Une carte de compétence touchée, à la manière de Kimi : le début de
+  /// la demande s'écrit dans le champ, et le moteur passe en ligne (ces
+  /// outils n'existent qu'en ligne ; sans clé, on va la mettre).
+  Future<void> _choisirCompetence(Competence c) async {
+    final l10n = AppLocalizations.of(context);
+    final debut = c.debut(l10n.localeName);
+    _inputCtrl.text = debut;
+    _inputCtrl.selection = TextSelection.collapsed(offset: debut.length);
+    if (_moteur != OrigineReponse.enLigne || !_enLigneDisponible) {
+      await _changerMoteur(OrigineReponse.enLigne);
+    }
+  }
+
   void _copier(String texte) {
     if (texte.isEmpty) return;
     Clipboard.setData(ClipboardData(text: texte));
@@ -1579,7 +1593,11 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
       children: [
         Positioned.fill(
           child: _messages.isEmpty
-              ? _AccueilVide(pseudo: ref.read(meshRepositoryProvider).myPseudo)
+              ? _AccueilVide(
+                  pseudo: ref.read(meshRepositoryProvider).myPseudo,
+                  basLibre: _hauteurComposeur,
+                  onCompetence: _choisirCompetence,
+                )
               : NotificationListener<ScrollNotification>(
                   onNotification: (_) {
                     _mesurer();
@@ -2692,11 +2710,19 @@ class _CurseurClignotantState extends State<_CurseurClignotant>
 /// à quelqu'un qui ne sait pas quoi demander ne l'aide pas. Les pastilles
 /// de départ vivent dans le composeur, au plus près du champ.
 class _AccueilVide extends StatelessWidget {
-  const _AccueilVide({this.pseudo});
+  const _AccueilVide({this.pseudo, this.basLibre = 96, this.onCompetence});
 
   /// Le prénom ou pseudo, quand on le connaît. Saluer quelqu'un par son
   /// nom coûte une ligne et change le ton de tout l'écran.
   final String? pseudo;
+
+  /// La hauteur du composeur posé par-dessus : l'accueil ne passe pas
+  /// dessous.
+  final double basLibre;
+
+  /// Les cartes de compétences, à la manière de Kimi : sous la salutation,
+  /// ce que l'assistant sait produire. Voir `competences_assistant.dart`.
+  final void Function(Competence)? onCompetence;
 
   @override
   Widget build(BuildContext context) {
@@ -2708,61 +2734,82 @@ class _AccueilVide extends StatelessWidget {
     // du haut en bas serait exactement rater le point.
     final calme = MediaQuery.disableAnimationsOf(context);
 
-    final bloc = Center(
-      child: Padding(
-        // ⚠️ REMONTÉ D'UN DIXIÈME. Centrer sur toute la hauteur, avec un
-        // composeur en bas, pose le bloc trop bas : l'œil le lit comme
-        // « collé au clavier » plutôt que posé au milieu.
-        padding: EdgeInsets.only(
-          left: DesignTokens.space8,
-          right: DesignTokens.space8,
-          bottom: MediaQuery.sizeOf(context).height * 0.1,
+    final salutation = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        calme
+            ? const AvatarAssistant(taille: 60)
+            : const AvatarAssistant(taille: 60)
+                .animate()
+                .fadeIn(duration: DesignTokens.durationSheet)
+                .scaleXY(
+                  begin: 0.88,
+                  curve: DesignTokens.curveEnter,
+                  duration: DesignTokens.durationSheet,
+                ),
+        const SizedBox(height: DesignTokens.space4),
+        Text(
+          nom == null || nom.isEmpty ? l10n.aiGreetingPlain : l10n.aiGreeting(nom),
+          textAlign: TextAlign.center,
+          style: OuroTypography.title1.copyWith(
+            color: OuroColors.label,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+          ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            calme
-                ? const AvatarAssistant(taille: 64)
-                : const AvatarAssistant(taille: 64)
-                    .animate()
-                    .fadeIn(duration: DesignTokens.durationSheet)
-                    .scaleXY(
-                      begin: 0.88,
-                      curve: DesignTokens.curveEnter,
-                      duration: DesignTokens.durationSheet,
-                    ),
-            const SizedBox(height: DesignTokens.space5),
-            Text(
-              nom == null || nom.isEmpty
-                  ? l10n.aiGreetingPlain
-                  : l10n.aiGreeting(nom),
-              textAlign: TextAlign.center,
-              style: OuroTypography.title1.copyWith(
-                color: OuroColors.label,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.space2),
-            Text(
-              l10n.aiGreetingHint,
-              textAlign: TextAlign.center,
-              style: OuroTypography.subheadline.copyWith(
-                color: OuroColors.secondaryLabel,
-                height: 1.4,
-              ),
-            ),
-          ],
+        const SizedBox(height: DesignTokens.space2),
+        Text(
+          l10n.aiGreetingHint,
+          textAlign: TextAlign.center,
+          style: OuroTypography.subheadline.copyWith(
+            color: OuroColors.secondaryLabel,
+            height: 1.4,
+          ),
         ),
-      ),
+      ],
     );
-
-    return calme
-        ? bloc
-        : bloc
+    final animee = calme
+        ? salutation
+        : salutation
             .animate()
             .fadeIn(duration: DesignTokens.durationSheet, delay: 60.ms)
             .slideY(begin: 0.06, curve: DesignTokens.curveEnter);
+
+    // Défilable : avec le clavier ouvert, l'accueil et ses cartes ne
+    // tiennent plus, et rien ne doit passer sous le composeur.
+    return LayoutBuilder(
+      builder: (context, c) => SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          DesignTokens.space4,
+          DesignTokens.space4,
+          DesignTokens.space4,
+          basLibre + DesignTokens.space3,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: (c.maxHeight - basLibre - DesignTokens.space3 - DesignTokens.space4).clamp(0, double.infinity),
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  animee,
+                  if (onCompetence != null) ...[
+                    const SizedBox(height: DesignTokens.space6),
+                    GrilleCompetences(
+                      langue: l10n.localeName,
+                      onChoisir: onCompetence!,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
