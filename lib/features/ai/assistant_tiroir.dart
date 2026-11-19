@@ -31,6 +31,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'conversations_screen.dart' show zoneDe;
+
 import '../../core/services/conversations_ia_store.dart';
 import '../../design_system/design_tokens.dart';
 import '../../design_system/ouro_colors.dart';
@@ -58,7 +60,7 @@ class AssistantTiroir extends StatefulWidget {
   final void Function(String conversationId) onOuvrir;
   final VoidCallback onNouvelle;
   final void Function(DestinationAssistant) onDestination;
-  final void Function(ConversationIa) onMenuConversation;
+  final void Function(ConversationIa c, Rect? zone) onMenuConversation;
 
   /// La première lettre du pseudo, dans la pastille du bas.
   final String initiale;
@@ -181,7 +183,7 @@ class _AssistantTiroirState extends State<AssistantTiroir> {
           OuroHaptics.selection();
           widget.onOuvrir(c.id);
         },
-        onLongPress: () => widget.onMenuConversation(c),
+        onLongPress: (ligne) => widget.onMenuConversation(c, zoneDe(ligne)),
       );
 }
 
@@ -288,7 +290,8 @@ class _LigneTiroir extends StatelessWidget {
   final String titre;
   final bool active;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  /// Reçoit le contexte de la ligne, pour poser le menu Glasmio dessus.
+  final void Function(BuildContext ligne) onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -297,7 +300,7 @@ class _LigneTiroir extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        onLongPress: onLongPress,
+        onLongPress: () => onLongPress(context),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           decoration: BoxDecoration(

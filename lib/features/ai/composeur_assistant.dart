@@ -53,6 +53,7 @@ import '../../design_system/ouro_spinner.dart';
 import '../../design_system/ouro_typography.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'selecteur_moteur.dart';
+import '../../core/services/superposition_glasmio.dart';
 
 /// Ce que le « + » propose.
 ///
@@ -135,6 +136,21 @@ class _ComposeurAssistantState extends State<ComposeurAssistant> {
 
   Future<void> _menuPlus() async {
     OuroHaptics.light();
+    // La feuille d'actions de verre Glasmio (Android 13+), comme le « + »
+    // de Kimi qui ouvre une feuille ; sinon la feuille Flutter.
+    final l10n = AppLocalizations.of(context);
+    final verre = await SuperpositionGlasmio.feuille(
+      message: l10n.cpNoPhoto,
+      boutons: [
+        BoutonGlasmio('fichier', l10n.cpFile),
+        BoutonGlasmio('annuler', l10n.actionCancel, annuler: true),
+      ],
+    );
+    if (verre != null) {
+      if (verre.id == 'fichier') await widget.onJoindre(ActionJointe.fichier);
+      return;
+    }
+    if (!mounted) return;
     final choix = await showModalBottomSheet<ActionJointe>(
       context: context,
       backgroundColor: Colors.transparent,

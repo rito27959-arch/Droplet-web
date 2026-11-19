@@ -36,6 +36,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../core/services/superposition_glasmio.dart';
 import '../../core/services/artefacts_store.dart';
 import '../../design_system/design_tokens.dart';
 import '../../design_system/ouro_colors.dart';
@@ -98,6 +99,28 @@ class _ArtefactScreenState extends State<ArtefactScreen> {
     if (a == null || a.nbVersions < 2) return;
     final l10n = AppLocalizations.of(context);
     OuroHaptics.light();
+    // Les versions dans la feuille de verre Glasmio (Android 13+), la plus
+    // récente en haut, celle qu'on regarde cochée.
+    final verre = await SuperpositionGlasmio.feuille(
+      titre: l10n.arVersions,
+      boutons: [
+        for (var i = a.nbVersions; i >= 1; i--)
+          BoutonGlasmio(
+            'v$i',
+            '${i == a.version ? '✓  ' : ''}${l10n.arVersion(i)}${i == a.nbVersions ? ' · ${l10n.arLatest}' : ''}',
+          ),
+        BoutonGlasmio('annuler', l10n.actionCancel, annuler: true),
+      ],
+    );
+    if (verre != null) {
+      final n = int.tryParse((verre.id ?? '').replaceFirst('v', ''));
+      if (n != null && mounted) {
+        setState(() => _version = n == a.nbVersions ? null : n);
+        _charger();
+      }
+      return;
+    }
+    if (!mounted) return;
     final choix = await showModalBottomSheet<int>(
       context: context,
       backgroundColor: Colors.transparent,

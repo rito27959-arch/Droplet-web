@@ -99,7 +99,9 @@ import '../../core/services/groq_service.dart';
 import '../../core/services/lecture_pdf.dart';
 import '../../core/services/outils_assistant.dart';
 import '../../core/services/production_fichiers.dart';
+import 'actions_message.dart';
 import 'artefact_screen.dart';
+import '../../core/services/superposition_glasmio.dart';
 import 'assistant_tiroir.dart';
 import 'composeur_assistant.dart';
 import 'conversations_screen.dart';
@@ -1324,6 +1326,80 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     }
   }
 
+  /// Le menu d'un message, en verre Glasmio sur la bulle (Android 13+),
+  /// sinon la feuille Flutter. Mêmes actions des deux côtés.
+  Future<void> _menuMessage(int i, Rect? zone) async {
+    if (i >= _messages.length) return;
+    final l10n = AppLocalizations.of(context);
+    final m = _messages[i];
+    final mine = m.deMoi;
+    final derniere = i == _messages.length - 1;
+    final peutRegenerer = !mine && !_genereEnCours && derniere;
+    OuroHaptics.light();
+    final elements = [
+      ElementMenuGlasmio('copier', l10n.amCopy, icone: Icons.copy_rounded),
+      if (!mine) ElementMenuGlasmio('markdown', l10n.amCopyMarkdown, icone: Icons.code_rounded),
+      ElementMenuGlasmio('partager', l10n.amShare, icone: Icons.shortcut_rounded),
+      if (!mine) ElementMenuGlasmio('lire', l10n.amReadAloud, icone: Icons.volume_up_rounded),
+      if (peutRegenerer) ElementMenuGlasmio('regenerer', l10n.amRegenerate, icone: Icons.refresh_rounded),
+      if (mine && !_genereEnCours) ElementMenuGlasmio('modifier', l10n.amEdit, icone: Icons.edit_rounded),
+      ElementMenuGlasmio('contexte', l10n.amAsContext, icone: Icons.reply_rounded),
+    ];
+    String? id;
+    final r = zone == null ? null : await SuperpositionGlasmio.menu(zone: zone, elements: elements, aDroite: mine);
+    if (r != null) {
+      id = r.id;
+    } else {
+      if (!mounted) return;
+      final a = await ouvrirActionsMessage(
+        context,
+        deMoi: mine,
+        dejaChapitre: false,
+        lectureDisponible: !mine,
+        avecChapitres: false,
+      );
+      id = switch (a) {
+        ActionMessage.copier => 'copier',
+        ActionMessage.copierMarkdown => 'markdown',
+        ActionMessage.partager => 'partager',
+        ActionMessage.lire => 'lire',
+        ActionMessage.regenerer => peutRegenerer ? 'regenerer' : null,
+        ActionMessage.modifier => 'modifier',
+        ActionMessage.contexte => 'contexte',
+        _ => null,
+      };
+    }
+    if (!mounted || id == null) return;
+    switch (id) {
+      case 'copier':
+        _copier(mine ? m.texte : texteBrutDepuisMarkdown(m.texte));
+      case 'markdown':
+        _copier(m.texte);
+      case 'partager':
+        await _partager(m.texte);
+      case 'lire':
+        await _lire(i);
+      case 'regenerer':
+        await _regenerer();
+      case 'contexte':
+        // Comme « répondre » : le passage cité en tête du champ.
+        final cite = m.texte.trim().split('\n').map((l) => '> $l').join('\n');
+        _inputCtrl.text = '$cite\n\n';
+        _inputCtrl.selection = TextSelection.collapsed(offset: _inputCtrl.text.length);
+      case 'modifier':
+        // ⚠️ MODIFIER EFFACE LA SUITE : tout ce qui vient après répondait à
+        // l'ancienne question. On le demande avant.
+        final sur = await confirmerModification(context, _messages.length - i - 1);
+        if (!sur || !mounted) return;
+        setState(() {
+          _inputCtrl.text = m.texte;
+          _messages.removeRange(i, _messages.length);
+        });
+        _inputCtrl.selection = TextSelection.collapsed(offset: _inputCtrl.text.length);
+        unawaited(_sauvegarderHistorique());
+    }
+  }
+
   void _copier(String texte) {
     if (texte.isEmpty) return;
     Clipboard.setData(ClipboardData(text: texte));
@@ -1381,7 +1457,18 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
               onOuvrir: _ouvrirConversation,
               onNouvelle: _nouvelleConversation,
               onDestination: _allerA,
-              onMenuConversation: (c) {},
+              // L'appui long sur une conversation du tiroir : le menu de
+              // verre Glasmio sur la ligne (épingler, renommer, supprimer).
+              // Supprimer celle qu'on lit ouvre une conversation neuve.
+              onMenuConversation: (c, zone) => gererConversationIa(
+                context,
+                store,
+                c,
+                zone: zone,
+                apresSuppression: () {
+                  if (c.id == _conversationId) unawaited(_nouvelleConversation());
+                },
+              ),
             ),
       appBar: AppBar(
         backgroundColor: OuroColors.systemBackground,
@@ -1530,6 +1617,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
                     onPartager: () => _partager(_messages[i].texte),
                     onNoter: (avis) => _noter(i, avis),
                     onRegenerer: _regenerer,
+                    onMenu: (zone) => _menuMessage(i, zone),
                   ),
                 ),
                 ),
@@ -1650,6 +1738,7 @@ class _Bulle extends StatelessWidget {
     this.onPartager,
     this.onNoter,
     this.onRegenerer,
+    this.onMenu,
     this.etapeEnCours,
     this.onArtefact,
     this.onFichier,
@@ -1675,6 +1764,11 @@ class _Bulle extends StatelessWidget {
   final VoidCallback? onPartager;
   final ValueChanged<int>? onNoter;
   final VoidCallback? onRegenerer;
+
+  /// L'appui long : le menu de verre Glasmio posé sur le message (copier,
+  /// copier en Markdown, partager, lire, régénérer, modifier…). Reçoit le
+  /// rectangle du message à l'écran.
+  final void Function(Rect? zone)? onMenu;
 
   /// Ce que l'assistant fait à l'instant, sous cette réponse.
   final String? etapeEnCours;
@@ -1719,7 +1813,9 @@ class _Bulle extends StatelessWidget {
     // astérisque ni dièse à l'écran. La question, elle, garde sa bulle.
     if (!mine) {
       return GestureDetector(
-        onLongPress: () => onCopier(texteBrutDepuisMarkdown(message.texte)),
+        onLongPress: () => onMenu == null
+            ? onCopier(texteBrutDepuisMarkdown(message.texte))
+            : onMenu!(zoneDe(context)),
         child: Padding(
           padding: const EdgeInsets.only(top: 6, bottom: 10, right: 6),
           child: Column(
@@ -1796,7 +1892,9 @@ class _Bulle extends StatelessWidget {
     return GestureDetector(
           // Copier une question qu'on vient soi-même de taper n'a pas
           // d'usage réel ; copier la réponse de l'assistant, si.
-          onLongPress: mine ? null : () => onCopier(message.texte),
+          onLongPress: onMenu == null
+              ? (mine ? null : () => onCopier(message.texte))
+              : () => onMenu!(zoneDe(context)),
           child: Align(
             alignment: mine
                 ? AlignmentDirectional.centerEnd

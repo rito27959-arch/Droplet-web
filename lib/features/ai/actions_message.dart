@@ -60,6 +60,7 @@ Future<ActionMessage?> ouvrirActionsMessage(
   required bool deMoi,
   required bool dejaChapitre,
   required bool lectureDisponible,
+  bool avecChapitres = true,
 }) {
   OuroHaptics.light();
   return showModalBottomSheet<ActionMessage>(
@@ -69,6 +70,7 @@ Future<ActionMessage?> ouvrirActionsMessage(
       deMoi: deMoi,
       dejaChapitre: dejaChapitre,
       lectureDisponible: lectureDisponible,
+      avecChapitres: avecChapitres,
     ),
   );
 }
@@ -78,8 +80,10 @@ class _MenuMessage extends StatelessWidget {
     required this.deMoi,
     required this.dejaChapitre,
     required this.lectureDisponible,
+    this.avecChapitres = true,
   });
 
+  final bool avecChapitres;
   final bool deMoi;
   final bool dejaChapitre;
   final bool lectureDisponible;
@@ -162,6 +166,7 @@ class _MenuMessage extends StatelessWidget {
                   onTap: () =>
                       Navigator.pop(context, ActionMessage.contexte),
                 ),
+                if (avecChapitres)
                 OuroListRow(
                   icon: dejaChapitre
                       ? Icons.bookmark_rounded

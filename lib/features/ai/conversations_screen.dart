@@ -30,6 +30,7 @@
 // ============================================================================
 
 import '../../design_system/ouro_alert.dart';
+import '../../core/services/superposition_glasmio.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -103,60 +104,8 @@ class _ConversationsIaScreenState extends State<ConversationsIaScreen> {
 
   // ── Actions sur une ligne ─────────────────────────────────────────────
 
-  Future<void> _menu(ConversationIa c) async {
-    final l10n = AppLocalizations.of(context);
-    OuroHaptics.light();
-    final choix = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _MenuConversation(epinglee: c.epinglee),
-    );
-    if (!mounted || choix == null) return;
-    switch (choix) {
-      case 'epingler':
-        widget.store.epingler(c.id, epinglee: !c.epinglee);
-      case 'renommer':
-        final titre = await _demanderTitre(c);
-        if (titre != null) widget.store.renommer(c.id, titre);
-      case 'supprimer':
-        final sur = await _confirmerSuppression(l10n);
-        if (sur) widget.store.supprimerConversation(c.id);
-    }
-  }
-
-  Future<String?> _demanderTitre(ConversationIa c) async {
-    final l10n = AppLocalizations.of(context);
-    final champ = TextEditingController(
-      text: c.titre.isEmpty ? _libelle(c, l10n) : c.titre,
-    );
-    final titre = await ouroPrompt(
-      context,
-      title: l10n.cvRename,
-      initialValue: champ.text,
-      placeholder: l10n.cvRenameHint,
-      cancelLabel: l10n.actionCancel,
-      confirmLabel: l10n.actionSave,
-      maxLength: 60,
-    );
-    champ.dispose();
-    final t = titre?.trim();
-    return (t == null || t.isEmpty) ? null : t;
-  }
-
-  Future<bool> _confirmerSuppression(AppLocalizations l10n) async {
-    // ⚠️ ON DEMANDE. Une conversation supprimée ne revient pas : il n'y a
-    // pas de corbeille, et il n'y en aura pas — un assistant local ne
-    // garde rien ailleurs d'où le récupérer.
-    final r = await ouroConfirm(
-      context,
-      title: l10n.cvDeleteTitle,
-      message: l10n.cvDeleteBody,
-      cancelLabel: l10n.actionCancel,
-      confirmLabel: l10n.actionDelete,
-      destructive: true,
-    );
-    return r ?? false;
-  }
+  Future<void> _menu(ConversationIa c, BuildContext ligne) =>
+      gererConversationIa(context, widget.store, c, zone: zoneDe(ligne));
 
   // ── Affichage ─────────────────────────────────────────────────────────
 
@@ -252,7 +201,7 @@ class _ConversationsIaScreenState extends State<ConversationsIaScreen> {
           OuroHaptics.selection();
           widget.onOuvrir(c.id);
         },
-        onLongPress: () => _menu(c),
+        onLongPress: (ligne) => _menu(c, ligne),
       );
 
   List<Widget> _sliversRecherche(AppLocalizations l10n) {
@@ -297,7 +246,7 @@ class _ConversationsIaScreenState extends State<ConversationsIaScreen> {
                     messageId: r.messageId,
                   );
                 },
-                onLongPress: () => _menu(r.conversation),
+                onLongPress: (ligne) => _menu(r.conversation, ligne),
               ),
           ],
         ),
@@ -365,14 +314,15 @@ class _LigneConversation extends StatelessWidget {
   final DateTime date;
   final bool epinglee;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  /// Reçoit le contexte de la ligne, pour poser le menu Glasmio dessus.
+  final void Function(BuildContext ligne) onLongPress;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      onLongPress: onLongPress,
+      onLongPress: () => onLongPress(context),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: DesignTokens.screenMargin,
@@ -604,4 +554,104 @@ class _Vide extends StatelessWidget {
           ],
         ),
       );
+}
+
+
+// ══ LES ACTIONS SUR UNE CONVERSATION, EN VERRE GLASMIO ═════════════════
+//
+// Une seule porte d'entrée, partagée par la liste plein écran et par le
+// tiroir : le menu d'appui long de Glasmio s'ouvre sur la ligne touchée
+// (Android 13+) ; sans Glasmio, la feuille Flutter habituelle. Renommer
+// et supprimer passent par `ouroPrompt` / `ouroConfirm`, déjà en verre
+// Glasmio quand il est là.
+
+/// Le rectangle d'un élément à l'écran, pour y poser un menu.
+Rect? zoneDe(BuildContext context) {
+  final r = context.findRenderObject();
+  if (r is! RenderBox || !r.hasSize) return null;
+  return r.localToGlobal(Offset.zero) & r.size;
+}
+
+Future<void> gererConversationIa(
+  BuildContext context,
+  ConversationsIaStore store,
+  ConversationIa c, {
+  Rect? zone,
+  VoidCallback? apresSuppression,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  OuroHaptics.light();
+  String? choix;
+  final elements = [
+    ElementMenuGlasmio(
+      'epingler',
+      c.epinglee ? l10n.cvUnpin : l10n.cvPin,
+      icone: c.epinglee ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+    ),
+    ElementMenuGlasmio('renommer', l10n.cvRename, icone: Icons.edit_rounded),
+    ElementMenuGlasmio('supprimer', l10n.actionDelete, icone: Icons.delete_outline_rounded, destructif: true),
+  ];
+  final ChoixGlasmio? r = zone != null
+      ? await SuperpositionGlasmio.menu(zone: zone, elements: elements)
+      : await SuperpositionGlasmio.feuille(
+          titre: ConversationsIaScreenLibelle.de(c, l10n),
+          boutons: [
+            for (final e in elements) BoutonGlasmio(e.id, e.titre, destructif: e.destructif),
+            BoutonGlasmio('annuler', l10n.actionCancel, annuler: true),
+          ],
+        );
+  if (r != null) {
+    choix = r.id == 'annuler' ? null : r.id;
+  } else {
+    if (!context.mounted) return;
+    choix = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _MenuConversation(epinglee: c.epinglee),
+    );
+  }
+  if (!context.mounted || choix == null) return;
+  switch (choix) {
+    case 'epingler':
+      store.epingler(c.id, epinglee: !c.epinglee);
+    case 'renommer':
+      final titre = await ouroPrompt(
+        context,
+        title: l10n.cvRename,
+        initialValue: ConversationsIaScreenLibelle.de(c, l10n),
+        placeholder: l10n.cvRenameHint,
+        cancelLabel: l10n.actionCancel,
+        confirmLabel: l10n.actionSave,
+        maxLength: 60,
+      );
+      final t = titre?.trim();
+      if (t != null && t.isNotEmpty) store.renommer(c.id, t);
+    case 'supprimer':
+      // ⚠️ ON DEMANDE. Une conversation supprimée ne revient pas : il n'y
+      // a pas de corbeille — un assistant local ne garde rien ailleurs.
+      final sur = await ouroConfirm(
+        context,
+        title: l10n.cvDeleteTitle,
+        message: l10n.cvDeleteBody,
+        cancelLabel: l10n.actionCancel,
+        confirmLabel: l10n.actionDelete,
+        destructive: true,
+      );
+      if (sur ?? false) {
+        store.supprimerConversation(c.id);
+        apresSuppression?.call();
+      }
+  }
+}
+
+/// Le titre affiché d'une conversation (titre, sinon début du premier
+/// message, sinon « Sans titre »).
+class ConversationsIaScreenLibelle {
+  static String de(ConversationIa c, AppLocalizations l10n) {
+    if (c.titre.isNotEmpty) return c.titre;
+    if (c.apercu.isNotEmpty) {
+      return c.apercu.length <= 48 ? c.apercu : '${c.apercu.substring(0, 48)}…';
+    }
+    return l10n.cvUntitled;
+  }
 }

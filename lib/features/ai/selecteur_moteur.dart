@@ -33,6 +33,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../core/services/superposition_glasmio.dart';
 import '../../core/services/ai_assistant_service.dart' show kAiModelTailleMo;
 import '../../core/services/conversations_ia_store.dart';
 import '../../design_system/design_tokens.dart';
@@ -130,6 +131,28 @@ class SelecteurMoteur extends StatelessWidget {
     bool localInstalle = true,
   }) async {
     OuroHaptics.light();
+    // La feuille de verre Glasmio d'abord (Android 13+) : le choix courant
+    // porte sa coche, et le message rappelle ce que coûte chaque moteur.
+    final l10n = AppLocalizations.of(context);
+    final local = moteur == OrigineReponse.local;
+    final verre = await SuperpositionGlasmio.feuille(
+      titre: l10n.moTitle,
+      message: [
+        '${l10n.moLocal} — ${localInstalle ? l10n.moLocalBody : l10n.moLocalToDownload(kAiModelTailleMo)}',
+        '${l10n.moOnline} — ${enLigneDisponible ? l10n.moOnlineBody : l10n.moOnlineNoKey}',
+      ].join('\n\n'),
+      boutons: [
+        BoutonGlasmio('local', local ? '✓  ${l10n.moLocal}' : l10n.moLocal),
+        BoutonGlasmio('enLigne', local ? l10n.moOnline : '✓  ${l10n.moOnline}'),
+        BoutonGlasmio('annuler', l10n.actionCancel, annuler: true),
+      ],
+    );
+    if (verre != null) {
+      if (verre.id == 'local') onChanger(OrigineReponse.local);
+      if (verre.id == 'enLigne') onChanger(OrigineReponse.enLigne);
+      return;
+    }
+    if (!context.mounted) return;
     final choix = await showModalBottomSheet<OrigineReponse>(
       context: context,
       backgroundColor: Colors.transparent,
