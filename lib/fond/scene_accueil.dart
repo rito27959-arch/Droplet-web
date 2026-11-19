@@ -22,7 +22,6 @@
 // « Réduire les animations » → une image fixe.
 import 'dart:math';
 
-import 'package:flutter/painting.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
@@ -268,7 +267,7 @@ class _PeintreScene extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.6
       ..strokeCap = StrokeCap.round
-      ..color = (horsLigne ? w.encre : w.accent).withValues(alpha: horsLigne ? 0.12 : 0.32);
+      ..color = (horsLigne ? w.encre : w.accent).withValues(alpha: horsLigne ? 0.12 : 0.42);
     for (final (a, b) in _liens) {
       _pointille(canvas, p[a], p[b], lien, 1.5, 6, 0);
     }
