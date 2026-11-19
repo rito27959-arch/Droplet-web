@@ -20,6 +20,7 @@ import '../design_system/ouro_typography.dart';
 import '../donnees/depot.dart';
 import '../donnees/modeles.dart' show kMoi;
 import '../donnees/photos_contacts.dart';
+import '../fond/doodle.dart';
 import 'coquille.dart' show DetailDroit;
 
 /// La courbe de sortie de l'app : rapide au départ, très douce à
@@ -1275,20 +1276,41 @@ class Fond extends StatelessWidget {
   Widget build(BuildContext context) {
     final f = fondsDiscussion[index % fondsDiscussion.length];
     final c = f.couleurs();
+    final sombre = OuroColors.isDark;
+    if (f.dessins) {
+      // Le fond dessiné, comme Telegram : un dégradé à plusieurs points de
+      // couleur très doux (un bleu, un vert d'eau, une lumière chaude), et
+      // par-dessus les petits dessins au trait de l'app, à peine visibles.
+      final taches = sombre
+          ? const [(Alignment(-0.9, -0.9), Color(0xFF16253F)), (Alignment(1, -0.6), Color(0xFF0F2A27)), (Alignment(0.8, 1), Color(0xFF231936))]
+          : const [(Alignment(-0.9, -0.9), Color(0xFFD5E5F6)), (Alignment(1, -0.6), Color(0xFFDCEFE3)), (Alignment(0.8, 1), Color(0xFFF4E6D3))];
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          ColoredBox(color: sombre ? const Color(0xFF0D1017) : const Color(0xFFEAEFF4)),
+          for (final (centre, couleur) in taches)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: centre,
+                  radius: 1.1,
+                  colors: [couleur.withValues(alpha: sombre ? 0.9 : 0.95), couleur.withValues(alpha: 0)],
+                ),
+              ),
+            ),
+          CalqueDoodle(
+            couleur: sombre ? const Color(0x14FFFFFF) : const Color(0x1A123F5C),
+          ),
+        ],
+      );
+    }
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: c),
       ),
-      child: f.dessins
-          ? RepaintBoundary(
-              child: CustomPaint(
-                painter: PeintreDessins(OuroColors.isDark ? const Color(0x12FFFFFF) : const Color(0x10000000)),
-                size: Size.infinite,
-              ),
-            )
-          : f.motif
-              ? CustomPaint(painter: PeintreMotif(OuroColors.label), size: Size.infinite)
-              : const SizedBox.expand(),
+      child: f.motif
+          ? CustomPaint(painter: PeintreMotif(OuroColors.label), size: Size.infinite)
+          : const SizedBox.expand(),
     );
   }
 }
