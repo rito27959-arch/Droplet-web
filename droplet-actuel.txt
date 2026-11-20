@@ -1,4 +1,4 @@
-Flutter 3.50.0 • channel stable • https://github.com/flutter/flutter.git
+Flutter 3.50.1 • channel stable • https://github.com/flutter/flutter.git
 ⚠️ absent du dépôt (bouche-trou de shader) : shaders/liquid.frag
 ⚠️ absent du dépôt (bouche-trou de shader) : shaders/nexus.frag
 ⚠️ absent du dépôt (bouche-trou de shader) : shaders/fond_prisme.frag
@@ -42,12 +42,12 @@ code 0
 0
    info • 'package:flutter/material.dart' is deprecated and shouldn't be used. Use package:material_ui/material_ui.dart instead. This feature was deprecated after v3.47.0-0.0.pre. Try replacing the use of the deprecated member with the replacement • lib/shared/widgets/typing_indicator.dart:14:1 • deprecated_member_use
 
-307 issues found. (ran in 21.3s)
+312 issues found. (ran in 16.1s)
 === DEBUG : 1
 FAILURE: Build failed with an exception.
 * What went wrong:
    > Error: Your project's Gradle version (8.14.0) is lower than Flutter's minimum supported version of 9.3.1. Please upgrade your Gradle version. 
-BUILD FAILED in 1m 25s
+BUILD FAILED in 1m 11s
 * What went wrong:
 An exception occurred applying plugin request [id: 'dev.flutter.flutter-gradle-plugin']
 > Failed to apply plugin 'dev.flutter.flutter-gradle-plugin'.
