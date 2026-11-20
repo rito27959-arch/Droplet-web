@@ -1,0 +1,15 @@
+=== DROPLET ID
+{"demande": "8b-v4uPdDYNTakRuM3MFsw", "code": "50", "android": "intent://droplet/a/8b-v4uPdDYNTakRuM3MFsw?e=id-test.dropletmesh.app#Intent;scheme=droplet;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;S.browser_fallback_url=https%3A%2F%2Fid-test.dropletmesh.app%2Fa%2F8b-v4uPdDYNTakRuM3MFsw;end"}
+lien : intent://droplet/a/8b-v4uPdDYNTakRuM3MFsw?e=id-test.dropletmesh.app#Intent;scheme=droplet;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;S.browser_fallback_url=https%3A%2F%2Fid-test.dropletmesh.app%2Fa%2F8b-v4uPdDYNTakRuM3MFsw;end
+adb: device 'emulator-5554' not found
+bouton Approuver : introuvable
+au premier plan après approbation : 
+état vu par le site : attente
+Traceback (most recent call last):
+  File "/home/runner/work/Droplet-web/Droplet-web/.github/outils/droplet_id_e2e.py", line 91, in <module>
+    {'commencer': commencer, 'etat': etat, 'terminer': terminer}[sys.argv[1]](sys.argv[2])
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/runner/work/Droplet-web/Droplet-web/.github/outils/droplet_id_e2e.py", line 70, in terminer
+    assert s == 200, f'terminer : HTTP {s} {corps[:200]}'
+           ^^^^^^^^
+AssertionError: terminer : HTTP 409 {"erreur":"pas_encore","etat":"attente"}
