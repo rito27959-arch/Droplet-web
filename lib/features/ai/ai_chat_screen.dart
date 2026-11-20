@@ -108,6 +108,7 @@ import '../../core/services/superposition_glasmio.dart';
 import 'assistant_tiroir.dart';
 import 'competences_assistant.dart';
 import 'mascotte_assistant.dart' show PhraseProgressive;
+import 'fond_pluie.dart';
 import 'orbe_droplet.dart';
 import 'selecteur_moteur.dart';
 import '../../core/providers/premium_provider.dart' show estProProvider;
@@ -1580,9 +1581,13 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
 
     final store = _conversations;
 
+    // Sur une conversation vierge, la pluie couvre tout l'écran, jusque
+    // sous la barre du haut (qui devient transparente).
+    final accueil = _messages.isEmpty && !_vocalOuvert;
     return Scaffold(
       key: _cleScaffold,
       backgroundColor: OuroColors.systemBackground,
+      extendBodyBehindAppBar: accueil,
       // Le tiroir n'existe que lorsque sa base est ouverte : un tiroir
       // vide qui glisse sur rien est pire que pas de tiroir du tout.
       drawer: store == null
@@ -1614,7 +1619,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
       // et à droite le haut-parleur qui fait lire chaque réponse à voix
       // haute. La mémoire et « nouvelle session » vivent dans le tiroir.
       appBar: AppBar(
-        backgroundColor: OuroColors.systemBackground,
+        backgroundColor: accueil ? Colors.transparent : OuroColors.systemBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -1726,10 +1731,20 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
       children: [
         Positioned.fill(
           child: _messages.isEmpty
-              ? _AccueilVide(
-                  pseudo: ref.read(meshRepositoryProvider).myPseudo,
-                  basLibre: _hauteurComposeur,
-                  onPro: ref.watch(estProProvider) ? null : () => context.push('/premium'),
+              // La pluie sur la vitre (voir `fond_pluie.dart`) : elle vibre
+              // quand on garde le doigt pour parler, redouble pendant la
+              // transcription, et le doigt y essuie la buée.
+              ? FondPluie(
+                  etat: _enregistre
+                      ? EtatOrbe.ecoute
+                      : (_transcrit ? EtatOrbe.reflexion : EtatOrbe.repos),
+                  niveau: _niveauParole,
+                  child: _AccueilVide(
+                    pseudo: ref.read(meshRepositoryProvider).myPseudo,
+                    basLibre: _hauteurComposeur,
+                    hautLibre: MediaQuery.paddingOf(context).top + kToolbarHeight,
+                    onPro: ref.watch(estProProvider) ? null : () => context.push('/premium'),
+                  ),
                 )
               : NotificationListener<ScrollNotification>(
                   onNotification: (_) {
@@ -2856,7 +2871,10 @@ class _CurseurClignotantState extends State<_CurseurClignotant>
 /// à quelqu'un qui ne sait pas quoi demander ne l'aide pas. Les pastilles
 /// de départ vivent dans le composeur, au plus près du champ.
 class _AccueilVide extends StatelessWidget {
-  const _AccueilVide({this.pseudo, this.basLibre = 96, this.onPro});
+  const _AccueilVide({this.pseudo, this.basLibre = 96, this.hautLibre = 0, this.onPro});
+
+  /// La barre du haut, transparente, posée au-dessus de la pluie.
+  final double hautLibre;
 
   /// Le prénom ou pseudo, quand on le connaît.
   final String? pseudo;
@@ -2921,13 +2939,13 @@ class _AccueilVide extends StatelessWidget {
       builder: (context, c) => SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
           DesignTokens.space6,
-          DesignTokens.space4,
+          hautLibre + DesignTokens.space4,
           DesignTokens.space6,
           basLibre + DesignTokens.space3,
         ),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            minHeight: (c.maxHeight - basLibre - DesignTokens.space3 - DesignTokens.space4).clamp(0, double.infinity),
+            minHeight: (c.maxHeight - hautLibre - basLibre - DesignTokens.space3 - DesignTokens.space4).clamp(0, double.infinity),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -2935,25 +2953,21 @@ class _AccueilVide extends StatelessWidget {
               // Le bloc remonté d'un dixième : centré sur toute la hauteur,
               // il paraîtrait « collé au clavier ».
               SizedBox(height: MediaQuery.sizeOf(context).height * 0.04),
-              // L'orbe de verre et de lumière (un shader, voir
-              // `orbe_droplet.dart`) : elle a remplacé la mascotte.
-              calme
-                  ? const OrbeDroplet(taille: 132)
-                  : const OrbeDroplet(taille: 132)
-                      .animate()
-                      .fadeIn(duration: 520.ms)
-                      .scaleXY(begin: 0.55, curve: Curves.easeOutBack, duration: 900.ms),
-              const SizedBox(height: DesignTokens.space6),
+              // La pluie fait le décor ; la phrase seule au centre, comme
+              // écrite sur la buée.
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 360),
                 child: PhraseProgressive(
                   texte: phrase,
                   delai: calme ? Duration.zero : const Duration(milliseconds: 380),
+                  // Sur la vitre : blanc, avec une ombre douce qui le détache
+                  // des lumières floues derrière.
                   style: OuroTypography.title1.copyWith(
-                    color: OuroColors.label,
+                    color: Colors.white,
                     fontWeight: FontWeight.w300,
                     height: 1.3,
                     letterSpacing: -0.3,
+                    shadows: const [Shadow(color: Color(0x99000000), blurRadius: 14)],
                   ),
                 ),
               ),

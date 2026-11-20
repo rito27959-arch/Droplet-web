@@ -308,6 +308,7 @@ flutter:
     - shaders/fond_prisme.frag
     - shaders/lentille_ios.frag
     - shaders/orbe_droplet.frag
+    - shaders/pluie_vitre.frag
 
 dependency_overrides:
   archive: ^4.0.0
