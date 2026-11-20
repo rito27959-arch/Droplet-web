@@ -85,12 +85,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
+import 'orbe_droplet.dart';
 import '../../core/services/groq_service.dart';
 import '../../design_system/design_tokens.dart';
 import '../../design_system/ouro_colors.dart';
@@ -139,6 +141,18 @@ class _CoucheVocaleState extends State<CoucheVocale>
     with SingleTickerProviderStateMixin {
   final _micro = AudioRecorder();
   final _voix = FlutterTts();
+
+  // ── LA VOIX NATURELLE (Orpheus, open source, servi par Groq) ──────────
+  //
+  // Pour les langues qui ont une voix Orpheus (anglais, arabe), la réponse
+  // est dite par un vrai modèle de voix au lieu de la synthèse du
+  // téléphone : phrase par phrase, la suivante se fabriquant pendant que
+  // la précédente se dit. Ailleurs, la meilleure voix du téléphone (les
+  // voix « réseau » de Google, neuronales, d'abord).
+  final AudioPlayer _lecteur = AudioPlayer();
+  int _jetonParole = 0;
+  bool _naturelEnCours = false;
+  bool _voixChoisie = false;
 
   EtatVocal _etat = EtatVocal.pret;
   String _derniereReponse = '';
@@ -198,7 +212,26 @@ class _CoucheVocaleState extends State<CoucheVocale>
     _respiration.dispose();
     unawaited(_micro.dispose());
     unawaited(_voix.stop());
+    unawaited(_lecteur.dispose());
     super.dispose();
+  }
+
+  /// Coupe toute voix en cours (le téléphone et Orpheus).
+  Future<void> _arreterVoix() async {
+    _jetonParole++;
+    _naturelEnCours = false;
+    await _voix.stop();
+    await _lecteur.stop();
+  }
+
+  /// L'appui « toucher pour interrompre » : on coupe, et on réécoute.
+  void _interrompre() {
+    OuroHaptics.light();
+    final naturel = _naturelEnCours;
+    unawaited(_arreterVoix());
+    // La voix du téléphone rappelle `_finDeParole` d'elle-même (son
+    // gestionnaire d'annulation) ; Orpheus, non.
+    if (naturel) _finDeParole();
   }
 
   void _finDeParole() {
@@ -356,8 +389,77 @@ class _CoucheVocaleState extends State<CoucheVocale>
     // Les sous-titres montrent CE QUI EST DIT, donc la version nettoyée —
     // pas le markdown brut, qu'on n'entendrait pas.
     if (mounted) setState(() => _derniereReponse = propre);
+    if (await _direNaturel(propre)) return;
     if (widget.langue != null) await _voix.setLanguage(widget.langue!);
+    await _choisirVoix();
     await _voix.speak(propre);
+  }
+
+  /// Dit la réponse avec Orpheus, phrase par phrase. Faux si la langue
+  /// n'a pas de voix Orpheus (ou que la première phrase échoue) : la voix
+  /// du téléphone prend alors le relais pour toute la réponse.
+  Future<bool> _direNaturel(String propre) async {
+    final langue = widget.langue ?? 'fr';
+    final phrases = decouperPhrases(propre);
+    if (phrases.isEmpty) return false;
+    final jeton = ++_jetonParole;
+    var prochaine = widget.groq.synthetiser(phrases.first, langue: langue);
+    for (var i = 0; i < phrases.length; i++) {
+      final wav = await prochaine;
+      if (jeton != _jetonParole || !mounted) return true;
+      if (wav == null) {
+        if (i == 0) return false;
+        // Une phrase du milieu a échoué : le téléphone dit le reste.
+        _naturelEnCours = false;
+        await _voix.speak(phrases.sublist(i).join(' '));
+        return true;
+      }
+      // La suivante se fabrique pendant que celle-ci se dit.
+      if (i + 1 < phrases.length) {
+        prochaine = widget.groq.synthetiser(phrases[i + 1], langue: langue);
+      }
+      _naturelEnCours = true;
+      final fin = _lecteur.onPlayerStateChanged
+          .firstWhere((e) => e == PlayerState.completed || e == PlayerState.stopped)
+          .timeout(const Duration(seconds: 30), onTimeout: () => PlayerState.stopped);
+      await _lecteur.play(BytesSource(wav, mimeType: 'audio/wav'));
+      await fin;
+      if (jeton != _jetonParole || !mounted) return true;
+    }
+    _naturelEnCours = false;
+    _finDeParole();
+    return true;
+  }
+
+  /// La meilleure voix du téléphone pour la langue : une voix « réseau »
+  /// (neuronale, celles de Google) si elle existe, sinon celle par défaut.
+  Future<void> _choisirVoix() async {
+    if (_voixChoisie) return;
+    _voixChoisie = true;
+    try {
+      final langue = (widget.langue ?? 'fr').toLowerCase();
+      final Object? voix = await _voix.getVoices;
+      if (voix is! List) return;
+      Map<String, String>? meilleure;
+      var score = -1;
+      for (final v in voix) {
+        if (v is! Map) continue;
+        final nom = '${v['name'] ?? ''}'.toLowerCase();
+        final locale = '${v['locale'] ?? ''}'.toLowerCase();
+        if (!locale.startsWith(langue)) continue;
+        var sc = 0;
+        if (nom.contains('network')) sc += 4;
+        if (nom.contains('neural') || nom.contains('wavenet')) sc += 3;
+        if (locale.contains('fr-fr') || locale.contains('en-us')) sc += 1;
+        if (sc > score) {
+          score = sc;
+          meilleure = {'name': '${v['name']}', 'locale': '${v['locale']}'};
+        }
+      }
+      if (meilleure != null) await _voix.setVoice(meilleure);
+    } on Object {
+      // Pas de liste de voix : la voix par défaut fera l'affaire.
+    }
   }
 
   /// Le micro coupé de Gemini : la couche reste, la boucle s'arrête.
@@ -370,7 +472,7 @@ class _CoucheVocaleState extends State<CoucheVocale>
       await _amplitudes?.cancel();
       _amplitudes = null;
       await _micro.stop();
-      await _voix.stop();
+      await _arreterVoix();
       if (mounted) setState(() => _etat = EtatVocal.pret);
     } else {
       _toursVides = 0;
@@ -382,7 +484,7 @@ class _CoucheVocaleState extends State<CoucheVocale>
     _silence?.cancel();
     await _amplitudes?.cancel();
     await _micro.stop();
-    await _voix.stop();
+    await _arreterVoix();
     widget.onQuitter();
   }
 
@@ -400,6 +502,37 @@ class _CoucheVocaleState extends State<CoucheVocale>
         // la réponse pousserait la pastille et ferait sauter ce qu'on
         // lisait. Gemini fige la sienne à trois lignes pour la même
         // raison ; au-delà, c'est le fil qui garde le texte entier.
+        // ── L'ORBE, AU-DESSUS DE TOUT ─────────────────────────────────
+        //
+        // Comme la sphère du mode vocal d'OpenAI : la présence de
+        // l'assistant, grande, au centre. Elle ondule avec la voix quand
+        // elle écoute, tourbillonne pendant qu'elle réfléchit, gonfle et
+        // se ride quand elle parle (voir `orbe_droplet.dart`). Un appui
+        // pendant qu'elle parle l'interrompt, comme l'onde.
+        Padding(
+          padding: const EdgeInsets.only(bottom: DesignTokens.space2),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: parle ? _interrompre : null,
+            child: AnimatedOpacity(
+              duration: DesignTokens.durationFast,
+              opacity: _coupe ? 0.45 : 1,
+              child: OrbeDroplet(
+                taille: 184,
+                etat: _coupe
+                    ? EtatOrbe.repos
+                    : switch (_etat) {
+                        EtatVocal.ecoute => EtatOrbe.ecoute,
+                        EtatVocal.transcription || EtatVocal.reflexion => EtatOrbe.reflexion,
+                        EtatVocal.parole => EtatOrbe.parole,
+                        _ => EtatOrbe.repos,
+                      },
+                niveau: _etat == EtatVocal.ecoute ? _niveau : 0,
+              ),
+            ),
+          ),
+        ),
+
         if (widget.sousTitres && _sousTitre().isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -479,12 +612,7 @@ class _CoucheVocaleState extends State<CoucheVocale>
                 Expanded(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: parle
-                        ? () {
-                            OuroHaptics.light();
-                            unawaited(_voix.stop());
-                          }
-                        : null,
+                    onTap: parle ? _interrompre : null,
                     child: Semantics(
                       liveRegion: true,
                       label: _libelleEtat(l10n),
@@ -691,3 +819,26 @@ class _RondVocal extends StatelessWidget {
 String texteAPrononcer(String texte) =>
     texteBrutDepuisMarkdown(texte.replaceAll(RegExp(r'```[\s\S]*?```'), ' '))
         .trim();
+
+
+/// Coupe un texte en phrases d'au plus 200 caractères (la limite d'une
+/// requête Orpheus), sans couper un mot.
+List<String> decouperPhrases(String texte) {
+  final brutes = texte
+      .split(RegExp(r'(?<=[.!?…。！？])\s+|\n+'))
+      .map((p) => p.trim())
+      .where((p) => p.isNotEmpty);
+  final sortie = <String>[];
+  for (final p in brutes) {
+    var reste = p;
+    while (reste.length > 200) {
+      var coupe = reste.lastIndexOf(RegExp(r'[,;:]\s'), 199);
+      if (coupe < 60) coupe = reste.lastIndexOf(' ', 199);
+      if (coupe < 1) coupe = 199;
+      sortie.add(reste.substring(0, coupe + 1).trim());
+      reste = reste.substring(coupe + 1).trim();
+    }
+    if (reste.isNotEmpty) sortie.add(reste);
+  }
+  return sortie;
+}

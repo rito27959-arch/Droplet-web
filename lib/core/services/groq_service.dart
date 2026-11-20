@@ -57,6 +57,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -586,6 +587,42 @@ class GroqService {
       rethrow;
     } on Object catch (e) {
       throw EchecIa(CauseEchecIa.reseau, detail: '$e');
+    }
+  }
+
+  /// LA VOIX NATURELLE : Orpheus (Canopy Labs, modèle open source) servi
+  /// par Groq. Rend le WAV d'UNE phrase, ou `null` si la langue n'a pas de
+  /// voix Orpheus (aujourd'hui : l'anglais et l'arabe saoudien) — on garde
+  /// alors la voix du téléphone.
+  ///
+  /// ⚠️ 200 CARACTÈRES AU PLUS par appel (limite de Groq) : le mode vocal
+  /// découpe la réponse en phrases et les enchaîne. C'est aussi ce qui
+  /// rend la voix rapide : la première phrase part pendant que les
+  /// suivantes se fabriquent.
+  ///
+  /// Par la clé personnelle seulement (le relais n'expose pas la voix).
+  Future<Uint8List?> synthetiser(String phrase, {required String langue}) async {
+    final (modele, voix) = switch (langue.split(RegExp('[_-]')).first) {
+      'en' => ('canopylabs/orpheus-v1-english', 'hannah'),
+      'ar' => ('canopylabs/orpheus-arabic-saudi', 'noura'),
+      _ => (null, null),
+    };
+    if (modele == null || voix == null) return null;
+    final cle = await clePersonnelle();
+    if (cle == null) return null;
+    final texte = phrase.length > 200 ? phrase.substring(0, 200) : phrase;
+    try {
+      final reponse = await _client
+          .post(
+            Uri.parse('https://api.groq.com/openai/v1/audio/speech'),
+            headers: {'Authorization': 'Bearer $cle', 'Content-Type': 'application/json'},
+            body: jsonEncode({'model': modele, 'voice': voix, 'input': texte, 'response_format': 'wav'}),
+          )
+          .timeout(const Duration(seconds: 20));
+      if (reponse.statusCode != 200) return null;
+      return reponse.bodyBytes;
+    } on Object {
+      return null;
     }
   }
 

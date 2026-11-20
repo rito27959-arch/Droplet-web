@@ -107,7 +107,8 @@ import 'artefact_screen.dart';
 import '../../core/services/superposition_glasmio.dart';
 import 'assistant_tiroir.dart';
 import 'competences_assistant.dart';
-import 'mascotte_assistant.dart';
+import 'mascotte_assistant.dart' show PhraseProgressive;
+import 'orbe_droplet.dart';
 import 'selecteur_moteur.dart';
 import '../../core/providers/premium_provider.dart' show estProProvider;
 import 'composeur_assistant.dart';
@@ -2934,12 +2935,14 @@ class _AccueilVide extends StatelessWidget {
               // Le bloc remonté d'un dixième : centré sur toute la hauteur,
               // il paraîtrait « collé au clavier ».
               SizedBox(height: MediaQuery.sizeOf(context).height * 0.04),
+              // L'orbe de verre et de lumière (un shader, voir
+              // `orbe_droplet.dart`) : elle a remplacé la mascotte.
               calme
-                  ? const MascotteAssistant(taille: 84)
-                  : const MascotteAssistant(taille: 84)
+                  ? const OrbeDroplet(taille: 132)
+                  : const OrbeDroplet(taille: 132)
                       .animate()
-                      .fadeIn(duration: 420.ms)
-                      .scaleXY(begin: 0.6, curve: Curves.elasticOut, duration: 900.ms),
+                      .fadeIn(duration: 520.ms)
+                      .scaleXY(begin: 0.55, curve: Curves.easeOutBack, duration: 900.ms),
               const SizedBox(height: DesignTokens.space6),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 360),
@@ -3258,7 +3261,11 @@ class _PastilleMoteur extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              EtincelleGemini(taille: 16, anime: anime),
+              // Pendant une réponse, la petite orbe pense dans la pastille.
+              if (anime)
+                const OrbeDroplet(taille: 22, etat: EtatOrbe.reflexion)
+              else
+                const EtincelleGemini(taille: 16),
               const SizedBox(width: 7),
               Flexible(
                 child: Text.rich(

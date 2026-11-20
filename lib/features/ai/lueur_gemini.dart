@@ -44,6 +44,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'orbe_droplet.dart';
 import '../../core/services/device_profile.dart';
 
 /// Les couleurs de la lueur, dans l'ordre où elles se succèdent.
@@ -502,7 +503,8 @@ class _IndicateurReflexionGeminiState extends State<IndicateurReflexionGemini>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const EtincelleGemini(taille: 24, anime: true),
+            // L'orbe de Droplet qui tourbillonne : l'assistant réfléchit.
+            const OrbeDroplet(taille: 30, etat: EtatOrbe.reflexion),
             const SizedBox(width: 12),
             SizedBox(
               width: 220,
